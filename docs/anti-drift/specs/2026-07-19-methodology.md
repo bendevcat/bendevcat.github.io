@@ -53,7 +53,11 @@ Generate it with `/anti-drift-planning:start-session N` and paste it as the firs
 
 | Plan | User-facing goal (binary) | Spec path |
 |---|---|---|
-| _(rempli au fur et à mesure par `/anti-drift-planning:new-plan`)_ | | |
+| **P1** | « Le blog est en ligne (github.io) et lisible, en thème dark editorial-dev » | [`…-plan-1-socle-blog-deploye.md`](./2026-07-19-plan-1-socle-blog-deploye.md) |
+| **P2** | « Je publie/édite les articles sans toucher au code (Sveltia CMS) » | `…-plan-2-cms-sveltia.md` *(à créer)* |
+| **P3** | « On peut parcourir mes fiches projets » | `…-plan-3-vitrine-projets.md` *(à créer)* |
+| **P4** | « Mes prompts et mes skills sont parcourables et copiables » | `…-plan-4-librairies-prompts-skills.md` *(à créer)* |
+| **P5** | « On cherche et on découvre (recherche, tags, à-propos, transparence-IA) » | `…-plan-5-recherche-et-pages.md` *(à créer)* |
 
 **Order:** strictly sequential (each plan builds on the previous). Each plan is executed in its own fresh Claude Code session.
 
