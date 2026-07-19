@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 03:57
+Last updated: 2026-07-19 04:16
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -58,3 +58,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 03:41 — B2 (migration des 6 articles publiés) → In progress — R6 In progress
 - 2026-07-19 03:55 — B2 → **Done** — commit `6576f8e` — 6 bundles, `getPublishedPosts()`=6, build PASS 0 erreur schéma, 3 covers locales + 3 body screenshots co-localisées (reviewer a checksummé les images + diffé les bodies vs source = identiques). **Phase B terminée.** R6 : build+count(6) ✅, clause « images s'affichent » → smoke C1/C3. Minor : 2 descriptions à re-tutoyer.
 - 2026-07-19 04:00 — C1 (ArticleCard + Hero + Home) → In progress — R2 In progress
+- 2026-07-19 04:12 — C1 → **Done** — commit `c32fa53` — build/check/vitest PASS, review ✅ Approved. Home = hero + 6 cartes, 3 sans cover rendues proprement (sans `<img>`), CTA réels (pas de `/a-propos`). `aiUsage` mappé en helper partagé `src/lib/aiUsage.ts` (réutilisé par C3). R2 : impl-smoke + review ✅ → smoke contrôleur consolidé après C3. Minor : temps de lecture ~haut (tokens md).
