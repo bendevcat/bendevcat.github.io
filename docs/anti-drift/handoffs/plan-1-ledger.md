@@ -1,7 +1,7 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 02:11
-Last updated by: main (pré-flight)
+Last updated: 2026-07-19 02:21
+Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
 
@@ -46,3 +46,4 @@ Last updated by: main (pré-flight)
 (Append a one-liner each time the ledger is updated, with the new status and the commit SHA.)
 
 - 2026-07-19 02:11 — Ledger seeded (pré-flight) — all rows Pending
+- 2026-07-19 02:21 — A1 (scaffold Astro) → In progress
