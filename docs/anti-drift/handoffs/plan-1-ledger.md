@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 05:35
+Last updated: 2026-07-19 05:42
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -13,7 +13,7 @@ Last updated by: main (contrôleur SDD)
 | R4 | `/blog` liste **tous** les articles publiés (`draft:false`), tri anté-chronologique (nb cartes = nb publiés **ET** aucun `draft:true` visible) | Done | C2 `3f1d8af` — **smoke contrôleur ✅** : `/blog` = 6 cartes (= publiés), ordre anté-chrono. Test draft d'exclusion passé. Fix D05 (route article filtre aussi les drafts). |
 | R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | Done | A3 `2c9a2ad` — smoke contrôleur ✅ 4/4 : clic flip dark→light, reload persiste (localStorage l'emporte sur média `prefersDark`), sans stockage suit `prefers-color-scheme` (→dark), no-flash (script inline = 1er nœud `<head>`) |
 | R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | Done | B1 `81fa99d` + B2 `6576f8e` — build OK, `getPublishedPosts()`=**6**=publiés, images co-localisées rendues (**smoke** : cover s'affiche sur carte + body images bienvenue en webp). **Compte 6** (9 drafts + 3 trash exclus). D03 : 3 covers Unsplash distantes omises (pending-user). |
-| R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | In progress | C4 — `@astrojs/rss`, `getPublishedPosts()` (6 items attendus) |
+| R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | Done | C4 `cae31c2` — **vérif contrôleur ✅** : `dist/rss.xml` = 6 `<item>` (titre + lien absolu `/blog/<slug>/` + pubDate + description), XML bien formé. `getPublishedPosts()` (drafts exclus du flux). Review ✅ Approved. |
 | R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | Done | A2 `37709c6` + A3 `2c9a2ad` — **smoke contrôleur ✅** : 3 familles `loaded`, toggle applique `--color-bg/acc`, mono sur logo + chips catégorie (C1) + **42 blocs code en JetBrains Mono** (C3). |
 | R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | Pending | |
 
@@ -64,3 +64,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 04:28 — C3 (page article : TOC + copie + bannière IA) → In progress — R3 In progress
 - 2026-07-19 05:05 — C3 → **Done** — impl `db9440c` + fix `1cf11ae` — review a trouvé 2 Important (bouton copier off-screen au scroll ; drafts publiés) → **corrigés + re-review ✅ Approved**. Déviations **D04** (`@astrojs/markdown-remark`, v7) + **D05** (route filtre drafts) loggées pending-user. **Smoke contrôleur consolidé** (home+/blog+article) → **R2, R3, R4, R6, R8 → Done**. Reste R7 (C4), R9 (C5), R1 (D1/GitHub).
 - 2026-07-19 05:35 — C4 (flux RSS) → In progress — R7 In progress
+- 2026-07-19 05:40 — C4 → **Done** — commit `cae31c2` — `dist/rss.xml` 6 items bien formés (vérif contrôleur), review ✅ Approved, 0 déviation. **R7 → Done.**
