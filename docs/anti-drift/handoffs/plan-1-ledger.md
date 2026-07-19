@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 02:41
+Last updated: 2026-07-19 02:52
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -49,3 +49,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 02:21 — A1 (scaffold Astro) → In progress
 - 2026-07-19 02:35 — A1 → **Done** — commit `d08debf` — build PASS, review ✅ Approved (3 Minor rolled up : nom `astro-tmp`, `CLAUDE.md` stock, Astro v7). Déviations D01+D02 loggées `pending-user`.
 - 2026-07-19 02:40 — A2 (Tailwind v4 + tokens + fonts) → In progress — R8 In progress
+- 2026-07-19 02:47 — A2 → **Done** — commit `37709c6` — build PASS, review ✅ Approved. `--color-acc-dim` complété (dark `rgb(74 222 128 /.12)`). R8 reste In progress (attend A3).
