@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 03:55
+Last updated: 2026-07-19 03:57
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -8,7 +8,7 @@ Last updated by: main (contrôleur SDD)
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
 | R1 | Un push sur `main` déclenche le workflow GitHub Actions (`withastro/action`) qui build et déploie le site (run vert **ET** `curl -sI https://bendevcat.github.io` = `200` HTML) | Pending | Dépend d'actions manuelles GitHub (création repo `bendevcat.github.io`, Pages source = Actions) |
-| R2 | La home `/` affiche un hero + une grille d'articles récents (hero **ET** ≥ 3 cartes réelles : titre, date, catégorie, description) | Pending | |
+| R2 | La home `/` affiche un hero + une grille d'articles récents (hero **ET** ≥ 3 cartes réelles : titre, date, catégorie, description) | In progress | C1 — 6 cartes (≥3 OK). 3 sans cover (D03) → carte gère l'absence. |
 | R3 | Un article `/blog/<slug>` : contenu complet + TOC (H2/H3) + blocs de code à bouton copier + bannière IA conditionnelle (visible si `aiUsage` défini) | Pending | |
 | R4 | `/blog` liste **tous** les articles publiés (`draft:false`), tri anté-chronologique (nb cartes = nb publiés **ET** aucun `draft:true` visible) | Pending | |
 | R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | Done | A3 `2c9a2ad` — smoke contrôleur ✅ 4/4 : clic flip dark→light, reload persiste (localStorage l'emporte sur média `prefersDark`), sans stockage suit `prefers-color-scheme` (→dark), no-flash (script inline = 1er nœud `<head>`) |
@@ -57,3 +57,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 03:40 — Survey source (contrôleur) : **6 publiés** à migrer, tout YAML, pas de shortcode, pas de `description` en source, 3 covers Unsplash distantes. Déviation **D03** loggée (`1938eca`, pending-user).
 - 2026-07-19 03:41 — B2 (migration des 6 articles publiés) → In progress — R6 In progress
 - 2026-07-19 03:55 — B2 → **Done** — commit `6576f8e` — 6 bundles, `getPublishedPosts()`=6, build PASS 0 erreur schéma, 3 covers locales + 3 body screenshots co-localisées (reviewer a checksummé les images + diffé les bodies vs source = identiques). **Phase B terminée.** R6 : build+count(6) ✅, clause « images s'affichent » → smoke C1/C3. Minor : 2 descriptions à re-tutoyer.
+- 2026-07-19 04:00 — C1 (ArticleCard + Hero + Home) → In progress — R2 In progress
