@@ -1,11 +1,15 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
+import { getPublishedPosts } from '../../lib/posts';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import AiBanner from '../../components/AiBanner.astro';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  // getPublishedPosts() filtre les drafts (R4/R6) — cf. C2 (src/pages/blog/index.astro)
+  // et C1 (src/pages/index.astro), qui filtrent déjà de la même façon : un
+  // draft:true ne doit obtenir NI carte d'index NI route publique.
+  const posts = await getPublishedPosts();
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
 

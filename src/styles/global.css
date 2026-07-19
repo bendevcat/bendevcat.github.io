@@ -107,7 +107,6 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 
 /* Blocs de code (Shiki, cf. astro.config.mjs → markdown.shikiConfig) */
 .prose :where(pre) {
-  position: relative; /* ancre pour .copy-btn (position absolute) */
   margin: 1.5em 0;
   padding: 1em;
   border-radius: 0.6em;
@@ -161,9 +160,21 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
+/* Wrapper non scrollable autour de chaque <pre> (Fix review C3, Important #1)
+   — <pre> reste seul responsable de l'overflow-x:auto (R9), mais .copy-btn
+   est positionné en absolute par rapport à CE wrapper (et non plus par
+   rapport à <pre>), qui lui ne défile jamais. Le bouton reste donc épinglé
+   au coin visible même après un scroll horizontal complet du code. Créé
+   dynamiquement en JS vanilla (src/scripts/copy-code.ts), pas de classe
+   scoped Astro possible : doit vivre en CSS global. */
+.code-block-wrapper {
+  position: relative;
+}
+
 /* Bouton copier (Plan 1 / C3, src/scripts/copy-code.ts) — créé dynamiquement
-   en JS vanilla et ajouté à chaque <pre>, donc pas de classe scoped Astro
-   possible : doit vivre en CSS global. */
+   en JS vanilla et ajouté à chaque .code-block-wrapper (jamais à <pre>
+   lui-même, cf. gotcha ci-dessus), donc pas de classe scoped Astro possible :
+   doit vivre en CSS global. */
 .copy-btn {
   position: absolute;
   top: 0.6em;
