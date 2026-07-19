@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 03:40
+Last updated: 2026-07-19 03:55
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -56,3 +56,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 03:30 — B1 → **Done** — commit `81fa99d` — TDD RED→GREEN (vitest 1/1), `astro check` 0 erreur. `relatedProjects` **conservé** (comportement Astro documenté, sûr Plan 1) → pas de déviation. `src/content/blog/.gitkeep` = autorisé par le contrôleur (dispatch B1). R6 reste In progress (attend B2). Minor : hints `z` deprecated (v7).
 - 2026-07-19 03:40 — Survey source (contrôleur) : **6 publiés** à migrer, tout YAML, pas de shortcode, pas de `description` en source, 3 covers Unsplash distantes. Déviation **D03** loggée (`1938eca`, pending-user).
 - 2026-07-19 03:41 — B2 (migration des 6 articles publiés) → In progress — R6 In progress
+- 2026-07-19 03:55 — B2 → **Done** — commit `6576f8e` — 6 bundles, `getPublishedPosts()`=6, build PASS 0 erreur schéma, 3 covers locales + 3 body screenshots co-localisées (reviewer a checksummé les images + diffé les bodies vs source = identiques). **Phase B terminée.** R6 : build+count(6) ✅, clause « images s'affichent » → smoke C1/C3. Minor : 2 descriptions à re-tutoyer.
