@@ -1,12 +1,30 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { getPublishedPosts } from '../lib/posts';
+
+const posts = await getPublishedPosts();
+// getPublishedPosts() trie déjà par pubDate desc (src/lib/posts.ts) ; on ne
+// fait ici qu'un tri stable additionnel pour faire remonter un éventuel
+// article `featured` en tête (aucun featured actuellement — no-op tant que
+// le CMS Plan 2 n'en déclare pas), conformément au plan d'impl C1.
+const orderedPosts = [...posts].sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
 ---
 
 <BaseLayout
 	title="bencat_"
 	description="Site perso de Benoît Catillon — blog, projets, prompts et skills."
 >
-	<main class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-		<h1 class="font-display text-3xl font-bold text-text">bencat_</h1>
+	<main>
+		<Hero />
+
+		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+			<h2 class="font-mono text-sm text-muted">// derniers articles</h2>
+
+			<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{orderedPosts.map((post) => <ArticleCard post={post} />)}
+			</div>
+		</section>
 	</main>
 </BaseLayout>
