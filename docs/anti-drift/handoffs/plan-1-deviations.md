@@ -30,6 +30,19 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **User decision:** —
 - **Follow-up:** si rejeté, copier le `.gitignore` du template et re-vérifier qu'aucun contenu local n'est balayé.
 
+## D03 — 3 covers distantes (Unsplash) non migrées (articles sans cover)
+
+- **Date:** 2026-07-19 03:40
+- **Task affected:** B2
+- **Original plan:** §6.1 mapping `image → cover` (co-localiser le fichier image, chemin relatif). Implicite : l'`image` source est un fichier local. R6 : « les images d'articles s'affichent ».
+- **Deviation taken:** 3 des 6 articles publiés (`docker-kubernetes-devops`, `linux-commandes-essentielles`, `meilleurs-vpn-2025`) ont un `image:` = **URL Unsplash distante**, pas un fichier local. Le schéma `cover: image()` (B1) n'accepte que du **local**. Ces 3 articles sont migrés avec `cover` **omis** (champ optionnel). Les 3 autres publiés (`bienvenue`, `comment-jutilise-github-actions`, `k9s`) ont des images **locales** → co-localisées normalement.
+- **Reason:** (1) `image()` ne peut pas référencer une URL distante ; (2) rapatrier les images = **télécharger des fichiers externes**, ce qui requiert l'accord explicite de l'utilisateur (règle de sécurité). Aucun téléchargement non autorisé. R6 « images co-localisées rendues » reste satisfait pour les images réellement locales. R2 n'exige PAS de cover (titre/date/catégorie/description seulement) → cartes valides sans cover.
+- **Reversibility:** cheap (par article : si l'utilisateur autorise, télécharger + co-localiser les 3 covers, ou les re-couvrir via le CMS au Plan 2).
+- **Caught late:** no (loggé avant exécution de B2).
+- **Status:** pending-user
+- **User decision:** — (options : (a) m'autoriser à télécharger+co-localiser les covers Unsplash ; (b) re-couvrir via CMS au Plan 2 ; (c) laisser ces 3 sans cover)
+- **Follow-up:** selon décision (a/b/c).
+
 <!--
 Template for a new deviation:
 
