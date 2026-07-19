@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 05:43
+Last updated: 2026-07-19 06:17
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -15,7 +15,7 @@ Last updated by: main (contrôleur SDD)
 | R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | Done | B1 `81fa99d` + B2 `6576f8e` — build OK, `getPublishedPosts()`=**6**=publiés, images co-localisées rendues (**smoke** : cover s'affiche sur carte + body images bienvenue en webp). **Compte 6** (9 drafts + 3 trash exclus). D03 : 3 covers Unsplash distantes omises (pending-user). |
 | R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | Done | C4 `cae31c2` — **vérif contrôleur ✅** : `dist/rss.xml` = 6 `<item>` (titre + lien absolu `/blog/<slug>/` + pubDate + description), XML bien formé. `getPublishedPosts()` (drafts exclus du flux). Review ✅ Approved. |
 | R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | Done | A2 `37709c6` + A3 `2c9a2ad` — **smoke contrôleur ✅** : 3 familles `loaded`, toggle applique `--color-bg/acc`, mono sur logo + chips catégorie (C1) + **42 blocs code en JetBrains Mono** (C3). |
-| R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | In progress | C5 — grille déjà 1-col < sm ; prose/code/img déjà responsive (C3) ; point à traiter = nav compacte à 375px |
+| R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | Done | C5 `29ad133` — **smoke contrôleur ✅** : home 375px scrollWidth=clientWidth=375 (0 débordement), grille 1-col, nav 2-lignes (Blog+toggle atteignables). Impl+review ont mesuré les 8 pages (home+/blog+6 articles) = 375. 2 Minor a11y (tab-order, `sm:nowrap`) → roll-up. |
 
 ## Status legend
 - **Done** — verified, criteria passed (link to commit SHA)
@@ -66,3 +66,5 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 05:35 — C4 (flux RSS) → In progress — R7 In progress
 - 2026-07-19 05:40 — C4 → **Done** — commit `cae31c2` — `dist/rss.xml` 6 items bien formés (vérif contrôleur), review ✅ Approved, 0 déviation. **R7 → Done.**
 - 2026-07-19 05:43 — C5 (passe responsive 375px) → In progress — R9 In progress
+- 2026-07-19 05:55 — C5 → **Done** — commit `29ad133` — nav 2-lignes < sm + `.prose overflow-wrap` (fix URL nue k9s). Review ✅ Approved. **Smoke contrôleur ✅** (home 375=375). **R9 → Done. Phase C terminée.** D06/D07 flaggés par l'impl → **adjugés non-canoniques** (dans la latitude explicitement accordée : 3 options nav offertes + « wrapping as needed »). 2 Minor a11y rollup. Reste **R1 (D1 — déploiement, dépend d'actions GitHub de l'utilisateur)**.
+- 2026-07-19 05:56 — Hygiène contrôleur : `.claude/{settings.local.json,launch.json}` gitignorés (`8...`, repo public) — pas une déviation.
