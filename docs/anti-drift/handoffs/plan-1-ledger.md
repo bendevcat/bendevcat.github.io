@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 02:39
+Last updated: 2026-07-19 02:41
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -14,7 +14,7 @@ Last updated by: main (contrôleur SDD)
 | R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | Pending | |
 | R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | Pending | Source = `../bencat-website/content/posts/` (15 fichiers, count publiés à établir en B2) |
 | R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | Pending | |
-| R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | Pending | |
+| R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | In progress | A2 (tokens+fonts) puis A3 (toggle applique le thème) |
 | R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | Pending | |
 
 ## Status legend
@@ -48,3 +48,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 02:11 — Ledger seeded (pré-flight) — all rows Pending
 - 2026-07-19 02:21 — A1 (scaffold Astro) → In progress
 - 2026-07-19 02:35 — A1 → **Done** — commit `d08debf` — build PASS, review ✅ Approved (3 Minor rolled up : nom `astro-tmp`, `CLAUDE.md` stock, Astro v7). Déviations D01+D02 loggées `pending-user`.
+- 2026-07-19 02:40 — A2 (Tailwind v4 + tokens + fonts) → In progress — R8 In progress
