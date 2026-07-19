@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 06:18
+Last updated: 2026-07-19 06:38
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -69,3 +69,7 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 05:55 — C5 → **Done** — commit `29ad133` — nav 2-lignes < sm + `.prose overflow-wrap` (fix URL nue k9s). Review ✅ Approved. **Smoke contrôleur ✅** (home 375=375). **R9 → Done. Phase C terminée.** D06/D07 flaggés par l'impl → **adjugés non-canoniques** (dans la latitude explicitement accordée : 3 options nav offertes + « wrapping as needed »). 2 Minor a11y rollup. Reste **R1 (D1 — déploiement, dépend d'actions GitHub de l'utilisateur)**.
 - 2026-07-19 05:56 — Hygiène contrôleur : `.claude/{settings.local.json,launch.json}` gitignorés (`8...`, repo public) — pas une déviation.
 - 2026-07-19 06:20 — D1 (workflow GitHub Pages) → In progress — R1 In progress (partie automatisable = le workflow ; vérif = bloquée côté utilisateur).
+- 2026-07-19 06:22 — D1 workflow écrit → commit `e4b42a8` (`.github/workflows/deploy.yml`, YAML validé, build OK). Steps 2-3 (repo/remote/push/Pages) = actions utilisateur, non tentées.
+- 2026-07-19 06:24 — **Revue finale de branche** (opus, 39 commits) : tests verts (vitest 1/1, check 0 err, build 8 pages). Trouvé **1 Critical** (workflow build Node 20 < Astro 7 exige Node ≥22 → 1er deploy échouerait) + 1 Important (I1 : repo doit s'appeler `bendevcat.github.io`) + Minor.
+- 2026-07-19 06:26 — **Fixes revue finale** → commit `744d4a6` : Node 22 épinglé (C1, → D06) + `concurrency` Pages + viewport `initial-scale=1` + trailing-slash cartes + nom package `astro-bencatdev`. Favicon **non touché** (§6 branding différé). Re-vérifié : build 8 pages, tests verts, workflow YAML OK. D1 workflow = **livré & vérifié statiquement**.
+- 2026-07-19 06:27 — **FIN DE SESSION (état = prêt à ship, en attente utilisateur).** 8/9 critères **Done** (R2–R9). **R1 = In progress / BLOQUÉ** : workflow prêt, mais création repo + push + Pages = tes actions. **Phase Z NON lancée** (le gate exige 0 `pending-user` — or 6 déviations D01–D06 à ratifier — + R1 vérifié). Handoff écrit : `docs/anti-drift/handoffs/plan-1-handoff.md`.
