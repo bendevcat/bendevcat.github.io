@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 04:17
+Last updated: 2026-07-19 04:27
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -60,3 +60,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 04:00 — C1 (ArticleCard + Hero + Home) → In progress — R2 In progress
 - 2026-07-19 04:12 — C1 → **Done** — commit `c32fa53` — build/check/vitest PASS, review ✅ Approved. Home = hero + 6 cartes, 3 sans cover rendues proprement (sans `<img>`), CTA réels (pas de `/a-propos`). `aiUsage` mappé en helper partagé `src/lib/aiUsage.ts` (réutilisé par C3). R2 : impl-smoke + review ✅ → smoke contrôleur consolidé après C3. Minor : temps de lecture ~haut (tokens md).
 - 2026-07-19 04:17 — C2 (index /blog) → In progress — R4 In progress
+- 2026-07-19 04:25 — C2 → **Done** — commit `3f1d8af` — build PASS, `/blog`=6 cartes, test draft d'exclusion passé (créé→absent→supprimé, tree propre), review ✅ Approved. R4 : build+draft-test+review ✅ → smoke contrôleur consolidé après C3. Observation (non-déviation, adjugée) : tri featured home vs /blog (no-op Plan 1) → minor-findings + user.
