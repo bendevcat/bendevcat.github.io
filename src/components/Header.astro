@@ -1,0 +1,47 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+interface NavLink {
+  label: string;
+  href?: string;
+}
+
+// Nav complète du site (spec design §4). Seul Blog a une page en Plan 1 ;
+// les autres piliers arrivent aux Plans 3-4 — rendus non cliquables pour
+// éviter tout lien mort (cf. spec Plan 1 §5).
+const navLinks: NavLink[] = [
+  { label: 'Blog', href: '/blog' },
+  { label: 'Projets' },
+  { label: 'Prompts' },
+  { label: 'Skills' },
+  { label: 'À propos' },
+];
+---
+
+<header class="border-b border-line">
+  <div class="mx-auto flex max-w-5xl items-center justify-between gap-6 px-4 py-4 sm:px-6">
+    <a href="/" class="font-mono text-lg text-text" aria-label="bencat_ — accueil">
+      bencat<span class="text-acc">_</span>
+    </a>
+
+    <nav aria-label="Navigation principale">
+      <ul class="flex items-center gap-5 text-sm">
+        {navLinks.map((link) => (
+          <li>
+            {link.href ? (
+              <a href={link.href} class="text-muted transition-colors hover:text-text">
+                {link.label}
+              </a>
+            ) : (
+              <span class="text-muted/40" aria-disabled="true" title="Bientôt disponible">
+                {link.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <ThemeToggle />
+  </div>
+</header>
