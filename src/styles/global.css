@@ -49,6 +49,12 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   font-family: var(--font-sans);
   color: var(--color-text);
   line-height: 1.75;
+  /* R9 (375px) : un token sans espace trop long (ex. URL brute en texte de
+     lien — cf. constat tâche C5 sur k9s-kubernetes-terminal-ui) déborderait
+     sinon de son <p>/<li>, qui n'a pas d'overflow-x:auto propre (contrairement
+     à .prose pre/table ci-dessous). Ne change rien au rendu des mots normaux :
+     ne coupe qu'un mot qui, seul, ne tiendrait pas dans le conteneur. */
+  overflow-wrap: break-word;
 }
 
 .prose :where(h2, h3, h4) {
