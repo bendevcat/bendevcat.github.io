@@ -56,6 +56,19 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **User decision:** — (options : (a) garder le pipeline unified — approche rehype du plan, +1 dep, warning console ; (b) revenir au moteur Astro 7 natif + slugger interne pour le TOC, sans rehype)
 - **Follow-up:** selon décision (a/b). Détail complet : rapport `scratchpad/task-C3-report.md` §D-C3-1.
 
+## D05 — `getStaticPaths` (page article) filtre les drafts (`getPublishedPosts` au lieu de `getCollection`)
+
+- **Date:** 2026-07-19 04:55
+- **Task affected:** C3 (fix post-revue)
+- **Original plan:** le snippet `[...slug].astro` du plan (C3 Step 2) fait `getStaticPaths` sur `getCollection('blog')` **brut** (non filtré).
+- **Deviation taken:** remplacé par `getPublishedPosts()` (helper B1, `!draft`). Un article `draft:true` n'obtient donc **pas** de route publique `/blog/<slug>` (404), au lieu d'une page publique rendue.
+- **Reason:** le snippet du plan est en **contradiction avec la spec** (R4 « aucun `draft:true` visible », R6 « publiés uniquement ») et avec les pages sœurs C1/C2 qui utilisent déjà `getPublishedPosts()`. Revue C3 (Important #2) : sans le fix, un draft aurait une URL publique crawlable. La spec gouverne le snippet. **No-op aujourd'hui** (0 draft parmi les 6), n'impacte que de futurs brouillons.
+- **Reversibility:** cheap (une ligne ; revenir à `getCollection` si l'utilisateur voulait vraiment publier les drafts — ce que R4/R6 excluent).
+- **Caught late:** no (loggé avant l'exécution du fix).
+- **Status:** pending-user
+- **User decision:** — (correction d'une incohérence interne du plan pour honorer R4/R6 ; ratification attendue)
+- **Follow-up:** si rejeté (improbable, contredirait R4/R6), revenir à `getCollection`.
+
 <!--
 Template for a new deviation:
 
