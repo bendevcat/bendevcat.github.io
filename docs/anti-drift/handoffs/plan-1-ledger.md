@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 03:35
+Last updated: 2026-07-19 03:40
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -12,7 +12,7 @@ Last updated by: main (contrôleur SDD)
 | R3 | Un article `/blog/<slug>` : contenu complet + TOC (H2/H3) + blocs de code à bouton copier + bannière IA conditionnelle (visible si `aiUsage` défini) | Pending | |
 | R4 | `/blog` liste **tous** les articles publiés (`draft:false`), tri anté-chronologique (nb cartes = nb publiés **ET** aucun `draft:true` visible) | Pending | |
 | R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | Done | A3 `2c9a2ad` — smoke contrôleur ✅ 4/4 : clic flip dark→light, reload persiste (localStorage l'emporte sur média `prefersDark`), sans stockage suit `prefers-color-scheme` (→dark), no-flash (script inline = 1er nœud `<head>`) |
-| R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | In progress | B1 (schéma+helper) puis B2 (migration). Source = `../bencat-website/content/posts/` (15 fichiers, count publiés établi en B2) |
+| R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | In progress | **Compte publié établi = 6** (draft:false ; 9 drafts + 3 trash exclus ; le « ~15 » du design spec = total, pas publiés). B1 fait ; B2 en cours. D03 : 3 covers Unsplash distantes omises. |
 | R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | Pending | |
 | R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | In progress | A2+A3 vérifiés (smoke : 3 familles `loaded`, toggle applique `--color-bg/acc`, mono sur logo). Reste la clause « méta/tags/code en JetBrains Mono » → prouvée à C1 (cartes) / C3 (code) |
 | R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | Pending | |
@@ -54,3 +54,5 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 03:10 — A3 → **Done** — commit `2c9a2ad` — build PASS, review ✅ Approved, smoke navigateur contrôleur ✅. **R5 → Done.** R8 reste In progress (attend C1/C3). **Phase A terminée.** 1 Minor (indent tab index.astro).
 - 2026-07-19 03:18 — B1 (schéma collection blog + helper `getPublishedPosts`, TDD) → In progress — R6 In progress
 - 2026-07-19 03:30 — B1 → **Done** — commit `81fa99d` — TDD RED→GREEN (vitest 1/1), `astro check` 0 erreur. `relatedProjects` **conservé** (comportement Astro documenté, sûr Plan 1) → pas de déviation. `src/content/blog/.gitkeep` = autorisé par le contrôleur (dispatch B1). R6 reste In progress (attend B2). Minor : hints `z` deprecated (v7).
+- 2026-07-19 03:40 — Survey source (contrôleur) : **6 publiés** à migrer, tout YAML, pas de shortcode, pas de `description` en source, 3 covers Unsplash distantes. Déviation **D03** loggée (`1938eca`, pending-user).
+- 2026-07-19 03:41 — B2 (migration des 6 articles publiés) → In progress — R6 In progress
