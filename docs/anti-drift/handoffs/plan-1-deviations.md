@@ -43,6 +43,19 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **User decision:** — (options : (a) m'autoriser à télécharger+co-localiser les covers Unsplash ; (b) re-couvrir via CMS au Plan 2 ; (c) laisser ces 3 sans cover)
 - **Follow-up:** selon décision (a/b/c).
 
+## D04 — `@astrojs/markdown-remark` installé (bascule du moteur markdown vers le pipeline unified classique)
+
+- **Date:** 2026-07-19 04:45
+- **Task affected:** C3
+- **Original plan:** Step 1 : `npm install rehype-slug rehype-autolink-headings` + `markdown: { shikiConfig:{...}, rehypePlugins: [...] }` dans `astro.config.mjs`. Aucun autre paquet mentionné.
+- **Deviation taken:** sur **Astro 7.1.1** (moteur markdown par défaut = « Sätteri »), cette config `rehypePlugins` fait **échouer le build** (erreur, pas warning) tant que `@astrojs/markdown-remark` n'est pas installé. L'implémenteur a installé `@astrojs/markdown-remark` (exactement ce que le message d'erreur d'Astro demande) → tout le markdown du site (les 6 posts + futurs) rend désormais via le pipeline **unified/remark/rehype classique** au lieu de Sätteri. Un warning console de dépréciation subsiste à chaque build (non bloquant).
+- **Reason:** l'étape 1 du plan est écrite pour l'API Astro v5-era ; sur v7 elle exige ce paquet. Alternative rejetée : *sauter* rehype-slug/autolink et se reposer sur le slugger natif d'Astro (R3 marcherait aussi) — mais retrancher une étape explicite du plan est une réduction de scope plus grande qu'ajouter une dépendance habilitante. Aucune régression observée sur les 6 posts (GFM, images, code, TOC OK).
+- **Reversibility:** cheap — retirer le bloc `markdown` d'`astro.config.mjs` + les 3 deps (`rehype-slug`, `rehype-autolink-headings`, `@astrojs/markdown-remark`). Aucune donnée/contenu affecté. Si rejeté : replier sur le slugger natif d'Astro pour le TOC (R3 tenu quand même), perte des permaliens d'ancrage sur les titres (effet unique de rehype-autolink-headings).
+- **Caught late:** no (build lancé sans le paquet d'abord pour confirmer l'échec, puis loggé avant de continuer).
+- **Status:** pending-user
+- **User decision:** — (options : (a) garder le pipeline unified — approche rehype du plan, +1 dep, warning console ; (b) revenir au moteur Astro 7 natif + slugger interne pour le TOC, sans rehype)
+- **Follow-up:** selon décision (a/b). Détail complet : rapport `scratchpad/task-C3-report.md` §D-C3-1.
+
 <!--
 Template for a new deviation:
 
