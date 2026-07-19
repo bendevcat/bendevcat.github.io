@@ -1,0 +1,39 @@
+@import "tailwindcss";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* bascule de thème pilotée par [data-theme] sur <html> */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* palette LIGHT (défaut) — surchargée en dark ci-dessous */
+  --color-bg: #FCFCFD;
+  --color-surface: #FFFFFF;
+  --color-line: rgb(15 23 42 / 0.10);
+  --color-text: #14181F;
+  --color-muted: #5A6572;
+  --color-acc: #047857;          /* vert texte AA sur clair */
+  --color-acc-solid: #34D399;    /* aplats/bouton */
+  --color-acc-contrast: #04231A;
+  --color-acc-dim: #ECFDF5;      /* fond puce catégorie (clair) */
+}
+
+/* DARK : surcharge des mêmes custom properties */
+:root[data-theme="dark"] {
+  --color-bg: #0B0E14;
+  --color-surface: #141B24;
+  --color-line: rgb(255 255 255 / 0.09);
+  --color-text: #E8EDF3;
+  --color-muted: #8B97A6;
+  --color-acc: #4ADE80;
+  --color-acc-solid: #4ADE80;
+  --color-acc-contrast: #06281A;
+  --color-acc-dim: rgb(74 222 128 / 0.12); /* vert translucide, fond puce catégorie sur surface sombre */
+}
+
+html { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); }
