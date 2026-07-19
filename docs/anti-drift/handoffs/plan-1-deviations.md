@@ -69,6 +69,19 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **User decision:** — (correction d'une incohérence interne du plan pour honorer R4/R6 ; ratification attendue)
 - **Follow-up:** si rejeté (improbable, contredirait R4/R6), revenir à `getCollection`.
 
+## D06 — Workflow durci : Node 22 épinglé (requis Astro 7) + groupe `concurrency` Pages
+
+- **Date:** 2026-07-19 06:25
+- **Task affected:** D1 (fix post-revue finale)
+- **Original plan:** workflow avec `- uses: withastro/action@v3` **nu** (aucun `with:`) + pas de bloc `concurrency`.
+- **Deviation taken:** (1) ajouté `with: { node-version: 22 }` sur `withastro/action@v3` ; (2) ajouté `concurrency: { group: "pages", cancel-in-progress: false }`.
+- **Reason:** (1) **Critical** de la revue finale : `withastro/action@v3` build en **Node 20 par défaut**, or l'Astro 7.1.1 installé déclare `engines: node >=22.12.0` → le build Pages échouerait, **R1 impossible** même après le setup GitHub de l'utilisateur. Invérifiable en local (machine en Node 22.22.3). C'est une conséquence directe d'Astro v7 (sur v5, Node 20 suffisait). (2) best-practice Pages (le template officiel GitHub l'inclut) : évite que deux push rapprochés lancent deux déploiements concurrents. Robustesse, non user-observable en fonctionnement normal.
+- **Reversibility:** cheap (2 ajouts YAML dans un seul fichier ; retirables en 1 min).
+- **Caught late:** no (loggé avant le fix ; issu de la revue finale de branche, pas exécuté silencieusement).
+- **Status:** pending-user
+- **User decision:** — (le pin Node 22 est requis pour que R1 passe ; ratification attendue)
+- **Follow-up:** si le pin Node est rejeté, R1 ne pourra pas passer sur Astro 7 — il faudrait alors rétrograder Astro à une version compatible Node 20 (contredirait « latest v5+ »).
+
 <!--
 Template for a new deviation:
 
