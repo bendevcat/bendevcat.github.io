@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 02:53
+Last updated: 2026-07-19 03:18
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -11,10 +11,10 @@ Last updated by: main (contrôleur SDD)
 | R2 | La home `/` affiche un hero + une grille d'articles récents (hero **ET** ≥ 3 cartes réelles : titre, date, catégorie, description) | Pending | |
 | R3 | Un article `/blog/<slug>` : contenu complet + TOC (H2/H3) + blocs de code à bouton copier + bannière IA conditionnelle (visible si `aiUsage` défini) | Pending | |
 | R4 | `/blog` liste **tous** les articles publiés (`draft:false`), tri anté-chronologique (nb cartes = nb publiés **ET** aucun `draft:true` visible) | Pending | |
-| R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | In progress | A3 — vérif navigateur (smoke) après implémentation |
+| R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | Done | A3 `2c9a2ad` — smoke contrôleur ✅ 4/4 : clic flip dark→light, reload persiste (localStorage l'emporte sur média `prefersDark`), sans stockage suit `prefers-color-scheme` (→dark), no-flash (script inline = 1er nœud `<head>`) |
 | R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | Pending | Source = `../bencat-website/content/posts/` (15 fichiers, count publiés à établir en B2) |
 | R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | Pending | |
-| R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | In progress | A2 (tokens+fonts) puis A3 (toggle applique le thème) |
+| R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | In progress | A2+A3 vérifiés (smoke : 3 familles `loaded`, toggle applique `--color-bg/acc`, mono sur logo). Reste la clause « méta/tags/code en JetBrains Mono » → prouvée à C1 (cartes) / C3 (code) |
 | R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | Pending | |
 
 ## Status legend
@@ -51,3 +51,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 02:40 — A2 (Tailwind v4 + tokens + fonts) → In progress — R8 In progress
 - 2026-07-19 02:47 — A2 → **Done** — commit `37709c6` — build PASS, review ✅ Approved. `--color-acc-dim` complété (dark `rgb(74 222 128 /.12)`). R8 reste In progress (attend A3).
 - 2026-07-19 02:52 — A3 (BaseLayout + toggle no-flash) → In progress — R5 In progress
+- 2026-07-19 03:10 — A3 → **Done** — commit `2c9a2ad` — build PASS, review ✅ Approved, smoke navigateur contrôleur ✅. **R5 → Done.** R8 reste In progress (attend C1/C3). **Phase A terminée.** 1 Minor (indent tab index.astro).
