@@ -4,6 +4,32 @@ _Append entries here whenever a task cuts scope, changes approach, or hits a blo
 
 _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe une entrée en `approved` / `rejected`. Il n'existe pas de troisième statut._
 
+## D05 — `integrity` + `crossorigin` (SRI) ajoutés au script CDN, non prévus par le plan
+
+- **Date:** 2026-07-30 23:05
+- **Task affected:** T-A1 (correctif issu de la revue finale de branche — constat I4)
+- **Original plan:** plan d'impl, T-A1 Step 4, HTML imposé verbatim : `<script src="https://unpkg.com/@sveltia/cms@0.175.1/dist/sveltia-cms.js"></script>` — sans attribut d'intégrité. Spec §6.2 n'exige que l'épinglage de version.
+- **Deviation taken:** ajout de `integrity="sha384-…"` et `crossorigin="anonymous"` sur cette balise, plus une assertion correspondante dans `src/lib/cms-config.test.ts`.
+- **Reason:** constat **Important** de la revue finale. Ce script s'exécute sur l'origine `bendevcat.github.io`, reçoit un PAT GitHub **Contents: Read and write** sur le dépôt qui publie le site, et le persiste dans le stockage de cette origine (documenté au README). L'épinglage de version protège de la **dérive fonctionnelle amont** ; il ne protège **pas** d'un contenu altéré servi pour cette même version (compromission d'unpkg, empoisonnement de cache, republication du tarball). Scénario concret : un bundle altéré exfiltre le PAT à la prochaine ouverture de `/admin` → écriture sur le dépôt, donc contrôle du contenu publié et point d'appui sur `.github/workflows/`. Le SRI ferme ce vecteur pour le point d'entrée.
+- **Reversibility:** cheap (deux attributs HTML + une assertion ; retirables en une minute).
+- **Caught late:** no (loggé avant exécution du correctif).
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Follow-up:** si rejeté, retirer les deux attributs et l'assertion. Réserve connue : si le bundle charge des ressources additionnelles à l'exécution, le SRI du point d'entrée ne les couvre pas — à confirmer d'un coup d'œil à l'onglet réseau lors de la vérification R2.
+
+## D04 — Dossier média global retiré de la config CMS (le plan le prescrivait)
+
+- **Date:** 2026-07-30 23:00
+- **Task affected:** T-A1 / T-B1 (correctif issu de la revue finale de branche — constat I1)
+- **Original plan:** plan d'impl, T-A1 Step 5, YAML imposé verbatim : « *Repli global (non utilisé par la collection blog, qui stocke ses médias à côté de l'article — cf. T-B1).* » suivi de `media_folder: public/images/uploads` / `public_folder: /images/uploads`.
+- **Deviation taken:** ces deux clés globales sont **retirées** de `public/admin/config.yml`. Seule subsiste la configuration *entry-relative* au niveau de la collection (`media_folder: ''` / `public_folder: ''`).
+- **Reason:** le commentaire du plan (« non utilisé ») est **faux**, et la revue finale l'a établi sur le code source de Sveltia : `getAssetLibraryFolderMap()` active l'onglet « global » du sélecteur de média **dès qu'un `media_folder` global existe**, y compris pour un champ dont la collection est entry-relative. Scénario d'échec concret et vérifié par sonde : l'utilisateur bascule sur cet onglet pour choisir sa couverture → Sveltia écrit `cover: /images/uploads/<fichier>` → `astro build` **échoue** (`image-not-found` : `image()` d'Astro ne résout pas un chemin absolu servi depuis `public/`) → le run GitHub Actions est rouge, **le site n'est pas redéployé**, l'article n'apparaît jamais, et rien dans le CMS n'explique pourquoi. Aggravant : `public/images/uploads/` n'existe même pas dans le dépôt — ces clés n'ouvrent qu'un chemin de casse. Retirer la porte est plus sûr que documenter qu'il ne faut pas l'ouvrir.
+- **Reversibility:** cheap (deux lignes de YAML ; aucun contenu, aucun média déjà stocké — aucun article n'a encore été créé via le CMS).
+- **Caught late:** no (loggé avant exécution du correctif).
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Follow-up:** si rejeté, remettre les deux clés — et alors documenter explicitement au README qu'il ne faut jamais utiliser l'onglet média global pour le champ « Image de couverture », en acceptant que le garde-fou soit humain et non structurel.
+
 ## D03 — `@types/node` ajouté en devDependency (non prévu par le plan) pour rétablir `astro check` à 0 erreur
 
 - **Date:** 2026-07-30 21:55
