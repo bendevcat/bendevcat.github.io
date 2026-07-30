@@ -4,6 +4,19 @@ _Append entries here whenever a task cuts scope, changes approach, or hits a blo
 
 _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe une entrée en `approved` / `rejected`. Il n'existe pas de troisième statut._
 
+## D02 — T-C1 (README) exécutée AVANT T-B2, dont elle devait consommer les constats
+
+- **Date:** 2026-07-30 21:45
+- **Task affected:** T-C1 (et par ricochet l'ordre B2 → C1 du plan)
+- **Original plan:** plan d'impl, T-C1, bloc **Interfaces** : « *Consumes: les constats de T-B2 (le mode local a réellement fonctionné).* » L'ordre du plan est donc B2 puis C1.
+- **Deviation taken:** T-C1 est rédigée et committée **avant** que T-B2 ait été exécutée. Le README documentera donc un workflow dont la validation de bout en bout reste à faire.
+- **Reason:** T-B2 exige de cliquer « Work with Local Repository » puis de sélectionner un dossier dans le **sélecteur de fichiers natif** du système. Mesuré côté contrôleur : un navigateur piloté par automatisation échoue avec « *A repository root directory could not be selected. Please try again.* » — la File System Access API n'accorde l'accès disque que sur un geste humain réel. T-B2 n'est donc exécutable **que par l'utilisateur**, ce qui la met sur le chemin critique bloquant. Plutôt que de laisser la session s'arrêter avec R7 non commencé, T-C1 est livrée maintenant : son contenu (URL, prérequis Chromium, absence de proxy, emplacement des fichiers) est connu indépendamment du résultat de T-B2. Ce qui reste suspendu est uniquement la **preuve** que le pas-à-pas fonctionne — c'est précisément ce que T-B2 apportera.
+- **Reversibility:** cheap (si T-B2 révèle que le pas-à-pas documenté est faux, corriger le README est un seul fichier, une tâche de rework).
+- **Caught late:** no (loggé avant l'exécution de T-C1).
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Follow-up:** si rejeté, retirer le commit du README et attendre l'exécution de T-B2 par l'utilisateur avant de le réécrire. Dans tous les cas, R7 ne peut passer `Done` qu'après que le pas-à-pas ait été **suivi** réellement (spec §7, phase C : « workflow local suivi depuis le README »).
+
 ## D01 — En développement local, l'URL du CMS est `/admin/index.html` et non `/admin/`
 
 - **Date:** 2026-07-30 21:05
