@@ -1,0 +1,24 @@
+# Configuration Sveltia CMS — Plan 2.
+# Source de vérité du schéma : src/content.config.ts (collection `blog`).
+backend:
+  name: github
+  repo: bendevcat/bendevcat.github.io
+  branch: main
+
+# Repli global (non utilisé par la collection blog, qui stocke ses médias
+# à côté de l'article — cf. T-B1).
+media_folder: public/images/uploads
+public_folder: /images/uploads
+
+collections:
+  - name: blog
+    label: Articles
+    label_singular: Article
+    folder: src/content/blog
+    path: '{{slug}}/index'
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    fields:
+      - { name: title, label: Titre, widget: string }
+      - { name: body, label: Contenu, widget: markdown }
