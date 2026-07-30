@@ -6,6 +6,19 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 **Ratification — 2026-07-30 23:45 (utilisateur bendevcat, transcrite depuis ses réponses explicites au gate de décision) :** **D01, D02, D03, D05 → `approved`** (ratification groupée). **D04 → décision : option (a)** — rendre l'onglet média global inoffensif plutôt que de le retirer (retrait impossible) ; voir D06. Trois travaux hors périmètre initial ont également été **commandés explicitement** par l'utilisateur : **D06** (parade média), **D07** (câblage des tests en CI), **D08** (rendu de la couverture sur la page article).
 
+## D09 — Repli média global repointé dans `src/` + `choose_url: false` sur la couverture (parade retenue pour I1)
+
+- **Date:** 2026-07-31 01:50
+- **Task affected:** T-D1 (remplace le mécanisme mort de **D06**)
+- **Original plan:** plan d'impl, T-A1 Step 5 : `media_folder: public/images/uploads` / `public_folder: /images/uploads`, commentés « repli global non utilisé ». Aucune tâche du plan ne prévoit d'option `choose_url`.
+- **Deviation taken:** (1) `media_folder: src/assets/uploads` et `public_folder: /src/assets/uploads` ; (2) `choose_url: false` sur le champ `cover` ; (3) correction du commentaire faux.
+- **Reason:** investigation en lecture seule du **bundle épinglé 0.175.1** (pas de la doc), après l'échec de D04 (retrait) et D06 (`../`). Conclusions **établies sur le code**, pas déduites : l'onglet global ne peut **pas** être masqué (`global.enabled = l !== void 0`, et le dossier global a `entryRelative: false` **codé en dur**) ; le `media_folder` au niveau du **champ** ajoute un onglet sans désactiver le global ; `media_libraries: {default: false}` supprime *aussi* l'onglet entry-relative et le bouton Upload. La seule parade structurelle n'est donc pas de fermer le chemin dangereux mais de le rendre **inoffensif** : un chemin absolu **racine-projet** pointant dans `src/` est suivi par la résolution Vite d'Astro. **Vérifié par build réel** : `/src/assets/uploads/probe.png` est importé **et optimisé** (`/_astro/probe.*.webp`), là où le même fichier ailleurs donne `ImageNotFound`. Les trois gestes possibles deviennent alors buildables. Le `choose_url: false` ferme un **trou distinct, jusque-là non identifié** : l'onglet « Entrer une URL » permettait `cover: https://…`, qui casse le build (`MissingImageDimension`). `public/images/uploads/` n'existe nulle part dans le dépôt : le repointer ne coûte rien.
+- **Reversibility:** cheap (deux lignes de YAML + une option de champ ; aucun média encore stocké par le CMS).
+- **Caught late:** no (loggée avant exécution).
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur — l'utilisateur a demandé de « chercher une autre parade », le mécanisme retenu reste à ratifier>
+- **Follow-up:** **résiduel assumé et mesuré** : une image de **corps d'article** choisie via l'onglet global sortirait en `<img src="/src/assets/…">` non optimisé → 404 silencieux. Ce n'est pas une régression — aujourd'hui le même geste écrit `/images/uploads/…`, déjà un 404 — mais c'est un changement de **nature** du risque (404 discret au lieu de build rouge). **Réserve d'honnêteté** : le comportement d'Astro est prouvé par build réel ; le comportement runtime du CMS (onglets, valeur écrite) est établi par lecture du bundle, **pas** par une session CMS authentifiée → un smoke test manuel reste requis avant de clore T-D1.
+
 ## D08 — Rendu de la couverture ajouté sur la page article (travail hors plan, sur un gabarit du Plan 1)
 
 - **Date:** 2026-07-30 23:45
