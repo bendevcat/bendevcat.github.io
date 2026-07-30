@@ -37,13 +37,16 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Date:** 2026-07-30 23:45
 - **Task affected:** nouvelle tâche **T-D1** (Phase D, hors plan initial) — remplace la remédiation impossible de **D04**
 - **Original plan:** plan d'impl, T-A1 Step 5 : `media_folder: public/images/uploads` / `public_folder: /images/uploads`, commentés « repli global non utilisé par la collection blog ».
-- **Deviation taken:** ces valeurs deviennent `media_folder: src/content/blog/_uploads` et `public_folder: ../_uploads`, et le commentaire mensonger est corrigé.
+- **Deviation taken:** ~~ces valeurs deviennent `media_folder: src/content/blog/_uploads` et `public_folder: ../_uploads`~~ → **TENTÉE PUIS ANNULÉE. Rien n'a été modifié** : `public/admin/config.yml` est resté à `public/images/uploads` / `/images/uploads` (vérifié, arbre propre, aucun commit).
+- **BLOCAGE (2026-07-31 00:40) — l'option (a) est structurellement impossible.** Mesuré en conditions réelles, puis confirmé en lisant le **bundle épinglé lui-même** (`@sveltia/cms@0.175.1`) : le validateur de configuration de Sveltia applique la regex `/^\.{1,2}\//` au `public_folder` **global** et rejette toute valeur commençant par `./` ou `../` — « *The configured public folder is invalid. It must be an absolute path starting with '/'* ». Le CMS refuse alors de rendre l'application (2 erreurs console, écran d'erreur de configuration) → **R1 régresserait**. Cette validation ne s'applique **pas** au niveau collection, ce qui explique que `public_folder: ''` y fonctionne. Conséquence : aucune valeur ne peut à la fois satisfaire le validateur global de Sveltia (chemin absolu) et `image()` d'Astro (chemin relatif). **Le mécanisme choisi ne peut pas exister.**
 - **Reason:** voir **D04** pour le risque complet. Le retrait pur étant impossible (Sveltia refuse de démarrer sans dossier média global — mesuré), la parade consiste à faire pointer ce dossier **dans l'arbre de contenu** : une image choisie depuis l'onglet global produit alors `cover: ../_uploads/<fichier>`, chemin **relatif** que `image()` d'Astro résout depuis `src/content/blog/<slug>/index.md`. Le garde-fou redevient structurel au lieu d'être humain : quel que soit l'onglet choisi, le build tient. Le loader glob (`**/index.{md,mdx}`) ignore `_uploads`, donc aucun faux article n'apparaît.
 - **Reversibility:** cheap (deux lignes de YAML ; aucun média n'a encore été stocké par le CMS).
 - **Caught late:** no
-- **Status:** approved
+- **Status:** approved (décision utilisateur) — **mais non réalisable ; la décision est rouverte**
 - **User decision:** « **(a) Rendre l'onglet inoffensif** » — choix explicite de l'utilisateur le 2026-07-30, contre « garde-fou humain documenté » et « ne rien faire ».
-- **Follow-up:** **à vérifier empiriquement avant de clore** : que Sveltia émet bien le préfixe `../_uploads/` et que le build passe avec une couverture placée là. Si Sveltia émet autre chose, ne pas bricoler : rouvrir la décision avec l'option (b).
+- **Follow-up (obsolète, conservé pour trace) :** ~~à vérifier empiriquement avant de clore~~ : que Sveltia émet bien le préfixe `../_uploads/` et que le build passe avec une couverture placée là. Si Sveltia émet autre chose, ne pas bricoler : rouvrir la décision avec l'option (b).
+
+- **Nouveau follow-up :** l'option (a) étant hors d'atteinte, il reste **(b)** un garde-fou humain documenté au README (ne jamais utiliser l'onglet média global pour la couverture) ou **(c)** accepter le risque en l'état. Dans les deux cas, le commentaire de `config.yml` qui affirme que ce dossier « n'est pas utilisé » doit être corrigé : il est faux. **Décision utilisateur requise.**
 
 ## D05 — `integrity` + `crossorigin` (SRI) ajoutés au script CDN, non prévus par le plan
 
