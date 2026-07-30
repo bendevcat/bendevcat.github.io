@@ -4,6 +4,8 @@ _Append entries here whenever a task cuts scope, changes approach, or hits a blo
 
 _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe une entrée en `approved` / `rejected`._
 
+**Ratification — 2026-07-30 (utilisateur bendevcat, transcrite par l'assistant depuis ses réponses explicites) :** D01, D02, D04, D05, D06 → **approved** (ratification groupée, validées de facto par le site en production). D03 → **rejected** (l'omission des covers n'est pas conservée) → **remédiée** : option (a) choisie, 3 covers Unsplash rapatriées + co-localisées (commit `f9de4f3`). **0 entrée `pending-user`.**
+
 ## D01 — Drapeau `--typescript strict` retiré de la commande de scaffold
 
 - **Date:** 2026-07-19 02:27
@@ -13,8 +15,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** la commande du plan est stale (CLI Astro a supprimé le drapeau en amont). Adaptation pré-autorisée par le contrôleur pour atteindre le **même** résultat.
 - **Reversibility:** cheap (détail d'invocation CLI ; l'état final est identique en substance).
 - **Caught late:** no
-- **Status:** pending-user
-- **User decision:** —
+- **Status:** approved
+- **User decision:** Approuvée par l'utilisateur (bendevcat) le 2026-07-30 — ratification groupée D01/D02/D04/D05/D06 ; validée de facto par le site en production (scaffold strict TS OK).
 - **Follow-up:** si rejeté, aucune remédiation de code — corriger la ligne de commande dans le plan d'impl.
 
 ## D02 — `.gitignore` du repo conservé au lieu de celui du template
@@ -26,8 +28,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** le `.gitignore` existant est un **sur-ensemble** de celui du template et il ignore notamment `.superpowers/` (contenu local réel `brainstorm/`). Laisser le template écraser aurait fait committer `.superpowers/` via le `git add -A` du Step 3 — changement non voulu. Vérifié après coup : `.superpowers/`, `dist/`, `node_modules/` restent ignorés ; seuls les 10 fichiers de scaffold légitimes sont committés.
 - **Reversibility:** cheap (un seul fichier ; `cp` de la version template en < 1 min).
 - **Caught late:** no
-- **Status:** pending-user
-- **User decision:** —
+- **Status:** approved
+- **User decision:** Approuvée par l'utilisateur le 2026-07-30 — ratification groupée ; aucun contenu local n'a fuité dans le repo (public).
 - **Follow-up:** si rejeté, copier le `.gitignore` du template et re-vérifier qu'aucun contenu local n'est balayé.
 
 ## D03 — 3 covers distantes (Unsplash) non migrées (articles sans cover)
@@ -39,9 +41,9 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** (1) `image()` ne peut pas référencer une URL distante ; (2) rapatrier les images = **télécharger des fichiers externes**, ce qui requiert l'accord explicite de l'utilisateur (règle de sécurité). Aucun téléchargement non autorisé. R6 « images co-localisées rendues » reste satisfait pour les images réellement locales. R2 n'exige PAS de cover (titre/date/catégorie/description seulement) → cartes valides sans cover.
 - **Reversibility:** cheap (par article : si l'utilisateur autorise, télécharger + co-localiser les 3 covers, ou les re-couvrir via le CMS au Plan 2).
 - **Caught late:** no (loggé avant exécution de B2).
-- **Status:** pending-user
-- **User decision:** — (options : (a) m'autoriser à télécharger+co-localiser les covers Unsplash ; (b) re-couvrir via CMS au Plan 2 ; (c) laisser ces 3 sans cover)
-- **Follow-up:** selon décision (a/b/c).
+- **Status:** rejected
+- **User decision:** Option (a) le 2026-07-30 : l'utilisateur autorise le téléchargement et choisit de rapatrier les 3 covers Unsplash d'origine (l'omission était un défaut *sûr* en l'absence d'autorisation — le raisonnement n'est pas invalidé, mais l'état « sans cover » n'est pas conservé). **Remédiation appliquée commit `f9de4f3`** : les 6 articles ont désormais une couverture co-localisée (`cover.jpg` 800×400 → `.webp` au build), vérifiée (6 `<img>` sur `/blog`, build OK).
+- **Follow-up:** remédiation faite ; redéploiement requis (push `main`) pour que les 3 covers s'affichent en prod.
 
 ## D04 — `@astrojs/markdown-remark` installé (bascule du moteur markdown vers le pipeline unified classique)
 
@@ -52,8 +54,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** l'étape 1 du plan est écrite pour l'API Astro v5-era ; sur v7 elle exige ce paquet. Alternative rejetée : *sauter* rehype-slug/autolink et se reposer sur le slugger natif d'Astro (R3 marcherait aussi) — mais retrancher une étape explicite du plan est une réduction de scope plus grande qu'ajouter une dépendance habilitante. Aucune régression observée sur les 6 posts (GFM, images, code, TOC OK).
 - **Reversibility:** cheap — retirer le bloc `markdown` d'`astro.config.mjs` + les 3 deps (`rehype-slug`, `rehype-autolink-headings`, `@astrojs/markdown-remark`). Aucune donnée/contenu affecté. Si rejeté : replier sur le slugger natif d'Astro pour le TOC (R3 tenu quand même), perte des permaliens d'ancrage sur les titres (effet unique de rehype-autolink-headings).
 - **Caught late:** no (build lancé sans le paquet d'abord pour confirmer l'échec, puis loggé avant de continuer).
-- **Status:** pending-user
-- **User decision:** — (options : (a) garder le pipeline unified — approche rehype du plan, +1 dep, warning console ; (b) revenir au moteur Astro 7 natif + slugger interne pour le TOC, sans rehype)
+- **Status:** approved
+- **User decision:** Approuvée le 2026-07-30 (option a) — on garde le pipeline unified / `@astrojs/markdown-remark` (approche rehype du plan) ; validée de facto (articles + TOC rendus en prod).
 - **Follow-up:** selon décision (a/b). Détail complet : rapport `scratchpad/task-C3-report.md` §D-C3-1.
 
 ## D05 — `getStaticPaths` (page article) filtre les drafts (`getPublishedPosts` au lieu de `getCollection`)
@@ -65,8 +67,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** le snippet du plan est en **contradiction avec la spec** (R4 « aucun `draft:true` visible », R6 « publiés uniquement ») et avec les pages sœurs C1/C2 qui utilisent déjà `getPublishedPosts()`. Revue C3 (Important #2) : sans le fix, un draft aurait une URL publique crawlable. La spec gouverne le snippet. **No-op aujourd'hui** (0 draft parmi les 6), n'impacte que de futurs brouillons.
 - **Reversibility:** cheap (une ligne ; revenir à `getCollection` si l'utilisateur voulait vraiment publier les drafts — ce que R4/R6 excluent).
 - **Caught late:** no (loggé avant l'exécution du fix).
-- **Status:** pending-user
-- **User decision:** — (correction d'une incohérence interne du plan pour honorer R4/R6 ; ratification attendue)
+- **Status:** approved
+- **User decision:** Approuvée le 2026-07-30 — le filtre drafts (`getPublishedPosts`) est conservé (conforme R4/R6) ; validée de facto.
 - **Follow-up:** si rejeté (improbable, contredirait R4/R6), revenir à `getCollection`.
 
 ## D06 — Workflow durci : Node 22 épinglé (requis Astro 7) + groupe `concurrency` Pages
@@ -78,8 +80,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** (1) **Critical** de la revue finale : `withastro/action@v3` build en **Node 20 par défaut**, or l'Astro 7.1.1 installé déclare `engines: node >=22.12.0` → le build Pages échouerait, **R1 impossible** même après le setup GitHub de l'utilisateur. Invérifiable en local (machine en Node 22.22.3). C'est une conséquence directe d'Astro v7 (sur v5, Node 20 suffisait). (2) best-practice Pages (le template officiel GitHub l'inclut) : évite que deux push rapprochés lancent deux déploiements concurrents. Robustesse, non user-observable en fonctionnement normal.
 - **Reversibility:** cheap (2 ajouts YAML dans un seul fichier ; retirables en 1 min).
 - **Caught late:** no (loggé avant le fix ; issu de la revue finale de branche, pas exécuté silencieusement).
-- **Status:** pending-user
-- **User decision:** — (le pin Node 22 est requis pour que R1 passe ; ratification attendue)
+- **Status:** approved
+- **User decision:** Approuvée le 2026-07-30 — pin Node 22 + `concurrency` conservés ; **validée de facto : le déploiement en production a réussi grâce au pin Node 22**.
 - **Follow-up:** si le pin Node est rejeté, R1 ne pourra pas passer sur Astro 7 — il faudrait alors rétrograder Astro à une version compatible Node 20 (contredirait « latest v5+ »).
 
 <!--
