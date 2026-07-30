@@ -6,6 +6,19 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 **Ratification — 2026-07-30 23:45 (utilisateur bendevcat, transcrite depuis ses réponses explicites au gate de décision) :** **D01, D02, D03, D05 → `approved`** (ratification groupée). **D04 → décision : option (a)** — rendre l'onglet média global inoffensif plutôt que de le retirer (retrait impossible) ; voir D06. Trois travaux hors périmètre initial ont également été **commandés explicitement** par l'utilisateur : **D06** (parade média), **D07** (câblage des tests en CI), **D08** (rendu de la couverture sur la page article).
 
+## D10 — README étendu au-delà du bloc prescrit par T-C1 (expiration du PAT)
+
+- **Date:** 2026-07-31 00:20
+- **Task affected:** T-C1 (post-livraison)
+- **Original plan:** T-C1 imposait un bloc Markdown verbatim. Son étape 3 mentionne le PAT sans recommander de durée de vie, et rien n'y parle du symptôme d'expiration.
+- **Deviation taken:** ajout, au point 3, d'une recommandation d'**expiration à 90 jours** avec sa justification, et au point 4 du **symptôme d'expiration** (échec de sauvegarde sans message clair). Commit `3745ac5`, déjà poussé.
+- **Reason:** demande **explicite de l'utilisateur** (« j'ai mis 90 jours, je veux bien la mention dans le readme »), après une question sur la durée de vie du token. Le README documentait comment créer le PAT sans dire quoi choisir, ce qui laissait la décision de sécurité la plus structurante hors de la doc.
+- **Reversibility:** cheap (un paragraphe de README).
+- **Caught late:** **yes** — le commit a été fait et poussé avant que cette entrée soit écrite. L'ajout était directement demandé par l'utilisateur, mais il étend le périmètre de T-C1 et aurait dû être loggé d'abord.
+- **Status:** approved
+- **User decision:** demandé explicitement par l'utilisateur le 2026-07-31 (« je veux bien la mention dans le readme »).
+- **Follow-up:** aucun. Toute nouvelle extension du README (par ex. la taille des images, cf. incident du 2026-07-31) doit être loggée **avant** exécution.
+
 ## D09 — Repli média global repointé dans `src/` + `choose_url: false` sur la couverture (parade retenue pour I1)
 
 - **Date:** 2026-07-31 01:50
