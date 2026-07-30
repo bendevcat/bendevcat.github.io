@@ -4,6 +4,8 @@ description: "Mon comparatif 2025 des meilleurs VPN, benchmarks de vitesse et de
 pubDate: 2025-10-26T11:00:00+02:00
 draft: false
 category: "Outils"
+cover: "./cover.jpg"
+coverAlt: "Illustration sécurité et confidentialité réseau"
 tags:
   - vpn
   - privacy

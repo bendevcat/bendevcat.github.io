@@ -4,6 +4,8 @@ description: "Un guide complet sur Docker et Kubernetes : conteneurisation, orch
 pubDate: 2025-10-20T14:00:00+02:00
 draft: false
 category: "Outils"
+cover: "./cover.jpg"
+coverAlt: "Illustration conteneurs et orchestration"
 tags:
   - docker
   - kubernetes

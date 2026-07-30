@@ -4,6 +4,8 @@ description: "Les commandes Linux que j'utilise en prod, du niveau basique au on
 pubDate: 2025-10-26T20:41:00.000+01:00
 draft: false
 category: "DevOps"
+cover: "./cover.jpg"
+coverAlt: "Illustration terminal Linux"
 tags:
   - linux
   - terminal
