@@ -4,6 +4,19 @@ _Append entries here whenever a task cuts scope, changes approach, or hits a blo
 
 _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe une entrée en `approved` / `rejected`. Il n'existe pas de troisième statut._
 
+## D03 — `@types/node` ajouté en devDependency (non prévu par le plan) pour rétablir `astro check` à 0 erreur
+
+- **Date:** 2026-07-30 21:55
+- **Task affected:** T-A1 (origine du défaut) — correctif appliqué après T-B1
+- **Original plan:** plan d'impl, section **File Structure** : « `package.json` | **Modifié** (T-A1) | Ajout de **`yaml`** en `devDependencies` ». C'est la seule dépendance que le plan autorise à ajouter. T-A1 Step 1 ne prévoit que `npm install --save-dev yaml`.
+- **Deviation taken:** ajout de `@types/node` en `devDependencies` (et, si nécessaire, `"types": ["node"]` dans `tsconfig.json`).
+- **Reason:** le test `src/lib/cms-config.test.ts` — dont le code est **imposé verbatim par le plan** — fait `import { readFileSync } from 'node:fs'`. Sans les types Node, `npx astro check` échoue : `src/lib/cms-config.test.ts:2:30 - error ts(2591): Cannot find name 'node:fs'`. Or le Plan 1 s'est clôturé avec **0 erreur** à `astro check` (ledger Plan 1, Phase Z), et la Phase Z du Plan 2 relancera cette commande : sans correctif, l'audit échouerait sur une régression introduite par ce plan. Ni l'implémenteur ni les relecteurs de T-A1 et T-B1 ne l'ont détecté — aucune étape du plan ne demandait `astro check` (défaut du plan, pas des agents) ; constat du contrôleur en repassant la suite complète. Alternative écartée : remplacer `readFileSync` par un import Vite `?raw`, ce qui éviterait la dépendance mais réécrirait du code que le plan impose verbatim — déviation plus large sur du code testé.
+- **Reversibility:** cheap (une devDependency de types, aucun code applicatif, aucun contenu ; désinstallable en une commande).
+- **Caught late:** no pour l'ajout (loggé avant exécution) — **oui pour le défaut lui-même** : la régression a été committée en T-A1 (`68ed21a`) et n'a été vue qu'après T-B1. Le ledger de T-A1 doit être lu avec cette réserve : « build OK » y était vrai, « `astro check` 0 erreur » n'y a jamais été affirmé car la commande n'a pas été lancée.
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Follow-up:** si rejeté, réécrire le test pour lire le YAML sans API Node (import Vite `?raw`) et retirer `@types/node`. Indépendamment de la décision, ajouter `npx astro check` aux étapes de vérification des plans suivants.
+
 ## D02 — T-C1 (README) exécutée AVANT T-B2, dont elle devait consommer les constats
 
 - **Date:** 2026-07-30 21:45
