@@ -32,3 +32,6 @@ yarn-error.log*
 
 # Brainstorm visual companion (mockups)
 .superpowers/
+
+# Fichier de travail transitoire et régénérable (prompt de reprise de session)
+docs/anti-drift/handoffs/_next-session-prompt.md

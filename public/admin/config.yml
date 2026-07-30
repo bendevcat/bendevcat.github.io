@@ -1,0 +1,57 @@
+# Configuration Sveltia CMS — Plan 2.
+# Source de vérité du schéma : src/content.config.ts (collection `blog`).
+backend:
+  name: github
+  repo: bendevcat/bendevcat.github.io
+  branch: main
+
+# Repli média global. Sveltia EXIGE cette clé (sans elle : « The media folder is
+# not defined ») et l'onglet « global » du sélecteur reste TOUJOURS activé, même
+# pour une collection entry-relative — impossible à masquer dans 0.175.1. Il
+# pointe donc dans `src/`, où la résolution Vite d'Astro sait suivre le chemin :
+# une couverture choisie depuis cet onglet donne `/src/assets/uploads/<fichier>`,
+# qu'`image()` importe et optimise. Un chemin hors de `src/` casserait le build.
+media_folder: src/assets/uploads
+public_folder: /src/assets/uploads
+
+output:
+  # Défaut Sveltia = false : sans ça, un champ optionnel laissé vide sort en
+  # chaîne vide / null et casse la validation Zod côté Astro (spec R4).
+  omit_empty_optional_fields: true
+
+collections:
+  - name: blog
+    label: Articles
+    label_singular: Article
+    description: Articles du blog — src/content/blog/<slug>/index.md
+    folder: src/content/blog
+    path: '{{slug}}/index'
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    slug: '{{slug}}'
+    identifier_field: title
+    sortable_fields: [pubDate, title]
+    # Médias à côté de l'article : Astro optimise les images co-localisées.
+    media_folder: ''
+    public_folder: ''
+    fields:
+      - { name: title, label: Titre, widget: string }
+      - { name: description, label: Description, widget: text, hint: Résumé affiché sur les cartes et dans le flux RSS }
+      - { name: pubDate, label: Date de publication, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ' }
+      - { name: updatedDate, label: Date de mise à jour, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ', required: false }
+      - { name: category, label: Catégorie, widget: select, options: [Actus, DevOps, Outils, Sécurité, Geekerie, Tutos, IA] }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: cover, label: Image de couverture, widget: image, required: false, choose_url: false }
+      - { name: coverAlt, label: Texte alternatif de la couverture, widget: string, required: false }
+      - name: aiUsage
+        label: Transparence IA
+        widget: select
+        required: false
+        options:
+          - { label: '✍️ 100% humain', value: none }
+          - { label: '🤝 Co-créé avec IA', value: partial }
+          - { label: '🤖 Généré par IA', value: full }
+      - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
+      - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
+      - { name: body, label: Contenu, widget: markdown }
