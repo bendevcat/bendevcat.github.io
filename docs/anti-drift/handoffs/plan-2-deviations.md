@@ -4,6 +4,8 @@ _Append entries here whenever a task cuts scope, changes approach, or hits a blo
 
 _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe une entrée en `approved` / `rejected`. Il n'existe pas de troisième statut._
 
+**Ratification (2) — 2026-07-31 01:10 (utilisateur bendevcat, transcrite depuis sa réponse explicite « J'approuve toutes les déviations ») :** **D09, D11, D12 → `approved`**. **Le log ne contient plus aucune entrée `pending-user`.**
+
 **Ratification — 2026-07-30 23:45 (utilisateur bendevcat, transcrite depuis ses réponses explicites au gate de décision) :** **D01, D02, D03, D05 → `approved`** (ratification groupée). **D04 → décision : option (a)** — rendre l'onglet média global inoffensif plutôt que de le retirer (retrait impossible) ; voir D06. Trois travaux hors périmètre initial ont également été **commandés explicitement** par l'utilisateur : **D06** (parade média), **D07** (câblage des tests en CI), **D08** (rendu de la couverture sur la page article).
 
 ## D12 — `<slug>` remplacé par `{slug}` dans la description de la collection
@@ -15,8 +17,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** constaté sur une **capture d'écran du CMS en production** : Sveltia rend la description en HTML, donc `<slug>` est interprété comme une balise inconnue et **supprimé**. L'en-tête de la collection affiche `src/content/blog//index.md` — un chemin **faux**, à l'intérieur même de l'outil censé documenter où atterrissent les fichiers. Purement cosmétique, mais c'est de la documentation trompeuse.
 - **Reversibility:** cheap (une chaîne de caractères).
 - **Caught late:** no (loggé avant exécution).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-07-31 (« J'approuve toutes les déviations »).
 - **Follow-up:** si rejeté, revenir à `<slug>` en acceptant l'affichage tronqué.
 
 ## D11 — README étendu : poids des couvertures et réflexe après une sauvegarde échouée
@@ -28,8 +30,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** les deux pièges ont été **rencontrés en conditions réelles** le 2026-07-31, et aucun n'est devinable. (1) Sveltia commite via l'API **GraphQL** en encodant le fichier en **base64 dans la mutation** : une image lourde fait répondre **502** à GitHub, et le navigateur affiche un message trompeur (« CORS »). Confirmé : ~40 Ko passe, une affiche pleine résolution non. (2) L'entrée et son média partent dans **deux commits séparés** — une sauvegarde partiellement échouée laisse un article référençant une image inexistante, ce qui casse le déploiement **sans aucun signal dans le CMS** (constaté : commit `fff9ccd`, run `30582659724` rouge). Aucun garde-fou structurel n'existe côté configuration : `choose_url: false` ne couvre que la saisie d'URL, et le build est déjà le détecteur — mais il se déclenche **après** le commit. La documentation est ici la seule mitigation disponible, et l'assumer explicitement vaut mieux que de laisser croire à une protection qui n'existe pas.
 - **Reversibility:** cheap (une sous-section de README).
 - **Caught late:** no (loggé avant exécution — contrairement à D10).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-07-31 (« J'approuve toutes les déviations »).
 - **Follow-up:** si rejeté, retirer la sous-section ; les deux pièges resteront alors non documentés.
 
 ## D10 — README étendu au-delà du bloc prescrit par T-C1 (expiration du PAT)
@@ -54,8 +56,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** investigation en lecture seule du **bundle épinglé 0.175.1** (pas de la doc), après l'échec de D04 (retrait) et D06 (`../`). Conclusions **établies sur le code**, pas déduites : l'onglet global ne peut **pas** être masqué (`global.enabled = l !== void 0`, et le dossier global a `entryRelative: false` **codé en dur**) ; le `media_folder` au niveau du **champ** ajoute un onglet sans désactiver le global ; `media_libraries: {default: false}` supprime *aussi* l'onglet entry-relative et le bouton Upload. La seule parade structurelle n'est donc pas de fermer le chemin dangereux mais de le rendre **inoffensif** : un chemin absolu **racine-projet** pointant dans `src/` est suivi par la résolution Vite d'Astro. **Vérifié par build réel** : `/src/assets/uploads/probe.png` est importé **et optimisé** (`/_astro/probe.*.webp`), là où le même fichier ailleurs donne `ImageNotFound`. Les trois gestes possibles deviennent alors buildables. Le `choose_url: false` ferme un **trou distinct, jusque-là non identifié** : l'onglet « Entrer une URL » permettait `cover: https://…`, qui casse le build (`MissingImageDimension`). `public/images/uploads/` n'existe nulle part dans le dépôt : le repointer ne coûte rien.
 - **Reversibility:** cheap (deux lignes de YAML + une option de champ ; aucun média encore stocké par le CMS).
 - **Caught late:** no (loggée avant exécution).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur — l'utilisateur a demandé de « chercher une autre parade », le mécanisme retenu reste à ratifier>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-07-31 (« J'approuve toutes les déviations »). Le mécanisme retenu — repli média dans `src/assets/uploads` + `choose_url: false` — est validé, résiduel compris.
 - **Follow-up:** **résiduel assumé et mesuré** : une image de **corps d'article** choisie via l'onglet global sortirait en `<img src="/src/assets/…">` non optimisé → 404 silencieux. Ce n'est pas une régression — aujourd'hui le même geste écrit `/images/uploads/…`, déjà un 404 — mais c'est un changement de **nature** du risque (404 discret au lieu de build rouge). **Réserve d'honnêteté** : le comportement d'Astro est prouvé par build réel ; le comportement runtime du CMS (onglets, valeur écrite) est établi par lecture du bundle, **pas** par une session CMS authentifiée → un smoke test manuel reste requis avant de clore T-D1.
 
 ## D08 — Rendu de la couverture ajouté sur la page article (travail hors plan, sur un gabarit du Plan 1)
