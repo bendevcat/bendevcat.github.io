@@ -12,13 +12,13 @@
 
 **Architecture:** Sveltia CMS est une SPA chargée depuis un CDN dans une page statique `public/admin/index.html` ; toute sa configuration tient dans `public/admin/config.yml` (copié verbatim par Astro dans `dist/`). Le backend `github` parle directement à l'API GitHub depuis le navigateur avec un PAT stocké en `localStorage` — aucun serveur, aucun OAuth relay. La collection `blog` est déclarée en *folder collection* avec `path: '{{slug}}/index'` et médias *entry-relative*, ce qui reproduit exactement la structure de bundles `src/content/blog/<slug>/index.md` + images co-localisées du Plan 1, sans modifier le schéma Zod.
 
-**Tech Stack:** Sveltia CMS `0.176.0` (CDN unpkg, version épinglée) · Astro 7.1.1 · vitest 4 (test de non-régression sur la config CMS) · `yaml` (parse du config.yml dans le test) · GitHub Actions (workflow `deploy.yml` du Plan 1, inchangé).
+**Tech Stack:** Sveltia CMS `0.175.1` (CDN unpkg, version épinglée) · Astro 7.1.1 · vitest 4 (test de non-régression sur la config CMS) · `yaml` (parse du config.yml dans le test) · GitHub Actions (workflow `deploy.yml` du Plan 1, inchangé).
 
 ## Global Constraints
 
 Valeurs exactes, reprises de la spec ; elles s'appliquent implicitement à **toutes** les tâches.
 
-- **Version CDN épinglée** (spec §6.2) : `https://unpkg.com/@sveltia/cms@0.176.0/dist/sveltia-cms.js`. Jamais de tag flottant (`@latest`, ni URL sans version).
+- **Version CDN épinglée** (spec §6.2) : `https://unpkg.com/@sveltia/cms@0.175.1/dist/sveltia-cms.js`. Jamais de tag flottant (`@latest`, ni URL sans version).
 - **Aucun backend** (spec §1, §5) : auth par PAT « Sign In with Token » uniquement. Pas d'OAuth, pas de Cloudflare Worker, pas de `decap-server` / `netlify-cms-proxy-server`.
 - **`/admin` en `robots: noindex`** (spec §6.1) : `<meta name="robots" content="noindex" />` dans `public/admin/index.html`.
 - **`output.omit_empty_optional_fields: true`** (spec R4) — le défaut Sveltia est `false`, la déclaration est donc obligatoire.
@@ -117,7 +117,7 @@ describe('config CMS — backend', () => {
 describe('page /admin', () => {
   it('épingle la version du CDN Sveltia et interdit l’indexation', () => {
     const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');
-    expect(html).toContain('https://unpkg.com/@sveltia/cms@0.176.0/dist/sveltia-cms.js');
+    expect(html).toContain('https://unpkg.com/@sveltia/cms@0.175.1/dist/sveltia-cms.js');
     expect(html).toMatch(/<meta\s+name="robots"\s+content="noindex"\s*\/?>/);
     // Un tag flottant ferait sauter l’épinglage (spec §6.2).
     expect(html).not.toContain('@sveltia/cms/dist');
@@ -146,7 +146,7 @@ Créer `public/admin/index.html` :
   </head>
   <body>
     <!-- Version épinglée : Sveltia est pre-1.0, les releases sont fréquentes (spec §6.2). -->
-    <script src="https://unpkg.com/@sveltia/cms@0.176.0/dist/sveltia-cms.js"></script>
+    <script src="https://unpkg.com/@sveltia/cms@0.175.1/dist/sveltia-cms.js"></script>
   </body>
 </html>
 ```
@@ -204,13 +204,13 @@ Puis ouvrir `http://localhost:4321/admin/` (outil de preview du harness) et **re
 2. le bouton **« Sign In with Token »** est présent (preuve que l'auth PAT est disponible) ;
 3. la console : **0 erreur** (les avertissements ne comptent pas ; les copier tels quels dans le rapport).
 
-Si une erreur console apparaît et vient de la version `0.176.0` elle-même (publiée le 2026-07-30), **ne pas** bidouiller : logger une déviation avant de changer de version épinglée.
+Si une erreur console apparaît et vient de la version `0.175.1` elle-même, **ne pas** bidouiller : logger une déviation avant de changer de version épinglée.
 
 - [ ] **Step 9: Commit**
 
 ```bash
 git add public/admin/index.html public/admin/config.yml src/lib/cms-config.test.ts package.json package-lock.json
-git commit -m "feat(p2): serve Sveltia CMS at /admin (pinned 0.176.0) + config regression test"
+git commit -m "feat(p2): serve Sveltia CMS at /admin (pinned 0.175.1) + config regression test"
 ```
 
 ---
@@ -263,7 +263,7 @@ coverAlt: z.string().optional()          aiUsage: z.enum(['none','partial','full
 featured: z.boolean().default(false)     relatedProjects: z.array(reference('projects')).optional()
 ```
 
-**Décision de mapping — `relatedProjects` est volontairement absent du CMS.** La collection `projects` qu'il référence n'existe qu'au Plan 3 (spec §5 : collections projets hors scope) ; un widget `relation` pointant vers une collection inexistante ferait planter le CMS. Le champ reste optionnel dans le Zod, donc aucun contenu n'est invalidé. **Cette omission a été soumise à l'utilisateur à la validation du plan** — si elle n'a pas été explicitement approuvée, l'implémenteur logge une déviation avant d'exécuter cette tâche.
+**Décision de mapping — `relatedProjects` est volontairement absent du CMS.** La collection `projects` qu'il référence n'existe qu'au Plan 3 (spec §5 : collections projets hors scope) ; un widget `relation` pointant vers une collection inexistante ferait planter le CMS. Le champ reste optionnel dans le Zod, donc aucun contenu n'est invalidé. **Approuvé explicitement par l'utilisateur le 2026-07-30 au gate de validation du plan** (question « relatedProjects » → « Omettre ») : pas de déviation à logger. Le CMS gagnera ce champ au Plan 3, avec la collection `projects`.
 
 **Décision de mapping — médias *entry-relative*.** `media_folder: ''` + `public_folder: ''` au niveau de la collection : l'image uploadée est écrite **dans le dossier de l'article** (`src/content/blog/<slug>/`) et le frontmatter reçoit le nom de fichier nu. Vérifié empiriquement le 2026-07-30 : `cover: "k9s-header.png"` (sans `./`) passe `astro build` et produit bien `/_astro/k9s-header.*.webp` — `image()` résout relativement au fichier d'entrée. C'est l'arbitrage laissé ouvert par la spec §6.3, tranché en faveur de `src/` (optimisation Astro conservée, cohérent avec la co-localisation du Plan 1).
 
@@ -613,5 +613,5 @@ Non contournable, non résumable de mémoire. C'est le **seul** chemin vers le s
 **3. Type consistency** — `loadCmsConfig()` est défini en T-A1 et réutilisé en T-B1 sous la même signature. Les noms de champs du YAML (T-B1 step 3) sont exactement ceux assertés au step 1 et ceux du Zod (`src/content.config.ts`), `relatedProjects` excepté — omission explicitement motivée et soumise à l'utilisateur.
 
 **4. Risques identifiés** (à traiter par le protocole de déviation, pas en silence) :
-- Sveltia `0.176.0` est sortie le jour même du plan ; si elle est cassée, changer de version épinglée **après** avoir loggé une déviation.
+- Version épinglée `0.175.1` (sortie le 2026-07-28) : choix de l'utilisateur au gate de validation du plan, contre la `0.176.0` sortie le jour même — on prend deux jours de recul, après la dernière release marquée *breaking* (`0.174.0`, Google Fonts → Fontsource). Si cette version s'avère cassée, changer de version épinglée **après** avoir loggé une déviation.
 - R2 et R5 dépendent d'un PAT et d'un merge sur `main` : ce sont des vérifications côté utilisateur, elles peuvent laisser le plan en « prêt à ship, en attente ».
