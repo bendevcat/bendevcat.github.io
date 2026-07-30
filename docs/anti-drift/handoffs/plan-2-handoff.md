@@ -1,0 +1,102 @@
+# Plan 2 — Handoff de session
+
+**Date:** 2026-07-30
+**Branche:** `plan-2-cms-sveltia` (non mergée, non poussée)
+**État:** **prêt à ship côté code — 3 décisions utilisateur + 3 vérifications manuelles en attente**
+**Phase Z:** **NON lancée** (voir « Pourquoi la Phase Z n'a pas tourné »)
+**Reprise:** `/anti-drift-planning:resume 2` régénère le prompt de reprise.
+
+---
+
+## 1. Ce qui est livré et vérifié
+
+| Tâche | Commit | Vérification |
+|---|---|---|
+| T-A1 — page `/admin` + config CMS valide + test de non-régression | `68ed21a` | Revue : spec ✅ / qualité Approved. Smoke navigateur contrôleur : UI Sveltia rendue, **0 erreur console**. |
+| T-B1 — mapping du schéma Zod en widgets Sveltia, `output`, médias | `e84d0dd` | Revue : spec ✅ / qualité Approved, 0 Critical/Important. |
+| Correctif — `@types/node` (régression `astro check`) | `d9e900a` | Re-revue ciblée : **ADDRESSED**, aucun masquage, aucune casse. |
+| T-C1 — README : workflows d'édition prod + local | `f5f2bc8` | Voir ledger (revue de tâche). |
+
+**Suite de tests au dernier passage contrôleur** (branche `f5f2bc8`) :
+
+```
+npx astro check   → 0 errors, 0 warnings, 14 hints
+npx vitest run    → 12 tests / 2 fichiers, 12 passed
+npx astro build   → 8 pages, 0 erreur
+```
+
+**Ne pas re-citer ces résultats comme frais** : la Phase Z devra les relancer.
+
+## 2. Ce qui reste — et pourquoi seul l'utilisateur peut le faire
+
+Trois vérifications exigent des gestes qu'aucun agent ne peut poser. Ce n'est pas un contournement : c'est la contrepartie directe de l'architecture « CMS sans backend » choisie par la spec.
+
+### T-A2 → critère **R2** (auth PAT)
+Un agent ne manipule jamais de *personal access token*. **Toi seul.**
+
+1. Lancer `npm run dev`, ouvrir **`http://localhost:4321/admin/index.html`** (le slash final ne marche qu'en production, cf. D01).
+2. Cliquer **« Sign In Using Access Token »** — *pas* « Sign In with GitHub », qui ne peut pas fonctionner sans backend.
+3. Créer un PAT **fine-grained** limité au dépôt `bendevcat/bendevcat.github.io`, permission **Contents: Read and write**.
+4. Le coller.
+5. **Constat binaire attendu :** la bibliothèque s'ouvre et la collection **Articles** liste les **6** articles existants.
+
+### T-B2 → critères **R3**, **R4**, **R6** (création/édition réelle)
+Mesuré cette session : un navigateur piloté par automatisation échoue avec « *A repository root directory could not be selected. Please try again.* ». La File System Access API n'accorde l'accès disque que sur un geste humain dans le sélecteur natif. **Toi seul, dans un navigateur Chromium.**
+
+Le pas-à-pas complet est dans le brief `.superpowers/sdd/2026-07-19-plan-2-cms-sveltia/task-B2-brief.md`. En résumé :
+
+1. `npm run dev` → `http://localhost:4321/admin/index.html` → **« Work with Local Repository »** → sélectionner la racine du projet.
+2. Créer un article de test avec **uniquement** : titre `Test CMS plan 2`, description, date, catégorie `Outils`, un corps markdown. **Laisser vides** `updatedDate`, `cover`, `coverAlt`, `aiUsage`, `tags`. Enregistrer.
+3. Vérifier `src/content/blog/test-cms-plan-2/index.md` : chemin conforme (**R3**), et **aucune** clé vide dans le frontmatter (**R4**).
+4. `npx astro build` → doit passer (clause « ET `astro build` passe » de **R4**).
+5. Rouvrir l'article, **uploader une image de couverture** + son texte alternatif, enregistrer → l'image doit atterrir **dans le dossier de l'article**, et s'afficher sur `/blog/test-cms-plan-2/` et sur `/blog` (**R6**).
+6. `rm -rf src/content/blog/test-cms-plan-2` puis `npx astro build` + `git status` → arbre propre.
+
+**Si une de ces étapes échoue**, ne corrige pas à la main : note le symptôme exact, c'est un défaut de `public/admin/config.yml` à traiter en session (le plan prévoit de reprendre au step 2 après correction).
+
+### T-C2 → critère **R5** (commit CMS → déploiement)
+Vérifiable seulement **après merge sur `main` et déploiement**. Mécanisme déjà vérifié côté contrôleur : `.github/workflows/deploy.yml` déclenche bien sur `push: { branches: [main] }` et n'a pas été modifié par ce plan.
+
+1. Après merge + déploiement, ouvrir `https://bendevcat.github.io/admin/`, se connecter au jeton.
+2. Modifier un article, **Save**.
+3. **Constat binaire attendu :** un nouveau commit apparaît sur `main`, un run `Deploy to GitHub Pages` est déclenché **par ce commit**, et une fois vert la modification est en ligne.
+
+### R7 (workflow local documenté)
+Le README est écrit (`f5f2bc8`), mais R7 dit « **suivre** le README ». Il passera `Done` quand T-B2 aura été exécutée **en suivant le README**, pas avant.
+
+## 3. Les 3 décisions que j'attends de toi
+
+Toutes sont `pending-user` dans [`plan-2-deviations.md`](./plan-2-deviations.md). **Tant qu'il en reste une, la Phase Z échoue et rien n'est tagué** — c'est le gate, pas une formalité.
+
+| # | Question | Ma recommandation |
+|---|---|---|
+| **D01** | En local, la doc envoie sur `/admin/index.html` au lieu de `/admin/` (qui renvoie 404 sur le serveur de dev ; en production les deux marchent). Tu acceptes ? | **Approuver.** L'alternative documentait une URL en 404, ce qui rendait R7 invérifiable en le suivant. |
+| **D02** | T-C1 (README) a été écrite **avant** T-B2, alors que le plan la fait dépendre de ses constats — parce que T-B2 est bloquée sur toi. Tu acceptes ? | **Approuver**, en gardant que R7 ne passe `Done` qu'après exécution réelle de T-B2. |
+| **D03** | `@types/node` ajouté en devDependency, non prévu au plan, pour rétablir `astro check` à 0 erreur (régression introduite en T-A1 par le code de test que le plan impose verbatim). Tu acceptes ? | **Approuver.** L'alternative réécrivait du code de test imposé verbatim par le plan. |
+
+**À retenir sur D03** : la régression a vécu 2 tâches sans être vue, parce qu'**aucune étape du plan ne lançait `astro check`**. C'est un défaut du plan, pas des agents. À corriger dans les plans 3 à 5 : ajouter `astro check` aux étapes de vérification.
+
+## 4. Pourquoi la Phase Z n'a pas tourné
+
+`/anti-drift-planning:verify 2` échouerait sur deux fronts, et la lancer maintenant produirait un audit connu d'avance :
+
+1. **3 entrées `pending-user`** dans le log de déviations — le gate l'interdit.
+2. **4 critères sur 7 non vérifiés** : R2, R3, R4, R6 restent `In progress` (leur preuve exige T-A2 et T-B2), R5 est `Pending` (post-merge), R7 est `In progress` (attend que le README soit suivi).
+
+Seul **R1** est `Done`. « Prêt à ship, décisions en attente » est l'état de succès de cette session ; un tag posé maintenant ne le serait pas.
+
+## 5. Ordre de reprise recommandé
+
+1. Ratifier **D01, D02, D03** (approved / rejected — ce sont tes mots, pas les miens).
+2. Exécuter **T-A2** puis **T-B2** en local → débloque R2, R3, R4, R6, R7.
+3. Merger `plan-2-cms-sveltia` dans `main`, pousser → déploiement.
+4. Exécuter **T-C2** sur le site déployé → débloque R5.
+5. Lancer **`/anti-drift-planning:verify 2`** → seul chemin vers le script de release et le tag `milestone-plan-2`.
+
+## 6. Points mineurs mis de côté (à trier à la revue finale)
+
+- Le libellé réel du bouton est « **Sign In Using Access Token** » ; la spec R2 écrit « Sign In with Token ». Libellé du bundle CDN, pas de notre fait — la doc utilise le libellé réel.
+- `sortable_fields`, `identifier_field`, `slug` et la `description` de collection ne sont couverts par aucune assertion du test de config.
+- Les options `aiUsage` sont comparées à un littéral dans le test, faute d'export dédié dans `src/content.config.ts` (les catégories, elles, sont bien comparées à `CATEGORIES` importé).
+- `npm audit` signale **1 vulnérabilité high** (`fast-uri`, transitive) — **préexistante au Plan 2**, confirmée présente avant le correctif `d9e900a`. À traiter en maintenance dédiée.
+- Sveltia affiche un avertissement console « version plus récente disponible » (`0.176.0`) : conséquence normale de l'épinglage volontaire en `0.175.1`.
