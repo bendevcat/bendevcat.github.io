@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
+import { CATEGORIES } from '../content.config';
 
 /**
  * Charge la config réelle du CMS (public/admin/config.yml) telle qu'elle sera
@@ -37,5 +38,66 @@ describe('page /admin', () => {
     // Un tag flottant ferait sauter l’épinglage (spec §6.2).
     expect(html).not.toContain('@sveltia/cms/dist');
     expect(html).not.toContain('@latest');
+  });
+});
+
+describe('config CMS — sortie', () => {
+  it('omet les champs optionnels vides (le défaut Sveltia est false)', () => {
+    expect(loadCmsConfig().output.omit_empty_optional_fields).toBe(true);
+  });
+});
+
+describe('config CMS — collection blog', () => {
+  const blog = () => loadCmsConfig().collections[0];
+  const fieldNames = () => blog().fields.map((f: any) => f.name);
+
+  it('écrit des bundles src/content/blog/<slug>/index.md', () => {
+    expect(blog().folder).toBe('src/content/blog');
+    expect(blog().path).toBe('{{slug}}/index');
+    expect(blog().extension).toBe('md');
+    expect(blog().format).toBe('yaml-frontmatter');
+  });
+
+  it('stocke les médias à côté de l’article (entry-relative)', () => {
+    expect(blog().media_folder).toBe('');
+    expect(blog().public_folder).toBe('');
+  });
+
+  it('mappe tous les champs du schéma Zod sauf relatedProjects', () => {
+    expect(fieldNames().sort()).toEqual([
+      'aiUsage', 'body', 'category', 'cover', 'coverAlt', 'description',
+      'draft', 'featured', 'pubDate', 'tags', 'title', 'updatedDate',
+    ]);
+  });
+
+  it('rend obligatoires exactement les champs non-optionnels du Zod', () => {
+    const required = blog().fields
+      .filter((f: any) => f.required !== false)
+      .map((f: any) => f.name)
+      .sort();
+    expect(required).toEqual(['body', 'category', 'description', 'pubDate', 'title']);
+  });
+
+  it('propose exactement les 7 catégories du schéma', () => {
+    const category = blog().fields.find((f: any) => f.name === 'category');
+    expect(category.widget).toBe('select');
+    expect(category.options).toEqual([...CATEGORIES]);
+  });
+
+  it('propose exactement les 3 niveaux aiUsage du schéma', () => {
+    const ai = blog().fields.find((f: any) => f.name === 'aiUsage');
+    expect(ai.widget).toBe('select');
+    expect(ai.options.map((o: any) => o.value ?? o)).toEqual(['none', 'partial', 'full']);
+  });
+
+  it('utilise les widgets attendus pour les champs typés', () => {
+    const byName = Object.fromEntries(blog().fields.map((f: any) => [f.name, f]));
+    expect(byName.pubDate.widget).toBe('datetime');
+    expect(byName.updatedDate.widget).toBe('datetime');
+    expect(byName.draft.widget).toBe('boolean');
+    expect(byName.featured.widget).toBe('boolean');
+    expect(byName.tags.widget).toBe('list');
+    expect(byName.cover.widget).toBe('image');
+    expect(byName.body.widget).toBe('markdown');
   });
 });
