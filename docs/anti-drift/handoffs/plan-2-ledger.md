@@ -1,6 +1,6 @@
 # Plan 2 — Scope Ledger
 
-Last updated: 2026-07-30 23:30
+Last updated: 2026-07-31 00:05
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -32,6 +32,9 @@ Last updated by: main (contrôleur SDD)
 | B2 | B | R3, R4, R6 (création/édition réelle via le workflow local) |
 | C1 | C | R7 (README : workflows prod + local) |
 | C2 | C | R5 (boucle commit → Actions — vérification post-merge) |
+| D1 | D | Constat I1 / déviation D06 — parade au dossier média global |
+| D2 | D | Constat I2 / déviation D07 — `vitest` + `astro check` câblés en CI |
+| D3 | D | Constat I3 / déviation D08 — **R6** (couverture rendue sur la page article) |
 | Z1 | Z | Audit `/anti-drift-planning:verify 2` (couverture R1–R7) |
 
 ## Updates log
@@ -57,3 +60,5 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-30 23:05 — **Déviations D04 (I1) et D05 (I4) loggées** (`ee490c6`, `pending-user`) avant correctif.
 - 2026-07-30 23:20 — **Vague de correctifs** → commit `68e854a`. **D05/I4 fait** : SRI `sha384-b6o5AP…` + `crossorigin="anonymous"` sur le bundle, assertion ajoutée au test, `/admin` recharge avec **0 erreur console** (un SRI faux aurait donné un écran blanc). **M4 fait** : `_next-session-prompt.md` gitignoré. **D04/I1 BLOQUÉ et annulé** : Sveltia **refuse de démarrer sans `media_folder` global** (« The media folder is not defined », 2 erreurs console) → le retrait ferait échouer R1. `config.yml` remis à l'identique (`git diff` vide). L'entrée D04 a été **corrigée** pour dire que rien n'a été modifié et que le risque subsiste ; 3 options y sont posées pour l'utilisateur. Le sous-agent a également refusé de committer le message de commit prescrit, qui aurait affirmé une suppression non faite — signalé, pas fait en silence.
 - 2026-07-30 23:30 — État vérifié par le contrôleur après correctifs : `astro check` **0 error / 0 warning / 14 hints**, `vitest` **13/13**, `astro build` 8 pages. **5 déviations `pending-user` : D01, D02, D03, D04, D05.** **Décisions utilisateur ouvertes en plus : I1 (option a/b/c), I2 (câbler les tests ?), I3 (R6 : rendre le cover sur la page article, ou reformuler le critère ?).**
+- 2026-07-31 00:00 — **GATE DE DÉCISION UTILISATEUR** (réponses explicites, transcrites) : **D01, D02, D03, D05 → approved** ; **D04 → rejected**, remplacée par l'option (a) ; **3 travaux hors périmètre commandés** → **D06** (parade média), **D07** (CI de test), **D08** (couverture sur la page article), tous `approved`. **Log de déviations : 0 entrée `pending-user`.** Commit `bea0f04`.
+- 2026-07-31 00:05 — **Phase D ajoutée au plan** (`bea0f04`) : T-D1, T-D2, T-D3. Elle lève, **pour ces trois tâches seulement**, les interdits du plan sur `deploy.yml`, `package.json`, `src/pages/` et `src/components/`. T-D1 → **In progress**.
