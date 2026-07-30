@@ -1,6 +1,6 @@
 # Plan 2 — Scope Ledger
 
-Last updated: 2026-07-31 01:15
+Last updated: 2026-07-31 01:30
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -66,3 +66,5 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-31 01:00 — T-D2 → **Done** — commit `299b5d4`. `package.json` gagne `test` et `check` ; `deploy.yml` gagne un job `test` (checkout + setup-node 22 + `npm ci` + `npm test` + `npm run check`) dont `build` dépend (`needs: test`). Diff vérifié par le contrôleur : **rien d'autre n'a bougé** (déclencheur, `concurrency`, `permissions`, job `deploy`, `withastro/action@v3` identiques). Jobs : `test` → `build` → `deploy`. **Réserve honnête : validation statique du YAML uniquement** — la CI n'a jamais tourné, elle ne le fera qu'au premier push sur `main`.
 - 2026-07-31 01:10 — T-D3 → **Done** — commit `b021e3b`. `src/pages/blog/[...slug].astro` rend `cover` conditionnellement, `alt = coverAlt ?? ''` (aucun alt inventé depuis le titre), conventions `<Image>` reprises de `ArticleCard.astro`. **Vérifié par le contrôleur sur la sortie construite** : 1 `<img>` `.webp` optimisé avec le bon `alt`. Implémenteur : build 8 pages, check 0 erreur, 13/13 tests, cas « sans cover » testé via une sonde supprimée, 375px sans débordement. **Point soumis à l'utilisateur** : la couverture est placée **après** le sommaire ; sur un article à long sommaire elle se retrouve loin sous la ligne de flottaison.
 - 2026-07-31 01:15 — **T-D1 reste BLOQUÉE** (constat I1 non résolu, décision utilisateur rouverte). Phase D : 2 tâches sur 3 livrées.
+- 2026-07-31 01:30 — **Décision utilisateur sur le placement de la couverture** : « la remonter sous le titre ». Fait (commit ci-dessous) : ordre DOM vérifié sur la sortie construite = titre → **couverture** → bannière IA → sommaire → corps. Build 8 pages, 13/13 tests, check 0 erreur. Ce n'est pas une déviation : D08 prévoyait explicitement que le rendu soit soumis à l'utilisateur et itéré.
+- 2026-07-31 01:30 — **Décision utilisateur sur I1** : « chercher une autre parade ». Investigation **en lecture seule** lancée sur le bundle Sveltia 0.175.1 épinglé (pistes : `media_folder`/`public_folder` au niveau du champ, options de bibliothèque d'assets, masquage de l'onglet global). T-D1 reste **In progress**, rien n'est modifié tant que la piste n'est pas établie sur le code.
