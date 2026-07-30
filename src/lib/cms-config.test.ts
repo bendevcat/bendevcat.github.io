@@ -39,6 +39,12 @@ describe('page /admin', () => {
     expect(html).not.toContain('@sveltia/cms/dist');
     expect(html).not.toContain('@latest');
   });
+
+  it('vérifie l’intégrité du script CDN via SRI (spec I4)', () => {
+    const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');
+    expect(html).toMatch(/integrity="sha384-/);
+    expect(html).toContain('crossorigin="anonymous"');
+  });
 });
 
 describe('config CMS — sortie', () => {
