@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* bascule de thème pilotée par [data-theme] sur <html> */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* palette LIGHT (défaut) — surchargée en dark ci-dessous */
+  --color-bg: #FCFCFD;
+  --color-surface: #FFFFFF;
+  --color-line: rgb(15 23 42 / 0.10);
+  --color-text: #14181F;
+  --color-muted: #5A6572;
+  --color-acc: #047857;          /* vert texte AA sur clair */
+  --color-acc-solid: #34D399;    /* aplats/bouton */
+  --color-acc-contrast: #04231A;
+  --color-acc-dim: #ECFDF5;      /* fond puce catégorie (clair) */
+}
+
+/* DARK : surcharge des mêmes custom properties */
+:root[data-theme="dark"] {
+  --color-bg: #0B0E14;
+  --color-surface: #141B24;
+  --color-line: rgb(255 255 255 / 0.09);
+  --color-text: #E8EDF3;
+  --color-muted: #8B97A6;
+  --color-acc: #4ADE80;
+  --color-acc-solid: #4ADE80;
+  --color-acc-contrast: #06281A;
+  --color-acc-dim: rgb(74 222 128 / 0.12); /* vert translucide, fond puce catégorie sur surface sombre */
+}
+
+html { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); }
+
+/* ==========================================================================
+   Article (`.prose`) — Plan 1 / C3
+   Pas de plugin `@tailwindcss/typography` : règles maison sur nos tokens
+   `--color-*` et nos 3 polices `--font-*`. `:where()` garde une spécificité
+   basse (facile à surcharger localement si besoin).
+   ========================================================================== */
+
+.prose {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  line-height: 1.75;
+  /* R9 (375px) : un token sans espace trop long (ex. URL brute en texte de
+     lien — cf. constat tâche C5 sur k9s-kubernetes-terminal-ui) déborderait
+     sinon de son <p>/<li>, qui n'a pas d'overflow-x:auto propre (contrairement
+     à .prose pre/table ci-dessous). Ne change rien au rendu des mots normaux :
+     ne coupe qu'un mot qui, seul, ne tiendrait pas dans le conteneur. */
+  overflow-wrap: break-word;
+}
+
+.prose :where(h2, h3, h4) {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-text);
+  scroll-margin-top: 5rem; /* ancre TOC lisible, pas cachée en haut de viewport */
+}
+.prose :where(h2) { margin-top: 2.5em; margin-bottom: 0.75em; font-size: 1.5rem; }
+.prose :where(h3) { margin-top: 2em; margin-bottom: 0.6em; font-size: 1.25rem; }
+.prose :where(h4) { margin-top: 1.5em; margin-bottom: 0.5em; font-size: 1.1rem; }
+
+/* rehype-autolink-headings (behavior: wrap) enrobe tout le titre dans un
+   <a href="#slug"> — on neutralise le style "lien" par défaut dessus. */
+.prose :where(h2, h3, h4) a { color: inherit; text-decoration: none; }
+
+.prose :where(p) { margin-top: 1.25em; margin-bottom: 1.25em; }
+
+.prose :where(strong) { color: var(--color-text); font-weight: 700; }
+.prose :where(em) { font-style: italic; }
+
+/* Liens dans le corps (hors titres, cf. règle ci-dessus) : accent + soulignement au survol. */
+.prose :where(p, li, blockquote) a {
+  color: var(--color-acc);
+  text-underline-offset: 2px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+.prose :where(p, li, blockquote) a:hover { text-decoration-thickness: 2px; }
+
+.prose :where(ul, ol) { margin-top: 1.25em; margin-bottom: 1.25em; padding-left: 1.4em; }
+.prose :where(ul) { list-style: disc; }
+.prose :where(ol) { list-style: decimal; }
+.prose :where(li) { margin-top: 0.4em; margin-bottom: 0.4em; }
+.prose :where(li)::marker { color: var(--color-muted); }
+
+.prose :where(blockquote) {
+  margin: 1.5em 0;
+  padding-left: 1em;
+  border-left: 3px solid var(--color-line);
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.prose :where(hr) { margin: 2.5em 0; border: none; border-top: 1px solid var(--color-line); }
+
+/* Code inline (hors bloc ```) */
+.prose :where(code) {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--color-acc);
+  background: var(--color-acc-dim);
+  padding: 0.15em 0.4em;
+  border-radius: 0.3em;
+}
+
+/* Blocs de code (Shiki, cf. astro.config.mjs → markdown.shikiConfig) */
+.prose :where(pre) {
+  margin: 1.5em 0;
+  padding: 1em;
+  border-radius: 0.6em;
+  border: 1px solid var(--color-line);
+  overflow-x: auto; /* R9 : jamais de débordement horizontal (375px) */
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+/* Le code inline ci-dessus stylise aussi <code> à l'intérieur d'un <pre> —
+   on annule ce style pour laisser Shiki gérer sa propre coloration. */
+.prose :where(pre code) {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.prose :where(img) {
+  max-width: 100%; /* R9 : jamais de débordement horizontal (375px) */
+  height: auto;
+  border-radius: 0.5em;
+  border: 1px solid var(--color-line);
+}
+
+.prose :where(table) { width: 100%; border-collapse: collapse; margin: 1.5em 0; }
+.prose :where(th, td) { border: 1px solid var(--color-line); padding: 0.5em 0.75em; text-align: left; }
+.prose :where(th) { font-family: var(--font-mono); color: var(--color-muted); }
+/* Tables larges : scroll horizontal dans leur propre conteneur plutôt que
+   débordement de page (R9) — le wrapper est le <table> lui-même en `block`. */
+.prose :where(table) { display: block; overflow-x: auto; }
+
+/* R8 : le code (bloc ET inline) est toujours en JetBrains Mono, indépendamment
+   de `.prose` (garantie au niveau de la classe Shiki elle-même). */
+.astro-code,
+.astro-code code {
+  font-family: var(--font-mono);
+}
+
+/* Bascule Shiki dual-thème (clair/sombre) — Astro expose les 2 thèmes en CSS
+   custom properties `--shiki-<nom>`/`--shiki-<nom>-bg`/... (le thème "light"
+   est appliqué par défaut via `color`/`background-color` inline ; on ne
+   surcharge que pour `[data-theme="dark"]`, piloté par le même attribut que
+   le reste du site — PAS de classe `.dark`). */
+[data-theme='dark'] .astro-code,
+[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* Wrapper non scrollable autour de chaque <pre> (Fix review C3, Important #1)
+   — <pre> reste seul responsable de l'overflow-x:auto (R9), mais .copy-btn
+   est positionné en absolute par rapport à CE wrapper (et non plus par
+   rapport à <pre>), qui lui ne défile jamais. Le bouton reste donc épinglé
+   au coin visible même après un scroll horizontal complet du code. Créé
+   dynamiquement en JS vanilla (src/scripts/copy-code.ts), pas de classe
+   scoped Astro possible : doit vivre en CSS global. */
+.code-block-wrapper {
+  position: relative;
+}
+
+/* Bouton copier (Plan 1 / C3, src/scripts/copy-code.ts) — créé dynamiquement
+   en JS vanilla et ajouté à chaque .code-block-wrapper (jamais à <pre>
+   lui-même, cf. gotcha ci-dessus), donc pas de classe scoped Astro possible :
+   doit vivre en CSS global. */
+.copy-btn {
+  position: absolute;
+  top: 0.6em;
+  right: 0.6em;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.35em 0.6em;
+  border-radius: 0.4em;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.copy-btn:hover,
+.copy-btn:focus-visible {
+  color: var(--color-acc);
+  border-color: var(--color-acc);
+}

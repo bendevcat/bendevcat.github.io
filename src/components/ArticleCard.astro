@@ -1,0 +1,67 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { AI_USAGE_META } from '../lib/aiUsage';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, category, cover, coverAlt, aiUsage } = post.data;
+
+const dateFr = pubDate.toLocaleDateString('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+// Estimation grossière (~200 mots/min, arrondi au supérieur, minimum 1 min) —
+// volontairement simple : `post.body` est le Markdown brut, pas de nettoyage
+// de la syntaxe. Affiné plus tard si besoin (cf. rapport de tâche).
+function estimateReadingMinutes(body: string): number {
+  const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 200));
+}
+
+const readingMinutes = estimateReadingMinutes(post.body ?? '');
+const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
+---
+
+<a
+  href={`/blog/${post.id}/`}
+  class="group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+>
+  {
+    cover && (
+      <Image
+        src={cover}
+        alt={coverAlt ?? title}
+        class="aspect-video w-full rounded-lg object-cover"
+      />
+    )
+  }
+
+  <span class="w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc">
+    {category}
+  </span>
+
+  <h3 class="font-display text-lg font-semibold text-text group-hover:text-acc">
+    {title}
+  </h3>
+
+  <p class="text-sm text-muted">{description}</p>
+
+  <div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
+    <p class="font-mono text-xs text-muted">
+      {dateFr} · {readingMinutes} min de lecture
+    </p>
+    {
+      usage && (
+        <span class="font-mono text-xs text-muted" title={usage.label}>
+          {usage.emoji} <span class="hidden sm:inline">{usage.label}</span>
+        </span>
+      )
+    }
+  </div>
+</a>

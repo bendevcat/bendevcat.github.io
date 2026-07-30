@@ -19,6 +19,10 @@ dist/
 !.vscode/extensions.json
 .idea/
 
+# Claude Code (local/personal config + dev preview tooling)
+.claude/settings.local.json
+.claude/launch.json
+
 # Logs
 *.log
 npm-debug.log*

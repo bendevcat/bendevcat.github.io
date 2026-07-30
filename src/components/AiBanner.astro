@@ -1,0 +1,23 @@
+---
+import type { AiUsage } from '../lib/aiUsage';
+import { AI_USAGE_META } from '../lib/aiUsage';
+
+interface Props {
+  usage: AiUsage;
+}
+
+const { usage } = Astro.props;
+const meta = AI_USAGE_META[usage];
+---
+
+<div
+  class={`mb-8 flex items-start gap-3 rounded-lg border px-4 py-3 ${meta.bannerClass}`}
+  role="note"
+  aria-label="Transparence IA de cet article"
+>
+  <span class="text-lg leading-none" aria-hidden="true">{meta.emoji}</span>
+  <div class="text-sm">
+    <p class="font-mono text-xs font-semibold uppercase tracking-wide">{meta.label}</p>
+    <p class="mt-1">{meta.description}</p>
+  </div>
+</div>

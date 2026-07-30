@@ -1,0 +1,27 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  /** Idéalement déjà filtré aux profondeurs H2/H3 par l'appelant. */
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+---
+
+{
+  headings.length > 0 && (
+    <nav class="toc mb-8 rounded-lg border border-line bg-surface p-4" aria-label="Sommaire de l'article">
+      <p class="font-mono text-xs uppercase tracking-wide text-muted">Sommaire</p>
+      <ul class="mt-2 space-y-1.5 text-sm">
+        {headings.map((heading) => (
+          <li class={heading.depth === 3 ? 'pl-4' : ''}>
+            <a href={`#${heading.slug}`} class="text-muted transition-colors hover:text-acc">
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}

@@ -1,0 +1,75 @@
+# Plan 1 — Scope Ledger
+
+Last updated: 2026-07-19 06:38
+Last updated by: main (contrôleur SDD)
+
+## Requirements (extracted from spec §3 Success criteria)
+
+| ID | Requirement | Status | Notes |
+|---|---|---|---|
+| R1 | Un push sur `main` déclenche le workflow GitHub Actions (`withastro/action`) qui build et déploie le site (run vert **ET** `curl -sI https://bendevcat.github.io` = `200` HTML) | In progress | **BLOQUÉ (côté utilisateur)** : workflow écrit (D1) mais vérif R1 dépend d'actions GitHub que l'utilisateur doit faire (créer repo `bendevcat.github.io`, `git remote add` + push `main`, Settings→Pages→Source=GitHub Actions). Impossibles côté agent. |
+| R2 | La home `/` affiche un hero + une grille d'articles récents (hero **ET** ≥ 3 cartes réelles : titre, date, catégorie, description) | Done | C1 `c32fa53` — **smoke contrôleur ✅** : hero (`~/ whoami` + titre + sous-titre + 2 CTA) + 6 cartes (chips catégorie mono, cover GitHub Actions rendue). |
+| R3 | Un article `/blog/<slug>` : contenu complet + TOC (H2/H3) + blocs de code à bouton copier + bannière IA conditionnelle (visible si `aiUsage` défini) | Done | C3 `db9440c` + fix `1cf11ae` — **smoke contrôleur ✅** : TOC=50 liens H2/H3, 42 blocs code mono (copie=code seul, bouton épinglé dans wrapper), bannière bleue « IA relue ». Fix des 2 Important (bouton scroll, drafts) re-review ✅. |
+| R4 | `/blog` liste **tous** les articles publiés (`draft:false`), tri anté-chronologique (nb cartes = nb publiés **ET** aucun `draft:true` visible) | Done | C2 `3f1d8af` — **smoke contrôleur ✅** : `/blog` = 6 cartes (= publiés), ordre anté-chrono. Test draft d'exclusion passé. Fix D05 (route article filtre aussi les drafts). |
+| R5 | Toggle de thème clair/sombre persistant (change le thème **ET** reload conserve via localStorage **ET** 1er chargement suit `prefers-color-scheme`) | Done | A3 `2c9a2ad` — smoke contrôleur ✅ 4/4 : clic flip dark→light, reload persiste (localStorage l'emporte sur média `prefersDark`), sans stockage suit `prefers-color-scheme` (→dark), no-flash (script inline = 1er nœud `<head>`) |
+| R6 | Tous les articles publiés de `bencat-website` migrés en entrées `blog`, schéma Zod valide, images co-localisées rendues (`astro build` OK **ET** count = ancien site **ET** images affichées) | Done | B1 `81fa99d` + B2 `6576f8e` — build OK, `getPublishedPosts()`=**6**=publiés, images co-localisées rendues (**smoke** : cover s'affiche sur carte + body images bienvenue en webp). **Compte 6** (9 drafts + 3 trash exclus). D03 : 3 covers Unsplash distantes omises (pending-user). |
+| R7 | `/rss.xml` généré, listant les articles publiés (RSS valide, 1 `<item>`/article : titre, lien, date, description) | Done | C4 `cae31c2` — **vérif contrôleur ✅** : `dist/rss.xml` = 6 `<item>` (titre + lien absolu `/blog/<slug>/` + pubDate + description), XML bien formé. `getPublishedPosts()` (drafts exclus du flux). Review ✅ Approved. |
+| R8 | Design system : tokens couleur (clair+sombre) + 3 polices via `@theme` Tailwind v4, mono sur les éléments techniques (3 polices chargées **ET** toggle applique `--color-*` **ET** méta/tags/code en JetBrains Mono) | Done | A2 `37709c6` + A3 `2c9a2ad` — **smoke contrôleur ✅** : 3 familles `loaded`, toggle applique `--color-bg/acc`, mono sur logo + chips catégorie (C1) + **42 blocs code en JetBrains Mono** (C3). |
+| R9 | Home + article lisibles sur mobile (~375px) : **aucun** scroll horizontal **ET** grille en 1 colonne **ET** nav utilisable | Done | C5 `29ad133` — **smoke contrôleur ✅** : home 375px scrollWidth=clientWidth=375 (0 débordement), grille 1-col, nav 2-lignes (Blog+toggle atteignables). Impl+review ont mesuré les 8 pages (home+/blog+6 articles) = 375. 2 Minor a11y (tab-order, `sm:nowrap`) → roll-up. |
+
+## Status legend
+- **Done** — verified, criteria passed (link to commit SHA)
+- **In progress** — actively being worked
+- **Pending** — not yet started
+- **Deferred** — moved to a later plan (must have an approved deviation)
+- **Cut** — removed from scope (must have an approved deviation)
+
+## Task index → requirement(s) covered
+
+| Task | Phase | Covers |
+|---|---|---|
+| A1 | A | Socle (scaffold Astro) — prérequis, aucun R livré directement |
+| A2 | A | R8 |
+| A3 | A | R5, R8 |
+| B1 | B | R6 (schéma collection + helper `getPublishedPosts`) |
+| B2 | B | R6 (migration des articles) |
+| C1 | C | R2 |
+| C2 | C | R4 |
+| C3 | C | R3 |
+| C4 | C | R7 |
+| C5 | C | R9 |
+| D1 | D | R1 |
+| Z1 | Z | Audit `/anti-drift-planning:verify 1` (couverture R1–R9) |
+
+## Updates log
+
+(Append a one-liner each time the ledger is updated, with the new status and the commit SHA.)
+
+- 2026-07-19 02:11 — Ledger seeded (pré-flight) — all rows Pending
+- 2026-07-19 02:21 — A1 (scaffold Astro) → In progress
+- 2026-07-19 02:35 — A1 → **Done** — commit `d08debf` — build PASS, review ✅ Approved (3 Minor rolled up : nom `astro-tmp`, `CLAUDE.md` stock, Astro v7). Déviations D01+D02 loggées `pending-user`.
+- 2026-07-19 02:40 — A2 (Tailwind v4 + tokens + fonts) → In progress — R8 In progress
+- 2026-07-19 02:47 — A2 → **Done** — commit `37709c6` — build PASS, review ✅ Approved. `--color-acc-dim` complété (dark `rgb(74 222 128 /.12)`). R8 reste In progress (attend A3).
+- 2026-07-19 02:52 — A3 (BaseLayout + toggle no-flash) → In progress — R5 In progress
+- 2026-07-19 03:10 — A3 → **Done** — commit `2c9a2ad` — build PASS, review ✅ Approved, smoke navigateur contrôleur ✅. **R5 → Done.** R8 reste In progress (attend C1/C3). **Phase A terminée.** 1 Minor (indent tab index.astro).
+- 2026-07-19 03:18 — B1 (schéma collection blog + helper `getPublishedPosts`, TDD) → In progress — R6 In progress
+- 2026-07-19 03:30 — B1 → **Done** — commit `81fa99d` — TDD RED→GREEN (vitest 1/1), `astro check` 0 erreur. `relatedProjects` **conservé** (comportement Astro documenté, sûr Plan 1) → pas de déviation. `src/content/blog/.gitkeep` = autorisé par le contrôleur (dispatch B1). R6 reste In progress (attend B2). Minor : hints `z` deprecated (v7).
+- 2026-07-19 03:40 — Survey source (contrôleur) : **6 publiés** à migrer, tout YAML, pas de shortcode, pas de `description` en source, 3 covers Unsplash distantes. Déviation **D03** loggée (`1938eca`, pending-user).
+- 2026-07-19 03:41 — B2 (migration des 6 articles publiés) → In progress — R6 In progress
+- 2026-07-19 03:55 — B2 → **Done** — commit `6576f8e` — 6 bundles, `getPublishedPosts()`=6, build PASS 0 erreur schéma, 3 covers locales + 3 body screenshots co-localisées (reviewer a checksummé les images + diffé les bodies vs source = identiques). **Phase B terminée.** R6 : build+count(6) ✅, clause « images s'affichent » → smoke C1/C3. Minor : 2 descriptions à re-tutoyer.
+- 2026-07-19 04:00 — C1 (ArticleCard + Hero + Home) → In progress — R2 In progress
+- 2026-07-19 04:12 — C1 → **Done** — commit `c32fa53` — build/check/vitest PASS, review ✅ Approved. Home = hero + 6 cartes, 3 sans cover rendues proprement (sans `<img>`), CTA réels (pas de `/a-propos`). `aiUsage` mappé en helper partagé `src/lib/aiUsage.ts` (réutilisé par C3). R2 : impl-smoke + review ✅ → smoke contrôleur consolidé après C3. Minor : temps de lecture ~haut (tokens md).
+- 2026-07-19 04:17 — C2 (index /blog) → In progress — R4 In progress
+- 2026-07-19 04:25 — C2 → **Done** — commit `3f1d8af` — build PASS, `/blog`=6 cartes, test draft d'exclusion passé (créé→absent→supprimé, tree propre), review ✅ Approved. R4 : build+draft-test+review ✅ → smoke contrôleur consolidé après C3. Observation (non-déviation, adjugée) : tri featured home vs /blog (no-op Plan 1) → minor-findings + user.
+- 2026-07-19 04:28 — C3 (page article : TOC + copie + bannière IA) → In progress — R3 In progress
+- 2026-07-19 05:05 — C3 → **Done** — impl `db9440c` + fix `1cf11ae` — review a trouvé 2 Important (bouton copier off-screen au scroll ; drafts publiés) → **corrigés + re-review ✅ Approved**. Déviations **D04** (`@astrojs/markdown-remark`, v7) + **D05** (route filtre drafts) loggées pending-user. **Smoke contrôleur consolidé** (home+/blog+article) → **R2, R3, R4, R6, R8 → Done**. Reste R7 (C4), R9 (C5), R1 (D1/GitHub).
+- 2026-07-19 05:35 — C4 (flux RSS) → In progress — R7 In progress
+- 2026-07-19 05:40 — C4 → **Done** — commit `cae31c2` — `dist/rss.xml` 6 items bien formés (vérif contrôleur), review ✅ Approved, 0 déviation. **R7 → Done.**
+- 2026-07-19 05:43 — C5 (passe responsive 375px) → In progress — R9 In progress
+- 2026-07-19 05:55 — C5 → **Done** — commit `29ad133` — nav 2-lignes < sm + `.prose overflow-wrap` (fix URL nue k9s). Review ✅ Approved. **Smoke contrôleur ✅** (home 375=375). **R9 → Done. Phase C terminée.** D06/D07 flaggés par l'impl → **adjugés non-canoniques** (dans la latitude explicitement accordée : 3 options nav offertes + « wrapping as needed »). 2 Minor a11y rollup. Reste **R1 (D1 — déploiement, dépend d'actions GitHub de l'utilisateur)**.
+- 2026-07-19 05:56 — Hygiène contrôleur : `.claude/{settings.local.json,launch.json}` gitignorés (`8...`, repo public) — pas une déviation.
+- 2026-07-19 06:20 — D1 (workflow GitHub Pages) → In progress — R1 In progress (partie automatisable = le workflow ; vérif = bloquée côté utilisateur).
+- 2026-07-19 06:22 — D1 workflow écrit → commit `e4b42a8` (`.github/workflows/deploy.yml`, YAML validé, build OK). Steps 2-3 (repo/remote/push/Pages) = actions utilisateur, non tentées.
+- 2026-07-19 06:24 — **Revue finale de branche** (opus, 39 commits) : tests verts (vitest 1/1, check 0 err, build 8 pages). Trouvé **1 Critical** (workflow build Node 20 < Astro 7 exige Node ≥22 → 1er deploy échouerait) + 1 Important (I1 : repo doit s'appeler `bendevcat.github.io`) + Minor.
+- 2026-07-19 06:26 — **Fixes revue finale** → commit `744d4a6` : Node 22 épinglé (C1, → D06) + `concurrency` Pages + viewport `initial-scale=1` + trailing-slash cartes + nom package `astro-bencatdev`. Favicon **non touché** (§6 branding différé). Re-vérifié : build 8 pages, tests verts, workflow YAML OK. D1 workflow = **livré & vérifié statiquement**.
+- 2026-07-19 06:27 — **FIN DE SESSION (état = prêt à ship, en attente utilisateur).** 8/9 critères **Done** (R2–R9). **R1 = In progress / BLOQUÉ** : workflow prêt, mais création repo + push + Pages = tes actions. **Phase Z NON lancée** (le gate exige 0 `pending-user` — or 6 déviations D01–D06 à ratifier — + R1 vérifié). Handoff écrit : `docs/anti-drift/handoffs/plan-1-handoff.md`.

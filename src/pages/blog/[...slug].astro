@@ -1,0 +1,40 @@
+---
+import { render } from 'astro:content';
+import { getPublishedPosts } from '../../lib/posts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import AiBanner from '../../components/AiBanner.astro';
+
+export async function getStaticPaths() {
+  // getPublishedPosts() filtre les drafts (R4/R6) — cf. C2 (src/pages/blog/index.astro)
+  // et C1 (src/pages/index.astro), qui filtrent déjà de la même façon : un
+  // draft:true ne doit obtenir NI carte d'index NI route publique.
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+
+// TOC = uniquement H2/H3 (cf. brief C3 gotcha #4) ; TableOfContents.astro se
+// masque lui-même si la liste est vide (pas d'encart TOC vide).
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<BaseLayout title={post.data.title} description={post.data.description}>
+  <article class="mx-auto max-w-3xl px-4 py-10">
+    <h1 class="mb-6 font-display text-4xl font-bold text-text">{post.data.title}</h1>
+
+    {post.data.aiUsage && <AiBanner usage={post.data.aiUsage} />}
+
+    <TableOfContents headings={tocHeadings} />
+
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+
+  <script>
+    import '../../scripts/copy-code.ts';
+  </script>
+</BaseLayout>
