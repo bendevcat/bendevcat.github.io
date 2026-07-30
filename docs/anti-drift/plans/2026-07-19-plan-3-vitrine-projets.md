@@ -301,45 +301,92 @@ git commit -m "feat(p3): add projects collection schema and ordering helpers"
 - Consumes: le schéma de T-A1 (`src/content.config.ts`).
 - Produces: des `id` de projets (= nom du dossier) référencés par les articles, et des `id` d'articles référencés par les projets. T-B1/T-B3/T-B4 rendent ces entrées.
 
-**Contexte pour l'implémenteur :** **cette tâche n'invente aucune donnée.** Les fiches décrivent des projets réels de Benoît ; titre, description, statut, stack, dates et URLs viennent de l'utilisateur, recueillis au gate de pré-flight, et **le plan est amendé avec les valeurs exactes avant exécution**. Un `id` d'entrée = le nom du dossier (le loader `glob` retire `/index`), donc `src/content/projects/mon-projet/index.md` → `mon-projet` → `/projets/mon-projet/`.
+**Contexte pour l'implémenteur :** **cette tâche n'invente aucune donnée.** Les deux fiches ci-dessous ont été choisies par l'utilisateur au gate de pré-flight, et chaque valeur de frontmatter est un **fait vérifié** — dépôt local pour l'une, API GitHub + README du dépôt pour l'autre. Ne change aucune valeur. Un `id` d'entrée = le nom du dossier (le loader `glob` retire `/index`), donc `src/content/projects/site-bencat/index.md` → `site-bencat` → `/projets/site-bencat/`.
 
 R5 exige les **deux sens** : au moins un projet doit porter `relatedPosts`, et au moins un article doit porter `relatedProjects`. Astro valide les `reference()` au build : un id inexistant fait **échouer** `astro build` avec un message explicite — c'est le test de cette tâche.
 
-- [ ] **Step 1: Créer les fiches (gabarit — valeurs réelles insérées à l'amendement du plan)**
+Règles de rédaction, non négociables :
+- **Ne jamais écrire une clé optionnelle vide** (`repoUrl:` sans valeur casse la validation `z.string().url()`). Clé absente = champ absent, c'est le contrat `omit_empty_optional_fields` du Plan 2.
+- Pas de couverture : `cover` reste absent (aucune image réelle fournie ; un `cover` pointant vers un fichier manquant casse le build).
+- `resumexyz` n'a **pas** de `demoUrl` : `benoitcatillon.xyz` ne résout plus (vérifié — pas de réponse DNS). Ne pas ajouter ce lien mort.
 
-Structure d'un fichier, `src/content/projects/<slug>/index.md` :
+- [ ] **Step 1: Créer la fiche du site — `src/content/projects/site-bencat/index.md`**
 
 ```markdown
 ---
-title: <titre réel>
-description: <une phrase, affichée sur la carte>
-status: <actif | wip | archivé>
-startDate: <YYYY-MM-DD>        # omettre la clé si inconnue
-stack: [<techno>, <techno>]
-tags: [<tag>, <tag>]
-repoUrl: <https://github.com/…>   # omettre la clé si absent
-demoUrl: <https://…>              # omettre la clé si absent
-featured: <true | false>
-relatedPosts: [<id-article>]      # omettre la clé si aucun article ne parle du projet
+title: "bencat_ — ce site"
+description: "Le site que tu es en train de lire : blog, projets, prompts et skills, en Astro, éditable depuis un CMS git sans backend."
+status: wip
+startDate: 2026-07-30
+stack: [Astro, Tailwind CSS, TypeScript, Sveltia CMS, GitHub Pages]
+tags: [astro, tailwind, cms]
+repoUrl: https://github.com/bendevcat/bendevcat.github.io
+demoUrl: https://bendevcat.github.io/
+featured: true
+relatedPosts: [bienvenue-dans-mon-foutoir]
 ---
 
-<Corps en Markdown : ce que fait le projet, pourquoi il existe, où il en est.>
+Ce site remplace mon ancien blog Hugo. Même contenu, autre socle : **Astro** en
+statique, **Tailwind v4** pour le thème, et **Sveltia CMS** pour écrire sans
+toucher au code.
+
+## Ce qu'il y a sous le capot
+
+Le contenu vit en *page bundles* — un dossier par article, avec ses images à
+côté — validés par des schémas Zod. Le CMS est une page statique servie sur
+`/admin` : le navigateur parle directement à l'API GitHub avec un jeton
+personnel, donc **aucun backend à héberger**. Chaque enregistrement produit un
+commit, et le commit déclenche le déploiement sur GitHub Pages.
+
+## Où j'en suis
+
+Le blog et le CMS sont en ligne. La vitrine projets — celle que tu lis — est en
+cours. Restent une bibliothèque de prompts, une de skills, et la recherche.
+
+Le site est construit plan par plan, avec une méthode anti-dérive : une spec à
+critères binaires par plan, un journal de périmètre tenu à jour à chaque tâche,
+et un audit de vérification obligatoire avant toute mise en ligne.
 ```
 
-Règles de rédaction, non négociables :
-- **Ne jamais écrire une clé optionnelle vide** (`repoUrl:` sans valeur casse la validation `z.string().url()`). Clé absente = champ absent, c'est le contrat `omit_empty_optional_fields` du Plan 2.
-- `relatedPosts` contient des **id d'articles**, c'est-à-dire les noms de dossiers sous `src/content/blog/` (ex. `k9s-kubernetes-terminal-ui`).
-- Pas de couverture dans cette tâche : `cover` reste absent tant qu'aucune image réelle n'est fournie (un `cover` pointant vers un fichier manquant casse le build).
+- [ ] **Step 2: Créer la fiche du CV — `src/content/projects/resumexyz/index.md`**
 
-- [ ] **Step 2: Ajouter le sens inverse sur le ou les articles concernés**
+```markdown
+---
+title: "Resume XYZ — mon CV en ligne"
+description: "Mon premier site perso, en 2017 : un CV d'une page écrit à la main en HTML, CSS, PHP et JavaScript."
+status: archivé
+startDate: 2017-02-01
+stack: [HTML, CSS, PHP, JavaScript]
+tags: [web, php]
+repoUrl: https://github.com/bendevcat/resumexyz
+featured: false
+---
 
-Dans le frontmatter de l'article visé (ex. `src/content/blog/k9s-kubernetes-terminal-ui/index.md`), ajouter la clé — sans toucher à quoi que ce soit d'autre du fichier :
+Février 2017 : mon premier site perso. Un CV sur une seule page, écrit à la
+main — pas de générateur, pas de framework, pas de build.
+
+## Ce qu'il y avait dedans
+
+Du HTML et du CSS pour la mise en page, un peu de JavaScript pour l'animation,
+et du **PHP** pour le formulaire de contact — l'époque où envoyer un mail depuis
+un site voulait dire écrire soi-même son `mail()`.
+
+## Statut
+
+Archivé. Le domaine `benoitcatillon.xyz` n'est plus enregistré, donc il n'y a
+plus de démo à montrer — seulement le code source. Il reste ici parce qu'il est
+le point de départ de tout le reste.
+```
+
+- [ ] **Step 3: Ajouter le sens inverse sur l'article**
+
+Dans `src/content/blog/bienvenue-dans-mon-foutoir/index.md`, ajouter cette clé au frontmatter, **juste après `aiUsage`** — sans toucher à quoi que ce soit d'autre dans le fichier (ni les guillemets des autres valeurs, ni le corps) :
 
 ```yaml
-relatedProjects: [<id-projet>]
+relatedProjects: [site-bencat]
 ```
 
-- [ ] **Step 3: Vérifier que les références résolvent**
+- [ ] **Step 4: Vérifier que les références résolvent**
 
 ```bash
 npx astro build
@@ -347,7 +394,7 @@ npx astro build
 
 Attendu : build **vert**, `10 pages` (8 existantes + 2 fiches projets, `/projets` n'existant pas encore). Un id erroné produirait ici une erreur de validation citant le champ `relatedPosts` ou `relatedProjects` — c'est la preuve que la validation est bien active.
 
-- [ ] **Step 4: Prouver que la référence est réellement résolvable en entrée (pas seulement valide)**
+- [ ] **Step 5: Prouver que la référence est réellement résolvable en entrée (pas seulement valide)**
 
 Sonde temporaire — créer `src/pages/_probe-refs.astro` :
 
@@ -376,7 +423,7 @@ Attendu : chaque ligne montre l'id **et le titre** de l'article lié. **Aucun `u
 rm src/pages/_probe-refs.astro && npx astro build
 ```
 
-- [ ] **Step 5: Vérifications complètes**
+- [ ] **Step 6: Vérifications complètes**
 
 ```bash
 npx vitest run
@@ -387,7 +434,7 @@ git status --short
 
 Attendu : tests verts · `astro check` **0 error** · build **10 pages** · `git status` ne montre **aucun** reliquat de sonde.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/content/projects src/content/blog
