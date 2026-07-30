@@ -38,6 +38,57 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
+## ✍️ Édition du contenu (Sveltia CMS)
+
+Le blog s'édite depuis une interface web, sans toucher au code. Le CMS est servi
+en statique sur `/admin/` — il n'y a **aucun backend** : le navigateur parle
+directement à l'API GitHub.
+
+### En production (publier / corriger un article)
+
+1. Ouvrir <https://bendevcat.github.io/admin/>.
+2. Cliquer **« Sign In Using Access Token »**. Ne pas utiliser le bouton
+   **« Sign In with GitHub »** (OAuth) affiché juste à côté : ce site n'a
+   aucun backend d'authentification, c'est un choix d'architecture assumé, et
+   ce bouton ne peut pas fonctionner ici.
+3. Suivre le lien proposé pour créer un *personal access token* GitHub — de
+   préférence un token **fine-grained** limité au seul dépôt
+   `bendevcat/bendevcat.github.io`, avec la permission **Contents: Read and write**.
+4. Coller le token. Il est conservé dans le `localStorage` du navigateur : à
+   refaire une seule fois par navigateur.
+5. Éditer, puis **Save** : Sveltia commite directement sur `main`. Le workflow
+   GitHub Actions `Deploy to GitHub Pages` se déclenche et le site est à jour en
+   quelques minutes.
+
+### En local (éditer sans publier)
+
+Sveltia utilise la *File System Access API* : **aucun serveur proxy** n'est
+nécessaire (ni `decap-server`, ni `netlify-cms-proxy-server`), mais un navigateur
+**Chromium** est requis (Chrome, Edge, Brave — pas Firefox ni Safari).
+
+1. `npm run dev`
+2. Ouvrir <http://localhost:4321/admin/index.html> dans un navigateur Chromium.
+   Le slash final (`/admin/`) ne fonctionne qu'en production ; en développement
+   le serveur Astro ne résout pas l'index de répertoire pour les fichiers de
+   `public/`, et renvoie une 404 — ce n'est pas une erreur de manipulation.
+3. Cliquer **« Work with Local Repository »** et sélectionner le dossier racine
+   du projet quand le navigateur le demande.
+4. Éditer : les fichiers locaux sont modifiés directement.
+5. Le CMS ne fait **aucune** opération Git en local — relire le diff, puis
+   commiter et pousser à la main.
+
+### Où atterrissent les fichiers
+
+| Élément | Emplacement |
+|---|---|
+| Article | `src/content/blog/<slug>/index.md` |
+| Images d'un article | dans le dossier de l'article, à côté de `index.md` |
+| Schéma de référence | `src/content.config.ts` (collection `blog`) |
+| Configuration du CMS | `public/admin/config.yml` |
+
+Les champs du CMS sont alignés sur le schéma Zod ; `src/lib/cms-config.test.ts`
+échoue si les deux divergent.
+
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
