@@ -125,3 +125,24 @@ Bonne nouvelle d'abord : la question centrale — *le CMS produira-t-il vraiment
 **3 questions de fond**, indépendantes des déviations : I1 (quelle parade au dossier média global), I2 (câbler `vitest`/`astro check` maintenant ou au Plan 3), I3 (rendre le cover sur la page article, ou reformuler R6).
 
 Aucune ne peut être tranchée à ta place : chacune arbitre entre élargir le périmètre du Plan 2 et laisser un critère ou un risque en l'état.
+
+---
+
+## 9. État final de session (2026-07-31 02:15)
+
+**Phase D terminée (3/3)** après le gate de décision :
+
+| Tâche | Commit | Résultat |
+|---|---|---|
+| T-D1 — parade au dossier média global (I1) | `df1a492` | **3ᵉ mécanisme, le bon.** Les deux premiers étaient impossibles et ont été prouvés tels sur le bundle épinglé, pas supposés. Sonde vérifiée : `/_astro/probe.*.webp` réellement émis sur disque. Ferme aussi un trou distinct (`choose_url: false` : une URL distante en couverture cassait le build). |
+| T-D2 — `vitest` + `astro check` en CI | `299b5d4` | Jobs `test` → `build` → `deploy`. Validation **statique** du YAML : la CI n'a jamais tourné, elle le fera au premier push. |
+| T-D3 — couverture sur la page article (R6) | `b021e3b` + `cf0d935` | Rendue, puis remontée sous le titre sur ta décision. Vérifié sur la sortie construite. |
+
+**Tests au dernier passage contrôleur** : `astro check` 0 erreur · `vitest` **15/15** · `astro build` 8 pages.
+
+**Il reste exactement une décision et trois gestes.**
+
+- **Décision** : ratifier **D09** (repli média dans `src/assets/uploads` + `choose_url: false`). C'est la seule entrée `pending-user`. Le résiduel assumé y est écrit noir sur blanc.
+- **Gestes** : T-A2 (PAT) → T-B2 (édition locale) → merge + déploiement → T-C2 (boucle de publication). Détail en §2.
+
+**Pendant T-B2, un point de vérification s'ajoute** : le comportement d'écriture de Sveltia sur un vrai clic humain a été établi en **lisant le bundle**, pas en l'observant. Vérifie que la couverture uploadée atterrit bien dans le dossier de l'article et que son chemin dans le frontmatter est un **nom de fichier nu**.
