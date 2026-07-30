@@ -1,13 +1,14 @@
 ---
-title: "Comment j'utilise GitHub Actions au quotidien"
-description: "Mes astuces du quotidien pour rendre tes workflows GitHub Actions plus DRY et sécurisés, à partir d'un vrai flow de déploiement staging/prod."
+title: Comment j'utilise GitHub Actions au quotidien
+description: Mes astuces du quotidien pour rendre tes workflows GitHub Actions plus DRY et sécurisés, à partir d'un vrai flow de déploiement staging/prod.
 pubDate: 2025-10-28T23:59:00.000+01:00
+category: DevOps
+cover: ./gha-chatgpt.png
+coverAlt: Logo GitHub Actions sur fond de schéma de workflow
+aiUsage: none
 draft: false
-category: "DevOps"
-cover: "./gha-chatgpt.png"
-coverAlt: "Logo GitHub Actions sur fond de schéma de workflow"
-aiUsage: "none"
 ---
+
 Cet article n'a pas pour objectif de vous faire découvrir GitHub Actions.\
 Je vais simplement vous partager des "trucs et astuces" que j'utilise au quotidien pour rendre mes workflows variables, DRY, sécurisés...
 
@@ -24,10 +25,3 @@ La branch 'develop' contient la version beta qui est déployée sur un environne
  La branch 'master' contient la release qui est déployée sur un environnement à destination des équipes de QA et qui finira en production si elle passe toutes les étapes de validations.
 
 On va donc prendre cet exemple, relativement simple en apparence, pour définir nos workflows, pas à pas.
-
-## Structure de base
-
-Définissons notre flow:
-
-1. récupérer le repo qui contient le code
-2. un environnement NodeJS pour build le code
