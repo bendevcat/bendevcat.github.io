@@ -82,6 +82,23 @@ nécessaire (ni `decap-server`, ni `netlify-cms-proxy-server`), mais un navigate
 5. Le CMS ne fait **aucune** opération Git en local — relire le diff, puis
    commiter et pousser à la main.
 
+### Images de couverture : deux pièges
+
+**Garde les couvertures légères — de l'ordre de 30 à 100 Ko.** Sveltia envoie le
+commit par l'API GraphQL de GitHub, avec le fichier encodé en base64 **à
+l'intérieur de la requête**. Une image lourde produit une requête que GitHub
+rejette par un **502**, et le navigateur affiche alors un message trompeur parlant
+de CORS — la cause est le 502, pas une histoire de CORS. Une affiche pleine
+résolution échoue ; 40 Ko passe sans problème. Redimensionne avant de téléverser :
+Astro se charge ensuite de l'optimisation et de la conversion en `.webp`.
+
+**Si une sauvegarde échoue, va voir l'onglet Actions avant de réessayer.**
+L'article et son image partent dans **deux commits séparés**. Si le premier passe
+et le second échoue, l'article se retrouve à référencer une image qui n'existe pas
+dans le dépôt : le déploiement casse (`image-not-found`) et **rien dans le CMS ne
+te le signale**. Le correctif est de re-sauvegarder l'article avec une image qui
+passe, ce qui corrige les deux dans le même commit.
+
 ### Où atterrissent les fichiers
 
 | Élément | Emplacement |

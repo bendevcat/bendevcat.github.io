@@ -23,7 +23,7 @@ collections:
   - name: blog
     label: Articles
     label_singular: Article
-    description: Articles du blog — src/content/blog/<slug>/index.md
+    description: Articles du blog — src/content/blog/{slug}/index.md
     folder: src/content/blog
     path: '{{slug}}/index'
     extension: md

@@ -6,6 +6,32 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 **Ratification — 2026-07-30 23:45 (utilisateur bendevcat, transcrite depuis ses réponses explicites au gate de décision) :** **D01, D02, D03, D05 → `approved`** (ratification groupée). **D04 → décision : option (a)** — rendre l'onglet média global inoffensif plutôt que de le retirer (retrait impossible) ; voir D06. Trois travaux hors périmètre initial ont également été **commandés explicitement** par l'utilisateur : **D06** (parade média), **D07** (câblage des tests en CI), **D08** (rendu de la couverture sur la page article).
 
+## D12 — `<slug>` remplacé par `{slug}` dans la description de la collection
+
+- **Date:** 2026-07-31 00:40
+- **Task affected:** T-B1 (correctif cosmétique post-livraison)
+- **Original plan:** plan d'impl, T-B1 Step 3, YAML imposé verbatim : `description: Articles du blog — src/content/blog/<slug>/index.md`.
+- **Deviation taken:** `<slug>` devient `{slug}`.
+- **Reason:** constaté sur une **capture d'écran du CMS en production** : Sveltia rend la description en HTML, donc `<slug>` est interprété comme une balise inconnue et **supprimé**. L'en-tête de la collection affiche `src/content/blog//index.md` — un chemin **faux**, à l'intérieur même de l'outil censé documenter où atterrissent les fichiers. Purement cosmétique, mais c'est de la documentation trompeuse.
+- **Reversibility:** cheap (une chaîne de caractères).
+- **Caught late:** no (loggé avant exécution).
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Follow-up:** si rejeté, revenir à `<slug>` en acceptant l'affichage tronqué.
+
+## D11 — README étendu : poids des couvertures et réflexe après une sauvegarde échouée
+
+- **Date:** 2026-07-31 00:35
+- **Task affected:** T-C1 (post-livraison)
+- **Original plan:** T-C1 imposait un bloc Markdown verbatim, qui ne dit rien du poids des médias ni du comportement du CMS en cas d'échec de sauvegarde.
+- **Deviation taken:** ajout d'une sous-section « Images de couverture : deux pièges » au README.
+- **Reason:** les deux pièges ont été **rencontrés en conditions réelles** le 2026-07-31, et aucun n'est devinable. (1) Sveltia commite via l'API **GraphQL** en encodant le fichier en **base64 dans la mutation** : une image lourde fait répondre **502** à GitHub, et le navigateur affiche un message trompeur (« CORS »). Confirmé : ~40 Ko passe, une affiche pleine résolution non. (2) L'entrée et son média partent dans **deux commits séparés** — une sauvegarde partiellement échouée laisse un article référençant une image inexistante, ce qui casse le déploiement **sans aucun signal dans le CMS** (constaté : commit `fff9ccd`, run `30582659724` rouge). Aucun garde-fou structurel n'existe côté configuration : `choose_url: false` ne couvre que la saisie d'URL, et le build est déjà le détecteur — mais il se déclenche **après** le commit. La documentation est ici la seule mitigation disponible, et l'assumer explicitement vaut mieux que de laisser croire à une protection qui n'existe pas.
+- **Reversibility:** cheap (une sous-section de README).
+- **Caught late:** no (loggé avant exécution — contrairement à D10).
+- **Status:** pending-user
+- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Follow-up:** si rejeté, retirer la sous-section ; les deux pièges resteront alors non documentés.
+
 ## D10 — README étendu au-delà du bloc prescrit par T-C1 (expiration du PAT)
 
 - **Date:** 2026-07-31 00:20
