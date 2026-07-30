@@ -1,6 +1,6 @@
 # Plan 2 — Scope Ledger
 
-Last updated: 2026-07-31 01:40
+Last updated: 2026-07-31 02:00
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -35,7 +35,7 @@ Last updated by: main (contrôleur SDD)
 | D1 | D | Constat I1 / déviation D06 — parade au dossier média global |
 | D2 | D | Constat I2 / déviation D07 — `vitest` + `astro check` câblés en CI |
 | D3 | D | Constat I3 / déviation D08 — **R6** (couverture rendue sur la page article) |
-| Z1 | Z | Audit `/anti-drift-planning:verify 2` (couverture R1–R7) |
+| Z1 | Z | Audit `/anti-drift-planning:verify 2` (couverture R1–R7) — **Done, verdict PASS** |
 
 ## Updates log
 
@@ -102,3 +102,10 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-31 01:40 — **R7 → Done.** L'utilisateur a suivi le pas-à-pas du README en mode « Work with Local Repository », puis commité et poussé à la main. **Preuves recoupées par le contrôleur :** (1) commit `7fb9b5f` avec `committer: bendevcat <bendevcat@gmail.com>` — un commit **local**, à l'opposé des commits CMS en backend GitHub qui portent `committer: GitHub <noreply@github.com>` ; (2) le diff porte la signature du sérialiseur de Sveltia — les guillemets des valeurs YAML ont été **retirés** (`title: "…"` → `title: …`), conforme au `quote: none` par défaut : le fichier a bien été réécrit par le CMS, pas édité à la main ; (3) aucun serveur proxy n'est intervenu (aucun n'est installé dans le projet). Déploiement `30588430905` **success**, site en 200.
   - **Observation (non bloquante)** : éditer via le CMS un article migré au Plan 1 **normalise son frontmatter** (perte des guillemets). Sans effet — le YAML non quoté s'analyse à l'identique — mais les articles verront leur frontmatter reformaté au fil des éditions.
 - 2026-07-31 01:40 — **7 critères sur 7 `Done`. 0 déviation `pending-user`. Toutes les tâches livrées (A1, A2, B1, B2, C1, C2, D1, D2, D3).** Phase Z (`/anti-drift-planning:verify 2`) peut être lancée.
+- 2026-07-31 02:00 — **PHASE Z — `/anti-drift-planning:verify 2` → VERDICT : ✅ PASS.**
+  - **Couverture spec** : **7/7 critères `Done`** (R1–R7). Aucun `Deferred`, aucun `Cut`, aucune ligne `Pending` ou `In progress`.
+  - **Déviations** : 12 entrées — **10 `approved`, 2 `rejected`, 0 `pending-user`**. Les deux rejetées (D04, D06) sont deux mécanismes successifs pour le même constat I1, tous deux prouvés impossibles sur le code du bundle épinglé et **jamais exécutés** ; remédiés par **D09**, approuvée et appliquée. **Un statut non conforme a été attrapé par le garde-fou du Lock 4** : D06 portait « approved … mais non réalisable ; la décision est rouverte », ré-audité comme `pending-user`, puis clos en `rejected` **sur décision explicite de l'utilisateur** en Phase Z. Aucun statut inventé ne subsiste.
+  - **Tests (passage frais, pendant l'audit)** : `vitest` **15/15** sur 2 fichiers · `astro check` **0 error / 0 warning / 14 hints** · `astro build` **8 pages, 0 erreur** · lint : aucun linter configuré dans ce projet (constat, pas un contournement).
+  - **Walkthrough user story (spec §1)** : **5/5 ✓**, confirmés par l'utilisateur. Preuves au dépôt : capture du CMS authentifié ; commits `982c5ce` / `fff9ccd` (création) et `517de02` / `a5ee9f9` (édition + upload, archivés sous le tag `plan-2-b2-evidence`) ; run `30585644672` vert avec l'article et sa couverture servis en 200 ; commit local `7fb9b5f` portant la signature du sérialiseur Sveltia (mode « Work with Local Repository »).
+  - **Smoke visuel** : ✓ — écran de connexion, bibliothèque à 6 articles, éditeur, et page article avec couverture (vérifiée en production par requête HTTP : `/_astro/l7o2hjty9lfh1.DaGo_XIJ_FaJKI.webp`, 200, 30 042 octets).
+  - **Z1 → Done. Plan 2 vérifié.** Ship (script de release + tag `milestone-plan-2`) = action utilisateur, distincte de cet audit.
