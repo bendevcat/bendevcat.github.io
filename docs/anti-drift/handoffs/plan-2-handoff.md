@@ -100,3 +100,28 @@ Seul **R1** est `Done`. « Prêt à ship, décisions en attente » est l'état d
 - Les options `aiUsage` sont comparées à un littéral dans le test, faute d'export dédié dans `src/content.config.ts` (les catégories, elles, sont bien comparées à `CATEGORIES` importé).
 - `npm audit` signale **1 vulnérabilité high** (`fast-uri`, transitive) — **préexistante au Plan 2**, confirmée présente avant le correctif `d9e900a`. À traiter en maintenance dédiée.
 - Sveltia affiche un avertissement console « version plus récente disponible » (`0.176.0`) : conséquence normale de l'épinglage volontaire en `0.175.1`.
+
+---
+
+## 7. Revue finale de branche — 4 constats Important (ajout du 2026-07-30 23:30)
+
+Une revue finale sur les 14 commits a été passée sur le modèle le plus capable, avec **sondes `astro build` réelles** et **lecture du code source amont de Sveltia**. Verdict : **aucun Critical**, merge recommandé sous réserve des 4 Important. Rapport complet : `.superpowers/sdd/2026-07-19-plan-2-cms-sveltia/final-review.md`.
+
+Bonne nouvelle d'abord : la question centrale — *le CMS produira-t-il vraiment ce que le schéma Zod exige ?* — reçoit une réponse **positive et vérifiée**, pas supposée. Chemin d'image nu résolu par `image()`, `omit_empty_optional_fields` bien lu au bon endroit et excluant `false`, `body` correctement reconnu comme nom réservé, format de date sûr (Sveltia utilise Day.js).
+
+| # | Constat | État |
+|---|---|---|
+| **I1** | L'onglet média **global** du sélecteur est toujours activé, même en mode entry-relative. Y basculer produit `cover: /images/uploads/…` → `astro build` échoue → run Actions rouge, article jamais publié, aucune explication dans le CMS. | **Ouvert** — le retrait est impossible (Sveltia refuse de démarrer sans `media_folder` global, mesuré). 3 options dans D04. |
+| **I2** | Aucun script `test` (`npm test` → *Missing script*), et la CI ne lance ni `vitest` ni `astro check`. Le README promet pourtant que le test « échoue si les deux divergent » — rien ne l'exécute. Même famille exacte que l'angle mort de D03. | **Ouvert** — câbler les tests dépasse le périmètre de la spec du Plan 2. Ta décision. |
+| **I3** | R6 dit « visible sur **l'article publié** ». Or le cover n'est rendu que dans `ArticleCard.astro` (vignettes de `/` et `/blog`) ; `src/pages/blog/[...slug].astro` ne le référence jamais. Vérifié sur la sortie construite : aucun `src=`/`srcset=`. Gabarits hérités du Plan 1, mais **R6 appartient au Plan 2**. | **Ouvert** — R6 n'est satisfaisable par aucun code livré. Ta décision. |
+| **I4** | Aucun SRI sur le bundle CDN qui reçoit le PAT en écriture. | **Corrigé** (`68e854a`, déviation D05) — `integrity` + `crossorigin`, `/admin` recharge avec 0 erreur. |
+
+**Minor mis de côté** : le test est **unidirectionnel** (il verrouille le CMS contre le schéma, jamais l'inverse — seul `CATEGORIES` est croisé avec la source ; le `format` des dates et la clé `output` ne sont assertés par rien) · `pubDate` n'a pas de `default: '{{now}}'`, donc date à saisir à la main à chaque article · pas de `clean_accents`, donc les slugs générés seront accentués alors que les 6 articles existants sont en ASCII · `_next-session-prompt.md` désormais gitignoré (corrigé).
+
+## 8. Les décisions ouvertes, au complet
+
+**5 déviations `pending-user`** : D01 (URL locale), D02 (README avant validation), D03 (`@types/node`), D04 (dossier média global — **tentative annulée, rien n'a été modifié**), D05 (SRI).
+
+**3 questions de fond**, indépendantes des déviations : I1 (quelle parade au dossier média global), I2 (câbler `vitest`/`astro check` maintenant ou au Plan 3), I3 (rendre le cover sur la page article, ou reformuler R6).
+
+Aucune ne peut être tranchée à ta place : chacune arbitre entre élargir le périmètre du Plan 2 et laisser un critère ou un risque en l'état.
