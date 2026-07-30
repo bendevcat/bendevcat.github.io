@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
+import { z } from 'astro:content';
 import { CATEGORIES, PROJECT_STATUSES } from '../content.config';
 
 /**
@@ -186,4 +187,64 @@ describe('config CMS — collection projects', () => {
     expect(byName.featured.widget).toBe('boolean');
     expect(byName.body.widget).toBe('markdown');
   });
+});
+
+describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03)', () => {
+  const urlSchema = z.string().url();
+
+  // Table confrontée au VRAI schéma Zod (`z.string().url()`), pas à des exemples
+  // choisis à la main — c'est le constat de la revue T-C1 : le validateur de
+  // champ `string` de Sveltia 0.175.1 (`_A(n[0]).test(String(i))`) n'est PAS
+  // ancré à droite, donc un motif non ancré des deux côtés ne teste qu'un
+  // préfixe et laisse passer des valeurs que Zod rejette.
+  //
+  // `ftp://exemple.fr` est un écart CONNU et ASSUMÉ, pas un oubli : Zod accepte
+  // n'importe quel schéma reconnu par l'URL WHATWG (dont `ftp://`), alors que le
+  // motif n'accepte que http(s)://, comme l'exige le libellé du champ (« Doit
+  // être une URL complète et valide, commençant par http:// ou https:// »).
+  // Direction de l'écart : le motif est plus STRICT que Zod — un lien `ftp://`
+  // légitime serait refusé par le CMS, ce qui n'est jamais l'incident qu'on
+  // cherche à éviter ici (un build cassé après coup par une valeur acceptée à
+  // tort). Ne jamais retirer ce cas de la table : il doit rester visible.
+  const cases: Array<{ value: string; zodAccepts: boolean }> = [
+    { value: 'https://', zodAccepts: false },
+    { value: 'http://', zodAccepts: false },
+    { value: 'https:///', zodAccepts: false },
+    { value: 'http://exa mple.com', zodAccepts: false },
+    { value: 'pas-une-url', zodAccepts: false },
+    { value: 'ftp://exemple.fr', zodAccepts: true }, // écart connu, voir commentaire ci-dessus
+    { value: 'https://github.com/bendevcat/bendevcat.github.io', zodAccepts: true },
+    { value: 'https://bendevcat.github.io/', zodAccepts: true },
+    { value: 'http://localhost:4321', zodAccepts: true },
+    { value: 'https://exemple.fr/chemin?a=1#b', zodAccepts: true },
+  ];
+
+  it('la table de cas reflète le verdict réel de z.string().url() (pas une supposition)', () => {
+    for (const { value, zodAccepts } of cases) {
+      expect(urlSchema.safeParse(value).success).toBe(zodAccepts);
+    }
+  });
+
+  it.each(['repoUrl', 'demoUrl'] as const)(
+    'le motif de %s ne laisse jamais passer une valeur que Zod rejette',
+    (fieldName) => {
+      const field = loadCmsConfig()
+        .collections[1].fields.find((f: any) => f.name === fieldName);
+      const pattern = new RegExp(field.pattern[0]);
+
+      for (const { value, zodAccepts } of cases) {
+        const patternAccepts = pattern.test(value);
+        if (value === 'ftp://exemple.fr') {
+          // Écart encodé explicitement (D03) : le motif refuse ce que Zod
+          // accepte — direction sûre, jamais l'inverse.
+          expect(patternAccepts).toBe(false);
+          continue;
+        }
+        // Sur tous les autres cas, le motif doit rendre exactement le même
+        // verdict que Zod : rien que le CMS accepte ne doit faire échouer
+        // `astro build` après coup, et rien de valide ne doit être refusé.
+        expect(patternAccepts).toBe(zodAccepts);
+      }
+    },
+  );
 });

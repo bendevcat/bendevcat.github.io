@@ -94,8 +94,13 @@ collections:
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: cover, label: Image de couverture, widget: image, required: false, choose_url: false }
       - { name: coverAlt, label: Texte alternatif de la couverture, widget: string, required: false }
-      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://', 'Doit être une URL complète commençant par http:// ou https://'] }
-      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://', 'Doit être une URL complète commençant par http:// ou https://'] }
+      # Motif ancré des deux côtés (voir D03) : `^https?://` seul n'est pas ancré à
+      # droite dans le validateur Sveltia 0.175.1 (RegExp.test non ancré = simple
+      # préfixe), donc `https://` ou `http://exa mple.com` passaient le CMS et
+      # cassaient `astro build` (ZodError sur `z.string().url()`) après le commit.
+      # Motif établi empiriquement contre `z.string().url()` — voir cms-config.test.ts.
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
+      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
       - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
       - name: relatedPosts
         label: Articles liés
