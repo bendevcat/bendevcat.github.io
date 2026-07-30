@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-30
 **Branche:** `plan-2-cms-sveltia` (non mergée, non poussée)
-**État:** **prêt à ship côté code — 3 décisions utilisateur + 3 vérifications manuelles en attente**
+**État:** **prêt à ship côté code — 5 déviations à ratifier + 3 questions de fond + 3 vérifications manuelles en attente** (détail en §7 et §8)
 **Phase Z:** **NON lancée** (voir « Pourquoi la Phase Z n'a pas tourné »)
 **Reprise:** `/anti-drift-planning:resume 2` régénère le prompt de reprise.
 
@@ -64,9 +64,9 @@ Vérifiable seulement **après merge sur `main` et déploiement**. Mécanisme d�
 ### R7 (workflow local documenté)
 Le README est écrit (`f5f2bc8`), mais R7 dit « **suivre** le README ». Il passera `Done` quand T-B2 aura été exécutée **en suivant le README**, pas avant.
 
-## 3. Les 3 décisions que j'attends de toi
+## 3. Les déviations à ratifier (liste complétée en §8)
 
-Toutes sont `pending-user` dans [`plan-2-deviations.md`](./plan-2-deviations.md). **Tant qu'il en reste une, la Phase Z échoue et rien n'est tagué** — c'est le gate, pas une formalité.
+Toutes sont `pending-user` dans [`plan-2-deviations.md`](./plan-2-deviations.md). **Deux autres, D04 et D05, sont venues de la revue finale — voir §7 et §8.** **Tant qu'il en reste une, la Phase Z échoue et rien n'est tagué** — c'est le gate, pas une formalité.
 
 | # | Question | Ma recommandation |
 |---|---|---|
@@ -80,20 +80,20 @@ Toutes sont `pending-user` dans [`plan-2-deviations.md`](./plan-2-deviations.md)
 
 `/anti-drift-planning:verify 2` échouerait sur deux fronts, et la lancer maintenant produirait un audit connu d'avance :
 
-1. **3 entrées `pending-user`** dans le log de déviations — le gate l'interdit.
+1. **5 entrées `pending-user`** dans le log de déviations (D01 à D05) — le gate l'interdit.
 2. **4 critères sur 7 non vérifiés** : R2, R3, R4, R6 restent `In progress` (leur preuve exige T-A2 et T-B2), R5 est `Pending` (post-merge), R7 est `In progress` (attend que le README soit suivi).
 
 Seul **R1** est `Done`. « Prêt à ship, décisions en attente » est l'état de succès de cette session ; un tag posé maintenant ne le serait pas.
 
 ## 5. Ordre de reprise recommandé
 
-1. Ratifier **D01, D02, D03** (approved / rejected — ce sont tes mots, pas les miens).
+1. Ratifier **D01 à D05** et trancher les 3 questions de fond de §8 (approved / rejected — ce sont tes mots, pas les miens).
 2. Exécuter **T-A2** puis **T-B2** en local → débloque R2, R3, R4, R6, R7.
 3. Merger `plan-2-cms-sveltia` dans `main`, pousser → déploiement.
 4. Exécuter **T-C2** sur le site déployé → débloque R5.
 5. Lancer **`/anti-drift-planning:verify 2`** → seul chemin vers le script de release et le tag `milestone-plan-2`.
 
-## 6. Points mineurs mis de côté (à trier à la revue finale)
+## 6. Points mineurs mis de côté
 
 - Le libellé réel du bouton est « **Sign In Using Access Token** » ; la spec R2 écrit « Sign In with Token ». Libellé du bundle CDN, pas de notre fait — la doc utilise le libellé réel.
 - `sortable_fields`, `identifier_field`, `slug` et la `description` de collection ne sont couverts par aucune assertion du test de config.
