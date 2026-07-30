@@ -1,6 +1,6 @@
 # Plan 2 — Scope Ledger
 
-Last updated: 2026-07-31 01:30
+Last updated: 2026-07-31 02:15
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -68,3 +68,7 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-31 01:15 — **T-D1 reste BLOQUÉE** (constat I1 non résolu, décision utilisateur rouverte). Phase D : 2 tâches sur 3 livrées.
 - 2026-07-31 01:30 — **Décision utilisateur sur le placement de la couverture** : « la remonter sous le titre ». Fait (commit ci-dessous) : ordre DOM vérifié sur la sortie construite = titre → **couverture** → bannière IA → sommaire → corps. Build 8 pages, 13/13 tests, check 0 erreur. Ce n'est pas une déviation : D08 prévoyait explicitement que le rendu soit soumis à l'utilisateur et itéré.
 - 2026-07-31 01:30 — **Décision utilisateur sur I1** : « chercher une autre parade ». Investigation **en lecture seule** lancée sur le bundle Sveltia 0.175.1 épinglé (pistes : `media_folder`/`public_folder` au niveau du champ, options de bibliothèque d'assets, masquage de l'onglet global). T-D1 reste **In progress**, rien n'est modifié tant que la piste n'est pas établie sur le code.
+- 2026-07-31 02:00 — **Investigation I1 terminée** (opus, lecture du bundle épinglé 0.175.1 + 5 sondes `astro build`). Conclusion **établie sur le code** : l'onglet média global est **impossible à masquer** dans cette version (`global.enabled = l !== void 0`, dossier global à `entryRelative: false` codé en dur) ; `media_folder` au niveau du champ **ajoute** un onglet sans désactiver le global ; `media_libraries: {default: false}` supprimerait *aussi* l'onglet entry-relative et l'upload. La parade retenue ne ferme donc pas le chemin dangereux, elle le rend **inoffensif**. Au passage, un **trou distinct non identifié jusque-là** : l'onglet « Entrer une URL » permettait `cover: https://…` → build cassé (`MissingImageDimension`).
+- 2026-07-31 02:05 — **Déviation D09 loggée** (`55c82b0`, `pending-user`) avant exécution.
+- 2026-07-31 02:15 — **T-D1 → Done** — commit `df1a492`. `media_folder: src/assets/uploads` + `public_folder: /src/assets/uploads` + `choose_url: false` sur le champ `cover`. **Sonde vérifiée** : `cover: "/src/assets/uploads/probe.png"` → build OK **et** `/_astro/probe.BnV1MXKY_1Lb9zI.webp` réellement présent sur disque (pas seulement un build vert) ; sonde supprimée, arbre propre. `/admin` recharge sur l'écran de connexion normal avec **0 erreur console** (les deux tentatives précédentes affichaient l'écran d'erreur de configuration). Bloc collection entry-relative **intact**. Tests **15/15**, check 0 erreur, build 8 pages. **Phase D terminée : 3/3.**
+- 2026-07-31 02:15 — **Résiduel assumé (D09)** : une image de **corps** choisie via l'onglet global sortirait non optimisée → 404 discret. Pas une régression (c'était déjà un 404), mais un changement de nature du risque. **Réserve** : le comportement d'écriture réel du CMS est établi par lecture du bundle, pas par un clic humain observé → smoke test manuel requis pendant T-B2.
