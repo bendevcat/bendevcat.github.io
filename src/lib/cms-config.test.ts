@@ -53,6 +53,21 @@ describe('config CMS — sortie', () => {
   });
 });
 
+describe('config CMS — repli média global', () => {
+  it('fait pointer le repli média global dans src/, où Astro sait résoudre le chemin', () => {
+    const cfg = loadCmsConfig();
+    expect(cfg.media_folder).toBe('src/assets/uploads');
+    expect(cfg.public_folder).toBe('/src/assets/uploads');
+    // Hors de src/, une image choisie depuis l'onglet global casserait le build.
+    expect(cfg.public_folder.startsWith('/src/')).toBe(true);
+  });
+
+  it('interdit la saisie d’une URL distante pour la couverture', () => {
+    const cover = loadCmsConfig().collections[0].fields.find((f: any) => f.name === 'cover');
+    expect(cover.choose_url).toBe(false);
+  });
+});
+
 describe('config CMS — collection blog', () => {
   const blog = () => loadCmsConfig().collections[0];
   const fieldNames = () => blog().fields.map((f: any) => f.name);

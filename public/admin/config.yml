@@ -5,10 +5,14 @@ backend:
   repo: bendevcat/bendevcat.github.io
   branch: main
 
-# Repli global (non utilisé par la collection blog, qui stocke ses médias
-# à côté de l'article — cf. T-B1).
-media_folder: public/images/uploads
-public_folder: /images/uploads
+# Repli média global. Sveltia EXIGE cette clé (sans elle : « The media folder is
+# not defined ») et l'onglet « global » du sélecteur reste TOUJOURS activé, même
+# pour une collection entry-relative — impossible à masquer dans 0.175.1. Il
+# pointe donc dans `src/`, où la résolution Vite d'Astro sait suivre le chemin :
+# une couverture choisie depuis cet onglet donne `/src/assets/uploads/<fichier>`,
+# qu'`image()` importe et optimise. Un chemin hors de `src/` casserait le build.
+media_folder: src/assets/uploads
+public_folder: /src/assets/uploads
 
 output:
   # Défaut Sveltia = false : sans ça, un champ optionnel laissé vide sort en
@@ -38,7 +42,7 @@ collections:
       - { name: updatedDate, label: Date de mise à jour, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ', required: false }
       - { name: category, label: Catégorie, widget: select, options: [Actus, DevOps, Outils, Sécurité, Geekerie, Tutos, IA] }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
-      - { name: cover, label: Image de couverture, widget: image, required: false }
+      - { name: cover, label: Image de couverture, widget: image, required: false, choose_url: false }
       - { name: coverAlt, label: Texte alternatif de la couverture, widget: string, required: false }
       - name: aiUsage
         label: Transparence IA
