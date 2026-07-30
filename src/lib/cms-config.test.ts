@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
-import { CATEGORIES } from '../content.config';
+import { CATEGORIES, PROJECT_STATUSES } from '../content.config';
 
 /**
  * Charge la config réelle du CMS (public/admin/config.yml) telle qu'elle sera
@@ -23,10 +23,10 @@ describe('config CMS — backend', () => {
     expect(cfg.backend.auth_endpoint).toBeUndefined();
   });
 
-  it('déclare exactement une collection, nommée blog', () => {
+  it('déclare exactement deux collections : blog et projects', () => {
     const cfg = loadCmsConfig();
-    expect(cfg.collections).toHaveLength(1);
-    expect(cfg.collections[0].name).toBe('blog');
+    expect(cfg.collections).toHaveLength(2);
+    expect(cfg.collections.map((c: any) => c.name)).toEqual(['blog', 'projects']);
   });
 });
 
@@ -84,10 +84,10 @@ describe('config CMS — collection blog', () => {
     expect(blog().public_folder).toBe('');
   });
 
-  it('mappe tous les champs du schéma Zod sauf relatedProjects', () => {
+  it('mappe tous les champs du schéma Zod', () => {
     expect(fieldNames().sort()).toEqual([
       'aiUsage', 'body', 'category', 'cover', 'coverAlt', 'description',
-      'draft', 'featured', 'pubDate', 'tags', 'title', 'updatedDate',
+      'draft', 'featured', 'pubDate', 'relatedProjects', 'tags', 'title', 'updatedDate',
     ]);
   });
 
@@ -119,6 +119,71 @@ describe('config CMS — collection blog', () => {
     expect(byName.featured.widget).toBe('boolean');
     expect(byName.tags.widget).toBe('list');
     expect(byName.cover.widget).toBe('image');
+    expect(byName.body.widget).toBe('markdown');
+  });
+});
+
+describe('config CMS — collection projects', () => {
+  const projects = () => loadCmsConfig().collections[1];
+  const fieldNames = () => projects().fields.map((f: any) => f.name);
+
+  it('écrit des bundles src/content/projects/<slug>/index.md', () => {
+    expect(projects().name).toBe('projects');
+    expect(projects().folder).toBe('src/content/projects');
+    expect(projects().path).toBe('{{slug}}/index');
+    expect(projects().extension).toBe('md');
+    expect(projects().format).toBe('yaml-frontmatter');
+    expect(projects().create).toBe(true);
+  });
+
+  it('stocke les médias à côté de la fiche (entry-relative)', () => {
+    expect(projects().media_folder).toBe('');
+    expect(projects().public_folder).toBe('');
+  });
+
+  it('interdit la saisie d’une URL distante pour la couverture', () => {
+    const cover = projects().fields.find((f: any) => f.name === 'cover');
+    expect(cover.choose_url).toBe(false);
+  });
+
+  it('mappe tous les champs du schéma Zod', () => {
+    expect(fieldNames().sort()).toEqual([
+      'body', 'coverAlt', 'cover', 'demoUrl', 'description', 'featured',
+      'relatedPosts', 'repoUrl', 'stack', 'startDate', 'status', 'tags', 'title',
+    ].sort());
+  });
+
+  it('rend obligatoires exactement les champs non-optionnels du Zod', () => {
+    const required = projects().fields
+      .filter((f: any) => f.required !== false)
+      .map((f: any) => f.name)
+      .sort();
+    expect(required).toEqual(['body', 'description', 'status', 'title']);
+  });
+
+  it('propose exactement les 3 statuts du schéma', () => {
+    const status = projects().fields.find((f: any) => f.name === 'status');
+    expect(status.widget).toBe('select');
+    expect(status.options).toEqual([...PROJECT_STATUSES]);
+    expect(status.default).toBe('actif');
+  });
+
+  it('relie les articles par une relation typée vers la collection blog', () => {
+    const rel = projects().fields.find((f: any) => f.name === 'relatedPosts');
+    expect(rel.widget).toBe('relation');
+    expect(rel.collection).toBe('blog');
+    expect(rel.multiple).toBe(true);
+    // `reference('blog')` d'Astro stocke l'id d'entrée = le nom du dossier.
+    expect(rel.value_field).toBe('{{slug}}');
+  });
+
+  it('utilise les widgets attendus pour les champs typés', () => {
+    const byName = Object.fromEntries(projects().fields.map((f: any) => [f.name, f]));
+    expect(byName.startDate.widget).toBe('datetime');
+    expect(byName.stack.widget).toBe('list');
+    expect(byName.tags.widget).toBe('list');
+    expect(byName.cover.widget).toBe('image');
+    expect(byName.featured.widget).toBe('boolean');
     expect(byName.body.widget).toBe('markdown');
   });
 });
