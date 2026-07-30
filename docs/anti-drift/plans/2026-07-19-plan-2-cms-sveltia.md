@@ -615,3 +615,126 @@ Non contournable, non résumable de mémoire. C'est le **seul** chemin vers le s
 **4. Risques identifiés** (à traiter par le protocole de déviation, pas en silence) :
 - Version épinglée `0.175.1` (sortie le 2026-07-28) : choix de l'utilisateur au gate de validation du plan, contre la `0.176.0` sortie le jour même — on prend deux jours de recul, après la dernière release marquée *breaking* (`0.174.0`, Google Fonts → Fontsource). Si cette version s'avère cassée, changer de version épinglée **après** avoir loggé une déviation.
 - R2 et R5 dépendent d'un PAT et d'un merge sur `main` : ce sont des vérifications côté utilisateur, elles peuvent laisser le plan en « prêt à ship, en attente ».
+
+---
+
+## Phase D — Corrections issues de la revue finale (ajoutée le 2026-07-30, sur décision explicite de l'utilisateur)
+
+Ces trois tâches ne figuraient pas au plan initial. Elles proviennent des constats **I1, I2, I3** de la revue finale de branche et ont été **commandées par l'utilisateur** au gate de décision de fin de session (déviations **D06, D07, D08**, toutes `approved`). Elles lèvent les contraintes globales du plan sur `deploy.yml`, `package.json`, `src/pages/` et `src/components/` — **pour ces trois tâches uniquement**.
+
+### Task D1: Rendre l'onglet média global inoffensif (constat I1 / déviation D06)
+
+**Files:** Modify: `public/admin/config.yml` (clés globales `media_folder` / `public_folder` + leur commentaire) · Modify: `src/lib/cms-config.test.ts` (assertions)
+
+**Contexte :** l'onglet média « global » du sélecteur Sveltia est **toujours** actif, même pour une collection en mode entry-relative. Aujourd'hui il produirait `cover: /images/uploads/<fichier>` — chemin **absolu** que `image()` d'Astro ne résout pas → `astro build` échoue → déploiement rouge, article jamais publié. Le retrait des clés est **impossible** : Sveltia refuse de démarrer sans dossier média global (« The media folder is not defined »). La parade est de faire pointer ce dossier **dans l'arbre de contenu**, pour que le chemin produit soit relatif et donc résoluble.
+
+- [ ] **Step 1: Écrire l'assertion qui échoue**
+
+Dans `src/lib/cms-config.test.ts`, ajouter au `describe('config CMS — collection blog', …)` :
+
+```ts
+it('fait pointer le dossier média global dans l’arbre de contenu, pour qu’un chemin choisi depuis l’onglet global reste résoluble par image()', () => {
+  const cfg = loadCmsConfig();
+  expect(cfg.media_folder).toBe('src/content/blog/_uploads');
+  expect(cfg.public_folder).toBe('../_uploads');
+  // Un public_folder absolu produirait `cover: /…`, qu'Astro ne sait pas résoudre.
+  expect(cfg.public_folder.startsWith('/')).toBe(false);
+});
+```
+
+- [ ] **Step 2: Lancer le test, vérifier qu'il échoue**
+
+Run: `npx vitest run src/lib/cms-config.test.ts` — Expected: FAIL (`public/images/uploads` reçu).
+
+- [ ] **Step 3: Corriger la config**
+
+Dans `public/admin/config.yml`, remplacer le bloc global et son commentaire par :
+
+```yaml
+# Dossier média global. Sveltia EXIGE cette clé (sans elle : « The media folder
+# is not defined »), et l'onglet « global » du sélecteur reste toujours actif —
+# y compris pour un champ dont la collection est entry-relative. Il pointe donc
+# à l'intérieur de l'arbre de contenu : une image choisie depuis cet onglet
+# produit `../_uploads/<fichier>`, chemin relatif que `image()` d'Astro résout
+# depuis `src/content/blog/<slug>/index.md`. Un chemin absolu casserait le build.
+media_folder: src/content/blog/_uploads
+public_folder: ../_uploads
+```
+
+- [ ] **Step 4: Vérifier — tests, typecheck, build, et CMS qui démarre**
+
+`npx vitest run` (tous verts) · `npx astro check` (0 error) · `npx astro build` (8 pages) · puis serveur de dev et `http://localhost:4321/admin/index.html` : UI affichée, **0 erreur console** (sans quoi R1 régresse).
+
+- [ ] **Step 5: Preuve empirique que le chemin relatif tient**
+
+Créer à la main `src/content/blog/_uploads/probe.png` (n'importe quelle image) et un article de sonde `src/content/blog/zz-probe/index.md` avec `cover: "../_uploads/probe.png"` et un frontmatter minimal valide. Lancer `npx astro build` : **doit passer** et émettre une image optimisée. Puis **supprimer la sonde** (`rm -rf src/content/blog/zz-probe src/content/blog/_uploads`), rebuild, et vérifier que `git status` est propre.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add public/admin/config.yml src/lib/cms-config.test.ts
+git commit -m "fix(p2): point the global media folder inside the content tree so any tab yields a resolvable path"
+```
+
+### Task D2: Câbler `vitest` et `astro check` (constat I2 / déviation D07)
+
+**Files:** Modify: `package.json` (scripts) · Modify: `.github/workflows/deploy.yml`
+
+**Contexte :** `npm test` échoue (*Missing script*) et la CI ne lance ni les tests ni le typecheck. Le README promet pourtant que le test de config « échoue si les deux divergent » — rien ne l'exécute. C'est la famille d'angle mort qui a laissé la régression D03 vivre deux tâches.
+
+- [ ] **Step 1: Ajouter les scripts**
+
+Dans `package.json`, section `scripts` :
+
+```json
+"test": "vitest run",
+"check": "astro check"
+```
+
+- [ ] **Step 2: Vérifier**
+
+Run: `npm test` → tous verts. `npm run check` → 0 error.
+
+- [ ] **Step 3: Câbler la CI**
+
+Dans `.github/workflows/deploy.yml`, ajouter **avant** le job `build` un job `test` que `build` attend (`needs: test`), sur `ubuntu-latest`, avec `actions/checkout@v4`, `actions/setup-node@v4` (`node-version: 22`, `cache: npm`), `npm ci`, puis `npm test` et `npm run check`. Ne change **rien** d'autre : le déclencheur `on: push: { branches: [main] }`, le bloc `concurrency`, les `permissions`, le job `deploy` et `withastro/action@v3` (avec son `node-version: 22`) restent identiques.
+
+- [ ] **Step 4: Valider la syntaxe YAML du workflow**
+
+Parser le fichier (par ex. `python3 -c "import yaml,sys;print(yaml.safe_load(open('.github/workflows/deploy.yml'))['jobs'].keys())"`) et confirmer les trois jobs et les dépendances. La CI n'est pas exécutable en local : la validation est **statique**, dis-le explicitement dans le rapport.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add package.json .github/workflows/deploy.yml
+git commit -m "ci(p2): run vitest and astro check before deploying"
+```
+
+### Task D3: Afficher la couverture sur la page article (constat I3 / déviation D08)
+
+**Files:** Modify: `src/pages/blog/[...slug].astro`
+
+**Contexte :** le critère **R6** exige que la couverture soit « visible sur l'article publié ». Elle n'est aujourd'hui rendue que sur les vignettes (`ArticleCard.astro`). Sans cette tâche, R6 ne peut pas passer.
+
+- [ ] **Step 1: Lire l'existant avant d'écrire**
+
+Lire `src/components/ArticleCard.astro` pour reprendre **exactement** sa façon d'importer et d'utiliser le composant `<Image>` d'Astro (mêmes conventions, mêmes attributs), et `src/pages/blog/[...slug].astro` pour trouver le bon point d'insertion (après le titre et les métadonnées, avant le corps de l'article).
+
+- [ ] **Step 2: Rendre la couverture, conditionnellement**
+
+N'afficher le bloc que si `post.data.cover` existe (le champ est optionnel — 6 articles sur 6 en ont une aujourd'hui, mais un article sans cover ne doit pas casser). Utiliser `post.data.coverAlt` comme texte alternatif, avec repli sur une chaîne vide si absent (une image décorative sans alt vaut mieux qu'un alt inventé). Respecter le thème existant (arrondis, marges) plutôt qu'inventer un style.
+
+- [ ] **Step 3: Vérifier**
+
+`npx astro build` (8 pages, 0 erreur) · `npx astro check` (0 error) · `npx vitest run` (tous verts). Puis, sur le serveur de dev, ouvrir un article **avec** couverture et un article **sans** : l'image s'affiche dans le premier cas, aucune zone cassée dans le second. Prendre une capture d'écran de chaque cas.
+
+- [ ] **Step 4: Vérifier qu'il n'y a pas de régression responsive**
+
+Ouvrir le même article en 375px de large : aucun débordement horizontal (le Plan 1 avait fait de `scrollWidth === clientWidth` son critère R9).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/pages/blog/\[...slug\].astro
+git commit -m "feat(p2): render the cover image on the article page (R6)"
+```

@@ -4,6 +4,47 @@ _Append entries here whenever a task cuts scope, changes approach, or hits a blo
 
 _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe une entrée en `approved` / `rejected`. Il n'existe pas de troisième statut._
 
+**Ratification — 2026-07-30 23:45 (utilisateur bendevcat, transcrite depuis ses réponses explicites au gate de décision) :** **D01, D02, D03, D05 → `approved`** (ratification groupée). **D04 → décision : option (a)** — rendre l'onglet média global inoffensif plutôt que de le retirer (retrait impossible) ; voir D06. Trois travaux hors périmètre initial ont également été **commandés explicitement** par l'utilisateur : **D06** (parade média), **D07** (câblage des tests en CI), **D08** (rendu de la couverture sur la page article).
+
+## D08 — Rendu de la couverture ajouté sur la page article (travail hors plan, sur un gabarit du Plan 1)
+
+- **Date:** 2026-07-30 23:45
+- **Task affected:** nouvelle tâche **T-D3** (Phase D, hors plan initial)
+- **Original plan:** aucune tâche du plan ne touche `src/pages/` ni `src/components/`. Les contraintes globales du plan les listent même comme **interdits de modification**. Le critère R6 exige pourtant « *uploader une cover via le CMS → … **ET** visible sur l'article publié* ».
+- **Deviation taken:** ajout du rendu de `cover` en tête de la page `src/pages/blog/[...slug].astro`.
+- **Reason:** constat **I3** de la revue finale, re-vérifié par le contrôleur : `cover` n'est rendu que dans `ArticleCard.astro` (vignettes) ; la page d'article ne contient aucun `src=`/`srcset=`. **R6 n'était satisfaisable par aucun code livré.** Les gabarits viennent du Plan 1 et n'ont pas régressé — mais R6 appartient au Plan 2, donc le combler est le seul moyen de le faire passer sans réinterpréter le critère.
+- **Reversibility:** cheap (un bloc de gabarit, aucun contenu, aucune donnée).
+- **Caught late:** no
+- **Status:** approved
+- **User decision:** « **Ajouter le rendu sur l'article** » — choix explicite de l'utilisateur le 2026-07-30, contre les deux alternatives proposées (reformuler R6 en « visible sur le site publié », ou reporter R6 au Plan 3). Le rendu doit lui être soumis.
+- **Follow-up:** si le rendu ne convient pas visuellement, itérer sur le gabarit ; le critère R6 reste satisfait tant que la couverture s'affiche sur la page article.
+
+## D07 — `vitest` et `astro check` câblés dans la CI (travail hors plan, modifie `deploy.yml`)
+
+- **Date:** 2026-07-30 23:45
+- **Task affected:** nouvelle tâche **T-D2** (Phase D, hors plan initial)
+- **Original plan:** la spec du Plan 2 ne mentionne aucune CI de test ; les contraintes globales du plan listent `.github/workflows/deploy.yml` comme **interdit de modification**. Le plan n'invoque `npx vitest run` que comme geste manuel pendant l'exécution.
+- **Deviation taken:** ajout d'un script `test` à `package.json` et d'une étape CI exécutant `vitest run` + `astro check` avant le déploiement.
+- **Reason:** constat **I2** de la revue finale, re-vérifié par le contrôleur (`npm test` → *Missing script*). Le README **promet** que `src/lib/cms-config.test.ts` « échoue si les deux divergent » — or rien ne l'exécute : la garantie annoncée n'est câblée nulle part. C'est la **même famille d'angle mort** que la régression D03, qui a survécu à deux tâches et deux relectures parce qu'aucune étape ne lançait `astro check`. Traiter le symptôme dans les plans suivants ne protège pas le dépôt.
+- **Reversibility:** cheap (un script + une étape de workflow).
+- **Caught late:** no
+- **Status:** approved
+- **User decision:** « **Câbler maintenant** » — choix explicite de l'utilisateur le 2026-07-30, contre « script npm seulement » et « reporter au Plan 3 ».
+- **Follow-up:** si la CI devient bloquante à tort, isoler l'étape de test du job de déploiement plutôt que de la retirer.
+
+## D06 — Dossier média global redirigé dans l'arbre de contenu (parade au constat I1)
+
+- **Date:** 2026-07-30 23:45
+- **Task affected:** nouvelle tâche **T-D1** (Phase D, hors plan initial) — remplace la remédiation impossible de **D04**
+- **Original plan:** plan d'impl, T-A1 Step 5 : `media_folder: public/images/uploads` / `public_folder: /images/uploads`, commentés « repli global non utilisé par la collection blog ».
+- **Deviation taken:** ces valeurs deviennent `media_folder: src/content/blog/_uploads` et `public_folder: ../_uploads`, et le commentaire mensonger est corrigé.
+- **Reason:** voir **D04** pour le risque complet. Le retrait pur étant impossible (Sveltia refuse de démarrer sans dossier média global — mesuré), la parade consiste à faire pointer ce dossier **dans l'arbre de contenu** : une image choisie depuis l'onglet global produit alors `cover: ../_uploads/<fichier>`, chemin **relatif** que `image()` d'Astro résout depuis `src/content/blog/<slug>/index.md`. Le garde-fou redevient structurel au lieu d'être humain : quel que soit l'onglet choisi, le build tient. Le loader glob (`**/index.{md,mdx}`) ignore `_uploads`, donc aucun faux article n'apparaît.
+- **Reversibility:** cheap (deux lignes de YAML ; aucun média n'a encore été stocké par le CMS).
+- **Caught late:** no
+- **Status:** approved
+- **User decision:** « **(a) Rendre l'onglet inoffensif** » — choix explicite de l'utilisateur le 2026-07-30, contre « garde-fou humain documenté » et « ne rien faire ».
+- **Follow-up:** **à vérifier empiriquement avant de clore** : que Sveltia émet bien le préfixe `../_uploads/` et que le build passe avec une couverture placée là. Si Sveltia émet autre chose, ne pas bricoler : rouvrir la décision avec l'option (b).
+
 ## D05 — `integrity` + `crossorigin` (SRI) ajoutés au script CDN, non prévus par le plan
 
 - **Date:** 2026-07-30 23:05
@@ -13,8 +54,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** constat **Important** de la revue finale. Ce script s'exécute sur l'origine `bendevcat.github.io`, reçoit un PAT GitHub **Contents: Read and write** sur le dépôt qui publie le site, et le persiste dans le stockage de cette origine (documenté au README). L'épinglage de version protège de la **dérive fonctionnelle amont** ; il ne protège **pas** d'un contenu altéré servi pour cette même version (compromission d'unpkg, empoisonnement de cache, republication du tarball). Scénario concret : un bundle altéré exfiltre le PAT à la prochaine ouverture de `/admin` → écriture sur le dépôt, donc contrôle du contenu publié et point d'appui sur `.github/workflows/`. Le SRI ferme ce vecteur pour le point d'entrée.
 - **Reversibility:** cheap (deux attributs HTML + une assertion ; retirables en une minute).
 - **Caught late:** no (loggé avant exécution du correctif).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur (bendevcat) le 2026-07-30 — ratification groupée D01/D02/D03/D05 au gate de décision de fin de session (SRI sur le bundle CDN).
 - **Follow-up:** si rejeté, retirer les deux attributs et l'assertion. Réserve connue : si le bundle charge des ressources additionnelles à l'exécution, le SRI du point d'entrée ne les couvre pas — à confirmer d'un coup d'œil à l'onglet réseau lors de la vérification R2.
 
 ## D04 — Dossier média global retiré de la config CMS (le plan le prescrivait)
@@ -27,8 +68,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** le commentaire du plan (« non utilisé ») est **faux**, et la revue finale l'a établi sur le code source de Sveltia : `getAssetLibraryFolderMap()` active l'onglet « global » du sélecteur de média **dès qu'un `media_folder` global existe**, y compris pour un champ dont la collection est entry-relative. Scénario d'échec concret et vérifié par sonde : l'utilisateur bascule sur cet onglet pour choisir sa couverture → Sveltia écrit `cover: /images/uploads/<fichier>` → `astro build` **échoue** (`image-not-found` : `image()` d'Astro ne résout pas un chemin absolu servi depuis `public/`) → le run GitHub Actions est rouge, **le site n'est pas redéployé**, l'article n'apparaît jamais, et rien dans le CMS n'explique pourquoi. Aggravant : `public/images/uploads/` n'existe même pas dans le dépôt — ces clés n'ouvrent qu'un chemin de casse. Retirer la porte est plus sûr que documenter qu'il ne faut pas l'ouvrir.
 - **Reversibility:** cheap (deux lignes de YAML ; aucun contenu, aucun média déjà stocké — aucun article n'a encore été créé via le CMS).
 - **Caught late:** no (loggé avant exécution du correctif).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** rejected
+- **User decision:** **Rejetée** le 2026-07-30 — l'utilisateur n'a pas retenu le retrait (de toute façon impossible : Sveltia refuse de démarrer sans dossier média global) mais l'**option (a)**, qui rend l'onglet global inoffensif. **Remédiation : voir D06** (`media_folder: src/content/blog/_uploads` + `public_folder: ../_uploads`). Le raisonnement sur le risque reste valide ; seule la parade change.
 - **Follow-up:** le retrait pur étant exclu, **trois options restent, à trancher par l'utilisateur** :
   - **(a) Rendre l'onglet global inoffensif** — pointer le dossier global à l'intérieur de l'arbre de contenu, par ex. `media_folder: src/content/blog/_uploads` + `public_folder: ../_uploads`. Une image choisie depuis l'onglet global produirait alors `cover: ../_uploads/<fichier>`, chemin **relatif** que `image()` d'Astro sait résoudre depuis `src/content/blog/<slug>/index.md`. Le loader glob (`**/index.{md,mdx}`) ignore `_uploads`, donc aucun faux article. **À vérifier empiriquement** : que Sveltia émet bien ce préfixe relatif, et que le build passe.
   - **(b) Garde-fou humain** — garder la config telle quelle et documenter au README qu'il ne faut jamais utiliser l'onglet média global pour « Image de couverture ». Le garde-fou devient humain, pas structurel ; le mode d'échec (run Actions rouge, article jamais publié, aucune explication dans le CMS) reste possible.
@@ -44,8 +85,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** le test `src/lib/cms-config.test.ts` — dont le code est **imposé verbatim par le plan** — fait `import { readFileSync } from 'node:fs'`. Sans les types Node, `npx astro check` échoue : `src/lib/cms-config.test.ts:2:30 - error ts(2591): Cannot find name 'node:fs'`. Or le Plan 1 s'est clôturé avec **0 erreur** à `astro check` (ledger Plan 1, Phase Z), et la Phase Z du Plan 2 relancera cette commande : sans correctif, l'audit échouerait sur une régression introduite par ce plan. Ni l'implémenteur ni les relecteurs de T-A1 et T-B1 ne l'ont détecté — aucune étape du plan ne demandait `astro check` (défaut du plan, pas des agents) ; constat du contrôleur en repassant la suite complète. Alternative écartée : remplacer `readFileSync` par un import Vite `?raw`, ce qui éviterait la dépendance mais réécrirait du code que le plan impose verbatim — déviation plus large sur du code testé.
 - **Reversibility:** cheap (une devDependency de types, aucun code applicatif, aucun contenu ; désinstallable en une commande).
 - **Caught late:** no pour l'ajout (loggé avant exécution) — **oui pour le défaut lui-même** : la régression a été committée en T-A1 (`68ed21a`) et n'a été vue qu'après T-B1. Le ledger de T-A1 doit être lu avec cette réserve : « build OK » y était vrai, « `astro check` 0 erreur » n'y a jamais été affirmé car la commande n'a pas été lancée.
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur (bendevcat) le 2026-07-30 — ratification groupée D01/D02/D03/D05 au gate de décision de fin de session (`@types/node`).
 - **Follow-up:** si rejeté, réécrire le test pour lire le YAML sans API Node (import Vite `?raw`) et retirer `@types/node`. Indépendamment de la décision, ajouter `npx astro check` aux étapes de vérification des plans suivants.
 
 ## D02 — T-C1 (README) exécutée AVANT T-B2, dont elle devait consommer les constats
@@ -57,8 +98,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** T-B2 exige de cliquer « Work with Local Repository » puis de sélectionner un dossier dans le **sélecteur de fichiers natif** du système. Mesuré côté contrôleur : un navigateur piloté par automatisation échoue avec « *A repository root directory could not be selected. Please try again.* » — la File System Access API n'accorde l'accès disque que sur un geste humain réel. T-B2 n'est donc exécutable **que par l'utilisateur**, ce qui la met sur le chemin critique bloquant. Plutôt que de laisser la session s'arrêter avec R7 non commencé, T-C1 est livrée maintenant : son contenu (URL, prérequis Chromium, absence de proxy, emplacement des fichiers) est connu indépendamment du résultat de T-B2. Ce qui reste suspendu est uniquement la **preuve** que le pas-à-pas fonctionne — c'est précisément ce que T-B2 apportera.
 - **Reversibility:** cheap (si T-B2 révèle que le pas-à-pas documenté est faux, corriger le README est un seul fichier, une tâche de rework).
 - **Caught late:** no (loggé avant l'exécution de T-C1).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur (bendevcat) le 2026-07-30 — ratification groupée D01/D02/D03/D05 au gate de décision de fin de session (README écrit avant T-B2).
 - **Follow-up:** si rejeté, retirer le commit du README et attendre l'exécution de T-B2 par l'utilisateur avant de le réécrire. Dans tous les cas, R7 ne peut passer `Done` qu'après que le pas-à-pas ait été **suivi** réellement (spec §7, phase C : « workflow local suivi depuis le README »).
 
 ## D01 — En développement local, l'URL du CMS est `/admin/index.html` et non `/admin/`
@@ -70,8 +111,8 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 - **Reason:** mesuré côté contrôleur, serveur de dev Astro 7 (`npx astro dev`) : `/admin` → **404**, `/admin/` → **404**, `/admin/index.html` → **200**. Le serveur de dev (middleware statique Vite) ne résout pas l'index de répertoire pour les fichiers de `public/`. En production-like (`astro build` + `astro preview`, même service de fichiers que GitHub Pages) les quatre URL répondent **200** — donc **R1 n'est pas affecté** et le critère « ouvrir `/admin` » reste vrai là où l'utilisateur final l'ouvre. Seul le pas-à-pas local est concerné. Alternatives écartées : (a) ajouter une redirection Astro `/admin` → `/admin/index.html` collisionne avec le fichier statique `dist/admin/index.html` et modifierait `astro.config.mjs` (interdit par les contraintes globales) ; (b) documenter une URL qui renvoie 404 rendrait R7 invérifiable en le suivant.
 - **Reversibility:** cheap (une URL dans le README + une étape de T-B2 ; aucun code applicatif, aucun contenu).
 - **Caught late:** no (loggé avant l'exécution de T-B2 et T-C1).
-- **Status:** pending-user
-- **User decision:** <renseigné après décision explicite de l'utilisateur>
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur (bendevcat) le 2026-07-30 — ratification groupée D01/D02/D03/D05 au gate de décision de fin de session (URL locale `/admin/index.html`).
 - **Follow-up:** si rejeté, il faut choisir explicitement une autre issue : soit documenter `/admin/` en local en acceptant le 404 (R7 devient invérifiable), soit ouvrir `astro.config.mjs` pour tenter une redirection (au risque d'un conflit avec le fichier statique).
 
 <!--
