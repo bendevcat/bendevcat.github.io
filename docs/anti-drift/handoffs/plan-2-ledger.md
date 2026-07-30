@@ -1,6 +1,6 @@
 # Plan 2 — Scope Ledger
 
-Last updated: 2026-07-31 02:15
+Last updated: 2026-07-31 03:00
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -72,3 +72,12 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-31 02:05 — **Déviation D09 loggée** (`55c82b0`, `pending-user`) avant exécution.
 - 2026-07-31 02:15 — **T-D1 → Done** — commit `df1a492`. `media_folder: src/assets/uploads` + `public_folder: /src/assets/uploads` + `choose_url: false` sur le champ `cover`. **Sonde vérifiée** : `cover: "/src/assets/uploads/probe.png"` → build OK **et** `/_astro/probe.BnV1MXKY_1Lb9zI.webp` réellement présent sur disque (pas seulement un build vert) ; sonde supprimée, arbre propre. `/admin` recharge sur l'écran de connexion normal avec **0 erreur console** (les deux tentatives précédentes affichaient l'écran d'erreur de configuration). Bloc collection entry-relative **intact**. Tests **15/15**, check 0 erreur, build 8 pages. **Phase D terminée : 3/3.**
 - 2026-07-31 02:15 — **Résiduel assumé (D09)** : une image de **corps** choisie via l'onglet global sortirait non optimisée → 404 discret. Pas une régression (c'était déjà un 404), mais un changement de nature du risque. **Réserve** : le comportement d'écriture réel du CMS est établi par lecture du bundle, pas par un clic humain observé → smoke test manuel requis pendant T-B2.
+- 2026-07-31 02:50 — **T-A2 et T-B2 exécutées par l'utilisateur.** Preuves dans l'historique de `main` : commits `982c5ce` (« Create Article "test-cms-plan-2" ») et `517de02` (« Update Article »), tous deux produits par le CMS.
+  - **R2 → Done** : l'authentification par PAT a fonctionné (sans elle, aucun commit CMS n'existerait). PAT fine-grained, expiration 90 jours.
+  - **R3 → Done** : fichier écrit en `src/content/blog/test-cms-plan-2/index.md` — structure de bundle conforme.
+  - **R4 → Done** : à la création, `cover`, `coverAlt`, `aiUsage` et `tags` sont **absents** du frontmatter (pas vides) ; `draft: false` / `featured: false` conservés (false ≠ vide) ; `pubDate: 2026-07-30T22:25:00+02:00`, format exactement conforme à la prédiction Day.js de la revue finale. `omit_empty_optional_fields` est donc **prouvé en conditions réelles**.
+  - **R5 → Done sur son libellé** : le commit CMS est bien allé sur `main` **ET** a déclenché un run Actions (30579487572). **Réserve honnête** : le run a **échoué**, donc la clause §1.4 de la spec (« l'article est en ligne sans intervention manuelle ») n'était pas tenue tant que le défaut ci-dessous n'était pas corrigé.
+  - **R6 → toujours In progress** : la couverture a été renseignée par **URL distante** (`https://picsum.photos/...`), pas par un **upload**. Aucun fichier image n'a été écrit dans le dossier de l'article (le bundle ne contient que `index.md`). La clause « fichier écrit dans le dossier média configuré » n'est donc pas démontrée.
+  - **R7 → toujours In progress** : les commits proviennent du backend GitHub, pas du mode « Work with Local Repository » (qui, lui, n'écrit aucun commit). Le pas-à-pas local du README reste à suivre.
+- 2026-07-31 02:55 — **INCIDENT : 2 runs Actions en échec** (30579487572 après l'update CMS, 30579674152 après le merge). **Cause racine identifiée et reproduite en local** : `MissingImageDimension` — `cover: https://picsum.photos/id/919/1920/1280.webp`. Astro exige `width`/`height` (ou `inferSize`) pour une image distante ; `image()` laisse passer l'URL au niveau du schéma, l'échec survient au rendu. **C'est exactement le trou prédit par l'investigation I1** et fermé par `choose_url: false` — mais l'article a été créé **avant** que ce garde-fou n'atteigne `main`. Le garde-fou est désormais en place (`df1a492`, mergé) : ce cas précis ne peut plus se reproduire via le CMS.
+- 2026-07-31 03:00 — **Correctif préparé en local, NON poussé** (l'action touche le site public → confirmation utilisateur requise) : suppression de `src/content/blog/test-cms-plan-2/` — c'est ce que le plan prescrivait de toute façon (T-B2 Step 7 : supprimer l'article de test). Après suppression : `astro build` **8 pages, 0 erreur**, `vitest` 15/15, `astro check` 0 erreur.

@@ -53,9 +53,14 @@ directement à l'API GitHub.
    ce bouton ne peut pas fonctionner ici.
 3. Suivre le lien proposé pour créer un *personal access token* GitHub — de
    préférence un token **fine-grained** limité au seul dépôt
-   `bendevcat/bendevcat.github.io`, avec la permission **Contents: Read and write**.
+   `bendevcat/bendevcat.github.io`, avec la permission **Contents: Read and write**
+   et une **expiration de 90 jours**. Ce token peut écrire sur le dépôt qui publie
+   le site et vit dans un navigateur : l'expiration est ce qui borne les dégâts en
+   cas de fuite. GitHub prévient par mail avant l'échéance.
 4. Coller le token. Il est conservé dans le `localStorage` du navigateur : à
-   refaire une seule fois par navigateur.
+   refaire une seule fois par navigateur, puis à chaque expiration.
+   **Symptôme d'expiration** : la sauvegarde échoue sans message clair, parfois en
+   plein milieu d'un article. Avant de chercher un bug, régénérer le token.
 5. Éditer, puis **Save** : Sveltia commite directement sur `main`. Le workflow
    GitHub Actions `Deploy to GitHub Pages` se déclenche et le site est à jour en
    quelques minutes.
