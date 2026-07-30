@@ -7,8 +7,8 @@ Last updated by: main (contrôleur SDD)
 
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
-| R1 | `/admin/` sert Sveltia CMS depuis le CDN (**version épinglée**) — ouvrir `/admin` → l'UI Sveltia se charge, **0 erreur** en console | Pending | |
-| R2 | Auth GitHub via PAT « Sign In with Token », sans backend — coller un PAT valide → session authentifiée, le repo `bendevcat.github.io` est listé | Pending | Vérification côté utilisateur (un agent ne manipule pas de PAT). |
+| R1 | `/admin/` sert Sveltia CMS depuis le CDN (**version épinglée**) — ouvrir `/admin` → l'UI Sveltia se charge, **0 erreur** en console | In progress | T-A1. Version épinglée retenue : `0.175.1` (décision utilisateur au gate de validation du plan). |
+| R2 | Auth GitHub via PAT « Sign In with Token », sans backend — coller un PAT valide → session authentifiée, le repo `bendevcat.github.io` est listé | In progress | Config backend livrée par T-A1 ; la vérification elle-même est côté utilisateur (un agent ne manipule pas de PAT) → T-A2. |
 | R3 | Collection `blog` éditable, champs mappés sur le schéma Zod — créer un article → fichier dans `src/content/blog/<slug>/index.md` avec frontmatter conforme au schéma | Pending | |
 | R4 | `omit_empty_optional_fields: true` actif — créer un article en laissant `updatedDate` et `cover` vides → le frontmatter **n'a aucune clé vide** **ET** `astro build` passe | Pending | Le défaut Sveltia est `false` → déclaration explicite obligatoire. |
 | R5 | Un enregistrement CMS commit sur `main` et déclenche le déploiement — sauver dans le CMS → nouveau commit sur `main` **ET** run Actions déclenché | Pending | Vérifiable seulement après merge sur `main` (post-merge, comme R1 au Plan 1). |
@@ -38,4 +38,6 @@ Last updated by: main (contrôleur SDD)
 
 (Append a one-liner each time the ledger is updated, with the new status and the commit SHA.)
 
-- 2026-07-30 20:35 — Ledger seeded (pré-flight) — 7 lignes `Pending`. Branche `plan-2-cms-sveltia` créée depuis `main` (`4fabccf`). Plan d'implémentation écrit (`docs/anti-drift/plans/2026-07-19-plan-2-cms-sveltia.md`), en attente de validation utilisateur avant T-A1.
+- 2026-07-30 20:35 — Ledger seeded (pré-flight) — 7 lignes `Pending`. Branche `plan-2-cms-sveltia` créée depuis `main` (`4fabccf`). Plan d'implémentation écrit (`docs/anti-drift/plans/2026-07-19-plan-2-cms-sveltia.md`), en attente de validation utilisateur avant T-A1. Commit `7b25cd7`.
+- 2026-07-30 20:45 — **Plan validé par l'utilisateur** (gate de pré-flight). 3 décisions prises AVANT exécution, plan amendé en conséquence (`ccde9fd`) : (1) plan validé tel quel → démarrer T-A1 ; (2) `relatedProjects` **non mappé** dans le CMS (référence la collection `projects` du Plan 3) → **approuvé explicitement**, donc pas de déviation ; (3) version CDN épinglée = **`0.175.1`** (et non `0.176.0`, sortie le jour même) → amendement du plan avant toute exécution, donc pas de déviation.
+- 2026-07-30 20:47 — T-A1 (page `/admin` + config valide + test de non-régression) → **In progress** — R1 In progress, R2 In progress (partie config).
