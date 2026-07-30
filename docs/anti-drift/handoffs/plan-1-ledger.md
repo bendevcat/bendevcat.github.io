@@ -1,6 +1,6 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-30 19:56
+Last updated: 2026-07-30 20:06
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -74,3 +74,5 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 06:26 — **Fixes revue finale** → commit `744d4a6` : Node 22 épinglé (C1, → D06) + `concurrency` Pages + viewport `initial-scale=1` + trailing-slash cartes + nom package `astro-bencatdev`. Favicon **non touché** (§6 branding différé). Re-vérifié : build 8 pages, tests verts, workflow YAML OK. D1 workflow = **livré & vérifié statiquement**.
 - 2026-07-19 06:27 — **FIN DE SESSION (état = prêt à ship, en attente utilisateur).** 8/9 critères **Done** (R2–R9). **R1 = In progress / BLOQUÉ** : workflow prêt, mais création repo + push + Pages = tes actions. **Phase Z NON lancée** (le gate exige 0 `pending-user` — or 6 déviations D01–D06 à ratifier — + R1 vérifié). Handoff écrit : `docs/anti-drift/handoffs/plan-1-handoff.md`.
 - 2026-07-19 (reprise) — Utilisateur a mergé sur `main` + déployé. Bug **I1 matérialisé** : repo poussé sous le nom `astro-bencatdev` (project-site) → site servi sous `/astro-bencatdev/` → CSS `/_astro/…` en 404. Diagnostic confirmé (curl : CSS 404 à la racine, 200 sous le sous-chemin). Choix utilisateur = **renommer le repo en `bendevcat.github.io`** (user-site, conforme spec, zéro code). Fait → **R1 vérifié live (200 + CSS OK + RSS 6 items)** → **R1 → Done. 9/9 critères Done.** Reste : ratifier D01–D06 puis Phase Z (`/anti-drift-planning:verify 1`) → tag `milestone-plan-1`.
+- 2026-07-30 — **D03 remédiée** (`f9de4f3`) : 3 covers Unsplash rapatriées (user option a) → 6/6 articles avec cover. **6 déviations ratifiées** (`6b244c6`) : D01/D02/D04/D05/D06 approved, D03 rejected+remédiée → **0 pending-user**.
+- 2026-07-30 — **PHASE Z — `/anti-drift-planning:verify 1` → VERDICT : ✅ PASS.** Couverture spec : **9/9 R = Done**. Déviations : 0 pending-user (5 approved, 1 rejected+remédiée), 0 statut inventé. Tests frais : vitest 1/1, `astro check` 0 err/0 warn, `astro build` 8 pages. User-story (§1) : 6/6 étapes ✓ (utilisateur a déployé + confirmé le site live ; surfaces smoke-testées). Smoke visuel : home desktop+mobile, article, /blog ✓. **Z1 → Done. Plan 1 vérifié.** Ship = action utilisateur (push `main` + tag `milestone-plan-1`/`v0.1.0`). Next : Plan 2 (CMS Sveltia).
