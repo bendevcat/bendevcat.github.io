@@ -1,13 +1,13 @@
 # Plan 1 — Scope Ledger
 
-Last updated: 2026-07-19 06:38
+Last updated: 2026-07-30 19:56
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
 
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
-| R1 | Un push sur `main` déclenche le workflow GitHub Actions (`withastro/action`) qui build et déploie le site (run vert **ET** `curl -sI https://bendevcat.github.io` = `200` HTML) | In progress | **BLOQUÉ (côté utilisateur)** : workflow écrit (D1) mais vérif R1 dépend d'actions GitHub que l'utilisateur doit faire (créer repo `bendevcat.github.io`, `git remote add` + push `main`, Settings→Pages→Source=GitHub Actions). Impossibles côté agent. |
+| R1 | Un push sur `main` déclenche le workflow GitHub Actions (`withastro/action`) qui build et déploie le site (run vert **ET** `curl -sI https://bendevcat.github.io` = `200` HTML) | Done | Workflow `e4b42a8`+`744d4a6` (Node 22). Déployé sur user-site `bendevcat.github.io` — **vérif contrôleur live ✅** : `curl https://bendevcat.github.io/` = **200** HTML, CSS `/_astro/*.css` = **200** (résout à la racine), `/blog/<slug>/` = 200, `/rss.xml` = 200 (6 items, liens racine). Bug I1 (repo project-site → sous-chemin → CSS 404) résolu par renommage du repo en `bendevcat.github.io` (user-site) — pas de changement de code (conforme spec §6.2). |
 | R2 | La home `/` affiche un hero + une grille d'articles récents (hero **ET** ≥ 3 cartes réelles : titre, date, catégorie, description) | Done | C1 `c32fa53` — **smoke contrôleur ✅** : hero (`~/ whoami` + titre + sous-titre + 2 CTA) + 6 cartes (chips catégorie mono, cover GitHub Actions rendue). |
 | R3 | Un article `/blog/<slug>` : contenu complet + TOC (H2/H3) + blocs de code à bouton copier + bannière IA conditionnelle (visible si `aiUsage` défini) | Done | C3 `db9440c` + fix `1cf11ae` — **smoke contrôleur ✅** : TOC=50 liens H2/H3, 42 blocs code mono (copie=code seul, bouton épinglé dans wrapper), bannière bleue « IA relue ». Fix des 2 Important (bouton scroll, drafts) re-review ✅. |
 | R4 | `/blog` liste **tous** les articles publiés (`draft:false`), tri anté-chronologique (nb cartes = nb publiés **ET** aucun `draft:true` visible) | Done | C2 `3f1d8af` — **smoke contrôleur ✅** : `/blog` = 6 cartes (= publiés), ordre anté-chrono. Test draft d'exclusion passé. Fix D05 (route article filtre aussi les drafts). |
@@ -73,3 +73,4 @@ Last updated by: main (contrôleur SDD)
 - 2026-07-19 06:24 — **Revue finale de branche** (opus, 39 commits) : tests verts (vitest 1/1, check 0 err, build 8 pages). Trouvé **1 Critical** (workflow build Node 20 < Astro 7 exige Node ≥22 → 1er deploy échouerait) + 1 Important (I1 : repo doit s'appeler `bendevcat.github.io`) + Minor.
 - 2026-07-19 06:26 — **Fixes revue finale** → commit `744d4a6` : Node 22 épinglé (C1, → D06) + `concurrency` Pages + viewport `initial-scale=1` + trailing-slash cartes + nom package `astro-bencatdev`. Favicon **non touché** (§6 branding différé). Re-vérifié : build 8 pages, tests verts, workflow YAML OK. D1 workflow = **livré & vérifié statiquement**.
 - 2026-07-19 06:27 — **FIN DE SESSION (état = prêt à ship, en attente utilisateur).** 8/9 critères **Done** (R2–R9). **R1 = In progress / BLOQUÉ** : workflow prêt, mais création repo + push + Pages = tes actions. **Phase Z NON lancée** (le gate exige 0 `pending-user` — or 6 déviations D01–D06 à ratifier — + R1 vérifié). Handoff écrit : `docs/anti-drift/handoffs/plan-1-handoff.md`.
+- 2026-07-19 (reprise) — Utilisateur a mergé sur `main` + déployé. Bug **I1 matérialisé** : repo poussé sous le nom `astro-bencatdev` (project-site) → site servi sous `/astro-bencatdev/` → CSS `/_astro/…` en 404. Diagnostic confirmé (curl : CSS 404 à la racine, 200 sous le sous-chemin). Choix utilisateur = **renommer le repo en `bendevcat.github.io`** (user-site, conforme spec, zéro code). Fait → **R1 vérifié live (200 + CSS OK + RSS 6 items)** → **R1 → Done. 9/9 critères Done.** Reste : ratifier D01–D06 puis Phase Z (`/anti-drift-planning:verify 1`) → tag `milestone-plan-1`.
