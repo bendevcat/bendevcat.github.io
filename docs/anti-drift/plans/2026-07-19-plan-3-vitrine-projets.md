@@ -348,35 +348,11 @@ critères binaires par plan, un journal de périmètre tenu à jour à chaque t�
 et un audit de vérification obligatoire avant toute mise en ligne.
 ```
 
-- [ ] **Step 2: Créer la fiche du CV — `src/content/projects/resumexyz/index.md`**
+- [ ] **Step 2: Créer la 2ᵉ fiche — EN ATTENTE DE L'UTILISATEUR**
 
-```markdown
----
-title: "Resume XYZ — mon CV en ligne"
-description: "Mon premier site perso, en 2017 : un CV d'une page écrit à la main en HTML, CSS, PHP et JavaScript."
-status: archivé
-startDate: 2017-02-01
-stack: [HTML, CSS, PHP, JavaScript]
-tags: [web, php]
-repoUrl: https://github.com/bendevcat/resumexyz
-featured: false
----
+Le contenu de cette étape a été **retiré** (déviation **D02**) : l'utilisateur a écarté `resumexyz` et publiera d'autres projets pour servir d'exemples réels. Le plan sera **ré-amendé ici** avec les valeurs exactes (titre, description, statut, stack, dates, URLs, tous vérifiés sur la source) dès que les dépôts seront disponibles, **avant** que cette étape ne soit exécutée.
 
-Février 2017 : mon premier site perso. Un CV sur une seule page, écrit à la
-main — pas de générateur, pas de framework, pas de build.
-
-## Ce qu'il y avait dedans
-
-Du HTML et du CSS pour la mise en page, un peu de JavaScript pour l'animation,
-et du **PHP** pour le formulaire de contact — l'époque où envoyer un mail depuis
-un site voulait dire écrire soi-même son `mail()`.
-
-## Statut
-
-Archivé. Le domaine `benoitcatillon.xyz` n'est plus enregistré, donc il n'y a
-plus de démo à montrer — seulement le code source. Il reste ici parce qu'il est
-le point de départ de tout le reste.
-```
+Tant que cette étape n'est pas faite, **R1 ne peut pas passer `Done`** (« ≥ 2 fiches réelles chargées ») et **T-B1 → T-B4 restent bloquées** : leurs critères se vérifient sur ≥ 2 cartes rendues.
 
 - [ ] **Step 3: Ajouter le sens inverse sur l'article**
 
