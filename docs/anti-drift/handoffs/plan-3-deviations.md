@@ -8,6 +8,22 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 ---
 
+## D09 — Réparation du registre §4 de la méthodologie (blocage du lint mécanique en Phase Z)
+
+- **Date:** 2026-08-02
+- **Task affected:** Z1 (Phase Z) — touche `docs/anti-drift/specs/2026-07-19-methodology.md`, artefact **partagé par les cinq plans**, hors périmètre du Plan 3.
+- **Original plan:** rien dans la spec ni dans le plan d'impl du Plan 3 ne prévoit de modifier la méthodologie. Sa table §4 a **3 colonnes** : `Plan | User-facing goal (binary) | Spec path`.
+- **Deviation taken:** ajouter la colonne `Topic` manquante aux cinq lignes du registre, avec les valeurs dérivées des noms de fichiers de spec (`socle-blog-deploye`, `cms-sveltia`, `vitrine-projets`, `librairies-prompts-skills`, `recherche-et-pages`). **Additif** : aucune valeur existante n'est modifiée, aucun plan n'est renommé.
+- **Reason:** l'étape 3 de la Phase Z (`/anti-drift-planning:lint 3`) sort **6 violations** et un code de retour **1**, toutes issues d'une cause unique : le linter exige **au moins 4 colonnes** (`Plan, Topic, goal, Spec path`) et n'arrive donc à lire **aucune** ligne du registre. Conséquence en cascade : « *plan 3 was requested but the roster contains no such plan (roster plans: none)* ». **Ce n'est pas une régression de ce plan** — vérifié : le lint sort **exactement les 6 mêmes violations sur le Plan 1 et sur le Plan 2**, qui ont pourtant été taggés. Le contrôle est simplement plus récent que le fichier qu'il audite. Les 12 autres contrôles passent, dont **tous** ceux qui portent sur les artefacts du Plan 3 (`spec-ledger-coverage`, `ledger-status-vocabulary`, `deviation-status-vocabulary`, `deviation-reference-integrity`, `commit-sha-resolvable`, `unfilled-placeholders`).
+  Laisser le registre illisible reviendrait à désactiver le Lock 5 pour les plans 4 et 5 aussi.
+- **Reversibility:** cheap (une colonne dans une table Markdown ; aucun contenu de plan, aucun code).
+- **Caught late:** no (loggé avant exécution).
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, choix explicite au gate de la Phase Z : « **Réparer le registre, puis relancer la Phase Z** », parmi trois options présentées (réparer / arrêter en FAIL / ignorer le lint).
+- **Follow-up:** relancer le lint après correction ; il doit sortir **0 violation** avant que l'audit ne reprenne à l'étape 4. Les plans 1 et 2 bénéficient de la réparation sans être re-audités — leur vérification a eu lieu avant l'existence de ce contrôle, ce constat est reporté tel quel.
+
+---
+
 ## D08 — `delete: false` sur les deux collections du CMS (constat I1 de la revue finale)
 
 - **Date:** 2026-07-31

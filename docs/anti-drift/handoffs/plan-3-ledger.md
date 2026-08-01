@@ -7,13 +7,13 @@ Last updated by: main (contrôleur SDD)
 
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
-| R1 | Collection `projects` + schéma Zod (page bundles) — `astro build` valide le schéma **ET** ≥ 2 fiches réelles chargées | **Done** | T-A1 (schéma + helpers + tests) puis T-A2 (fiches réelles). Le schéma est repris **verbatim** de la spec de design §3.2 — pas de champ `draft` pour les projets. |
-| R2 | `/projets` rend une grille de cartes (titre, desc, statut, stack) — la page rend ≥ 2 cartes affichant ces 4 champs | **Done** | T-B1. Carte = **variante** de `ArticleCard.astro` (spec §6.2), pas un nouveau design system. |
-| R3 | Filtre par statut et par stack — choisir un statut → **seules** les fiches de ce statut restent visibles (idem pour une techno) | **Done** | T-B2. JS vanilla progressif (spec §6.1), aucun framework. Prédicat pur testé unitairement + vérification par comptage dans le navigateur. |
-| R4 | `/projets/<slug>` rend la fiche (corps + repo + démo) — corps rendu **ET** liens `repoUrl`/`demoUrl` présents quand définis | **Done** | T-B3. |
-| R5 | Relation bidirectionnelle `blog ↔ projects` résolue — liens cliquables, **aucun `undefined`** | **Done** | Trois tâches : T-A2 (données des deux côtés), T-B3 (projet → articles), T-B4 (article → projets). `relatedProjects` existe déjà dans le schéma blog depuis le Plan 1 (`src/content.config.ts:20`) mais n'a jamais été rendu. |
-| R6 | Projets éditables via le CMS — collection ajoutée au `config.yml` → créer un projet via `/admin` produit un fichier conforme au schéma | **Done** | T-C1 (config + garde-fou de test) puis **T-C2, geste utilisateur** : un agent ne peut ni fournir le PAT ni actionner le sélecteur de dossier natif (établi au Plan 2). |
-| R7 | Cartes/fiches en direction dark editorial-dev, responsive 375px — visuel cohérent avec le blog **ET** pas de scroll horizontal à 375px | **Done** | Contrôle 375px + dark/light dans T-B1, T-B2, T-B3 et T-B4 (pas de tâche dédiée : chaque tâche livrant du gabarit le vérifie). |
+| R1 | Collection `projects` + schéma Zod (page bundles) — `astro build` valide le schéma **ET** ≥ 2 fiches réelles chargées | Done | T-A1 (schéma + helpers + tests) puis T-A2 (fiches réelles). Le schéma est repris **verbatim** de la spec de design §3.2 — pas de champ `draft` pour les projets. |
+| R2 | `/projets` rend une grille de cartes (titre, desc, statut, stack) — la page rend ≥ 2 cartes affichant ces 4 champs | Done | T-B1. Carte = **variante** de `ArticleCard.astro` (spec §6.2), pas un nouveau design system. |
+| R3 | Filtre par statut et par stack — choisir un statut → **seules** les fiches de ce statut restent visibles (idem pour une techno) | Done | T-B2. JS vanilla progressif (spec §6.1), aucun framework. Prédicat pur testé unitairement + vérification par comptage dans le navigateur. |
+| R4 | `/projets/<slug>` rend la fiche (corps + repo + démo) — corps rendu **ET** liens `repoUrl`/`demoUrl` présents quand définis | Done | T-B3. |
+| R5 | Relation bidirectionnelle `blog ↔ projects` résolue — liens cliquables, **aucun `undefined`** | Done | Trois tâches : T-A2 (données des deux côtés), T-B3 (projet → articles), T-B4 (article → projets). `relatedProjects` existe déjà dans le schéma blog depuis le Plan 1 (`src/content.config.ts:20`) mais n'a jamais été rendu. |
+| R6 | Projets éditables via le CMS — collection ajoutée au `config.yml` → créer un projet via `/admin` produit un fichier conforme au schéma | Done | T-C1 (config + garde-fou de test) puis **T-C2, geste utilisateur** : un agent ne peut ni fournir le PAT ni actionner le sélecteur de dossier natif (établi au Plan 2). |
+| R7 | Cartes/fiches en direction dark editorial-dev, responsive 375px — visuel cohérent avec le blog **ET** pas de scroll horizontal à 375px | Done | Contrôle 375px + dark/light dans T-B1, T-B2, T-B3 et T-B4 (pas de tâche dédiée : chaque tâche livrant du gabarit le vérifie). |
 
 ## Status legend
 - **Done** — verified, criteria passed (link to commit SHA)
