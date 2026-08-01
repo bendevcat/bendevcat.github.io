@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getSortedProjects } from '../../lib/projects';
+import { getSortedProjects, assertEntriesResolved } from '../../lib/projects';
 import { PROJECT_STATUS_META } from '../../lib/projectStatus';
 import { sortAndFilter } from '../../lib/posts';
 
@@ -22,8 +22,18 @@ const statusMeta = PROJECT_STATUS_META[status];
 // jamais un id ni `undefined`. sortAndFilter (src/lib/posts.ts) écarte au
 // passage les articles `draft: true`, qui n'ont pas de route publique : les
 // lier produirait un lien mort.
+// D06 : assertEntriesResolved échoue avec un message nommant le projet, la
+// collection visée et l'id manquant si `getEntries` a renvoyé `undefined`
+// pour une référence cassée (cf. src/lib/projects.ts) — au lieu de laisser
+// passer un `TypeError` anonyme jusqu'à `sortAndFilter`.
 const relatedPosts = project.data.relatedPosts?.length
-  ? sortAndFilter(await getEntries(project.data.relatedPosts))
+  ? sortAndFilter(
+      assertEntriesResolved(
+        project.id,
+        project.data.relatedPosts,
+        await getEntries(project.data.relatedPosts),
+      ),
+    )
   : [];
 
 const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });

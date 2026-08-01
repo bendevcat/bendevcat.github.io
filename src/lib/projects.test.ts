@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortProjects, collectStacks } from './projects';
+import { sortProjects, collectStacks, assertEntriesResolved } from './projects';
 
 /** Fabrique un faux minimal — seules les clés lues par les fonctions testées. */
 function project(data: Partial<Record<string, any>>) {
@@ -57,5 +57,32 @@ describe('collectStacks', () => {
 
   it('renvoie un tableau vide quand aucun projet ne déclare de stack', () => {
     expect(collectStacks([project({}), project({ stack: [] })])).toEqual([]);
+  });
+});
+
+describe('assertEntriesResolved', () => {
+  it('renvoie les entrées inchangées quand tout est résolu (rien ne change)', () => {
+    const refs = [
+      { id: 'article-un', collection: 'blog' },
+      { id: 'article-deux', collection: 'blog' },
+    ];
+    const resolved = [
+      { id: 'article-un', data: { title: 'Un' } },
+      { id: 'article-deux', data: { title: 'Deux' } },
+    ];
+
+    expect(assertEntriesResolved('site-bencat', refs, resolved)).toEqual(resolved);
+  });
+
+  it('lève une erreur nommant le porteur, la collection et l\'id manquant quand une entrée est undefined', () => {
+    const refs = [
+      { id: 'article-un', collection: 'blog' },
+      { id: 'article-fantome', collection: 'blog' },
+    ];
+    const resolved = [{ id: 'article-un', data: { title: 'Un' } }, undefined];
+
+    expect(() => assertEntriesResolved('site-bencat', refs, resolved)).toThrow(
+      /site-bencat.*blog.*article-fantome/,
+    );
   });
 });
