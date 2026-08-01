@@ -201,3 +201,21 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   color: var(--color-acc);
   border-color: var(--color-acc);
 }
+
+/* ==========================================================================
+   Filtre /projets — Plan 3 / T-B2
+   Le masquage passe par l'attribut `hidden` (piloté par
+   src/scripts/project-filters.ts), qui garde la sémantique : un élément
+   `hidden` sort de l'arbre d'accessibilité ET de l'ordre de tabulation.
+   La règle est explicite parce que le `[hidden] { display: none }` du
+   preflight Tailwind a la MÊME spécificité que l'utilitaire `flex` porté par
+   la carte : sans `!important`, l'ordre de génération déciderait du résultat.
+   La barre de filtres est rendue `hidden` par le serveur et révélée par le
+   script : sans JS, aucun contrôle mort n'est affiché (enhancement progressif,
+   spec §6.1).
+   ========================================================================== */
+[data-project-card][hidden],
+[data-project-filters][hidden],
+[data-projects-empty][hidden] {
+  display: none !important;
+}

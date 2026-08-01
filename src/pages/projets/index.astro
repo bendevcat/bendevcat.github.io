@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { getSortedProjects, collectStacks } from '../../lib/projects';
+import { PROJECT_STATUSES } from '../../content.config';
+import { ALL } from '../../lib/projectFilters';
+
+// getSortedProjects() applique déjà l'ordre du plan (featured, startDate desc,
+// titre) — cf. src/lib/projects.ts. Pas de re-tri ici.
+const projects = await getSortedProjects();
+const stacks = collectStacks(projects);
+---
+
+<BaseLayout
+	title="Projets — bencat_"
+	description="Les projets de bencat_ : extensions, outils et POCs."
+>
+	<main>
+		<section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+			<p class="font-mono text-sm text-acc">~/ projets</p>
+			<h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">Projets</h1>
+		</section>
+
+		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+			{/*
+				`hidden` côté serveur : révélé par src/scripts/project-filters.ts.
+				Sans JS, aucun contrôle mort n'est affiché et toutes les cartes
+				restent visibles (enhancement progressif, spec §6.1).
+			*/}
+			<div
+				class="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+				data-project-filters
+				hidden
+			>
+				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par statut">
+					<button
+						type="button"
+						data-filter-status={ALL}
+						aria-pressed="true"
+						class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc aria-pressed:border-acc aria-pressed:text-acc"
+					>
+						tous
+					</button>
+					{
+						PROJECT_STATUSES.map((status) => (
+							<button
+								type="button"
+								data-filter-status={status}
+								aria-pressed="false"
+								class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc aria-pressed:border-acc aria-pressed:text-acc"
+							>
+								{status}
+							</button>
+						))
+					}
+				</div>
+
+				{
+					stacks.length > 0 && (
+						<label class="flex items-center gap-2 font-mono text-xs text-muted">
+							techno
+							<select
+								data-filter-stack
+								class="rounded-lg border border-line bg-surface px-2 py-1 font-mono text-xs text-text"
+							>
+								<option value={ALL}>toutes</option>
+								{stacks.map((tech) => (
+									<option value={tech}>{tech}</option>
+								))}
+							</select>
+						</label>
+					)
+				}
+			</div>
+
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{projects.map((project) => <ProjectCard project={project} />)}
+			</div>
+
+			<p class="mt-8 font-mono text-sm text-muted" data-projects-empty hidden>
+				Aucun projet ne correspond à ce filtre.
+			</p>
+		</section>
+	</main>
+
+	<script>
+		import '../../scripts/project-filters.ts';
+	</script>
+</BaseLayout>

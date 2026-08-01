@@ -29,6 +29,13 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
+    # Défaut Sveltia = true : sans cette clé, le bouton « Supprimer » est actif
+    # alors que le CMS ne nettoie JAMAIS les rétro-références. Supprimer un
+    # article laisserait un `relatedProjects` mort sur une fiche projet ; le
+    # commit suivant échoue au garde-fou `assertEntriesResolved` et le build
+    # entier ne produit plus aucune page (D08). Suppression propre : voir la
+    # section dédiée du README.
+    delete: false
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [pubDate, title]
@@ -54,4 +61,68 @@ collections:
           - { label: '🤖 Généré par IA', value: full }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
       - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
+      - name: relatedProjects
+        label: Projets liés
+        widget: relation
+        required: false
+        multiple: true
+        collection: projects
+        value_field: '{{slug}}'
+        search_fields: [title]
+        display_fields: [title]
+      - { name: body, label: Contenu, widget: markdown }
+
+  - name: projects
+    label: Projets
+    label_singular: Projet
+    description: Fiches projets — src/content/projects/{slug}/index.md
+    folder: src/content/projects
+    path: '{{slug}}/index'
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    # Défaut Sveltia = true : sans cette clé, le bouton « Supprimer » est actif
+    # alors que le CMS ne nettoie JAMAIS les rétro-références. Supprimer un
+    # projet laisserait un `relatedProjects` mort sur un article de blog ; le
+    # commit suivant échoue au garde-fou `assertEntriesResolved` et le build
+    # entier ne produit plus aucune page (D08). Suppression propre : voir la
+    # section dédiée du README.
+    delete: false
+    slug: '{{slug}}'
+    identifier_field: title
+    sortable_fields: [title, startDate]
+    # Médias à côté de la fiche : Astro optimise les images co-localisées
+    # (même stratégie que `blog`, prouvée en production au Plan 2).
+    media_folder: ''
+    public_folder: ''
+    fields:
+      - { name: title, label: Titre, widget: string }
+      - { name: description, label: Description, widget: text, hint: Résumé affiché sur les cartes }
+      - name: status
+        label: Statut
+        widget: select
+        default: actif
+        options: [actif, wip, archivé]
+      - { name: startDate, label: Date de début, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ', required: false }
+      - { name: stack, label: Stack technique, widget: list, required: false, default: [], hint: Une techno par entrée — alimente le filtre de /projets }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: cover, label: Image de couverture, widget: image, required: false, choose_url: false }
+      - { name: coverAlt, label: Texte alternatif de la couverture, widget: string, required: false }
+      # Motif ancré des deux côtés (voir D03) : `^https?://` seul n'est pas ancré à
+      # droite dans le validateur Sveltia 0.175.1 (RegExp.test non ancré = simple
+      # préfixe), donc `https://` ou `http://exa mple.com` passaient le CMS et
+      # cassaient `astro build` (ZodError sur `z.string().url()`) après le commit.
+      # Motif établi empiriquement contre `z.string().url()` — voir cms-config.test.ts.
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
+      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
+      - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
+      - name: relatedPosts
+        label: Articles liés
+        widget: relation
+        required: false
+        multiple: true
+        collection: blog
+        value_field: '{{slug}}'
+        search_fields: [title]
+        display_fields: [title]
       - { name: body, label: Contenu, widget: markdown }
