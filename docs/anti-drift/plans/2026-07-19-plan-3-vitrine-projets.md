@@ -657,10 +657,10 @@ const projects = await getSortedProjects();
 
 ```bash
 npx astro build
-grep -c 'data-project-card' dist/projets/index.html
+grep -o 'data-project-card' dist/projets/index.html | wc -l
 ```
 
-Attendu : le compte est **≥ 2** (R2 exige ≥ 2 cartes). Puis, sur la même sortie, vérifier pour chaque carte la présence des **quatre** champs exigés par R2 — titre, description, statut, stack :
+Attendu : le compte est **≥ 2** (R2 exige ≥ 2 cartes). **`grep -o … | wc -l`, pas `grep -c`** : le HTML construit n'est pas indenté, et `grep -c` compterait les *lignes* contenant le motif — il renverrait `1` quel que soit le nombre de cartes (déviation D05). Puis, sur la même sortie, vérifier pour chaque carte la présence des **quatre** champs exigés par R2 — titre, description, statut, stack :
 
 ```bash
 grep -o 'data-status="[^"]*"' dist/projets/index.html
@@ -684,7 +684,7 @@ npx astro check
 npx astro build
 ```
 
-Attendu : tests verts · `astro check` **0 error** · build **11 pages**.
+Attendu : tests verts · `astro check` **0 error** · build **9 pages** (8 + `/projets` ; les fiches `/projets/<slug>` arrivent en T-B3).
 
 - [ ] **Step 7: Commit**
 
@@ -1008,7 +1008,7 @@ npx astro check
 npx astro build
 ```
 
-Attendu : tests verts (dont les 5 nouveaux) · `astro check` **0 error** · build **11 pages**.
+Attendu : tests verts (dont les 5 nouveaux) · `astro check` **0 error** · build **9 pages** (le filtre ne crée aucune route).
 
 - [ ] **Step 11: Commit**
 
@@ -1206,7 +1206,7 @@ npx astro build
 git status --short
 ```
 
-Attendu : tests verts · `astro check` **0 error** · build = 11 pages + 1 par fiche · **aucun** reliquat de sonde.
+Attendu : tests verts · `astro check` **0 error** · build **11 pages** (9 + les 2 fiches projets) · **aucun** reliquat de sonde.
 
 - [ ] **Step 6: Commit**
 

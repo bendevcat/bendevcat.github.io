@@ -6,6 +6,23 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 ---
 
+## D05 — Valeurs attendues fausses dans les étapes de vérification de la Phase B
+
+- **Date:** 2026-07-31
+- **Task affected:** T-B1 (Steps 4 et 6), T-B2 (Step 10), T-B3 (Step 5)
+- **Original plan:** deux erreurs, relevées par l'implémenteur de T-B1 et **re-vérifiées par le contrôleur** :
+  1. `grep -c 'data-project-card' dist/projets/index.html` (T-B1 Step 4) — `grep -c` compte les **lignes** contenant le motif, pas les **occurrences**. Le HTML construit n'étant pas indenté (6 lignes en tout), la commande renvoie `1` quel que soit le nombre de cartes. **Le contrôle de R2 « ≥ 2 cartes » était donc impossible à satisfaire tel qu'écrit.**
+  2. « build **11 pages** » annoncé à la fin de T-B1, T-B2 et T-B3. Faux à deux endroits sur trois : après T-B1 le build fait **9 pages** (8 + `/projets`), après T-B2 toujours **9** (le filtre ne crée aucune route), et ce n'est qu'après T-B3 qu'il atteint **11** (9 + les 2 fiches).
+- **Deviation taken:** la commande devient `grep -o … | wc -l` ; les valeurs attendues sont corrigées à 9 / 9 / 11.
+- **Reason:** mesuré, pas déduit. `npx astro build` → **9 pages** ; `grep -o 'data-project-card' dist/projets/index.html | wc -l` → **2**, quand `grep -c` sur le même fichier renvoie **1**. Une étape de vérification qui ne peut pas passer, ou dont le chiffre attendu est faux, pousse l'implémenteur suivant soit à croire qu'il a cassé quelque chose, soit — bien pire — à « arrondir » son rapport pour coller au plan.
+- **Reversibility:** cheap (des commandes et des nombres dans des étapes de vérification ; aucun livrable n'est touché).
+- **Caught late:** no (loggé avant correction du plan). L'implémenteur de T-B1 a **signalé les deux écarts au lieu de les arrondir** — c'est exactement le comportement attendu.
+- **Status:** pending-user
+- **User decision:** —
+- **Follow-up:** aucun code à défaire. Vérifier que les valeurs corrigées tiennent à mesure que la Phase B avance.
+
+---
+
 ## D04 — La méthode de vérification de R5 prescrite par le plan (T-A2 Steps 4-5) était factuellement fausse
 
 - **Date:** 2026-07-31
