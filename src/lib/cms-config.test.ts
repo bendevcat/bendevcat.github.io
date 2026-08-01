@@ -122,6 +122,15 @@ describe('config CMS — collection blog', () => {
     expect(byName.cover.widget).toBe('image');
     expect(byName.body.widget).toBe('markdown');
   });
+
+  it('relie les projets par une relation typée vers la collection projects', () => {
+    const rel = blog().fields.find((f: any) => f.name === 'relatedProjects');
+    expect(rel.widget).toBe('relation');
+    expect(rel.collection).toBe('projects');
+    expect(rel.multiple).toBe(true);
+    // `reference('projects')` d'Astro stocke l'id d'entrée = le nom du dossier.
+    expect(rel.value_field).toBe('{{slug}}');
+  });
 });
 
 describe('config CMS — collection projects', () => {

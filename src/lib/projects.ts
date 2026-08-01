@@ -7,7 +7,9 @@ export type ProjectEntry = CollectionEntry<'projects'>;
  * fixe, la spec est muette) :
  *   1. `featured` d'abord ;
  *   2. `startDate` décroissante, une fiche sans date passant en dernier ;
- *   3. titre A→Z (`localeCompare` en 'fr' : casse et accents ignorés).
+ *   3. titre A→Z (`localeCompare` en 'fr' : ordre alphabétique linguistique,
+ *      casse et accents ne servent que de départage, pas d'ignorés — ex.
+ *      `'e'.localeCompare('é', 'fr')` vaut -1).
  * Ne mute pas le tableau reçu.
  */
 export function sortProjects(projects: ProjectEntry[]): ProjectEntry[] {
