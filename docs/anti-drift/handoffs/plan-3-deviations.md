@@ -6,6 +6,23 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 ---
 
+## D06 — Garde-fou ajouté sur la résolution des références (constat Important de la revue T-B3)
+
+- **Date:** 2026-07-31
+- **Task affected:** T-B3 (round de fix 1) et, par conséquence, T-B4
+- **Original plan:** le plan impose verbatim, en T-B3 comme en T-B4, de passer directement le résultat de `getEntries()` à `sortAndFilter` / `sortProjects`. Aucune étape ne prévoit de garde-fou sur une référence introuvable.
+- **Deviation taken:** interposer un garde-fou qui **échoue avec un message nommant le projet (ou l'article) fautif et l'id manquant**, au lieu de laisser passer un `undefined` jusqu'à un `TypeError` anonyme.
+- **Reason:** constat **Important** de la revue, **établi empiriquement** par le relecteur — sondes créées, mesurées, supprimées, arbre vérifié propre. `getEntries` d'Astro n'échoue pas sur une référence introuvable : `createGetEntry` fait `console.warn('Entry blog → … was not found.'); return;`, donc **`undefined` entre dans le tableau**. `sortAndFilter` (`src/lib/posts.ts:5`) accède ensuite à `p.data.draft` → `TypeError: Cannot read properties of undefined (reading 'data')`, **exit 1, build interrompu** : aucune des 11 pages n'est produite, pas seulement la fiche concernée. Ni le schéma Zod (`reference()` ne valide que la forme) ni `astro check` (0 erreur sur une référence cassée) ne détectent le cas en amont.
+  **Scénario réel, pas théorique** : l'éditeur supprime ou renomme dans le CMS un article encore cité en `relatedPosts` → le commit est accepté sans le moindre avertissement → le déploiement suivant casse intégralement, avec un message qui ne nomme ni le projet ni l'article manquant. C'est la forme exacte de l'incident image du Plan 2 : le CMS accepte, le build tranche, et il tranche trop tard **et** sans expliquer.
+  **La lettre de R5 est déjà respectée** (aucun `undefined` n'atteint le HTML, l'échec est bruyant) : ce garde-fou ne corrige pas une non-conformité, il rend l'échec **diagnosticable**. C'est pour cette raison qu'il est loggé comme une déviation et non comme un correctif de conformité.
+- **Reversibility:** cheap (un helper et son appel dans deux gabarits ; aucun contenu, aucune donnée, rien de publié).
+- **Caught late:** no (loggé avant exécution du correctif).
+- **Status:** pending-user
+- **User decision:** —
+- **Follow-up:** si rejeté, retirer le helper et revenir au code verbatim du plan — en assumant qu'une référence cassée produira un `TypeError` anonyme et un déploiement rouge non diagnosticable. **Choix alternatif écarté** : filtrer silencieusement les `undefined`. Il aurait rendu le build vert en **supprimant discrètement un lien**, ce qui est précisément le genre de perte silencieuse que ce plan existe pour empêcher.
+
+---
+
 ## D05 — Valeurs attendues fausses dans les étapes de vérification de la Phase B
 
 - **Date:** 2026-07-31
