@@ -1,7 +1,8 @@
 ---
 import { Image } from 'astro:assets';
-import { render } from 'astro:content';
+import { getEntries, render } from 'astro:content';
 import { getPublishedPosts } from '../../lib/posts';
+import { sortProjects, assertEntriesResolved } from '../../lib/projects';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import AiBanner from '../../components/AiBanner.astro';
@@ -20,6 +21,23 @@ const { Content, headings } = await render(post);
 // TOC = uniquement H2/H3 (cf. brief C3 gotcha #4) ; TableOfContents.astro se
 // masque lui-même si la liste est vide (pas d'encart TOC vide).
 const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+// R5, sens article → projets : les références sont résolues en entrées réelles
+// pour afficher un titre, jamais un id ni `undefined`. Les projets n'ont pas de
+// champ `draft` (spec de design §3.2) : rien à filtrer, seulement à ordonner.
+// D06 : assertEntriesResolved échoue avec un message nommant l'article, la
+// collection visée et l'id manquant si `getEntries` a renvoyé `undefined` pour
+// une référence cassée (cf. src/lib/projects.ts), au lieu de laisser passer un
+// `TypeError` anonyme jusqu'à `sortProjects`.
+const relatedProjects = post.data.relatedProjects?.length
+  ? sortProjects(
+      assertEntriesResolved(
+        post.id,
+        post.data.relatedProjects,
+        await getEntries(post.data.relatedProjects),
+      ),
+    )
+  : [];
 ---
 
 <BaseLayout title={post.data.title} description={post.data.description}>
@@ -43,6 +61,26 @@ const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
     <div class="prose">
       <Content />
     </div>
+
+    {
+      relatedProjects.length > 0 && (
+        <section class="mt-12 border-t border-line pt-8">
+          <h2 class="font-mono text-sm text-muted">// projets liés</h2>
+          <ul class="mt-4 flex flex-col gap-2">
+            {relatedProjects.map((project) => (
+              <li>
+                <a
+                  href={`/projets/${project.id}/`}
+                  class="text-text underline decoration-line underline-offset-4 transition-colors hover:text-acc hover:decoration-acc"
+                >
+                  {project.data.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
   </article>
 
   <script>
