@@ -6,6 +6,27 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 ---
 
+## D04 — La méthode de vérification de R5 prescrite par le plan (T-A2 Steps 4-5) était factuellement fausse
+
+- **Date:** 2026-07-31
+- **Task affected:** T-A2 (Steps 4 et 5)
+- **Original plan:** deux affirmations du plan d'impl, toutes deux erronées :
+  1. contexte de T-A2 et Step 4 — « **Astro valide les `reference()` au build : un id inexistant fait échouer `astro build`** avec un message explicite — c'est le test de cette tâche » ;
+  2. Step 5 — sonde à créer en `src/pages/_probe-refs.astro`, puis à lire via `cat dist/_probe-refs/index.html`.
+- **Deviation taken:** (1) l'affirmation est corrigée — `reference()` ne valide que la **forme**, l'existence n'est vérifiée qu'à la **résolution** (`getEntry` / `getEntries`), donc uniquement quand une page routée résout le champ ; le Step 4 devient un contrôle de schéma, et la preuve d'intégrité des références passe par la sonde. (2) La sonde est renommée **sans underscore** (`src/pages/probe-refs.astro`) et lue en `dist/probe-refs/index.html`.
+- **Reason:** constat remonté par l'implémenteur de T-A2, qui s'est **arrêté avant de committer** comme le brief le lui demandait, puis **re-vérifié indépendamment par le contrôleur** en trois builds réels :
+  - id cassé (`nexiste-pas`) dans `relatedPosts`, **aucune page ne le résout** → `astro build` **vert, exit 0, 8 pages**. La validation annoncée par le plan n'existe pas à ce stade.
+  - même id cassé **avec** une page routée qui résout → build **en échec** : `Entry blog → nexiste-pas was not found.` puis `TypeError: Cannot read properties of undefined (reading 'id')`.
+  - ids corrects + sonde routée → `site-bencat -> [bienvenue-dans-mon-foutoir:Bienvenue dans mon foutoir ! 🚀]` et `gha-svu -> [comment-jutilise-github-actions-au-quotidien:Comment j'utilise GitHub Actions au quotidien]` — **aucun `undefined`**.
+  Quant au nom de la sonde : Astro exclut du routage tout fichier ou dossier préfixé par `_` sous `src/pages/`. La sonde prescrite ne produisait donc **aucune page**, et le `cat` du plan échouait en « No such file or directory » **même avec des données correctes** — une étape de vérification qui ne pouvait pas passer.
+- **Reversibility:** cheap (une méthode de vérification et un nom de fichier temporaire ; aucun livrable n'est touché — les Steps 2 et 3 restent identiques).
+- **Caught late:** no (loggé avant que le correctif ne soit exécuté et avant tout commit de T-A2).
+- **Status:** pending-user
+- **User decision:** —
+- **Follow-up:** conséquence à porter jusqu'à la Phase Z — **une référence cassée dans le contenu ne casse le build qu'une fois qu'une page la résout**. Tant que T-B3 et T-B4 ne sont pas livrées, rien ne protège contre un `relatedPosts` pointant dans le vide. À partir de T-B4, la protection existe et elle est **bruyante** (build rouge), ce qui est le bon comportement. Ce fait doit être re-vérifié lors du walkthrough de R5 en Phase Z, pas supposé.
+
+---
+
 ## D03 — Durcissement du `pattern` de `repoUrl` / `demoUrl` (constat Important de la revue T-C1)
 
 - **Date:** 2026-07-31

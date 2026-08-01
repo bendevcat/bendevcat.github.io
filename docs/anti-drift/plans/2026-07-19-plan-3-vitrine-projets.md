@@ -305,7 +305,9 @@ git commit -m "feat(p3): add projects collection schema and ordering helpers"
 
 **⚠️ Le Step 1 est DÉJÀ LIVRÉ** (commit `7edc67e`, avant une interruption de session) : `src/content/projects/site-bencat/index.md` et la ligne `relatedProjects: [site-bencat]` sur l'article « Bienvenue dans mon foutoir ! » existent déjà. **Ne les recrée pas, ne les réécris pas.** Ton travail commence au **Step 2**. Le Step 1 reste ci-dessous pour référence — vérifie seulement que le fichier existe et correspond.
 
-R5 exige les **deux sens** : au moins un projet doit porter `relatedPosts`, et au moins un article doit porter `relatedProjects`. Astro valide les `reference()` au build : un id inexistant fait **échouer** `astro build` avec un message explicite — c'est le test de cette tâche.
+R5 exige les **deux sens** : au moins un projet doit porter `relatedPosts`, et au moins un article doit porter `relatedProjects`.
+
+**⚠️ Correction du plan (déviation D04) — ce que fait vraiment `reference()`.** Une version antérieure de ce plan affirmait qu'un id inexistant faisait échouer `astro build`. **C'est faux**, et ça a été mesuré : `reference()` ne valide que la **forme** du champ ; l'existence n'est vérifiée qu'au moment de la **résolution** (`getEntry` / `getEntries`), donc uniquement quand une **page routée** résout le champ. Tant qu'aucune page ne le fait, un `relatedPosts: [nexiste-pas]` passe le build en vert. La preuve d'intégrité des références est donc portée par la **sonde du Step 5**, pas par le build seul.
 
 Règles de rédaction, non négociables :
 - **Ne jamais écrire une clé optionnelle vide** (`repoUrl:` sans valeur casse la validation `z.string().url()`). Clé absente = champ absent, c'est le contrat `omit_empty_optional_fields` du Plan 2.
@@ -421,35 +423,52 @@ Cet article parle de GitHub Actions au quotidien et `gha-svu` est une action Git
 npx astro build
 ```
 
-Attendu : build **vert, 8 pages**. Le compte ne bouge pas : les routes `/projets` et `/projets/<slug>` n'existent pas encore (elles arrivent en T-B1 et T-B3), donc une entrée de collection ne produit aucune page à ce stade. **Ce qui est vérifié ici, c'est la validation du schéma et des références**, pas un nombre de pages : un id erroné dans `relatedPosts` ou `relatedProjects` fait échouer le build avec un message citant le champ. Vérifie-le pour de bon — remplace temporairement un id par `nexiste-pas`, constate l'échec, puis remets la bonne valeur. Une validation qu'on n'a jamais vue échouer n'est pas une validation prouvée.
+Attendu : build **vert, 8 pages**. Le compte ne bouge pas : les routes `/projets` et `/projets/<slug>` n'existent pas encore (T-B1 et T-B3), donc une entrée de collection ne produit aucune page à ce stade.
 
-- [ ] **Step 5: Prouver que la référence est réellement résolvable en entrée (pas seulement valide)**
+Ce Step ne vérifie que la validation du **schéma** (types, champs requis, `z.string().url()` sur `repoUrl`). Il **ne prouve rien sur l'existence des références** — voir la correction D04 ci-dessus. Cette preuve-là est au Step 5.
 
-Sonde temporaire — créer `src/pages/_probe-refs.astro` :
+- [ ] **Step 5: Prouver que les références se résolvent réellement — dans les deux sens**
+
+Sonde temporaire — créer `src/pages/probe-refs.astro`. **Le nom ne prend pas d'underscore** : Astro exclut du routage tout fichier préfixé par `_` sous `src/pages/`, une sonde nommée `_probe-refs.astro` ne produirait donc aucune page (c'était l'erreur corrigée par D04).
 
 ```astro
 ---
 import { getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { getSortedProjects } from '../lib/projects';
 
 const projects = await getSortedProjects();
+const posts = await getCollection('blog');
 const lines: string[] = [];
+
+// Sens projet → articles
 for (const p of projects) {
-  const posts = p.data.relatedPosts?.length ? await getEntries(p.data.relatedPosts) : [];
-  lines.push(`${p.id} -> [${posts.map((e) => `${e.id}:${e.data.title}`).join(', ')}]`);
+  const linked = p.data.relatedPosts?.length ? await getEntries(p.data.relatedPosts) : [];
+  lines.push(`${p.id} -> [${linked.map((e) => `${e.id}:${e.data.title}`).join(', ')}]`);
+}
+
+// Sens article → projets
+for (const a of posts) {
+  if (!a.data.relatedProjects?.length) continue;
+  const linked = await getEntries(a.data.relatedProjects);
+  lines.push(`${a.id} -> [${linked.map((e) => `${e.id}:${e.data.title}`).join(', ')}]`);
 }
 ---
 <pre>{lines.join('\n')}</pre>
 ```
 
 ```bash
-npx astro build && cat dist/_probe-refs/index.html
+npx astro build && cat dist/probe-refs/index.html
 ```
 
-Attendu : chaque ligne montre l'id **et le titre** de l'article lié. **Aucun `undefined`** dans la sortie (clause explicite de R5). Puis supprimer la sonde :
+Attendu : **quatre lignes** — deux dans le sens projet → article, deux dans le sens article → projet — chacune montrant l'id **et le titre** de la cible. **Aucun `undefined`** dans la sortie (clause explicite de R5).
+
+Puis, **pendant que la sonde est en place**, prouver que la protection existe vraiment : remplacer temporairement un id par `nexiste-pas`, relancer `npx astro build`, et constater l'échec. Le message attendu, mesuré : `Entry blog → nexiste-pas was not found.` suivi de `TypeError: Cannot read properties of undefined (reading 'id')`. Coller ce message dans le rapport, puis remettre la bonne valeur et vérifier que le build repasse. Une validation qu'on n'a jamais vue échouer n'est pas une validation prouvée.
+
+Enfin, supprimer la sonde :
 
 ```bash
-rm src/pages/_probe-refs.astro && npx astro build
+rm src/pages/probe-refs.astro && npx astro build
 ```
 
 - [ ] **Step 6: Vérifications complètes**
