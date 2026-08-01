@@ -31,6 +31,20 @@ describe('config CMS — backend', () => {
   });
 });
 
+describe('config CMS — suppression désactivée (D08)', () => {
+  it('interdit la suppression sur blog et projects : le CMS ne nettoie pas les rétro-références', () => {
+    const cfg = loadCmsConfig();
+    // Défaut Sveltia = true. Sans `delete: false`, supprimer une entrée laisse
+    // une référence morte (`relatedPosts`/`relatedProjects`) sur l'autre
+    // collection : le commit suivant casse `assertEntriesResolved` et
+    // `astro build` ne produit plus aucune page (constat I1, revue T-C1).
+    expect(cfg.collections[0].name).toBe('blog');
+    expect(cfg.collections[0].delete).toBe(false);
+    expect(cfg.collections[1].name).toBe('projects');
+    expect(cfg.collections[1].delete).toBe(false);
+  });
+});
+
 describe('page /admin', () => {
   it('épingle la version du CDN Sveltia et interdit l’indexation', () => {
     const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');

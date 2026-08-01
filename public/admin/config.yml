@@ -29,6 +29,13 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
+    # Défaut Sveltia = true : sans cette clé, le bouton « Supprimer » est actif
+    # alors que le CMS ne nettoie JAMAIS les rétro-références. Supprimer un
+    # article laisserait un `relatedProjects` mort sur une fiche projet ; le
+    # commit suivant échoue au garde-fou `assertEntriesResolved` et le build
+    # entier ne produit plus aucune page (D08). Suppression propre : voir la
+    # section dédiée du README.
+    delete: false
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [pubDate, title]
@@ -74,6 +81,13 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
+    # Défaut Sveltia = true : sans cette clé, le bouton « Supprimer » est actif
+    # alors que le CMS ne nettoie JAMAIS les rétro-références. Supprimer un
+    # projet laisserait un `relatedProjects` mort sur un article de blog ; le
+    # commit suivant échoue au garde-fou `assertEntriesResolved` et le build
+    # entier ne produit plus aucune page (D08). Suppression propre : voir la
+    # section dédiée du README.
+    delete: false
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [title, startDate]

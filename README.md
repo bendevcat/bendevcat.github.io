@@ -99,6 +99,28 @@ dans le dépôt : le déploiement casse (`image-not-found`) et **rien dans le CM
 te le signale**. Le correctif est de re-sauvegarder l'article avec une image qui
 passe, ce qui corrige les deux dans le même commit.
 
+### Supprimer une entrée proprement
+
+Le bouton **« Supprimer »** est **désactivé** dans le CMS (`delete: false` sur
+les deux collections dans `public/admin/config.yml`), et c'est volontaire :
+Sveltia ne nettoie **jamais** les rétro-références. Supprimer le projet
+`gha-svu` depuis `/admin` laisserait par exemple `relatedProjects: [gha-svu]`
+sur un article de blog qui le cite encore — et ce n'est pas juste la page du
+projet qui casserait : le commit suivant ferait échouer le garde-fou
+`assertEntriesResolved` d'Astro, et **tout le déploiement** s'arrêterait, 0
+page produite, sur un geste que le CMS présente comme banal.
+
+Pour supprimer une entrée proprement, à la main :
+
+1. Supprimer le dossier de l'entrée (`src/content/blog/<slug>/` ou
+   `src/content/projects/<slug>/`).
+2. Retirer **toutes** les rétro-références qui la citent : `relatedProjects`
+   côté article si tu supprimes un projet, `relatedPosts` côté projet si tu
+   supprimes un article. Un `grep` sur le slug dans `src/content/` trouve tout
+   ce qui reste.
+3. Vérifier avec un build local (`npm run build`) avant de pousser — c'est le
+   seul moyen d'être sûr qu'aucune référence morte ne subsiste.
+
 ### Où atterrissent les fichiers
 
 | Élément | Emplacement |
