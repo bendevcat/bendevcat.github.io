@@ -301,16 +301,18 @@ git commit -m "feat(p3): add projects collection schema and ordering helpers"
 - Consumes: le schéma de T-A1 (`src/content.config.ts`).
 - Produces: des `id` de projets (= nom du dossier) référencés par les articles, et des `id` d'articles référencés par les projets. T-B1/T-B3/T-B4 rendent ces entrées.
 
-**Contexte pour l'implémenteur :** **cette tâche n'invente aucune donnée.** Les deux fiches ci-dessous ont été choisies par l'utilisateur au gate de pré-flight, et chaque valeur de frontmatter est un **fait vérifié** — dépôt local pour l'une, API GitHub + README du dépôt pour l'autre. Ne change aucune valeur. Un `id` d'entrée = le nom du dossier (le loader `glob` retire `/index`), donc `src/content/projects/site-bencat/index.md` → `site-bencat` → `/projets/site-bencat/`.
+**Contexte pour l'implémenteur :** **cette tâche n'invente aucune donnée.** Les fiches ont été choisies par l'utilisateur, et chaque valeur de frontmatter est un **fait vérifié** — le dépôt local pour l'une, l'API GitHub + le `README.md` + l'`action.yml` du dépôt pour l'autre. Ne change aucune valeur, n'améliore pas la prose. Un `id` d'entrée = le nom du dossier (le loader `glob` retire `/index`), donc `src/content/projects/site-bencat/index.md` → `site-bencat` → `/projets/site-bencat/`.
+
+**⚠️ Le Step 1 est DÉJÀ LIVRÉ** (commit `7edc67e`, avant une interruption de session) : `src/content/projects/site-bencat/index.md` et la ligne `relatedProjects: [site-bencat]` sur l'article « Bienvenue dans mon foutoir ! » existent déjà. **Ne les recrée pas, ne les réécris pas.** Ton travail commence au **Step 2**. Le Step 1 reste ci-dessous pour référence — vérifie seulement que le fichier existe et correspond.
 
 R5 exige les **deux sens** : au moins un projet doit porter `relatedPosts`, et au moins un article doit porter `relatedProjects`. Astro valide les `reference()` au build : un id inexistant fait **échouer** `astro build` avec un message explicite — c'est le test de cette tâche.
 
 Règles de rédaction, non négociables :
 - **Ne jamais écrire une clé optionnelle vide** (`repoUrl:` sans valeur casse la validation `z.string().url()`). Clé absente = champ absent, c'est le contrat `omit_empty_optional_fields` du Plan 2.
 - Pas de couverture : `cover` reste absent (aucune image réelle fournie ; un `cover` pointant vers un fichier manquant casse le build).
-- `resumexyz` n'a **pas** de `demoUrl` : `benoitcatillon.xyz` ne résout plus (vérifié — pas de réponse DNS). Ne pas ajouter ce lien mort.
+- **`gha-svu` n'a pas de `demoUrl`** : le dépôt ne déclare aucune `homepage`, et sa fiche Marketplace `https://github.com/marketplace/actions/gha-svu` répond **404** (vérifié). Ne pas inventer ce lien.
 
-- [ ] **Step 1: Créer la fiche du site — `src/content/projects/site-bencat/index.md`**
+- [x] **Step 1: Créer la fiche du site — `src/content/projects/site-bencat/index.md`** *(DÉJÀ FAIT — `7edc67e`)*
 
 ```markdown
 ---
@@ -348,19 +350,70 @@ critères binaires par plan, un journal de périmètre tenu à jour à chaque t�
 et un audit de vérification obligatoire avant toute mise en ligne.
 ```
 
-- [ ] **Step 2: Créer la 2ᵉ fiche — EN ATTENTE DE L'UTILISATEUR**
+- [ ] **Step 2: Créer la 2ᵉ fiche — `src/content/projects/gha-svu/index.md`**
 
-Le contenu de cette étape a été **retiré** (déviation **D02**) : l'utilisateur a écarté `resumexyz` et publiera d'autres projets pour servir d'exemples réels. Le plan sera **ré-amendé ici** avec les valeurs exactes (titre, description, statut, stack, dates, URLs, tous vérifiés sur la source) dès que les dépôts seront disponibles, **avant** que cette étape ne soit exécutée.
+Projet fourni par l'utilisateur : `https://github.com/bencatlab/gha-svu`. Toutes les valeurs ci-dessous sont vérifiées sur la source — API GitHub (`created_at` 2025-05-05, `pushed_at` 2026-05-13, tags `v0.0.1`/`v0.0.2`/`v0.0.3`, ni `homepage` ni `license`), `README.md` et `action.yml` du dépôt. Le corps ne dit rien qui ne soit pas dans ces deux fichiers.
 
-Tant que cette étape n'est pas faite, **R1 ne peut pas passer `Done`** (« ≥ 2 fiches réelles chargées ») et **T-B1 → T-B4 restent bloquées** : leurs critères se vérifient sur ≥ 2 cartes rendues.
+```markdown
+---
+title: "gha-svu — le versionnage sémantique dans GitHub Actions"
+description: "Une action composite qui calcule la prochaine version sémantique avec SVU v3, et pose le tag si tu lui demandes."
+status: actif
+startDate: 2025-05-05
+stack: [GitHub Actions, Bash, Go, SVU]
+tags: [github-actions, devops, versioning]
+repoUrl: https://github.com/bencatlab/gha-svu
+featured: false
+relatedPosts: [comment-jutilise-github-actions-au-quotidien]
+---
 
-- [ ] **Step 3: Ajouter le sens inverse sur l'article**
+Décider du prochain numéro de version à la main, c'est le genre de tâche qu'on
+finit toujours par bâcler. [SVU](https://github.com/caarlos0/svu) le fait très
+bien à partir des commits — encore faut-il l'installer et lui passer les bons
+arguments dans chaque workflow. `gha-svu` emballe tout ça dans une **action
+composite** : une étape, et tu as ta version.
 
-Dans `src/content/blog/bienvenue-dans-mon-foutoir/index.md`, ajouter cette clé au frontmatter, **juste après `aiUsage`** — sans toucher à quoi que ce soit d'autre dans le fichier (ni les guillemets des autres valeurs, ni le corps) :
+## Ce qu'elle fait
+
+Elle installe SVU (v3 minimum), calcule la version, et expose trois sorties :
+`current`, `next`, et `changed` — un booléen qui te dit si les commits ont
+effectivement provoqué un incrément. Les six sous-commandes de SVU sont
+disponibles : `current`, `next`, `major`, `minor`, `patch` et `prerelease`.
+
+Douze entrées couvrent le reste : identifiant de préversion, métadonnées de
+build, préfixe et motif de tag, mode de tag (`all`, `light`, `heavy`),
+restriction aux commits touchant certains dossiers, incrément forcé du patch
+même sans commit qualifiant, et épinglage d'une version précise de SVU plutôt
+que la dernière.
+
+## Deux détails qui évitent des surprises
+
+Elle **refuse de démarrer** si tu lui demandes une version de SVU antérieure à
+v3, avec un message d'erreur explicite plutôt qu'un comportement inattendu plus
+loin dans le workflow.
+
+Et elle ne passe `--always` et `--v0` qu'à la sous-commande `next` : les autres
+les rejettent comme des drapeaux inconnus. C'est le genre de détail qu'on
+découvre en production, une fois.
+
+## Où elle en est
+
+Trois versions publiées (`v0.0.1` à `v0.0.3`), deux workflows d'intégration —
+un sur les pull requests, un pour la publication. Pas encore sur la Marketplace
+GitHub : elle s'utilise en référençant directement le dépôt.
+```
+
+- [ ] **Step 3: Ajouter le sens inverse sur les articles**
+
+Le premier sens est **déjà en place** (`7edc67e`) : `src/content/blog/bienvenue-dans-mon-foutoir/index.md` porte `relatedProjects: [site-bencat]`. **N'y touche pas.**
+
+Ajoute le second : dans `src/content/blog/comment-jutilise-github-actions-au-quotidien/index.md`, ajouter cette clé au frontmatter, **juste après `draft`** — sans toucher à quoi que ce soit d'autre dans le fichier (ni les valeurs existantes, ni leur mise en forme, ni le corps) :
 
 ```yaml
-relatedProjects: [site-bencat]
+relatedProjects: [gha-svu]
 ```
+
+Cet article parle de GitHub Actions au quotidien et `gha-svu` est une action GitHub : la relation est réelle, pas décorative. Elle donne aussi une **seconde paire bidirectionnelle**, ce qui rend la vérification de R5 moins dépendante d'un cas unique.
 
 - [ ] **Step 4: Vérifier que les références résolvent**
 
@@ -368,7 +421,7 @@ relatedProjects: [site-bencat]
 npx astro build
 ```
 
-Attendu : build **vert**, `10 pages` (8 existantes + 2 fiches projets, `/projets` n'existant pas encore). Un id erroné produirait ici une erreur de validation citant le champ `relatedPosts` ou `relatedProjects` — c'est la preuve que la validation est bien active.
+Attendu : build **vert, 8 pages**. Le compte ne bouge pas : les routes `/projets` et `/projets/<slug>` n'existent pas encore (elles arrivent en T-B1 et T-B3), donc une entrée de collection ne produit aucune page à ce stade. **Ce qui est vérifié ici, c'est la validation du schéma et des références**, pas un nombre de pages : un id erroné dans `relatedPosts` ou `relatedProjects` fait échouer le build avec un message citant le champ. Vérifie-le pour de bon — remplace temporairement un id par `nexiste-pas`, constate l'échec, puis remets la bonne valeur. Une validation qu'on n'a jamais vue échouer n'est pas une validation prouvée.
 
 - [ ] **Step 5: Prouver que la référence est réellement résolvable en entrée (pas seulement valide)**
 
@@ -408,13 +461,13 @@ npx astro build
 git status --short
 ```
 
-Attendu : tests verts · `astro check` **0 error** · build **10 pages** · `git status` ne montre **aucun** reliquat de sonde.
+Attendu : `vitest` **33/33** · `astro check` **0 error / 0 warning** · `astro build` **8 pages** · `git status` ne montre **aucun** reliquat de sonde et **aucune** modification de `src/content/projects/site-bencat/` ni de `bienvenue-dans-mon-foutoir/index.md`.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/content/projects src/content/blog
-git commit -m "content(p3): add real project pages and blog<->project relations"
+git add src/content/projects/gha-svu src/content/blog/comment-jutilise-github-actions-au-quotidien
+git commit -m "content(p3): add gha-svu project page and its blog relation"
 ```
 
 ---
