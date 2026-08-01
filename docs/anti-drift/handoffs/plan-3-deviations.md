@@ -6,6 +6,25 @@ _Le seul statut qu'un agent écrit est `pending-user` ; seul l'utilisateur passe
 
 ---
 
+## D07 — Travail après clôture de T-C1 : symétriser le garde-fou CMS↔Zod + corriger un commentaire faux
+
+- **Date:** 2026-07-31
+- **Task affected:** T-C1 (rouverte après la revue finale de branche) et T-A1 (commentaire)
+- **Original plan:** T-C1 Step 2 prescrit une **liste exacte** d'assertions pour `src/lib/cms-config.test.ts`. Elle couvre `projects.relatedPosts` (widget, collection, `multiple`, `value_field`) mais, pour `blog.relatedProjects`, seul le **nom du champ** est vérifié.
+- **Deviation taken:** (1) ajouter à `cms-config.test.ts` les assertions manquantes sur `blog.relatedProjects`, en miroir de celles de `projects.relatedPosts` ; (2) corriger le commentaire JSDoc de `sortProjects` dans `src/lib/projects.ts`.
+- **Reason:** constat **I2** de la revue finale, que **seule une revue transverse pouvait voir** : les deux côtés de la relation ont été livrés par deux tâches différentes, chacune conforme à son brief. Scénario mesuré : passer `value_field: '{{slug}}'` à `'{{title}}'` sur `config.yml:63` laisse **40/40 tests verts**, `astro check` vert et `astro build` vert (le contenu existant est écrit à la main) ; puis le **premier article enregistré depuis `/admin`** écrit `relatedProjects: ["gha-svu — le versionnage sémantique…"]` et casse le build après le commit. La contrainte globale du plan dit pourtant que **toute divergence CMS↔Zod doit faire échouer ce test** : l'ajout sert cette contrainte, mais il élargit une tâche déjà close, donc il est loggé.
+  Pour (2) : le commentaire affirme que `localeCompare('fr')` « ignore casse et accents » — **faux**, vérifié en Node par deux relecteurs indépendants. Un commentaire faux dans une fonction de tri est un piège pour la prochaine personne qui la modifie. La revue finale l'a classé « seul Minor dont la correction est gratuite et le maintien coûteux ».
+- **Reversibility:** cheap (des assertions de test et une phrase de commentaire ; aucun comportement modifié).
+- **Caught late:** no (loggé avant exécution).
+- **Status:** pending-user
+- **User decision:** —
+- **Follow-up:** aucun code à défaire si rejeté. **Le constat I1 de la revue finale n'est PAS traité ici** — il demande une décision de l'utilisateur, voir la note ci-dessous.
+
+> **CONSTAT I1 DE LA REVUE FINALE — décision utilisateur requise, aucune action prise.**
+> Aucune collection du `config.yml` ne pose `delete: false` : supprimer une entrée depuis `/admin` est donc autorisé. Or le CMS **ne nettoie pas les rétro-références**. Reproduit par le relecteur : supprimer le projet `gha-svu` laisse `relatedProjects: [gha-svu]` sur l'article, le commit déclenche le déploiement, `astro build` s'interrompt et **0 page** est produite — le site entier cesse d'être déployé. C'est la **troisième occurrence** du mode « le CMS accepte, le build casse après le commit » sur ce projet. Deux options, toutes deux à trancher par l'utilisateur : (a) `delete: false` sur les deux collections — le trou se ferme, mais supprimer un article ou un projet redevient une opération manuelle dans le dépôt ; (b) accepter le risque et le documenter dans le README, à côté des deux pièges d'images du Plan 2. **Rien ne sera fait sans décision explicite** : les deux options changent quelque chose d'observable.
+
+---
+
 ## D06 — Garde-fou ajouté sur la résolution des références (constat Important de la revue T-B3)
 
 - **Date:** 2026-07-31
