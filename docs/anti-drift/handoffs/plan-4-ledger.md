@@ -37,7 +37,7 @@ Last updated by: main (contrôleur SDD)
 | C2 | C | R6 (instructions + `installCmd` + repo + prompts liés), R7 (rendu), R9 · **+ addition n°1** (nav « Prompts »/« Skills ») |
 | D1 | D | R8 (collections CMS + garde-fou de test) · **+ addition n°3** (`delete: false`) |
 | D2 | D | R8 (création réelle via `/admin` — **action utilisateur**) |
-| Z1 | Z | Audit `/anti-drift-planning:verify 4` (couverture R1–R9) |
+| Z1 | Z | Audit `/anti-drift-planning:verify 4` (couverture R1–R9) — **Done, verdict PASS** |
 
 ## Additions au-delà de la lettre de la spec (à ratifier au gate de pré-flight)
 
@@ -149,4 +149,12 @@ Aucune n'est exigée par un critère R. Elles sont listées ici pour être appro
 - 2026-08-02 — **R5 → Done.** `/skills` rend **2 cartes**, et le filtre a enfin pu être exercé sur un **sous-ensemble réel**, ce qui était impossible avec une entrée unique : filtrer par `planification` laisse **exactement** `Anti-Drift Planning` et écarte `SuperPowers`, qui ne porte aucun tag. **R2 s'en trouve renforcé** au passage : `outil=Claude` → 1 carte (`MacOS Clone`), `outil=Claude Code` → 2, `format=fiche` → 2 — des sous-ensembles non triviaux, là où le plan n'avait pu tester que 1 contre 1.
 - 2026-08-02 — **R6 → Done.** La page `/skills/superpowers/` rend enfin **le bloc « code source »** (`https://github.com/obra/superpowers`), la clause de l'intitulé qui n'avait rien à rendre jusque-là. Mesure binaire vérifiée sur cette page : `installCmd` affiché et **copiable au texte exact** (« Copié ! », `<pre>` dans `.prose` et dans `<article>`), `relatedPrompts` résolu en **« MacOS Clone »** cliquable, **aucun `undefined`**. **Deux faits reportés tels quels** : le corps de `superpowers` est **vide** (l'utilisateur n'a pas rempli le champ Contenu — choix éditorial, pas un défaut de code), et la fiche `anti-drift-planning` **conserve son absence de `repoUrl`** et sa mise en garde tant que son dépôt répond 404. **R9 re-vérifié sur les 2 nouvelles pages** : écart **0 px** à 375px.
 - 2026-08-02 — **9 critères sur 9 sont `Done`, et les 11 déviations sont `approved`.** Les deux verrous qui bloquaient la Phase Z sont levés. Elle peut être lancée.
+- 2026-08-02 — **PHASE Z — VERDICT : PASS.** Les cinq étapes de l'audit canonique, lancées en frais :
+  1. **Lint mécanique (verrou 5)** : **13/13, 0 violation**, exit 0. Une seule note informative (le Plan 5 est spécifié mais pas démarré).
+  2. **Couverture spec, auditée sur la SPEC et non sur le ledger** : les 9 critères de §3 ont une ligne, **9/9 `Done`**, **0** `Pending` ou `In progress`, **0** `Deferred`/`Cut` — donc aucune ligne n'a besoin de s'appuyer sur une déviation approuvée.
+  3. **Revue des déviations, garde anti-blanchiment appliquée** : **11 entrées, toutes `approved`**, **0 `pending-user`**, et **aucun statut inventé** (le vocabulaire est strictement `pending-user`/`approved`/`rejected`).
+  4. **Suite de tests, relancée en frais** : `vitest` **93/93 (9 fichiers)** · `astro check` **0 error / 0 warning** (66 hints) · `astro build` **Complete**, 18 pages.
+  5. **Walkthrough de la user story** : l'utilisateur confirme les **6 pas sur 6**. Le pas 6 (« Benoît édite prompts & skills via le CMS ») est prouvé matériellement : ses deux créations depuis `/admin` ont produit des fichiers conformes, validés par le build.
+  6. **Smoke visuel** : surfaces capturées. **Un constat reporté, et assumé par l'utilisateur** : les 2 entrées créées via `/admin` portent littéralement `No content` comme corps (`'\n\nNo content\n'`, identique dans les deux fichiers), texte qui s'affiche donc sur `/skills/superpowers/` et `/prompts/macos-clone/`. **Ce n'est pas un défaut de code** — le gabarit rend le corps qu'on lui donne. L'utilisateur choisit de **remplir les corps plus tard** ; le résiduel est donc explicite, pas silencieux.
+- 2026-08-02 — **Étape de release : NON exécutée.** La Phase Z ne release pas, même sur PASS — c'est une action utilisateur distincte. Le dépôt n'a pas de script de release ; les plans précédents ont utilisé un tag annoté. Étape suggérée : **`milestone-plan-4`** et **`v0.4.0`** — et **non** `milestone-plan-3`, déjà posé sur `eb9deee`.
 
