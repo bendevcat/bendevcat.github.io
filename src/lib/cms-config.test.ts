@@ -48,6 +48,13 @@ function generateUrlProbeCases(): Array<{ value: string; zodAccepts: boolean }> 
     '<', 'ex<emple.fr',
     '>', 'ex>emple.fr',
     '^', 'ex^emple.fr',
+    // Élargi au fix round 3 (constat I1 round 3, revue indépendante du
+    // contrôleur) : `\s` en regex couvre espace/tab/saut de ligne mais pas les
+    // autres caractères de contrôle — aucun hôte des deux générations
+    // précédentes n'en contenait, donc un octet NUL (ou tout autre `\x00`–
+    // `\x1f`/`\x7f`) dans l'hôte passait le motif sans que rien ne le révèle.
+    `ex${String.fromCharCode(0)}emple.fr`, // NUL
+    `ex${String.fromCharCode(1)}emple.fr`, // autre caractère de contrôle (SOH)
   ];
   const ports = ['', ':80', ':8080', ':3000', ':443', ':4321', ':0', ':65535', ':65536', ':99999', ':abc', ':bendevcat', ':-1', ':', ':00080'];
   const paths = [
@@ -279,7 +286,7 @@ describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03
   // le motif n'était « jamais plus laxiste que Zod ».
   const cases = generateUrlProbeCases();
 
-  it('la génération couvre bien les catégories exigées par I1 (round 1 et 2) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé (crochet), espace, schéma non-http, userinfo, hôte à caractère spécial seul, chemin sans « / » initial', () => {
+  it('la génération couvre bien les catégories exigées par I1 (round 1, 2 et 3) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé (crochet), espace, schéma non-http, userinfo, hôte à caractère spécial seul, chemin sans « / » initial, caractère de contrôle dans l’hôte', () => {
     const values = cases.map((c) => c.value);
     // Round 1.
     expect(values).toContain('http://exemple.fr:99999');
@@ -302,11 +309,19 @@ describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03
     expect(values).toContain('https://ex<emple.fr');
     expect(values).toContain('https://ex^emple.fr');
     expect(values).toContain('https://%');
+    // Round 3 (constat I1, revue indépendante du contrôleur, Fix round 3/5) :
+    // `\s` ne couvre pas les caractères de contrôle hors espace/tab/saut de
+    // ligne — aucun hôte des deux générations précédentes n'en contenait.
+    const nulHost = `https://ex${String.fromCharCode(0)}emple.fr`;
+    const ctrlHost = `https://ex${String.fromCharCode(1)}emple.fr`;
+    expect(values).toContain(nulHost);
+    expect(values).toContain(ctrlHost);
     // Et Zod les rejette bien réellement (sinon la génération ne testerait rien).
     const adversarials = [
       'http://exemple.fr:99999', 'https://exemple.fr:abc', 'https://github.com:bendevcat/anti-drift-planning', 'http://[',
       'https://@', 'https://user@', 'http://?', 'https://#', 'https://?a=1', 'https://#frag',
       'https://exemple.fr%20/', 'https://ex|emple.fr', 'https://ex<emple.fr', 'https://ex^emple.fr', 'https://%',
+      nulHost, ctrlHost,
     ];
     for (const adversarial of adversarials) {
       expect(cases.find((c) => c.value === adversarial)!.zodAccepts, adversarial).toBe(false);
@@ -544,7 +559,7 @@ describe('config CMS — motif repoUrl du skill vs Zod (D03, D10)', () => {
     }
   });
 
-  it('rejette bien les URL adversariales trouvées en revue (I1, round 1 et 2) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé, userinfo, `?`/`#`/`%`/`|`/`<`/`^` seuls ou en hôte', () => {
+  it('rejette bien les URL adversariales trouvées en revue (I1, round 1, 2 et 3) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé, userinfo, `?`/`#`/`%`/`|`/`<`/`^` seuls ou en hôte, caractère de contrôle dans l’hôte', () => {
     for (const adversarial of [
       // Round 1.
       'http://exemple.fr:99999',
@@ -563,6 +578,9 @@ describe('config CMS — motif repoUrl du skill vs Zod (D03, D10)', () => {
       'https://ex<emple.fr',
       'https://ex^emple.fr',
       'https://%',
+      // Round 3.
+      `https://ex${String.fromCharCode(0)}emple.fr`,
+      `https://ex${String.fromCharCode(1)}emple.fr`,
     ]) {
       expect(pattern.test(adversarial), adversarial).toBe(false);
     }
