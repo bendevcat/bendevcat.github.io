@@ -93,9 +93,9 @@ Valeurs exactes reprises des specs ; elles s'appliquent implicitement à **toute
 
 ---
 
-## Additions au-delà de la lettre de la spec — à valider au gate de pré-flight
+## Additions au-delà de la lettre de la spec — **ratifiées au gate de pré-flight (2026-08-02)**
 
-Ces trois points ne sont exigés par **aucun** critère R. Ils sont listés ici pour être **approuvés ou coupés explicitement** avant T-A1. S'ils sont coupés, les étapes correspondantes disparaissent du plan et rien d'autre ne bouge.
+Ces trois points ne sont exigés par **aucun** critère R. Ils ont été soumis à l'utilisateur avant T-A1 et **les trois sont approuvées** — elles font donc partie du plan et ne sont pas des déviations. Décisions annexes prises au même gate : matière de T-A2 = **anti-drift** (2ᵉ skill encore à nommer, à trancher avant T-A2) ; tag et version = **`milestone-plan-4` + `v0.4.0`** (et non `milestone-plan-3`, déjà posé au Plan 3).
 
 1. **Activation des liens de nav « Prompts » et « Skills »** (T-C2). `src/components/Header.astro:12-18` les rend aujourd'hui **non cliquables** (`<span aria-disabled="true" title="Bientôt disponible">`), avec le commentaire « les autres piliers arrivent au Plan 4-5 ». Sans cette activation, `/prompts` et `/skills` existent mais ne sont atteignables qu'en tapant l'URL. Même addition, même justification, que l'addition n°1 ratifiée au Plan 3 pour « Projets ».
 2. **Sens `prompt → skills liés`** (T-B3). R6 et R7 n'exigent que le sens **skill → prompts** (« Un skill liste ses prompts liés »). Le champ `relatedSkills` existe pourtant côté `prompts` dans la spec de design §3.3, et le titre du critère R7 écrit `skills ↔ prompts` avec une **double flèche**. Rendre le sens retour coûte ~10 lignes et rend la « navigation croisée » réellement croisée. **Sans cette addition, `relatedSkills` reste un champ de données jamais affiché.**
