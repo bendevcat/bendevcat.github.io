@@ -27,42 +27,40 @@
 
 ---
 
-## 2. Ce qui bloque le ship, et pourquoi c'est normal
+## 2. Ce qui bloque encore le ship
 
-**11 déviations, toutes `pending-user`.** `/anti-drift-planning:verify 4` échoue sur la moindre entrée non tranchée — c'est le verrou 2 qui fait son travail, pas un incident. **Aucun tag ne sera posé tant qu'elles ne sont pas décidées.**
+**Les 11 déviations sont APPROUVÉES** (gate de ratification du 2026-08-02, « Je les approuve toutes »). Ce verrou est levé.
 
-**T-D2 non faite** — création réelle d'un prompt et d'un skill via `/admin`. Un agent ne peut ni fournir le PAT GitHub (secret personnel) ni actionner le sélecteur de dossier natif de la File System Access API. Établi au Plan 2, reconfirmé au Plan 3.
+**Il reste deux actions, toutes deux du ressort de l'utilisateur :**
 
----
+1. **Publier le dépôt `anti-drift-planning`** → débloque **R6**. Tant que `https://github.com/bendevcat/anti-drift-planning` répond **404**, le bloc « code source » de la fiche skill n'a rien à rendre. Dès qu'il répond **200** : l'entrée est amendée (`repoUrl` + `installCmd` réellement exécutable avec le vrai `git clone`), le rendu est re-vérifié, et R6 passe `Done`. Le motif d'URL resserré en D10 accepte déjà cette URL — vérifié.
+2. **Faire T-D2** → débloque **R8**. Créer un prompt et un skill depuis `/admin`. Un agent ne peut ni fournir le PAT GitHub (secret personnel) ni actionner le sélecteur de dossier natif de la File System Access API — établi au Plan 2, reconfirmé au Plan 3.
 
-## 3. Les 11 décisions attendues
-
-Chaque entrée est détaillée dans `plan-4-deviations.md`. Résumé, de la plus lourde à la plus légère :
-
-| # | Sujet | Ce que ça change | Réversibilité |
-|---|---|---|---|
-| **D05** | **1 seul skill au lieu de ≥ 2** | **R1 et R5 ne seront pas satisfaits.** Choix explicite de l'utilisateur : aucun 2ᵉ skill ne lui appartenait et n'était publiable (les autres sont sous l'org privée `sxd-platform`, `author: Sixense Digital`, `license: UNLICENSED`) | cheap |
-| **D10** | **4ᵉ occurrence du mode de panne « le CMS accepte, le build casse après »** | Motif d'URL resserré sur **3 champs**, dont 2 du Plan 3. **Effet observable : le CMS refuse désormais des URL qu'il acceptait** — toutes invalides pour Zod | cheap |
-| **D07** | Bloc de prompt hors `.prose` | **2 461 px de débordement horizontal**, R9 cassée, avec build/check/93 tests **au vert** | cheap |
-| **D11** | Vague de correction de la revue finale | 2 Important transverses + 6 Minor triés « avant merge » | cheap |
-| **D09** | Ordre des entrées liées | Composition des helpers testés ; entrées liées en A→Z au lieu de l'ordre frontmatter | cheap |
-| **D03** | Filtrage `draft` rendu testable | Comportement exigé par le plan, couvert par **aucun** test | cheap |
-| **D08** | Annonce de l'échec de copie + test manquant | `aria-live` sur le bouton ; branche non couverte | cheap |
-| **D06** | Garde de type dans `matchesFacets` | Défaut non atteignable aujourd'hui, mais le module était livré tel quel à T-C1 | cheap |
-| **D01** | Fichier hors liste de T-A1 | 1 ligne d'import ; sans elle, 2 tests de la baseline cassaient | cheap |
-| **D02** | Chiffres de baseline faux dans le plan | 9 pages → 11 · 52 tests → 56 · message de WARN erroné. **Récidive tracée** | cheap |
-| **D04** | JSDoc réécrit au lieu d'être déplacé | Perte de la citation du code d'Astro et du locus du symptôme. **`Caught late: yes`** | cheap |
-
-**Cinq d'entre elles — D02, D03, D04, D07, D09 — sont des défauts du plan d'implémentation, écrit par le contrôleur.** D10 et D11 viennent de constats de revue. Aucune ne vient d'un implémenteur ayant contourné la spec en silence.
+**Tant que R6 et R8 ne sont pas `Done`, la Phase Z ne peut pas passer.** Ce n'est pas un blocage à contourner : c'est le verrou 4 qui fait son travail.
 
 ---
 
-## 4. Ce que l'utilisateur doit faire
+## 3. Décisions déjà rendues au gate du 2026-08-02
 
-1. **Ratifier ou rejeter les 11 déviations** (`approved` / `rejected` — seuls ses mots comptent).
-2. **Trancher R6** : soit publier `https://github.com/bendevcat/anti-drift-planning` (encore **404**, re-vérifié plusieurs fois), auquel cas l'entrée du skill est amendée (`repoUrl` + `installCmd` réellement exécutable) et R6 passe `Done` sans réserve ; soit acter que la mesure binaire fait foi.
-3. **Faire T-D2** : créer un prompt et un skill depuis `/admin` (Chrome/Edge/Brave, `Sign In Using Access Token` ou dépôt local), en renseignant les champs de relation. Le contrôleur vérifie ensuite chemin, frontmatter, ids et omission des champs vides.
-4. **Décider du sort de R1/R5** si aucun 2ᵉ skill n'est publié : `Deferred` (reporté au Plan 5) ou `Cut`. **Le linter exigera une déviation `approved`** pour accepter l'un ou l'autre.
+- **Les 11 déviations D01→D11 : `approved`.** Ratification groupée, phrase transcrite dans chaque entrée. Cinq d'entre elles (**D02, D03, D04, D07, D09**) sont des défauts du plan d'implémentation écrit par le contrôleur ; **D10** et **D11** viennent de constats de revue ; **aucune** ne vient d'un implémenteur ayant contourné la spec en silence.
+- **R1 et R5 → `Deferred` au Plan 5**, appuyées sur la déviation approuvée **D05**, comme le linter l'exige. Ce qui est reporté est **la seule clause de comptage** (« ≥ 2 skills », « ≥ 2 cartes ») : tout le reste des deux critères est livré et prouvé. Le manque est du **contenu**, pas du code — un 2ᵉ skill s'ajoutera sans une ligne de code à changer.
+- **R6 : l'utilisateur publie le dépôt**, plutôt que d'acter que la mesure binaire fait foi.
+
+---
+
+## 4. Marche à suivre pour T-D2
+
+```bash
+npm run dev
+```
+
+1. Ouvrir `http://localhost:4321/admin/index.html` dans **Chrome, Edge ou Brave** (File System Access API — ni Firefox ni Safari).
+2. Se connecter via **« Sign In Using Access Token »**, ou **« Work with Local Repository »** en sélectionnant la racine du dépôt.
+3. Créer **un prompt** : titre, description, format, texte du prompt, et surtout **« Skills liés » renseigné** — c'est le widget `relation` qu'on veut voir écrire un **id de dossier**, pas un titre (scénario D07 du Plan 3).
+4. Créer **un skill** : titre, description, type, **« Prompts liés » renseigné**.
+5. Publier les deux.
+
+Le contrôleur vérifie ensuite, **sur le dépôt** : chemin `src/content/<coll>/<slug>/index.md`, frontmatter validant le schéma Zod (`astro build`), champs de relation contenant des **ids**, et champs optionnels vides **absents** du frontmatter. **R8 ne passera `Done` qu'après ces contrôles** — on ne marque pas `Done` ce qu'on n'a pas vu.
 
 ---
 
