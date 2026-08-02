@@ -1,13 +1,14 @@
 ---
-title: "Bienvenue dans mon foutoir ! 🚀"
-description: "Je te présente ce blog, son objectif et la manière dont j'indique la part d'IA utilisée dans chaque article."
+title: Bienvenue dans mon foutoir ! 🚀
+description: Je te présente ce blog, son objectif et la manière dont j'indique la part d'IA utilisée dans chaque article.
 pubDate: 2025-10-20T13:37:00.000+02:00
-draft: false
-category: "Actus"
-cover: "./theitcrown.png"
-coverAlt: "Bureau bordélique façon The IT Crowd, rempli de posters et de gadgets geek"
-aiUsage: "none"
+category: Actus
+cover: ./theitcrown.png
+coverAlt: Bureau bordélique façon The IT Crowd, rempli de posters et de gadgets geek
+aiUsage: none
+draft: true
 ---
+
 ## TL;DR - L'essentiel en 30 secondes ⚡
 
 J'ai donc 30 secondes pour vous convaincre d'en prendre un peu plus pour lire la suite...
@@ -24,9 +25,9 @@ Le but de ce blog sera essentiellement de décharger mon cerveau, centraliser de
 
 On va tenter d'être le plus pertinent possible hein, j'espère bien réussir à garder cet espace aussi clean que possible, une sorte de bdd fun à utiliser.
 
----
+***
 
-## IA : une aide, pas un *ghostwriter*
+## IA : une aide, pas un _ghostwriter_
 
 En 2025, il serait idiot de ne pas me faire aider par une IA, j'ai donc mis en place une balise présente en début d'article qui me permet de mettre en avant les moyens utilisés pour la rédaction:
 
@@ -48,7 +49,7 @@ Je ferais bien évidemment un gros travail pour vérifier les infos crachés par
 Si vous aussi vous bossez dans la tech, vous savez à quel point elle peut être pertinente lorsque l'ont sait s'en servir.\
 D'ailleurs, ce blog a été créé from-scratch avec Claude Code sur Sonnet 4.5, en seulement quelques heures. J'en ferait un article dédié, il faut absolument que je partage cette experience, parfois magique, parfois incompréhensible, il y'a deux trois trucs à partager qui pourrait vous aider si vous utilisez cet outil ;)
 
----
+***
 
 ## EXIT 0
 
