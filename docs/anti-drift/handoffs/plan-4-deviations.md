@@ -37,6 +37,22 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D05 — Un seul skill réel au lieu de « ≥ 2 » : R1 et R5 ne seront pas entièrement satisfaits
+
+- **Date:** 2026-08-02
+- **Task affected:** T-A2 (contenu), et par ricochet T-C1 (clause « ≥ 2 cartes » de R5). **Réduction de périmètre — la plus lourde de ce plan.**
+- **Original plan:** la spec §3 exige, pour **R1**, « ≥ 2 prompts **ET** ≥ 2 skills réels », et pour **R5**, « ≥ 2 cartes » sur `/skills`. T-A2 devait livrer 2 prompts et 2 skills.
+- **Deviation taken:** T-A2 livrera **2 prompts et 1 seul skill** (`anti-drift-planning`). **R1 et R5 ne seront donc pas entièrement satisfaits** et resteront `In progress` — ils ne seront **pas** maquillés en `Done`.
+- **Reason:** décision explicite de l'utilisateur au gate, en connaissance de cause. Recherche faite dans son environnement : **un seul** skill lui appartenant et publiable est identifiable — le plugin `anti-drift-planning` (`author.name: bendevcat`, `license: MIT`, `homepage: https://github.com/bendevcat/anti-drift-planning`). Les autres skills disponibles vivent sous l'org **privée `sxd-platform`** (son employeur) et leur métadonnée dit `author.name: "Sixense Digital"`, `license: "UNLICENSED"`, `homepage: null` — établi en lisant les `plugin.json` réels, pas la doc. Publier ça sur une vitrine perso publique aurait signifié publier de la propriété intellectuelle employeur non licenciée. Trois options lui ont été présentées avec ces faits ; il a choisi de n'en publier qu'un plutôt que d'inventer un skill ou de publier ce qui ne lui appartient pas.
+- **Portée exacte de ce qui tombe, et de ce qui ne tombe pas** (mesuré, pas supposé) : tombent la clause « ≥ 2 skills » de **R1** et la clause « ≥ 2 cartes » de **R5**. Ne tombent **pas** : **R6** (`/skills/<slug>` — instructions, `installCmd` copiable, repo, prompts liés) et **R7** (relation `skills ↔ prompts` résolue dans les deux sens), tous deux entièrement livrables et vérifiables avec un seul skill relié à deux prompts. T-C1 et T-C2 sont donc **construites et vérifiées normalement** ; seul le comptage de cartes de R5 reste en défaut.
+- **Reversibility:** cheap (ajouter un second skill = un `index.md` de plus ; aucun code, aucun schéma, aucune page à changer — la grille, le filtre et les relations fonctionnent déjà à N entrées).
+- **Caught late:** no (loggé avant que T-A2 s'exécute).
+- **Status:** pending-user
+- **User decision:** l'utilisateur a **choisi explicitement** l'option « 1 seul skill, R1 reste In progress » le 2026-08-02, parmi trois options présentées avec les faits de propriété ci-dessus (autre skill à lui / publier un skill sxd avec confirmation d'auteur et de droit / un seul skill). **Le statut reste `pending-user` :** un agent n'écrit jamais `approved`, et une réduction de périmètre de cette taille mérite une ratification explicite au gate, pas une déduction depuis un clic. À ratifier avant la Phase Z.
+- **Follow-up:** si l'utilisateur publie un 2ᵉ skill avant la Phase Z, R1 et R5 redeviennent atteignables et cette entrée devient sans objet. Sinon, la Phase Z doit trancher entre `Deferred` (reporté au Plan 5) et `Cut` pour la clause manquante — et le linter mécanique **exigera une déviation `approved`** pour accepter l'un ou l'autre.
+
+---
+
 ## D04 — JSDoc d'`assertEntriesResolved` réécrit au lieu d'être déplacé (le Step 4 se contredit lui-même)
 
 - **Date:** 2026-08-02
