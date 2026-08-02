@@ -37,6 +37,23 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D08 — Deux ajouts hors de la lettre du plan sur T-B3 : annonce de l'échec de copie, et un test manquant
+
+- **Date:** 2026-08-02
+- **Task affected:** T-B3 — `src/scripts/copy-code.ts` (partagé avec le blog et les projets) et `src/lib/clipboard.test.ts`
+- **Original plan:** (1) le Step 5 de T-B3 ne prescrit **que** le changement de `textContent` du bouton ; l'`aria-label` (`copy-code.ts:29`, posé au Plan 1) n'est mentionné nulle part. (2) Le Step 1 fournit la **liste exacte** des 5 cas de `clipboard.test.ts`.
+- **Deviation taken:** (1) faire en sorte que le nouvel état d'échec soit **perceptible autrement que visuellement**, sans changer le chemin nominal ni le comportement visuel. (2) Ajouter le cas de test manquant à `clipboard.test.ts`.
+- **Reason:** deux constats de la revue de tâche.
+  **I2 :** ce plan **crée** un état d'échec qui n'existait pas au Plan 1 (« Échec — copie manuelle »). Il n'est porté que par le `textContent`, et l'`aria-label` reste figé sur « Copier le code » : un utilisateur de lecteur d'écran clique, la copie échoue, et **rien ne le lui dit** — puis le message disparaît après 1,5 s. C'est la spec §6.1 (« fallback + feedback ») livrée à moitié : le feedback existe pour ceux qui voient l'écran. **Reconnu hors de la lettre de la spec**, qui ne parle que de feedback *visuel* — d'où cette entrée plutôt qu'une correction glissée en silence.
+  **I3 :** le relecteur a **muté le code pour le prouver** — en remplaçant `deps.legacyCopy?.(text) ?? false` par `deps.legacyCopy!(text)`, **les 5 tests passent quand même**. La branche « pas de `legacyCopy` du tout » n'est donc couverte par rien, alors que c'est exactement le cas d'un navigateur sans `document.execCommand`.
+- **Reversibility:** cheap (un attribut d'accessibilité et un cas de test ; le chemin nominal et le rendu visuel ne changent pas).
+- **Caught late:** no (loggé avant le correctif).
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté sur (1), retirer l'annonce — l'échec de copie reste alors invisible aux lecteurs d'écran, ce qui est un choix, mais un choix explicite. Si rejeté sur (2), retirer le test — la branche redevient non couverte.
+
+---
+
 ## D07 — Le bloc de prompt est hors de `.prose` : R9 violé de 2 461 px, et le style du code-block du Plan 1 jamais appliqué
 
 - **Date:** 2026-08-02
@@ -49,6 +66,7 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Caught late:** no (loggé avant le correctif).
 - **Status:** pending-user
 - **User decision:**
+- **Addendum du 2026-08-02, après la revue de tâche :** la forme retenue par l'implémenteur ajoutait une classe `astro-code` sur le `<pre>`, justifiée par la nécessité de restaurer la police mono. **La justification est fausse**, et le relecteur l'a établie sur le CSS buildé : le preflight Tailwind v4 met déjà `pre` en JetBrains Mono (`--default-mono-font-family: var(--font-mono)`), et cette classe attache en réalité **5 déclarations `!important` de Shiki** (`global.css:160-167`) qui matchent bien ce `<pre>` — bénignes aujourd'hui **par accident** (les variables `--shiki-*` sont indéfinies, donc `unset`). La classe est retirée. Ce n'est pas une nouvelle déviation mais un affinement de celle-ci, consigné ici parce que **cette forme allait être reprise verbatim pour T-C2**.
 - **Follow-up:** si rejeté, restaurer le markup verbatim du Step 6 — et acter alors que **R9 est en échec sur `/prompts/<slug>`**, ce qui devra être tranché en `Deferred` ou `Cut` à la Phase Z, avec la déviation approuvée que le linter exigera.
 
 ---
