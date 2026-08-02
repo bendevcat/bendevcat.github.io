@@ -1712,8 +1712,28 @@ const relatedPrompts = skill.data.relatedPrompts?.length
           {/*
             R6 : ce <pre> est DANS <article>, donc src/scripts/copy-code.ts
             (importé plus bas) lui accroche son bouton « Copier »/« Copié ! ».
+
+            AMENDEMENT du 2026-08-02, AVANT exécution de T-C2 (donc pas une
+            déviation) — forme établie et vérifiée en T-B3, voir D07 :
+            le <pre> DOIT être enveloppé dans un conteneur `.prose`, sinon il
+            ne reçoit RIEN du style de code-block du Plan 1. La règle
+            `.prose :where(pre)` (src/styles/global.css:115-122) porte
+            overflow-x:auto, padding, bordure et rayon, et elle est SCOPÉE à
+            `.prose`. Sans l'enveloppe, le bloc mesurait `overflow-x: visible`
+            et provoquait 2 461 px de débordement horizontal à 375px — R9
+            cassée, et spec §6.2 (« réutilisant le composant code-block du
+            Plan 1 ») jamais honorée.
+            Deux points établis en T-B3, à ne pas re-débattre :
+            - le label `<h2>` reste HORS de `.prose` (sinon `.prose :where(h2)`
+              écrase son style de label mono discret) ;
+            - le <pre> ne porte AUCUNE classe : pas de `astro-code` (elle
+              attache 5 déclarations `!important` de Shiki, global.css:160-167,
+              et n'est pas nécessaire — le preflight Tailwind v4 met déjà
+              `pre` en JetBrains Mono).
           */}
-          <pre class="mt-4"><code>{installCmd}</code></pre>
+          <div class="prose mt-4">
+            <pre><code>{installCmd}</code></pre>
+          </div>
         </section>
       )
     }
