@@ -27,6 +27,14 @@ document.querySelectorAll<HTMLPreElement>('article pre').forEach((pre) => {
   btn.textContent = 'Copier';
   btn.className = 'copy-btn';
   btn.setAttribute('aria-label', 'Copier le code');
+  // D08 (fix round 1) : l'état d'échec ("Échec — copie manuelle") introduit
+  // par le Plan 4 n'était porté que par le textContent — invisible pour un
+  // lecteur d'écran, dont l'aria-label restait figé sur « Copier le code ».
+  // aria-live sur le bouton lui-même (pas de région ajoutée au DOM, pas de
+  // refonte : juste un attribut sur l'élément déjà là) fait annoncer son
+  // texte à chaque mutation, succès comme échec. Rendu visuel et chemin
+  // nominal inchangés.
+  btn.setAttribute('aria-live', 'polite');
 
   btn.addEventListener('click', async () => {
     // Plan 4 : la copie peut échouer (contexte non sécurisé, permission

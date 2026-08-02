@@ -35,4 +35,8 @@ describe('copyText', () => {
     });
     expect(await copyText('salut', { legacyCopy })).toBe(false);
   });
+
+  it('renvoie false sans lever quand ni writeText ni legacyCopy ne sont fournis', async () => {
+    await expect(copyText('salut', {})).resolves.toBe(false);
+  });
 });

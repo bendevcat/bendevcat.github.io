@@ -77,14 +77,23 @@ const relatedSkills = prompt.data.relatedSkills?.length
             `.prose :where(h2)` (police display, 1.5rem) écraserait sinon
             son style de label mono discret.
 
-            `astro-code` : ce <pre> n'est pas issu de Shiki, mais `.prose`
-            impose sa police sans-serif par héritage (`.prose { font-family:
-            var(--font-sans) }`, cf. ligne 48, a une spécificité de classe —
-            supérieure à la règle user-agent `pre { font-family: monospace }`
-            qu'elle écraserait sinon). La classe `astro-code` porte déjà
-            (ligne 150, R8) la règle `font-family: var(--font-mono)`, requise
-            pour tout bloc de code indépendamment de `.prose` — on la
-            RÉUTILISE elle aussi, sans dupliquer sa déclaration.
+            Correctif addendum D07 (revue qualité, round 1) : ce <pre> ne
+            porte PAS la classe `astro-code`. Une première version l'ajoutait
+            en pensant que `.prose { font-family: var(--font-sans) }`
+            (ligne 48) écraserait sinon la police mono par héritage — c'est
+            faux : une valeur héritée ne concurrence JAMAIS une règle qui
+            matche l'élément directement, et le preflight Tailwind v4 déclaré
+            en tête de ce fichier (`@import "tailwindcss"`) fait déjà
+            `code, kbd, samp, pre { font-family: --theme(--default-mono-
+            font-family, …) }`, qui se résout à `var(--font-mono)` via
+            `--font-mono` (notre `@theme`) — donc ce <pre> est en JetBrains
+            Mono sans rien ajouter. Pire : `astro-code` n'est pas neutre —
+            `global.css:160-167` lui attache 5 déclarations `!important` de
+            Shiki (thème dark), inoffensives ICI seulement par accident
+            (les variables `--shiki-*` référencées n'existent pas sur ce
+            bloc, donc `unset`). Vérifié sur le HTML buildé et en dev :
+            `getComputedStyle(pre).fontFamily` reste bien
+            `"JetBrains Mono Variable", ui-monospace, …` sans la classe.
 
             R3 : ce <pre> reste DANS <article> (juste un niveau plus profond,
             via .prose puis .code-block-wrapper), donc
@@ -93,7 +102,7 @@ const relatedSkills = prompt.data.relatedSkills?.length
             copie — spec §6.2.
           */}
           <div class="prose mt-4">
-            <pre class="astro-code"><code>{prompt.data.prompt}</code></pre>
+            <pre><code>{prompt.data.prompt}</code></pre>
           </div>
         </section>
       )
