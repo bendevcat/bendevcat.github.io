@@ -37,6 +37,36 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D04 — JSDoc d'`assertEntriesResolved` réécrit au lieu d'être déplacé (le Step 4 se contredit lui-même)
+
+- **Date:** 2026-08-02
+- **Task affected:** T-A1 — `src/lib/references.ts`
+- **Original plan:** le Step 4 de T-A1 se contredit. Sa **prose** dit : créer `src/lib/references.ts` « avec le **corps exact** actuellement dans `src/lib/projects.ts:39-85` (JSDoc compris), en adaptant seulement la dernière phrase du JSDoc qui parle de T-B3/T-B4 ». Le **bloc de code** qui suit immédiatement fournit ensuite un JSDoc **condensé**, réécrit d'un bout à l'autre. Les deux ne peuvent pas être vrais en même temps.
+- **Deviation taken:** ce qui est parti dans `b316b45` est le **bloc de code** — l'implémenteur a transcrit littéralement, comme le brief le lui ordonnait par ailleurs (« les valeurs exactes se transcrivent verbatim »). Correction retenue : **restaurer le JSDoc d'origine** et n'en adapter que la dernière phrase, c'est-à-dire faire ce que la prose annonçait et ce que « pur déplacement » signifie.
+- **Reason:** constat **I2** de la revue de tâche, vérifié sur la source. Le JSDoc d'origine porte deux choses que la version condensée a perdues : (1) la **citation du code d'Astro** (`createGetEntry` dans `astro/dist/content/runtime.js` fait `console.warn(…); return;`) — c'est le fait établi qui justifie l'existence même du garde-fou, et sans lui la prochaine personne qui lit la fonction n'a aucune raison de la croire ; (2) le **locus exact** du symptôme (`sortAndFilter`, `src/lib/posts.ts:5`) — c'est ce qui rend un `TypeError` diagnosticable. Le corps **exécutable** de la fonction, lui, est bien byte-identique : `diff` entre `git show a4eb77d:src/lib/projects.ts` et `src/lib/references.ts` sur la portée de la fonction est **vide** (vérifié par le contrôleur, puis re-vérifié indépendamment par le relecteur).
+- **Reversibility:** cheap (un bloc de commentaire ; aucun comportement, aucun test).
+- **Caught late:** **yes.** L'implémenteur avait signalé la contradiction prose/bloc-de-code dans son message final ; le contrôleur a écrit D01 et D02 au tour suivant **sans la logger**, et ne l'a reprise qu'après que le relecteur l'a resortie en I2. C'est exactement le retard que ce protocole existe pour rendre visible : reporté tel quel plutôt que réécrit.
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté, conserver le JSDoc condensé tel qu'il est parti dans `b316b45` et corriger la prose du Step 4 du plan, qui serait alors la partie fausse.
+
+---
+
+## D03 — Filtrage `draft` rendu testable et couvert par des tests (le plan l'exige sans le tester)
+
+- **Date:** 2026-08-02
+- **Task affected:** T-A1 — `src/lib/prompts.ts`, `src/lib/skills.ts`, `src/lib/prompts.test.ts`, `src/lib/skills.test.ts`
+- **Original plan:** le plan **exige** le comportement — section « Décisions d'implémentation tranchées par ce plan » : « **Entrées `draft`** (T-A1) : `getSortedPrompts()` / `getSortedSkills()` écartent `draft: true` […] Conséquence : une entrée `draft` n'a **pas de route publique** et ne doit pas être liée depuis une autre ». Mais la **liste de tests du Step 1** que le plan fournit verbatim ne contient **aucun** cas de filtrage `draft`, et le code du Step 5 inline le `.filter()` dans la fonction `async` qui appelle `getCollection` — donc dans la seule partie du module qu'un test unitaire ne peut pas atteindre.
+- **Deviation taken:** extraire le filtrage dans une fonction **pure** exportée, sur le modèle exact de `sortAndFilter` (`src/lib/posts.ts:3-7`), et ajouter les cas de test correspondants aux deux fichiers de test. `getSortedPrompts()` / `getSortedSkills()` gardent leur signature et leur comportement observable ; c'est un changement de **découpage interne** plus des tests. Le nom exact de la fonction extraite est laissé à l'implémenteur, à condition qu'il dise ce qu'elle fait.
+- **Reason:** constat **I1** de la revue de tâche. Le comportement est exigé par le plan, dépend d'une clause que **T-C2 utilise** (« les prompts `draft` sont écartés APRÈS résolution — les lier produirait un 404 »), et **rien ne le vérifie**. Un comportement exigé, non testé, et sur lequel une tâche ultérieure s'appuie, est précisément ce qui disparaît en silence entre deux sessions. Le relecteur a aussi noté que la forme inlinée s'écarte du pattern établi du repo (`posts.ts`), que les contraintes globales demandent de suivre.
+- **Reversibility:** cheap (une extraction de fonction dans deux modules et des tests ; aucun comportement observable ne change).
+- **Caught late:** no (loggé avant la correction).
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté, remettre le `.filter()` inline et retirer les tests — le filtrage `draft` redevient alors un comportement exigé par le plan et vérifié par rien.
+
+---
+
 ## D02 — Correction d'un chiffre de baseline faux dans les contraintes globales du plan
 
 - **Date:** 2026-08-02
