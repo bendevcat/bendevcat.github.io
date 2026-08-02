@@ -1,5 +1,5 @@
 ---
-title: "anti-drift-planning"
+title: "Anti-Drift Planning"
 name: anti-drift-planning
 description: "Méthodologie de planification multi-sessions résistante à la dérive : specs binaires, anti-arbitrage silencieux, scope ledger, phase de vérification, lint mécanique."
 type: claude-code

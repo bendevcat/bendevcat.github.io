@@ -1,5 +1,6 @@
-# Configuration Sveltia CMS — Plan 2.
-# Source de vérité du schéma : src/content.config.ts (collection `blog`).
+# Configuration Sveltia CMS.
+# Source de vérité du schéma : src/content.config.ts (collections `blog`,
+# `projects`, `prompts`, `skills`).
 backend:
   name: github
   repo: bendevcat/bendevcat.github.io
@@ -178,8 +179,8 @@ collections:
           - { label: 'Fiche — prompt copiable + notes', value: fiche }
           - { label: 'Guide — write-up long', value: guide }
       - { name: prompt, label: Texte du prompt, widget: text, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide.' }
-      - { name: tool, label: Outil, widget: string, default: Claude }
-      - { name: model, label: Modèle, widget: string, required: false }
+      - { name: tool, label: Outil, widget: string, default: Claude, hint: 'Alimente le filtre « outil » de /prompts' }
+      - { name: model, label: Modèle, widget: string, required: false, hint: 'Affiché en pastille sur la fiche du prompt, si renseigné' }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
       - name: relatedSkills

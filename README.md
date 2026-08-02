@@ -130,8 +130,11 @@ Pour supprimer une entrée proprement, à la main :
 | Élément | Emplacement |
 |---|---|
 | Article | `src/content/blog/<slug>/index.md` |
+| Projet | `src/content/projects/<slug>/index.md` |
+| Prompt | `src/content/prompts/<slug>/index.md` |
+| Skill | `src/content/skills/<slug>/index.md` |
 | Images d'un article | dans le dossier de l'article, à côté de `index.md` |
-| Schéma de référence | `src/content.config.ts` (collection `blog`) |
+| Schéma de référence | `src/content.config.ts` (collections `blog`, `projects`, `prompts`, `skills`) |
 | Configuration du CMS | `public/admin/config.yml` |
 
 Les champs du CMS sont alignés sur le schéma Zod ; `src/lib/cms-config.test.ts`

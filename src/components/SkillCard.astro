@@ -22,7 +22,13 @@ const facets = JSON.stringify({ type: [type], tag: tags });
     <span class="w-fit rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted">
       {type}
     </span>
-    {version && <span class="font-mono text-xs text-muted">v{version}</span>}
+    {
+      version && (
+        <span class="w-fit rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted">
+          v{version}
+        </span>
+      )
+    }
   </div>
 
   <h3 class="font-display text-lg font-semibold text-text group-hover:text-acc">

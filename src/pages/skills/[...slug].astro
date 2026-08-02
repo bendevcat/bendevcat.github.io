@@ -78,7 +78,7 @@ const relatedPrompts = skill.data.relatedPrompts?.length
     }
 
     {
-      installCmd && (
+      (installCmd ?? '').trim().length > 0 && (
         <section class="mt-10">
           <h2 class="font-mono text-sm text-muted">// installation</h2>
           {/*
