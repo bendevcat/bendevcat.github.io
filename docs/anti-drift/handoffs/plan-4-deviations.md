@@ -46,8 +46,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reason:** trois d'entre eux ont un effet observable réel. **T2** : le pattern de bloc copiable a **dérivé entre T-B3 et T-C2** — `shouldRenderPromptBlock` teste `.trim().length > 0`, la page skill teste `installCmd &&`. Un `installCmd` composé d'espaces (saisissable dans `/admin`) rend un `<pre>` vide surmonté d'un bouton qui copie du blanc et affiche « Copié ! ». **T3** : `version` s'affiche en texte nu sur la carte et en pastille bordée sur la fiche ; `SkillCard` est la seule des 4 surfaces à mêler les deux styles — invisible en revue par tâche, personne n'ayant comparé carte skill et fiche skill. **D1-M3/M4/M7** : l'en-tête du `config.yml` annonce encore « Plan 2 », la table du README reste blog-only alors que la branche a édité la section juste au-dessus, et des hints du CMS sont à revoir **avant T-D2**, qui utilise précisément ce formulaire.
 - **Reversibility:** cheap (rendu conditionnel, classes d'une pastille, commentaires et documentation ; aucun schéma, aucune donnée, aucun contrat partagé).
 - **Caught late:** no (loggé avant la vague).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, tout revient en l'état — et le bloc `installCmd` d'espaces reste rendu vide avec un bouton qui prétend avoir copié.
 
 ---
@@ -66,8 +66,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Effet observable, énoncé franchement :** après correctif, le CMS **refusera** des URL qu'il acceptait avant — toutes invalides pour Zod, donc toutes vouées à casser le build. Le motif reste **plus strict** que Zod sur le schéma (`ftp://` refusé), jamais plus laxiste.
 - **Reversibility:** cheap (un motif YAML répété 3 fois et des assertions de test ; aucun contenu, aucun schéma, aucune page).
 - **Caught late:** no (loggé avant le correctif).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, restaurer le motif du Step 1 et la liste d'assertions d'origine — et acter que le mode de panne « le CMS accepte, le build casse après » reste **ouvert** sur 3 champs URL, avec un test qui affirme le contraire.
 
 ---
@@ -81,8 +81,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reason:** constat **I1** de la revue de T-C2. Ces helpers **existent, sont testés, et leur JSDoc nomme littéralement ce cas d'usage** — les avoir extraits est même l'objet de la déviation **D03**. Refiltrer à la main à côté d'eux crée une seconde source de vérité pour la même règle, et produit un **effet observable** : les prompts liés s'affichent dans l'ordre du frontmatter au lieu de l'ordre alphabétique. Le précédent du dépôt tranche dans le même sens : `src/pages/projets/[...slug].astro` (Plan 3) compose bien `sortAndFilter` pour ses articles liés. **T-B3 est rouverte** pour que les deux sens de la relation se comportent pareil — corriger un seul côté remplacerait une incohérence par une asymétrie.
 - **Reversibility:** cheap (deux appels de fonction ; aucun schéma, aucune donnée, aucun contrat partagé).
 - **Caught late:** no (loggé avant le correctif).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, restaurer les deux `.filter()` verbatim — l'ordre des entrées liées redevient celui du frontmatter, et la règle `draft` reste écrite à deux endroits.
 
 ---
@@ -98,8 +98,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   **I3 :** le relecteur a **muté le code pour le prouver** — en remplaçant `deps.legacyCopy?.(text) ?? false` par `deps.legacyCopy!(text)`, **les 5 tests passent quand même**. La branche « pas de `legacyCopy` du tout » n'est donc couverte par rien, alors que c'est exactement le cas d'un navigateur sans `document.execCommand`.
 - **Reversibility:** cheap (un attribut d'accessibilité et un cas de test ; le chemin nominal et le rendu visuel ne changent pas).
 - **Caught late:** no (loggé avant le correctif).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté sur (1), retirer l'annonce — l'échec de copie reste alors invisible aux lecteurs d'écran, ce qui est un choix, mais un choix explicite. Si rejeté sur (2), retirer le test — la branche redevient non couverte.
 
 ---
@@ -114,8 +114,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   À noter, parce que ça explique pourquoi personne ne l'a vu plus tôt : `astro build`, `astro check` et les 73 tests sont **tous verts**. Rien dans la chaîne automatisée ne mesure une largeur rendue — seul un smoke navigateur pouvait l'attraper.
 - **Reversibility:** cheap (le rendu d'un bloc dans une seule page ; aucun schéma, aucune donnée, aucun contrat partagé).
 - **Caught late:** no (loggé avant le correctif).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Addendum du 2026-08-02, après la revue de tâche :** la forme retenue par l'implémenteur ajoutait une classe `astro-code` sur le `<pre>`, justifiée par la nécessité de restaurer la police mono. **La justification est fausse**, et le relecteur l'a établie sur le CSS buildé : le preflight Tailwind v4 met déjà `pre` en JetBrains Mono (`--default-mono-font-family: var(--font-mono)`), et cette classe attache en réalité **5 déclarations `!important` de Shiki** (`global.css:160-167`) qui matchent bien ce `<pre>` — bénignes aujourd'hui **par accident** (les variables `--shiki-*` sont indéfinies, donc `unset`). La classe est retirée. Ce n'est pas une nouvelle déviation mais un affinement de celle-ci, consigné ici parce que **cette forme allait être reprise verbatim pour T-C2**.
 - **Follow-up:** si rejeté, restaurer le markup verbatim du Step 6 — et acter alors que **R9 est en échec sur `/prompts/<slug>`**, ce qui devra être tranché en `Deferred` ou `Cut` à la Phase Z, avec la déviation approuvée que le linter exigera.
 
@@ -132,8 +132,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reason:** constat **I1** de la revue de tâche. `(entry[key] ?? []).includes(value)` ne vérifie jamais que `entry[key]` est un tableau : sur une **chaîne**, `.includes` devient un **matching de sous-chaîne**, donc filtrer sur `fic` ferait matcher `"fiche"`. Le `JSON.parse` du script navigateur (`src/scripts/facet-filters.ts:23`) est **casté** en `Record<string, string[]>` sans garde, donc TypeScript est aveugle au problème. `PromptCard.astro:15` respecte le contrat (il sérialise bien des tableaux) — **le défaut n'est donc pas atteignable aujourd'hui**. Mais ce module est **explicitement livré tel quel à T-C1**, qui doit reproduire le même contrat de son côté : c'est précisément le genre de contrat implicite qui casse à la tâche suivante, entre deux implémenteurs qui ne se parlent pas.
 - **Reversibility:** cheap (une garde et un test ; aucun comportement observable ne change sur les données réelles).
 - **Caught late:** no (loggé avant le correctif).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, restaurer le corps verbatim du Step 3 et retirer le test — le contrat « valeurs = tableaux » redevient alors une convention que rien ne fait respecter, à la veille d'être reproduite par T-C1.
 
 ---
@@ -148,8 +148,9 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Portée exacte de ce qui tombe, et de ce qui ne tombe pas** (mesuré, pas supposé) : tombent la clause « ≥ 2 skills » de **R1** et la clause « ≥ 2 cartes » de **R5**. Ne tombent **pas** : **R6** (`/skills/<slug>` — instructions, `installCmd` copiable, repo, prompts liés) et **R7** (relation `skills ↔ prompts` résolue dans les deux sens), tous deux entièrement livrables et vérifiables avec un seul skill relié à deux prompts. T-C1 et T-C2 sont donc **construites et vérifiées normalement** ; seul le comptage de cartes de R5 reste en défaut.
 - **Reversibility:** cheap (ajouter un second skill = un `index.md` de plus ; aucun code, aucun schéma, aucune page à changer — la grille, le filtre et les relations fonctionnent déjà à N entrées).
 - **Caught late:** no (loggé avant que T-A2 s'exécute).
-- **Status:** pending-user
+- **Status:** approved
 - **User decision:** l'utilisateur a **choisi explicitement** l'option « 1 seul skill, R1 reste In progress » le 2026-08-02, parmi trois options présentées avec les faits de propriété ci-dessus (autre skill à lui / publier un skill sxd avec confirmation d'auteur et de droit / un seul skill). **Le statut reste `pending-user` :** un agent n'écrit jamais `approved`, et une réduction de périmètre de cette taille mérite une ratification explicite au gate, pas une déduction depuis un clic. À ratifier avant la Phase Z.
+- **Arbitrage rendu le 2026-08-02, au même gate :** l'utilisateur choisit **`Deferred` (reporté au Plan 5)** pour la clause « ≥ 2 skills » de **R1** et « ≥ 2 cartes » de **R5**, parmi trois options (Deferred / Cut / publier un 2ᵉ skill maintenant). **Cette entrée est la déviation approuvée sur laquelle reposent les deux lignes `Deferred` du ledger**, comme le linter mécanique l'exige. Motif retenu : le manque est du **contenu**, pas du code — la grille, le filtre et les relations fonctionnent déjà à N entrées, un 2ᵉ skill s'ajoutera sans une ligne de code à changer.
 - **Follow-up:** si l'utilisateur publie un 2ᵉ skill avant la Phase Z, R1 et R5 redeviennent atteignables et cette entrée devient sans objet. Sinon, la Phase Z doit trancher entre `Deferred` (reporté au Plan 5) et `Cut` pour la clause manquante — et le linter mécanique **exigera une déviation `approved`** pour accepter l'un ou l'autre.
 
 ---
@@ -163,8 +164,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reason:** constat **I2** de la revue de tâche, vérifié sur la source. Le JSDoc d'origine porte deux choses que la version condensée a perdues : (1) la **citation du code d'Astro** (`createGetEntry` dans `astro/dist/content/runtime.js` fait `console.warn(…); return;`) — c'est le fait établi qui justifie l'existence même du garde-fou, et sans lui la prochaine personne qui lit la fonction n'a aucune raison de la croire ; (2) le **locus exact** du symptôme (`sortAndFilter`, `src/lib/posts.ts:5`) — c'est ce qui rend un `TypeError` diagnosticable. Le corps **exécutable** de la fonction, lui, est bien byte-identique : `diff` entre `git show a4eb77d:src/lib/projects.ts` et `src/lib/references.ts` sur la portée de la fonction est **vide** (vérifié par le contrôleur, puis re-vérifié indépendamment par le relecteur).
 - **Reversibility:** cheap (un bloc de commentaire ; aucun comportement, aucun test).
 - **Caught late:** **yes.** L'implémenteur avait signalé la contradiction prose/bloc-de-code dans son message final ; le contrôleur a écrit D01 et D02 au tour suivant **sans la logger**, et ne l'a reprise qu'après que le relecteur l'a resortie en I2. C'est exactement le retard que ce protocole existe pour rendre visible : reporté tel quel plutôt que réécrit.
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, conserver le JSDoc condensé tel qu'il est parti dans `b316b45` et corriger la prose du Step 4 du plan, qui serait alors la partie fausse.
 
 ---
@@ -178,8 +179,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reason:** constat **I1** de la revue de tâche. Le comportement est exigé par le plan, dépend d'une clause que **T-C2 utilise** (« les prompts `draft` sont écartés APRÈS résolution — les lier produirait un 404 »), et **rien ne le vérifie**. Un comportement exigé, non testé, et sur lequel une tâche ultérieure s'appuie, est précisément ce qui disparaît en silence entre deux sessions. Le relecteur a aussi noté que la forme inlinée s'écarte du pattern établi du repo (`posts.ts`), que les contraintes globales demandent de suivre.
 - **Reversibility:** cheap (une extraction de fonction dans deux modules et des tests ; aucun comportement observable ne change).
 - **Caught late:** no (loggé avant la correction).
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, remettre le `.filter()` inline et retirer les tests — le filtrage `draft` redevient alors un comportement exigé par le plan et vérifié par rien.
 
 ---
@@ -193,8 +194,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reason:** le chiffre était **faux**. Je ne l'avais pas mesuré : je l'avais recopié du ledger du Plan 3, où « 9 pages » date de T-B1 — **avant** que T-B3 n'ajoute les routes `/projets/<slug>`. L'implémenteur de T-A1 l'a relevé et a mesuré 11 pages avant comme après sa tâche. **Re-vérifié indépendamment par le contrôleur** : `npx astro build` produit 12 fichiers HTML dans `dist/`, dont `dist/admin/index.html` qui est un asset statique de `public/` et non une page Astro → **11 pages Astro**, conforme au décompte attendu (1 home + 1 index blog + 6 articles + 1 index projets + 2 fiches projets). Laisser « 9 » aurait fait passer chaque tâche suivante pour une régression de +2 pages, ou pire, aurait entraîné leur ajustement silencieux.
 - **Reversibility:** cheap (des chiffres attendus dans un document de plan ; aucun code, aucun comportement).
 - **Caught late:** no pour l'exécution (rien n'a été construit sur le chiffre faux), **mais l'entrée est écrite après le commit `b316b45`** : le constat est venu du rapport de l'implémenteur, qui ne peut pas écrire dans ce log. Séquence exacte reportée telle quelle.
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, restaurer « 9 pages » dans le plan — ce qui revient à demander aux tâches suivantes de se comparer à un chiffre que le dépôt contredit.
 
 ---
@@ -209,6 +210,6 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   Conséquence mécanique : le Step 8 du plan attend 3 occurrences, il y en a **4**. C'est le même constat, pas un second.
 - **Reversibility:** cheap (une ligne d'import dans un fichier de test ; le chemin de retour est de ne pas déplacer la fonction du tout, soit une seule tâche de rework).
 - **Caught late:** no — l'implémenteur l'a relevé au Step 6, **avant** de committer, et l'a remonté au contrôleur au lieu de le glisser en silence. L'entrée est toutefois **écrite après** le commit `b316b45` : un subagent n'écrit pas dans ce log, il rapporte au contrôleur qui l'écrit à la première occasion.
-- **Status:** pending-user
-- **User decision:**
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-08-02, ratification groupée : « **Je les approuve toutes** », choisie parmi trois options présentées (approuver les 11 / les examiner une par une / approuver sauf D10, la seule dont l'effet est visible à l'usage).
 - **Follow-up:** si rejeté, annuler le déplacement de `assertEntriesResolved` : la fonction retourne dans `src/lib/projects.ts`, `src/lib/references.ts` est supprimé, et les 4 imports (2 pages + le test + les futures pages du Plan 4) pointent de nouveau vers `projects.ts`.
