@@ -4,6 +4,8 @@
 // d'ajouter le bouton au DOM. Si on lisait `pre.innerText` après avoir fait
 // `pre.appendChild(btn)`, le presse-papier contiendrait aussi le libellé du
 // bouton (« Copier » / « Copié ! »), ce qui viole R3 (« le contenu » seul).
+import { copyText } from '../lib/clipboard';
+
 document.querySelectorAll<HTMLPreElement>('article pre').forEach((pre) => {
   const codeText = pre.querySelector('code')?.innerText ?? pre.innerText;
 
@@ -27,8 +29,11 @@ document.querySelectorAll<HTMLPreElement>('article pre').forEach((pre) => {
   btn.setAttribute('aria-label', 'Copier le code');
 
   btn.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(codeText);
-    btn.textContent = 'Copié !';
+    // Plan 4 : la copie peut échouer (contexte non sécurisé, permission
+    // refusée). Avant, l'échec était SILENCIEUX — la promesse rejetait et le
+    // libellé ne changeait jamais. Le chemin nominal est inchangé.
+    const ok = await copyText(codeText);
+    btn.textContent = ok ? 'Copié !' : 'Échec — copie manuelle';
     setTimeout(() => {
       btn.textContent = 'Copier';
     }, 1500);
