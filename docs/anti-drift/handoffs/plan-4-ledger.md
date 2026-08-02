@@ -80,3 +80,4 @@ Aucune n'est exigée par un critère R. Elles sont listées ici pour être appro
   - **4 Minor déférés** à la revue finale de branche (chemin d'installation fictif pour le lecteur, 2 affirmations contrefactuelles non sourçables, comptes de mots du rapport sous-évalués, « 5 verrous » de la fiche vs « 4 verrous » de la méthodologie de ce dépôt — les deux exacts dans leur cadre mais dissonants côte à côte).
   - **R1 et R7 restent In progress.** R1 : 2 prompts ✅ mais **1 seul skill** au lieu de ≥ 2 (**D05**, `pending-user`). R7 : les données sont en place **et prouvées** dans les deux sens, mais son critère parle de **rendu** (« un skill liste ses prompts liés », « navigation croisée ») → T-C2. **T-B1 est débloquée** : 2 prompts, 2 formats distincts (`fiche`, `guide`).
 
+- 2026-08-02 — T-B1 (carte prompt + grille `/prompts`) → **In progress** — R2 et R9 In progress.
