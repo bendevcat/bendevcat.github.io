@@ -28,7 +28,16 @@ export type FacetSelection = Record<string, string>;
  * sans tag.
  */
 export function matchesFacets(entry: FacetValues, selected: FacetSelection): boolean {
-  return Object.entries(selected).every(
-    ([key, value]) => value === ALL || (entry[key] ?? []).includes(value),
-  );
+  return Object.entries(selected).every((entryPair) => {
+    const [key, value] = entryPair;
+    if (value === ALL) return true;
+    const values = entry[key];
+    // Garde de type : `entry` vient d'un `JSON.parse` non garanti côté
+    // navigateur (cf. src/scripts/facet-filters.ts). Une valeur qui n'est pas
+    // un tableau — ex. `{ format: 'fiche' }` au lieu de `['fiche']` — ne doit
+    // jamais matcher : sans cette garde, `.includes` sur une chaîne devient un
+    // matching de sous-chaîne (`'fiche'.includes('fic')` → true), ce qui
+    // n'est pas la sémantique du moteur.
+    return Array.isArray(values) && values.includes(value);
+  });
 }

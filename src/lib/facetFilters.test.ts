@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ALL, matchesFacets } from './facetFilters';
+import { ALL, matchesFacets, type FacetValues } from './facetFilters';
 
 const entry = { format: ['fiche'], tool: ['Claude'], tag: ['ia', 'anti-drift'] };
 
@@ -35,5 +35,15 @@ describe('matchesFacets', () => {
 
   it('refuse une entrée dont la facette est un tableau vide', () => {
     expect(matchesFacets({ tag: [] }, { tag: 'ia' })).toBe(false);
+  });
+
+  it('refuse une entrée dont la valeur de facette n’est pas un tableau (JSON malformé)', () => {
+    // `entry` vient d'un `JSON.parse` non garanti côté navigateur (data-facet
+    // malformé) : `{ format: 'fiche' }` au lieu de `{ format: ['fiche'] }`.
+    // Sans garde de type, `.includes` sur une chaîne ferait du matching de
+    // sous-chaîne (`'fiche'.includes('fic')` → true) — ce n'est pas la
+    // sémantique du moteur, qui ne doit matcher que sur le domaine typé.
+    const malformed = { format: 'fiche' } as unknown as FacetValues;
+    expect(matchesFacets(malformed, { format: 'fic' })).toBe(false);
   });
 });
