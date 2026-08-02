@@ -108,7 +108,12 @@ loggées dont 3 rejetées ; zéro entrée laissée `pending-user` à la sortie.
 ## Installation
 
 Le dépôt n'est pas accessible publiquement pour l'instant — c'est pourquoi tu ne
-trouveras pas de lien vers lui sur cette fiche. Le plugin s'installe donc depuis
-un clone local, qui fait office de marketplace à lui tout seul : la commande
-ci-dessus enregistre la marketplace puis installe le plugin. Redémarre Claude
-Code après l'installation pour que la skill et les commandes se chargent.
+trouveras pas de lien vers lui sur cette fiche. Conséquence directe : **la
+commande d'installation de cette fiche n'est pas exécutable en l'état**. Il lui
+manque l'étape qui la précède, le `git clone` du dépôt vers un chemin local —
+et c'est précisément cette étape-là que le 404 rend impossible.
+
+Le reste décrit le fonctionnement réel : le clone fait office de marketplace à
+lui tout seul, la commande enregistre cette marketplace puis installe le plugin
+depuis elle, et il faut redémarrer Claude Code pour que la skill et les sept
+commandes se chargent.

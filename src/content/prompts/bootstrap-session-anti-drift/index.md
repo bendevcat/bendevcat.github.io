@@ -143,8 +143,17 @@ Ce prompt-là, tu ne l'écris pas à la main : il est généré par
 d'une session neuve — une session par plan. Le contexte vierge est voulu : c'est
 ce qui empêche une session d'hériter des approximations de la précédente.
 
-Ce que tu lis ci-dessus est l'instance réelle du Plan 4 de ce site, émise
-automatiquement par la phase de vérification du Plan 3.
+Le bloc de prompt de cette fiche est une instance réelle et non retouchée :
+celle du Plan 4 de ce site, émise automatiquement par la phase de vérification
+du Plan 3.
+
+Qui dit instance réelle dit vraie coquille. Le texte demande de taguer
+`milestone-plan-3` alors qu'il pilote le Plan 4 — et ce tag-là est déjà posé
+depuis la fin du Plan 3. La spec du Plan 4, elle, vise `milestone-plan-4`. Je ne
+l'ai pas corrigée dans le bloc : la contradiction a été relevée au gate de
+pré-flight et tranchée là, `milestone-plan-4`, sans déplacer celui du Plan 3.
+C'est le trajet qu'on attend d'une contradiction entre une spec et un prompt —
+remonter au gate, plutôt que filer en silence jusqu'au tag.
 
 ## Ce qu'il porte
 

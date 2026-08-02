@@ -125,12 +125,14 @@ La méthode surveille aussi son propre surcoût : au-delà de trois décisions e
 attente simultanément, c'est le plan qu'il faut refaire, pas plus d'approbations
 à empiler.
 
-Et le dispositif doit accepter de sortir des résultats moches. Sur le Plan 4 de
-ce site, un seul skill publiable m'appartenant a été identifié, alors que la
-spec en demandait deux. La réduction est loggée avant d'être exécutée, et les
-deux critères concernés ne seront pas maquillés en `Done` : ils restent en
-l'état, avec l'entrée qui dit pourquoi. C'est laid dans le tableau, et c'est
-exactement à ça que sert le tableau.
+Et le dispositif doit accepter de sortir des résultats moches. Ça m'est arrivé
+sur ce site : une spec exigeait deux artefacts d'un certain type, un seul était
+réellement livrable au moment de l'exécution. La méthode n'autorise pas à
+arrondir. La réduction se logge **avant** d'être exécutée, et les critères
+concernés restent en l'état plutôt que d'être maquillés en `Done`, avec l'entrée
+qui dit pourquoi. C'est laid dans le tableau, et c'est exactement à ça que sert
+le tableau : c'est la seule chose qui distingue un périmètre tenu d'un périmètre
+raconté.
 
 ## Quand ne pas s'en servir
 
