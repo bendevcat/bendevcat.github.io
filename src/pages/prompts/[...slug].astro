@@ -2,6 +2,7 @@
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSortedPrompts } from '../../lib/prompts';
+import { sortAndFilterSkills } from '../../lib/skills';
 import { assertEntriesResolved } from '../../lib/references';
 import { shouldRenderPromptBlock } from '../../lib/promptView';
 
@@ -20,13 +21,22 @@ const showPromptBlock = shouldRenderPromptBlock(format, prompt.data.prompt);
 // le sens skill → prompts ; sans ceci, `relatedSkills` serait un champ de
 // données jamais affiché. `assertEntriesResolved` fait échouer le build avec
 // un message nommant l'entrée et l'id manquant plutôt que de laisser passer
-// un `undefined` (D06, Plan 3).
+// un `undefined` (D06, Plan 3) — appelé EN PREMIER, sinon une référence
+// cassée serait masquée.
+// `sortAndFilterSkills` (src/lib/skills.ts) est composé ENSUITE : il écarte
+// les skills `draft` (référence valide, mais pas de route publique — les
+// lier produirait un 404) et trie A→Z. D09 (fix round 1, T-C2) : réutilise le
+// helper testé existant au lieu de réécrire le filtre à la main, qui perdait
+// le tri (cf. sortAndFilterPrompts, composé symétriquement côté skill →
+// prompts).
 const relatedSkills = prompt.data.relatedSkills?.length
-  ? assertEntriesResolved(
-      prompt.id,
-      prompt.data.relatedSkills,
-      await getEntries(prompt.data.relatedSkills),
-    ).filter((skill) => !skill.data.draft)
+  ? sortAndFilterSkills(
+      assertEntriesResolved(
+        prompt.id,
+        prompt.data.relatedSkills,
+        await getEntries(prompt.data.relatedSkills),
+      ),
+    )
   : [];
 ---
 

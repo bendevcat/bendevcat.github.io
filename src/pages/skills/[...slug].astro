@@ -2,6 +2,7 @@
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSortedSkills } from '../../lib/skills';
+import { sortAndFilterPrompts } from '../../lib/prompts';
 import { assertEntriesResolved } from '../../lib/references';
 
 export async function getStaticPaths() {
@@ -16,16 +17,22 @@ const { title, name, description, type, version, repoUrl, installCmd, tags } = s
 // R7 : les références sont résolues en entrées réelles — on affiche un titre,
 // jamais un id ni `undefined`. `assertEntriesResolved` (D06, Plan 3) fait
 // échouer le build avec un message nommant le skill, la collection visée et
-// l'id manquant, au lieu d'un TypeError anonyme.
-// Les prompts `draft` sont écartés APRÈS résolution : ils existent bien (la
-// référence n'est pas cassée) mais n'ont pas de route publique — les lier
-// produirait un 404.
+// l'id manquant, au lieu d'un TypeError anonyme — appelé EN PREMIER, sinon
+// une référence cassée serait masquée.
+// `sortAndFilterPrompts` (src/lib/prompts.ts) est composé ENSUITE : il écarte
+// les prompts `draft` (ils existent bien — la référence n'est pas cassée —
+// mais n'ont pas de route publique, les lier produirait un 404) et trie A→Z.
+// D09 (fix round 1, T-C2) : réutilise le helper testé existant au lieu de
+// réécrire le filtre à la main, qui perdait le tri (cf. sortAndFilterSkills,
+// composé symétriquement côté prompt → skills).
 const relatedPrompts = skill.data.relatedPrompts?.length
-  ? assertEntriesResolved(
-      skill.id,
-      skill.data.relatedPrompts,
-      await getEntries(skill.data.relatedPrompts),
-    ).filter((prompt) => !prompt.data.draft)
+  ? sortAndFilterPrompts(
+      assertEntriesResolved(
+        skill.id,
+        skill.data.relatedPrompts,
+        await getEntries(skill.data.relatedPrompts),
+      ),
+    )
   : [];
 ---
 
