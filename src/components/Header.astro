@@ -6,14 +6,14 @@ interface NavLink {
   href?: string;
 }
 
-// Nav complète du site (spec design §4). Blog (Plan 1) et Projets (Plan 3)
-// ont une page ; les autres piliers arrivent au Plan 4-5 — rendus non
-// cliquables pour éviter tout lien mort (cf. spec Plan 1 §5).
+// Nav complète du site (spec design §4). Blog (Plan 1), Projets (Plan 3),
+// Prompts et Skills (Plan 4) ont une page ; « À propos » arrive au Plan 5 —
+// rendu non cliquable pour éviter tout lien mort (cf. spec Plan 1 §5).
 const navLinks: NavLink[] = [
   { label: 'Blog', href: '/blog' },
   { label: 'Projets', href: '/projets' },
-  { label: 'Prompts' },
-  { label: 'Skills' },
+  { label: 'Prompts', href: '/prompts' },
+  { label: 'Skills', href: '/skills' },
   { label: 'À propos' },
 ];
 ---
