@@ -61,11 +61,40 @@ const relatedSkills = prompt.data.relatedSkills?.length
         <section class="mt-10">
           <h2 class="font-mono text-sm text-muted">// le prompt</h2>
           {/*
-            R3 : ce <pre> est DANS <article>, donc src/scripts/copy-code.ts
-            (importé plus bas) lui accroche son bouton « Copier »/« Copié ! ».
-            Aucun second mécanisme de copie — spec §6.2.
+            Correctif D07 (pending-user, cheap) : le Step 6 d'origine rendait
+            ce <pre> hors de tout `.prose`, or `.prose :where(pre)`
+            (src/styles/global.css:115-122) — overflow-x:auto, padding,
+            bordure, rayon — est SCOPÉE à `.prose`. Résultat mesuré au smoke
+            navigateur : overflow-x:visible, padding/border/radius à 0,
+            2461px de débordement horizontal à 375px (R9 cassée) et aucun
+            style du composant code-block du Plan 1 appliqué (spec §6.2).
+
+            Fix : on place le <pre> dans un conteneur `.prose`, exactement
+            comme le corps de l'article ci-dessous — on RÉUTILISE
+            `.prose :where(pre)`, on ne duplique aucune règle CSS et on ne
+            touche pas à src/styles/global.css. Le label « // le prompt »
+            reste hors de `.prose`, comme « // skills liés » plus bas :
+            `.prose :where(h2)` (police display, 1.5rem) écraserait sinon
+            son style de label mono discret.
+
+            `astro-code` : ce <pre> n'est pas issu de Shiki, mais `.prose`
+            impose sa police sans-serif par héritage (`.prose { font-family:
+            var(--font-sans) }`, cf. ligne 48, a une spécificité de classe —
+            supérieure à la règle user-agent `pre { font-family: monospace }`
+            qu'elle écraserait sinon). La classe `astro-code` porte déjà
+            (ligne 150, R8) la règle `font-family: var(--font-mono)`, requise
+            pour tout bloc de code indépendamment de `.prose` — on la
+            RÉUTILISE elle aussi, sans dupliquer sa déclaration.
+
+            R3 : ce <pre> reste DANS <article> (juste un niveau plus profond,
+            via .prose puis .code-block-wrapper), donc
+            src/scripts/copy-code.ts (importé plus bas) lui accroche toujours
+            son bouton « Copier »/« Copié ! ». Aucun second mécanisme de
+            copie — spec §6.2.
           */}
-          <pre class="mt-4"><code>{prompt.data.prompt}</code></pre>
+          <div class="prose mt-4">
+            <pre class="astro-code"><code>{prompt.data.prompt}</code></pre>
+          </div>
         </section>
       )
     }
