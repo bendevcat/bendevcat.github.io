@@ -2,8 +2,8 @@
 
 **Date :** 2026-08-02
 **Branche :** `plan-4-librairies-prompts-skills` (depuis `main` @ `eb9deee`, tag `milestone-plan-3`)
-**Commits :** 40, **non poussés**
-**État :** **prêt à shipper, décisions en attente.** Ce n'est pas un échec — c'est l'état de succès prévu par la méthodologie quand le travail est fait et que le gate n'a pas encore tranché.
+**Commits :** 43, **non poussés**
+**État :** **prêt à shipper, deux actions utilisateur en attente.** Les 11 déviations sont **approuvées** ; il reste la publication du dépôt (R6) et T-D2 (R8). Ce n'est pas un échec — c'est l'état de succès prévu quand le travail est fait et que les derniers gestes ne sont pas ceux d'un agent.
 
 ---
 
@@ -11,19 +11,19 @@
 
 | Critère | Statut | Ce qui l'établit |
 |---|---|---|
-| R1 collections + contenu réel | **In progress** | 2 prompts réels ✅ · **1 seul skill** au lieu de ≥ 2 (**D05**) |
+| R1 collections + contenu réel | **Deferred** (Plan 5) | schémas validés au build ✅ · 2 prompts réels ✅ · **1 seul skill** au lieu de ≥ 2 — clause de comptage reportée, appuyée sur **D05 approuvée** |
 | R2 `/prompts` grille + filtre | **Done** | filtrage vérifié **par comptage** dans les deux sens, dans un vrai navigateur |
 | R3 copie 1 clic | **Done** | texte transmis **identique au bloc rendu** (10 579 car.), sans le libellé du bouton ; « Copié ! » puis retour ; chemin d'échec observé réellement |
 | R4 fiche vs guide | **Done** | fiche = bloc rendu · guide = **zéro `<pre>`** |
-| R5 `/skills` grille + filtre | **In progress** | filtre prouvé sur l'ensemble vide · **1 carte** au lieu de ≥ 2 (**D05**) |
-| R6 page skill | **In progress** | mesure binaire **entièrement satisfaite** ; l'intitulé nomme « + repo » et ce bloc n'a rien à rendre (dépôt en 404) — **arbitrage laissé au gate** |
+| R5 `/skills` grille + filtre | **Deferred** (Plan 5) | filtre prouvé sur l'ensemble vide ✅ · **1 carte** au lieu de ≥ 2 — clause de comptage reportée, appuyée sur **D05 approuvée** |
+| R6 page skill | **In progress** | mesure binaire **entièrement satisfaite** ; le bloc « repo » attend la publication du dépôt (404) — **l'utilisateur a choisi de le publier** |
 | R7 relation `skills ↔ prompts` | **Done** | boucle skill→prompt→skill en **200**, aucun `undefined`, **et l'échec prouvé** (id cassé → build en exit 1) |
 | R8 CMS | **In progress** | config livrée, testée, smoke `/admin` propre — **manque T-D2, geste utilisateur** |
 | R9 dark + 375px | **Done** | écart **0 px** sur les 4 pages, en dark **et** en light |
 
 **Mesures finales :** `npm test` **93/93 (9 fichiers)** · `npx astro check` **0 error / 0 warning** (66 hints) · `npx astro build` **16 pages** · lint anti-drift **13/13, exit 0**.
 
-**Tâches :** T-A1, T-A2, T-B1, T-B2, T-B3, T-C1, T-C2, T-D1 → **Done** (8/9). T-D2 → **en attente de l'utilisateur**. Phase Z → **non lancée** (elle échouerait, voir §2).
+**Tâches :** T-A1, T-A2, T-B1, T-B2, T-B3, T-C1, T-C2, T-D1 → **Done** (8/9). T-D2 → **en attente de l'utilisateur**. Phase Z → **non lancée** : elle échouerait tant que R6 et R8 ne sont pas `Done` (voir §2).
 
 ---
 
