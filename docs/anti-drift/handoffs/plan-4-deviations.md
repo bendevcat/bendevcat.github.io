@@ -37,6 +37,26 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D10 — Fermer la 4ᵉ occurrence du mode de panne « le CMS accepte, le build casse après », et symétriser le garde-fou
+
+- **Date:** 2026-08-02
+- **Task affected:** T-D1 (`public/admin/config.yml`, `src/lib/cms-config.test.ts`). **Touche aussi la collection `projects`, livrée au Plan 3** — voir la portée ci-dessous.
+- **Original plan:** le Step 1 de T-D1 impose pour `skills.repoUrl` le motif **exactement identique** à celui de `projects` (`^https?://[^\s/]+(/[^\s]*)?$`), et le Step 2 fournit la **liste exacte** des assertions à ajouter à `cms-config.test.ts` — dont un test intitulé « n'est **JAMAIS** plus laxiste que Zod », qui vérifie **10 cas choisis à la main**.
+- **Deviation taken:** (1) **resserrer le motif** pour qu'il refuse les hôtes et ports invalides, sur `skills.repoUrl` **et** sur `projects.repoUrl` / `projects.demoUrl` ; (2) remplacer les 10 cas choisis à la main par une **génération de cas** confrontée au vrai `z.string().url()`, pour que l'affirmation du test soit réellement vérifiée ; (3) **symétriser le garde-fou** sur les 2 nouvelles collections : assertions de `required`, de `widget`, et des clés `extension`/`format`/`media_folder`/`public_folder` — toutes présentes sur `blog`/`projects`, absentes sur `prompts`/`skills`.
+- **Reason:** constats **I1 à I4** de la revue de tâche, tous établis **par mesure contre le Zod réellement utilisé** (4.4.3, via `astro:content`), pas par lecture de doc.
+  **I1 — la 4ᵉ occurrence, atteignable par un collage banal :** le motif accepte `https://github.com:bendevcat/anti-drift-planning`, `http://exemple.fr:99999`, `https://exemple.fr:abc`, `http://[` — que `z.string().url()` **rejette**. Le CMS valide et commite, le commit déclenche le déploiement, `astro build` s'interrompt et produit **0 page**. Et le test censé l'interdire **ne le voit pas** : aucun de ses 10 cas ne contient de port ni d'hôte invalide. **Le test affirme donc quelque chose de faux**, ce qui est pire qu'une absence de test.
+  **I2/I3/I4 — trois portes ouvertes pour une 5ᵉ occurrence :** aucune assertion de `required` (passer `description` en `required: false` laisse **85 tests verts**, puis un champ omis casse le build), aucune assertion de `widget` (passer `tags` de `list` à `string`, ou `draft` de `boolean` à `string` : idem), et le test de `skills` omet 4 clés que son homologue `prompts` vérifie. **Toutes ces protections existent déjà sur `blog` et `projects`** — le plan a simplement oublié de les demander pour les deux nouvelles collections.
+  La **contrainte globale du plan** dit pourtant : « toute divergence CMS↔Zod **doit** faire échouer `cms-config.test.ts` ». Ce correctif sert cette contrainte ; il élargit une liste d'assertions que le plan avait figée trop court.
+- **Portée sur du code du Plan 3, assumée et signalée :** le motif de `projects.repoUrl` / `projects.demoUrl` est corrigé lui aussi. Le laisser en l'état conserverait la même faille sur une collection éditable, **et** rendrait le test partagé menteur. Le Plan 3 avait d'ailleurs **déféré exactement ce constat** (« `https://exemple.fr:99999` passe le motif mais est rejeté par Zod… à trancher à la revue finale de branche ») — il n'a jamais été tranché. Il l'est ici.
+- **Effet observable, énoncé franchement :** après correctif, le CMS **refusera** des URL qu'il acceptait avant — toutes invalides pour Zod, donc toutes vouées à casser le build. Le motif reste **plus strict** que Zod sur le schéma (`ftp://` refusé), jamais plus laxiste.
+- **Reversibility:** cheap (un motif YAML répété 3 fois et des assertions de test ; aucun contenu, aucun schéma, aucune page).
+- **Caught late:** no (loggé avant le correctif).
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté, restaurer le motif du Step 1 et la liste d'assertions d'origine — et acter que le mode de panne « le CMS accepte, le build casse après » reste **ouvert** sur 3 champs URL, avec un test qui affirme le contraire.
+
+---
+
 ## D09 — Ordre des entrées liées : composer les helpers testés au lieu de refiltrer à la main
 
 - **Date:** 2026-08-02
