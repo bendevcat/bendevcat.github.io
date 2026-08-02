@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { sortProjects, collectStacks, assertEntriesResolved } from './projects';
+import { sortProjects, collectStacks } from './projects';
+import { assertEntriesResolved } from './references';
 
 /** Fabrique un faux minimal — seules les clés lues par les fonctions testées. */
 function project(data: Partial<Record<string, any>>) {

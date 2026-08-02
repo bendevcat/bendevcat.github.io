@@ -2,7 +2,8 @@
 import { Image } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 import { getPublishedPosts } from '../../lib/posts';
-import { sortProjects, assertEntriesResolved } from '../../lib/projects';
+import { sortProjects } from '../../lib/projects';
+import { assertEntriesResolved } from '../../lib/references';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import AiBanner from '../../components/AiBanner.astro';

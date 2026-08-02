@@ -2,7 +2,8 @@
 import { Image } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getSortedProjects, assertEntriesResolved } from '../../lib/projects';
+import { getSortedProjects } from '../../lib/projects';
+import { assertEntriesResolved } from '../../lib/references';
 import { PROJECT_STATUS_META } from '../../lib/projectStatus';
 import { sortAndFilter } from '../../lib/posts';
 
