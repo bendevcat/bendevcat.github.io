@@ -37,6 +37,23 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D06 — Durcissement de `matchesFacets` au-delà du code fourni verbatim par le plan
+
+- **Date:** 2026-08-02
+- **Task affected:** T-B2 — `src/lib/facetFilters.ts`, `src/lib/facetFilters.test.ts`
+- **Original plan:** le Step 3 de T-B2 fournit le **corps exact** de `matchesFacets`, à transcrire verbatim :
+  `return Object.entries(selected).every(([key, value]) => value === ALL || (entry[key] ?? []).includes(value));`
+  Et le Step 1 fournit la **liste exacte** des 8 cas de test. Ni l'un ni l'autre ne contrôle que les valeurs de facette sont bien des **tableaux**.
+- **Deviation taken:** ajouter une garde de type dans `matchesFacets` (les valeurs non-tableau ne matchent pas) et le cas de test qui l'ancre. Le comportement sur le domaine typé — le seul atteignable aujourd'hui — **ne change pas**.
+- **Reason:** constat **I1** de la revue de tâche. `(entry[key] ?? []).includes(value)` ne vérifie jamais que `entry[key]` est un tableau : sur une **chaîne**, `.includes` devient un **matching de sous-chaîne**, donc filtrer sur `fic` ferait matcher `"fiche"`. Le `JSON.parse` du script navigateur (`src/scripts/facet-filters.ts:23`) est **casté** en `Record<string, string[]>` sans garde, donc TypeScript est aveugle au problème. `PromptCard.astro:15` respecte le contrat (il sérialise bien des tableaux) — **le défaut n'est donc pas atteignable aujourd'hui**. Mais ce module est **explicitement livré tel quel à T-C1**, qui doit reproduire le même contrat de son côté : c'est précisément le genre de contrat implicite qui casse à la tâche suivante, entre deux implémenteurs qui ne se parlent pas.
+- **Reversibility:** cheap (une garde et un test ; aucun comportement observable ne change sur les données réelles).
+- **Caught late:** no (loggé avant le correctif).
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté, restaurer le corps verbatim du Step 3 et retirer le test — le contrat « valeurs = tableaux » redevient alors une convention que rien ne fait respecter, à la veille d'être reproduite par T-C1.
+
+---
+
 ## D05 — Un seul skill réel au lieu de « ≥ 2 » : R1 et R5 ne seront pas entièrement satisfaits
 
 - **Date:** 2026-08-02
