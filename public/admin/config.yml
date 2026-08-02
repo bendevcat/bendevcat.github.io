@@ -112,9 +112,16 @@ collections:
       # droite dans le validateur Sveltia 0.175.1 (RegExp.test non ancré = simple
       # préfixe), donc `https://` ou `http://exa mple.com` passaient le CMS et
       # cassaient `astro build` (ZodError sur `z.string().url()`) après le commit.
-      # Motif établi empiriquement contre `z.string().url()` — voir cms-config.test.ts.
-      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
-      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
+      # Partie hôte resserrée (voir D10, Plan 4, fix round 1) : la première version
+      # de ce motif ([^\s/]+ pour l'hôte) acceptait encore un port invalide —
+      # `https://github.com:bendevcat/x`, `http://exemple.fr:99999`,
+      # `https://exemple.fr:abc`, `http://[` — que `z.string().url()` rejette tous.
+      # L'hôte exclut désormais `:`, `[`, `]`, et un port explicite (`:NNNNN`) doit
+      # être un entier 0–65535. Motif établi empiriquement contre `z.string().url()`
+      # (cartésien de cas générés, pas une liste choisie à la main) — voir
+      # cms-config.test.ts.
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/:\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
+      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s/:\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
       - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
       - name: relatedPosts
         label: Articles liés
@@ -195,9 +202,11 @@ collections:
       - { name: description, label: Description, widget: text, hint: 'Le « when to use » — affiché sur les cartes' }
       - { name: type, label: Type, widget: string, default: claude-code }
       - { name: version, label: Version, widget: string, required: false }
-      # Motif ancré des deux côtés (D03, Plan 3) : `^https?://` seul n'est pas
-      # ancré à droite dans le validateur Sveltia 0.175.1.
-      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-skill)'] }
+      # Motif ancré des deux côtés (D03, Plan 3), hôte resserré contre les ports
+      # invalides (D10, Plan 4, fix round 1) — voir le commentaire détaillé sur
+      # `projects.repoUrl` plus haut dans ce fichier ; motif identique partagé
+      # par les 3 champs URL du CMS.
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/:\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-skill)'] }
       - { name: installCmd, label: Commande d’installation, widget: string, required: false, hint: 'Affichée dans un bloc copiable sur la page du skill' }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
