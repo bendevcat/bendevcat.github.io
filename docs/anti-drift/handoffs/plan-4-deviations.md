@@ -37,6 +37,21 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D11 — Vague de correction issue de la revue finale de branche
+
+- **Date:** 2026-08-02
+- **Task affected:** transverse — `src/lib/promptView.ts` ou `src/pages/skills/[...slug].astro`, `src/components/SkillCard.astro`, `public/admin/config.yml` (en-tête + hints), `README.md`, `src/pages/skills/[...slug].astro`.
+- **Original plan:** aucune tâche du plan ne prévoit de vague de correction post-revue. Chaque tâche a été relue **isolément** ; ces constats ne se voient qu'en regardant l'ensemble.
+- **Deviation taken:** une **seule** vague de correction couvrant les 2 constats `Important` transverses et les 6 `Minor` triés « à corriger avant merge » par la revue finale. Détail dans `final-branch-review.md`.
+- **Reason:** trois d'entre eux ont un effet observable réel. **T2** : le pattern de bloc copiable a **dérivé entre T-B3 et T-C2** — `shouldRenderPromptBlock` teste `.trim().length > 0`, la page skill teste `installCmd &&`. Un `installCmd` composé d'espaces (saisissable dans `/admin`) rend un `<pre>` vide surmonté d'un bouton qui copie du blanc et affiche « Copié ! ». **T3** : `version` s'affiche en texte nu sur la carte et en pastille bordée sur la fiche ; `SkillCard` est la seule des 4 surfaces à mêler les deux styles — invisible en revue par tâche, personne n'ayant comparé carte skill et fiche skill. **D1-M3/M4/M7** : l'en-tête du `config.yml` annonce encore « Plan 2 », la table du README reste blog-only alors que la branche a édité la section juste au-dessus, et des hints du CMS sont à revoir **avant T-D2**, qui utilise précisément ce formulaire.
+- **Reversibility:** cheap (rendu conditionnel, classes d'une pastille, commentaires et documentation ; aucun schéma, aucune donnée, aucun contrat partagé).
+- **Caught late:** no (loggé avant la vague).
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté, tout revient en l'état — et le bloc `installCmd` d'espaces reste rendu vide avec un bouton qui prétend avoir copié.
+
+---
+
 ## D10 — Fermer la 4ᵉ occurrence du mode de panne « le CMS accepte, le build casse après », et symétriser le garde-fou
 
 - **Date:** 2026-08-02
