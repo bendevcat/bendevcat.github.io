@@ -29,9 +29,34 @@ export function loadCmsConfig(): any {
 function generateUrlProbeCases(): Array<{ value: string; zodAccepts: boolean }> {
   const urlSchema = z.string().url();
   const protocols = ['https://', 'http://', 'ftp://', 'javascript:', ''];
-  const hosts = ['exemple.fr', 'github.com', 'bendevcat.github.io', 'localhost', '', 'exa mple.com', '[', ']', '[::1]'];
-  const ports = ['', ':80', ':8080', ':4321', ':0', ':65535', ':65536', ':99999', ':abc', ':bendevcat', ':-1', ':', ':00080'];
-  const paths = ['', '/', '/a/b', '/a/b?c=d#e', '/a b', '/anti-drift-planning', '///'];
+  const hosts = [
+    // Hôtes valides, dont un cas de sous-domaine profond et un IDN punycode.
+    'exemple.fr', 'github.com', 'bendevcat.github.io', 'localhost',
+    'sub.deep.exemple.fr', 'xn--exmple-cva.fr',
+    // Hôtes malformés déjà couverts au fix round 1.
+    '', 'exa mple.com', '[', ']', '[::1]',
+    // Élargi au fix round 2 (constat I1 round 2) : la génération d'origine ne
+    // contenait AUCUN hôte avec `@ ? # % | < > ^`, donc ne pouvait pas voir que
+    // ces caractères manquaient de la classe d'hôte du motif. Une famille de
+    // caractères non listée ici est une famille non testée — d'où la liste
+    // volontairement redondante (caractère seul ET au milieu d'un hôte).
+    '@', 'user@', 'ex@emple.fr',
+    '?', 'ex?emple.fr',
+    '#', 'ex#emple.fr',
+    '%', 'ex%emple.fr', 'exemple.fr%20',
+    '|', 'ex|emple.fr',
+    '<', 'ex<emple.fr',
+    '>', 'ex>emple.fr',
+    '^', 'ex^emple.fr',
+  ];
+  const ports = ['', ':80', ':8080', ':3000', ':443', ':4321', ':0', ':65535', ':65536', ':99999', ':abc', ':bendevcat', ':-1', ':', ':00080'];
+  const paths = [
+    '', '/', '/a/b', '/a/b?c=d#e', '/a b', '/anti-drift-planning', '///',
+    // Élargi au fix round 2 : chemins ne commençant PAS par `/` — c'est ce qui
+    // manquait pour générer `http://?`, `https://#a=1`, `https://#frag`
+    // (userinfo/query/fragment collés directement à l'hôte, sans `/`).
+    '?a=1', '#frag',
+  ];
 
   const values = new Set<string>();
   for (const protocol of protocols) {
@@ -254,16 +279,36 @@ describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03
   // le motif n'était « jamais plus laxiste que Zod ».
   const cases = generateUrlProbeCases();
 
-  it('la génération couvre bien les catégories exigées par I1 : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé (crochet), espace, schéma non-http', () => {
+  it('la génération couvre bien les catégories exigées par I1 (round 1 et 2) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé (crochet), espace, schéma non-http, userinfo, hôte à caractère spécial seul, chemin sans « / » initial', () => {
     const values = cases.map((c) => c.value);
+    // Round 1.
     expect(values).toContain('http://exemple.fr:99999');
     expect(values).toContain('https://exemple.fr:abc');
     expect(values).toContain('https://github.com:bendevcat/anti-drift-planning');
     expect(values).toContain('http://[');
     expect(values).toContain('http://exa mple.com');
     expect(values).toContain('ftp://exemple.fr');
+    // Round 2 (constat I1, revue Fix round 2/5) : la génération d'origine ne
+    // contenait aucun hôte avec `@ ? # % | < > ^`, donc ne pouvait pas révéler
+    // que ces caractères manquaient de la classe d'hôte du motif.
+    expect(values).toContain('https://@');
+    expect(values).toContain('https://user@');
+    expect(values).toContain('http://?');
+    expect(values).toContain('https://#');
+    expect(values).toContain('https://?a=1');
+    expect(values).toContain('https://#frag');
+    expect(values).toContain('https://exemple.fr%20/');
+    expect(values).toContain('https://ex|emple.fr');
+    expect(values).toContain('https://ex<emple.fr');
+    expect(values).toContain('https://ex^emple.fr');
+    expect(values).toContain('https://%');
     // Et Zod les rejette bien réellement (sinon la génération ne testerait rien).
-    for (const adversarial of ['http://exemple.fr:99999', 'https://exemple.fr:abc', 'https://github.com:bendevcat/anti-drift-planning', 'http://[']) {
+    const adversarials = [
+      'http://exemple.fr:99999', 'https://exemple.fr:abc', 'https://github.com:bendevcat/anti-drift-planning', 'http://[',
+      'https://@', 'https://user@', 'http://?', 'https://#', 'https://?a=1', 'https://#frag',
+      'https://exemple.fr%20/', 'https://ex|emple.fr', 'https://ex<emple.fr', 'https://ex^emple.fr', 'https://%',
+    ];
+    for (const adversarial of adversarials) {
       expect(cases.find((c) => c.value === adversarial)!.zodAccepts, adversarial).toBe(false);
     }
   });
@@ -296,6 +341,27 @@ describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03
     const pattern = new RegExp(field.pattern[0]);
     expect(pattern.test('ftp://exemple.fr')).toBe(false);
     expect(z.string().url().safeParse('ftp://exemple.fr').success).toBe(true);
+  });
+
+  it('reste délibérément plus strict que Zod sur IPv6, userinfo et les ports vides/à zéros non significatifs (Minor, fix round 2, écarts connus et assumés)', () => {
+    // Relevé par la revue (Fix round 2/5) : ces 4 formes sont acceptées par
+    // Zod mais refusées par le motif — direction sûre (jamais l'inverse), mais
+    // jusqu'ici non testée ni documentée comme intentionnelle. Encodé ici
+    // explicitement, sur le même principe que le cas `ftp://` ci-dessus : un
+    // écart assumé et prouvé vaut mieux qu'un écart tacite.
+    const field = loadCmsConfig().collections[1].fields.find((f: any) => f.name === 'repoUrl');
+    const pattern = new RegExp(field.pattern[0]);
+    const urlSchema = z.string().url();
+    const knownStricterCases = [
+      'https://[::1]/', // littéral IPv6 — l'hôte exclut `[` et `]`
+      'https://user:pass@host/', // userinfo — l'hôte exclut `@`
+      'https://host:/', // port vide après `:` — le groupe port exige des chiffres
+      'https://exemple.fr:00080', // port à zéros non significatifs — hors des alternatives numériques couvertes
+    ];
+    for (const value of knownStricterCases) {
+      expect(pattern.test(value), `${value} devrait être refusé par le motif`).toBe(false);
+      expect(urlSchema.safeParse(value).success, `${value} devrait être accepté par Zod`).toBe(true);
+    }
   });
 });
 
@@ -478,12 +544,25 @@ describe('config CMS — motif repoUrl du skill vs Zod (D03, D10)', () => {
     }
   });
 
-  it('rejette bien les 4 URL adversariales trouvées en revue (I1) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé', () => {
+  it('rejette bien les URL adversariales trouvées en revue (I1, round 1 et 2) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé, userinfo, `?`/`#`/`%`/`|`/`<`/`^` seuls ou en hôte', () => {
     for (const adversarial of [
+      // Round 1.
       'http://exemple.fr:99999',
       'https://exemple.fr:abc',
       'https://github.com:bendevcat/anti-drift-planning',
       'http://[',
+      // Round 2.
+      'https://@',
+      'https://user@',
+      'http://?',
+      'https://#',
+      'https://?a=1',
+      'https://#frag',
+      'https://exemple.fr%20/',
+      'https://ex|emple.fr',
+      'https://ex<emple.fr',
+      'https://ex^emple.fr',
+      'https://%',
     ]) {
       expect(pattern.test(adversarial), adversarial).toBe(false);
     }
@@ -492,5 +571,19 @@ describe('config CMS — motif repoUrl du skill vs Zod (D03, D10)', () => {
   it('est délibérément plus strict que Zod sur le schéma d’URL (ftp:// refusé)', () => {
     expect(pattern.test('ftp://exemple.fr')).toBe(false);
     expect(z.string().url().safeParse('ftp://exemple.fr').success).toBe(true);
+  });
+
+  it('reste délibérément plus strict que Zod sur IPv6, userinfo et les ports vides/à zéros non significatifs (Minor, fix round 2, écarts connus et assumés)', () => {
+    const urlSchema = z.string().url();
+    const knownStricterCases = [
+      'https://[::1]/',
+      'https://user:pass@host/',
+      'https://host:/',
+      'https://exemple.fr:00080',
+    ];
+    for (const value of knownStricterCases) {
+      expect(pattern.test(value), `${value} devrait être refusé par le motif`).toBe(false);
+      expect(urlSchema.safeParse(value).success, `${value} devrait être accepté par Zod`).toBe(true);
+    }
   });
 });

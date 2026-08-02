@@ -116,12 +116,20 @@ collections:
       # de ce motif ([^\s/]+ pour l'hôte) acceptait encore un port invalide —
       # `https://github.com:bendevcat/x`, `http://exemple.fr:99999`,
       # `https://exemple.fr:abc`, `http://[` — que `z.string().url()` rejette tous.
-      # L'hôte exclut désormais `:`, `[`, `]`, et un port explicite (`:NNNNN`) doit
-      # être un entier 0–65535. Motif établi empiriquement contre `z.string().url()`
-      # (cartésien de cas générés, pas une liste choisie à la main) — voir
-      # cms-config.test.ts.
-      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/:\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
-      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s/:\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
+      # Resserrée une seconde fois (fix round 2) : `@ ? # % | < > ^` manquaient
+      # de la classe d'hôte, laissant passer `https://@`, `http://?`, `https://#`,
+      # `https://exemple.fr%20/`, `https://ex|emple.fr`, etc., que Zod rejette
+      # aussi. L'hôte exclut désormais `: @ ? # % | < > ^ [ ]`, et un port
+      # explicite (`:NNNNN`) doit être un entier 0–65535. Motif établi
+      # empiriquement contre `z.string().url()` (cartésien de cas générés, pas
+      # une liste choisie à la main) — voir cms-config.test.ts.
+      # Écarts connus et assumés, motif plus STRICT que Zod (jamais l'inverse) :
+      # littéraux IPv6 (`https://[::1]/`), userinfo (`user:pass@hôte`), port vide
+      # (`https://hôte:/`) et port à zéros non significatifs (`:00080`) — tous
+      # acceptés par Zod, tous refusés ici. Voir le test dédié dans
+      # cms-config.test.ts qui encode cet écart explicitement, comme pour `ftp://`.
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/:@?#%|<>^\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
+      - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s/:@?#%|<>^\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
       - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
       - name: relatedPosts
         label: Articles liés
@@ -206,7 +214,7 @@ collections:
       # invalides (D10, Plan 4, fix round 1) — voir le commentaire détaillé sur
       # `projects.repoUrl` plus haut dans ce fichier ; motif identique partagé
       # par les 3 champs URL du CMS.
-      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/:\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-skill)'] }
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/:@?#%|<>^\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-skill)'] }
       - { name: installCmd, label: Commande d’installation, widget: string, required: false, hint: 'Affichée dans un bloc copiable sur la page du skill' }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
