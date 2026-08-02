@@ -30,7 +30,7 @@ Valeurs exactes reprises des specs ; elles s'appliquent implicitement à **toute
 - **Aucun contenu existant modifié** (`src/content/blog/**`, `src/content/projects/**`) — aucun critère R4 de ce plan ne l'exige.
 - **Responsive 375px** (R9) : aucune tâche livrant du gabarit n'est terminée sans un contrôle de non-débordement horizontal à 375px (`document.documentElement.scrollWidth === window.innerWidth`), en **dark et en light**.
 - **`npx astro check` fait partie de la vérification de CHAQUE tâche** (leçon du Plan 2 : une régression de typecheck a traversé un implémenteur et deux relecteurs parce qu'aucune étape ne le lançait). Attendu : **0 error, 0 warning**. Les *hints* ne bloquent pas mais leur nombre est reporté.
-- **Baseline à ne pas régresser**, mesurée sur la branche au moment d'écrire ce plan : `npm test` → **42 tests / 4 fichiers**, `npx astro check` → **0 error / 0 warning / 33 hints**, `npx astro build` → **9 pages**.
+- **Baseline à ne pas régresser**, mesurée sur la branche au moment d'écrire ce plan : `npm test` → **42 tests / 4 fichiers**, `npx astro check` → **0 error / 0 warning / 33 hints**, `npx astro build` → **11 pages** (12 fichiers HTML dans `dist/`, dont `dist/admin/index.html` qui est un asset statique de `public/`, pas une page Astro). *Corrigé — voir D02 : le plan annonçait d'abord 9, chiffre recopié du ledger du Plan 3 et périmé depuis T-B3.*
 - **Node ≥ 22.12**, commandes via `npm run …` / `npx astro …`. Dev server : `astro dev --background` (CLAUDE.md).
 - **Hors périmètre, à ne toucher sous aucun prétexte** : `src/pages/index.astro` (home et teasers satellites), `/tags`, Pagefind/recherche, `/a-propos`, `/transparence-ia`, `/404`, `astro.config.mjs`, `.github/workflows/deploy.yml`, `package.json`, `src/pages/rss.xml.js`.
 
@@ -465,7 +465,7 @@ Run: `npx astro check`
 Expected: **0 error, 0 warning** (reporter le nombre de hints).
 
 Run: `npx astro build`
-Expected: **9 pages** (aucune route nouvelle avant T-B1) + deux `[WARN] [glob-loader] No files found matching '**/index.{md,mdx}' in …/src/content/prompts` (et `skills`) — **attendus**, les collections sont vides jusqu'à T-A2.
+Expected: **11 pages** (aucune route nouvelle avant T-B1) + deux `[WARN] [glob-loader] The base directory "…/src/content/prompts/" does not exist.` (et `skills`) — **attendus**, les dossiers de contenu n'existent pas avant T-A2.
 
 - [ ] **Step 8: Prouver que le déplacement n'a rien cassé**
 
@@ -590,7 +590,7 @@ Chaque `relatedSkills` / `relatedPrompts` doit pointer un **id existant** (= nom
 - [ ] **Step 5: Vérifier que le build charge les 4 entrées**
 
 Run: `npx astro build`
-Expected: **9 pages** (aucune route prompt/skill avant T-B1), et **plus aucun** `[WARN] [glob-loader] No files found matching` pour `prompts` ni `skills`.
+Expected: **11 pages** (aucune route prompt/skill avant T-B1), et **plus aucun** `[WARN] [glob-loader]` pour `prompts` ni `skills`.
 
 Un échec de schéma est bruyant (`ZodError` nommant le fichier et le champ) — c'est le contrôle du critère R1 « `astro build` valide les 2 schémas ».
 
@@ -637,7 +637,7 @@ Puis **prouver l'échec** : casser volontairement un id de `relatedPrompts` en `
 
 ```bash
 rm src/pages/probe-refs.astro
-npx astro build   # 9 pages, arbre propre
+npx astro build   # 11 pages, arbre propre
 git status --porcelain   # aucun reliquat de sonde
 ```
 
@@ -768,7 +768,7 @@ const prompts = await getSortedPrompts();
 - [ ] **Step 3: Build et typecheck**
 
 Run: `npx astro build`
-Expected: **10 pages** (9 + `/prompts`).
+Expected: **12 pages** (11 + `/prompts`).
 
 Run: `npx astro check`
 Expected: **0 error, 0 warning**.
@@ -1130,7 +1130,7 @@ Le Plan 3 a ajouté une règle rendant `[hidden]` effectif malgré les utilitair
 
 - [ ] **Step 9: Build, typecheck, tests**
 
-Run: `npx astro build` → **10 pages**.
+Run: `npx astro build` → **12 pages**.
 Run: `npx astro check` → **0 error, 0 warning**.
 Run: `npm test` → **60 tests**.
 
