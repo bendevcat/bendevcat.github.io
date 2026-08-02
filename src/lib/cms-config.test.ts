@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro:content';
-import { CATEGORIES, PROJECT_STATUSES } from '../content.config';
+import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS } from '../content.config';
 
 /**
  * Charge la config réelle du CMS (public/admin/config.yml) telle qu'elle sera
@@ -24,10 +24,10 @@ describe('config CMS — backend', () => {
     expect(cfg.backend.auth_endpoint).toBeUndefined();
   });
 
-  it('déclare exactement deux collections : blog et projects', () => {
+  it('déclare exactement quatre collections : blog, projects, prompts, skills', () => {
     const cfg = loadCmsConfig();
-    expect(cfg.collections).toHaveLength(2);
-    expect(cfg.collections.map((c: any) => c.name)).toEqual(['blog', 'projects']);
+    expect(cfg.collections).toHaveLength(4);
+    expect(cfg.collections.map((c: any) => c.name)).toEqual(['blog', 'projects', 'prompts', 'skills']);
   });
 });
 
@@ -270,4 +270,133 @@ describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03
       }
     },
   );
+});
+
+/** Petit helper local : retrouve un champ par son nom dans une collection. */
+function field(cfg: any, collection: string, name: string): any {
+  const coll = cfg.collections.find((c: any) => c.name === collection);
+  return coll.fields.find((f: any) => f.name === name);
+}
+
+describe('config CMS — collection prompts', () => {
+  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'prompts');
+    expect(coll.folder).toBe('src/content/prompts');
+    expect(coll.path).toBe('{{slug}}/index');
+    expect(coll.extension).toBe('md');
+    expect(coll.format).toBe('yaml-frontmatter');
+    expect(coll.delete).toBe(false);
+    expect(coll.media_folder).toBe('');
+    expect(coll.public_folder).toBe('');
+  });
+
+  it('mappe TOUS les champs du schéma Zod, et rien de plus', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'prompts');
+    expect(coll.fields.map((f: any) => f.name)).toEqual([
+      'title',
+      'description',
+      'format',
+      'prompt',
+      'tool',
+      'model',
+      'tags',
+      'draft',
+      'relatedSkills',
+      'body',
+    ]);
+  });
+
+  it('offre exactement les formats de PROMPT_FORMATS, avec le même défaut que Zod', () => {
+    const cfg = loadCmsConfig();
+    const f = field(cfg, 'prompts', 'format');
+    expect(f.options.map((o: any) => o.value)).toEqual([...PROMPT_FORMATS]);
+    expect(f.default).toBe('fiche');
+  });
+
+  it('garde le défaut `Claude` sur `tool`, comme le schéma Zod', () => {
+    expect(field(loadCmsConfig(), 'prompts', 'tool').default).toBe('Claude');
+  });
+
+  it('lie relatedSkills à la collection skills par slug', () => {
+    const f = field(loadCmsConfig(), 'prompts', 'relatedSkills');
+    expect(f.widget).toBe('relation');
+    expect(f.collection).toBe('skills');
+    expect(f.multiple).toBe(true);
+    expect(f.value_field).toBe('{{slug}}');
+  });
+});
+
+describe('config CMS — collection skills', () => {
+  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'skills');
+    expect(coll.folder).toBe('src/content/skills');
+    expect(coll.path).toBe('{{slug}}/index');
+    expect(coll.delete).toBe(false);
+  });
+
+  it('mappe TOUS les champs du schéma Zod, et rien de plus', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'skills');
+    expect(coll.fields.map((f: any) => f.name)).toEqual([
+      'title',
+      'name',
+      'description',
+      'type',
+      'version',
+      'repoUrl',
+      'installCmd',
+      'tags',
+      'draft',
+      'relatedPrompts',
+      'body',
+    ]);
+  });
+
+  it('garde le défaut `claude-code` sur `type`, comme le schéma Zod', () => {
+    expect(field(loadCmsConfig(), 'skills', 'type').default).toBe('claude-code');
+  });
+
+  it('lie relatedPrompts à la collection prompts par slug', () => {
+    const f = field(loadCmsConfig(), 'skills', 'relatedPrompts');
+    expect(f.widget).toBe('relation');
+    expect(f.collection).toBe('prompts');
+    expect(f.multiple).toBe(true);
+    expect(f.value_field).toBe('{{slug}}');
+  });
+});
+
+describe('config CMS — motif repoUrl du skill vs Zod (D03)', () => {
+  const pattern = new RegExp(field(loadCmsConfig(), 'skills', 'repoUrl').pattern[0]);
+  const zodUrl = z.string().url();
+
+  // Le motif est lu DEPUIS le YAML et confronté au vrai validateur Zod, au
+  // lieu d'être comparé à des exemples choisis (méthode établie en D03).
+  const cases = [
+    'https://github.com/bendevcat/anti-drift-planning',
+    'http://exemple.fr',
+    'https://exemple.fr/a/b?c=d',
+    'https://',
+    'http://',
+    'https:///',
+    'http://exa mple.com',
+    'pas-une-url',
+    'javascript:alert(1)',
+    'ftp://exemple.fr',
+  ];
+
+  it('n’est JAMAIS plus laxiste que Zod (une URL acceptée par le CMS ne casse pas le build)', () => {
+    for (const value of cases) {
+      if (pattern.test(value)) {
+        expect(zodUrl.safeParse(value).success, `${value} passe le CMS mais pas Zod`).toBe(true);
+      }
+    }
+  });
+
+  it('est délibérément plus strict que Zod sur le schéma d’URL (ftp:// refusé)', () => {
+    expect(pattern.test('ftp://exemple.fr')).toBe(false);
+    expect(zodUrl.safeParse('ftp://exemple.fr').success).toBe(true);
+  });
 });

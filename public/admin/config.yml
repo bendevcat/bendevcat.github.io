@@ -126,3 +126,88 @@ collections:
         search_fields: [title]
         display_fields: [title]
       - { name: body, label: Contenu, widget: markdown }
+
+  - name: prompts
+    label: Prompts
+    label_singular: Prompt
+    description: Bibliothèque de prompts — src/content/prompts/{slug}/index.md
+    folder: src/content/prompts
+    path: '{{slug}}/index'
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    # Voir D08 (Plan 3) : le CMS ne nettoie pas les rétro-références. Supprimer
+    # un prompt laisserait un `relatedPrompts` mort sur un skill ; le commit
+    # suivant casse `assertEntriesResolved` et le build ne produit plus aucune
+    # page. Suppression propre : voir la section dédiée du README.
+    delete: false
+    slug: '{{slug}}'
+    identifier_field: title
+    sortable_fields: [title]
+    media_folder: ''
+    public_folder: ''
+    fields:
+      - { name: title, label: Titre, widget: string }
+      - { name: description, label: Description, widget: text, hint: Résumé affiché sur les cartes }
+      - name: format
+        label: Format
+        widget: select
+        default: fiche
+        options:
+          - { label: 'Fiche — prompt copiable + notes', value: fiche }
+          - { label: 'Guide — write-up long', value: guide }
+      - { name: prompt, label: Texte du prompt, widget: text, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide.' }
+      - { name: tool, label: Outil, widget: string, default: Claude }
+      - { name: model, label: Modèle, widget: string, required: false }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
+      - name: relatedSkills
+        label: Skills liés
+        widget: relation
+        required: false
+        multiple: true
+        collection: skills
+        value_field: '{{slug}}'
+        search_fields: [title]
+        display_fields: [title]
+      - { name: body, label: Contenu, widget: markdown }
+
+  - name: skills
+    label: Skills
+    label_singular: Skill
+    description: Bibliothèque de skills Claude Code — src/content/skills/{slug}/index.md
+    folder: src/content/skills
+    path: '{{slug}}/index'
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    # Voir D08 (Plan 3) — même raison que pour `prompts`, la relation est
+    # symétrique.
+    delete: false
+    slug: '{{slug}}'
+    identifier_field: title
+    sortable_fields: [title]
+    media_folder: ''
+    public_folder: ''
+    fields:
+      - { name: title, label: Titre, widget: string }
+      - { name: name, label: Nom technique, widget: string, required: false, hint: 'Slug type SKILL.md (ex. anti-drift-planning)' }
+      - { name: description, label: Description, widget: text, hint: 'Le « when to use » — affiché sur les cartes' }
+      - { name: type, label: Type, widget: string, default: claude-code }
+      - { name: version, label: Version, widget: string, required: false }
+      # Motif ancré des deux côtés (D03, Plan 3) : `^https?://` seul n'est pas
+      # ancré à droite dans le validateur Sveltia 0.175.1.
+      - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s/]+(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-skill)'] }
+      - { name: installCmd, label: Commande d’installation, widget: string, required: false, hint: 'Affichée dans un bloc copiable sur la page du skill' }
+      - { name: tags, label: Tags, widget: list, required: false, default: [] }
+      - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
+      - name: relatedPrompts
+        label: Prompts liés
+        widget: relation
+        required: false
+        multiple: true
+        collection: prompts
+        value_field: '{{slug}}'
+        search_fields: [title]
+        display_fields: [title]
+      - { name: body, label: Contenu, widget: markdown }

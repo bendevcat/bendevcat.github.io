@@ -102,22 +102,26 @@ passe, ce qui corrige les deux dans le même commit.
 ### Supprimer une entrée proprement
 
 Le bouton **« Supprimer »** est **désactivé** dans le CMS (`delete: false` sur
-les deux collections dans `public/admin/config.yml`), et c'est volontaire :
+les quatre collections dans `public/admin/config.yml`), et c'est volontaire :
 Sveltia ne nettoie **jamais** les rétro-références. Supprimer le projet
 `gha-svu` depuis `/admin` laisserait par exemple `relatedProjects: [gha-svu]`
 sur un article de blog qui le cite encore — et ce n'est pas juste la page du
 projet qui casserait : le commit suivant ferait échouer le garde-fou
 `assertEntriesResolved` d'Astro, et **tout le déploiement** s'arrêterait, 0
-page produite, sur un geste que le CMS présente comme banal.
+page produite, sur un geste que le CMS présente comme banal. Le même risque
+existe entre `prompts` et `skills` : la relation `relatedSkills` ↔
+`relatedPrompts` est symétrique.
 
 Pour supprimer une entrée proprement, à la main :
 
-1. Supprimer le dossier de l'entrée (`src/content/blog/<slug>/` ou
-   `src/content/projects/<slug>/`).
+1. Supprimer le dossier de l'entrée (`src/content/blog/<slug>/`,
+   `src/content/projects/<slug>/`, `src/content/prompts/<slug>/` ou
+   `src/content/skills/<slug>/`).
 2. Retirer **toutes** les rétro-références qui la citent : `relatedProjects`
    côté article si tu supprimes un projet, `relatedPosts` côté projet si tu
-   supprimes un article. Un `grep` sur le slug dans `src/content/` trouve tout
-   ce qui reste.
+   supprimes un article, `relatedSkills` côté prompt si tu supprimes un
+   skill, `relatedPrompts` côté skill si tu supprimes un prompt. Un `grep`
+   sur le slug dans `src/content/` trouve tout ce qui reste.
 3. Vérifier avec un build local (`npm run build`) avant de pousser — c'est le
    seul moyen d'être sûr qu'aucune référence morte ne subsiste.
 
