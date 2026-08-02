@@ -203,10 +203,12 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 /* ==========================================================================
-   Filtre /projets — Plan 3 / T-B2
+   Filtre /projets (Plan 3 / T-B2) et moteur à facettes /prompts, /skills
+   (Plan 4 / T-B2).
    Le masquage passe par l'attribut `hidden` (piloté par
-   src/scripts/project-filters.ts), qui garde la sémantique : un élément
-   `hidden` sort de l'arbre d'accessibilité ET de l'ordre de tabulation.
+   src/scripts/project-filters.ts et src/scripts/facet-filters.ts), qui garde
+   la sémantique : un élément `hidden` sort de l'arbre d'accessibilité ET de
+   l'ordre de tabulation.
    La règle est explicite parce que le `[hidden] { display: none }` du
    preflight Tailwind a la MÊME spécificité que l'utilitaire `flex` porté par
    la carte : sans `!important`, l'ordre de génération déciderait du résultat.
@@ -216,6 +218,9 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
    ========================================================================== */
 [data-project-card][hidden],
 [data-project-filters][hidden],
-[data-projects-empty][hidden] {
+[data-projects-empty][hidden],
+[data-facet-card][hidden],
+[data-facet-filters][hidden],
+[data-facet-empty][hidden] {
   display: none !important;
 }
