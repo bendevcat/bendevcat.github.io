@@ -2,8 +2,8 @@
 
 **Date :** 2026-08-02
 **Branche :** `plan-4-librairies-prompts-skills` (depuis `main` @ `eb9deee`, tag `milestone-plan-3`)
-**Commits :** 43, **non poussés**
-**État :** **prêt à shipper, deux actions utilisateur en attente.** Les 11 déviations sont **approuvées** ; il reste la publication du dépôt (R6) et T-D2 (R8). Ce n'est pas un échec — c'est l'état de succès prévu quand le travail est fait et que les derniers gestes ne sont pas ceux d'un agent.
+**Commits :** 45, **non poussés**
+**État :** **Phase Z passée (PASS). Prêt à release.** 9 critères sur 9 `Done`, 11 déviations sur 11 `approved`. Le merge et les tags restent une action utilisateur.
 
 ---
 
@@ -27,40 +27,43 @@
 
 ---
 
-## 2. Ce qui bloque encore le ship
+## 2. Phase Z — VERDICT : PASS
 
-**Les 11 déviations sont APPROUVÉES** (gate de ratification du 2026-08-02, « Je les approuve toutes »). Ce verrou est levé.
+Les cinq étapes de l'audit canonique, lancées **en frais** le 2026-08-02 :
 
-**Il reste deux actions, toutes deux du ressort de l'utilisateur :**
+| Étape | Résultat |
+|---|---|
+| Lint mécanique (verrou 5) | **13/13, 0 violation**, exit 0 |
+| Couverture spec (auditée sur la **spec**, pas sur le ledger) | **9/9 `Done`** · 0 `Pending`/`In progress` · 0 `Deferred`/`Cut` |
+| Revue des déviations (garde anti-blanchiment) | **11 entrées, toutes `approved`** · 0 `pending-user` · **aucun statut inventé** |
+| Suite de tests | `vitest` **93/93 (9 fichiers)** · `astro check` **0 error / 0 warning** · `astro build` **18 pages** |
+| Walkthrough user story | **6 pas sur 6** confirmés par l'utilisateur |
+| Smoke visuel | Surfaces capturées · **1 constat reporté et assumé** (voir §6) |
 
-1. **Publier le dépôt `anti-drift-planning`** → débloque **R6**. Tant que `https://github.com/bendevcat/anti-drift-planning` répond **404**, le bloc « code source » de la fiche skill n'a rien à rendre. Dès qu'il répond **200** : l'entrée est amendée (`repoUrl` + `installCmd` réellement exécutable avec le vrai `git clone`), le rendu est re-vérifié, et R6 passe `Done`. Le motif d'URL resserré en D10 accepte déjà cette URL — vérifié.
-2. **Faire T-D2** → débloque **R8**. Créer un prompt et un skill depuis `/admin`. Un agent ne peut ni fournir le PAT GitHub (secret personnel) ni actionner le sélecteur de dossier natif de la File System Access API — établi au Plan 2, reconfirmé au Plan 3.
-
-**Tant que R6 et R8 ne sont pas `Done`, la Phase Z ne peut pas passer.** Ce n'est pas un blocage à contourner : c'est le verrou 4 qui fait son travail.
-
----
-
-## 3. Décisions déjà rendues au gate du 2026-08-02
-
-- **Les 11 déviations D01→D11 : `approved`.** Ratification groupée, phrase transcrite dans chaque entrée. Cinq d'entre elles (**D02, D03, D04, D07, D09**) sont des défauts du plan d'implémentation écrit par le contrôleur ; **D10** et **D11** viennent de constats de revue ; **aucune** ne vient d'un implémenteur ayant contourné la spec en silence.
-- **R1 et R5 → `Deferred` au Plan 5**, appuyées sur la déviation approuvée **D05**, comme le linter l'exige. Ce qui est reporté est **la seule clause de comptage** (« ≥ 2 skills », « ≥ 2 cartes ») : tout le reste des deux critères est livré et prouvé. Le manque est du **contenu**, pas du code — un 2ᵉ skill s'ajoutera sans une ligne de code à changer.
-- **R6 : l'utilisateur publie le dépôt**, plutôt que d'acter que la mesure binaire fait foi.
+**L'étape de release n'a PAS été exécutée** — la Phase Z ne release jamais, même sur PASS : c'est une action utilisateur distincte.
 
 ---
 
-## 4. Marche à suivre pour T-D2
+## 3. Étape de release suggérée
+
+Le dépôt n'a **pas de script de release**. Les plans précédents ont utilisé un merge dans `main` suivi de deux tags annotés (`milestone-plan-N` posé sur le commit de merge, plus `vN`). La suite cohérente serait donc :
 
 ```bash
-npm run dev
+git switch main && git merge --no-ff plan-4-librairies-prompts-skills
+git tag -a milestone-plan-4 -m "Plan 4 — librairies prompts & skills" && git tag -a v0.4.0 -m "v0.4.0"
 ```
 
-1. Ouvrir `http://localhost:4321/admin/index.html` dans **Chrome, Edge ou Brave** (File System Access API — ni Firefox ni Safari).
-2. Se connecter via **« Sign In Using Access Token »**, ou **« Work with Local Repository »** en sélectionnant la racine du dépôt.
-3. Créer **un prompt** : titre, description, format, texte du prompt, et surtout **« Skills liés » renseigné** — c'est le widget `relation` qu'on veut voir écrire un **id de dossier**, pas un titre (scénario D07 du Plan 3).
-4. Créer **un skill** : titre, description, type, **« Prompts liés » renseigné**.
-5. Publier les deux.
+**Et non `milestone-plan-3`**, déjà posé sur `eb9deee` au Plan 3 — contradiction du prompt de session relevée au gate de pré-flight et tranchée par l'utilisateur.
 
-Le contrôleur vérifie ensuite, **sur le dépôt** : chemin `src/content/<coll>/<slug>/index.md`, frontmatter validant le schéma Zod (`astro build`), champs de relation contenant des **ids**, et champs optionnels vides **absents** du frontmatter. **R8 ne passera `Done` qu'après ces contrôles** — on ne marque pas `Done` ce qu'on n'a pas vu.
+⚠️ **Pousser publierait les Plans 2, 3 et 4 d'un coup.** `origin/main` est resté à la fin du Plan 1 : le site en production ne sert aujourd'hui que le blog. C'est une décision à prendre en connaissance de cause, pas un corollaire du merge.
+
+---
+
+## 4. Décisions rendues au gate du 2026-08-02
+
+- **Les 11 déviations D01→D11 : `approved`.** Ratification groupée, phrase transcrite dans chaque entrée. Cinq d'entre elles (**D02, D03, D04, D07, D09**) sont des défauts du plan d'implémentation écrit par le contrôleur ; **D10** et **D11** viennent de constats de revue ; **aucune** ne vient d'un implémenteur ayant contourné la spec en silence.
+- **R1 et R5 étaient `Deferred`** faute d'un second skill — puis les créations CMS de l'utilisateur les ont rendus **`Done`**, exactement comme le Follow-up de **D05** le prévoyait. D05 reste `approved` (c'est le mot de l'utilisateur, il ne se réécrit pas) mais son arbitrage `Deferred` est devenu **sans objet**.
+- **T-D2 est faite et prouvée** : les deux entrées créées depuis `/admin` ont produit des fichiers conformes au schéma, avec un **id** dans le champ de relation et les champs optionnels vides **absents**.
 
 ---
 
