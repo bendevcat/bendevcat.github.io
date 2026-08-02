@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { sortSkills, collectTypes, collectSkillTags, type SkillEntry } from './skills';
+import {
+  sortSkills,
+  collectTypes,
+  collectSkillTags,
+  sortAndFilterSkills,
+  type SkillEntry,
+} from './skills';
 
 function skill(id: string, data: Partial<SkillEntry['data']> = {}): SkillEntry {
   return {
@@ -49,5 +55,24 @@ describe('collectSkillTags', () => {
     expect(
       collectSkillTags([skill('a', { tags: ['b', 'a'] }), skill('b', { tags: ['a', 'c'] })]),
     ).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('sortAndFilterSkills', () => {
+  it('écarte les entrées draft: true et conserve les draft: false', () => {
+    const out = sortAndFilterSkills([
+      skill('a', { title: 'A', draft: false }),
+      skill('b', { title: 'B', draft: true }),
+    ]);
+    expect(out.map((s) => s.id)).toEqual(['a']);
+  });
+
+  it('trie les entrées restantes par titre A→Z après avoir écarté les drafts', () => {
+    const out = sortAndFilterSkills([
+      skill('c', { title: 'Vérification', draft: false }),
+      skill('b', { title: 'Masquée', draft: true }),
+      skill('a', { title: 'Anti-drift', draft: false }),
+    ]);
+    expect(out.map((s) => s.data.title)).toEqual(['Anti-drift', 'Vérification']);
   });
 });

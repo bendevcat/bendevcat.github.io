@@ -17,7 +17,12 @@ export function collectSkillTags(skills: SkillEntry[]): string[] {
   return [...new Set(skills.flatMap((s) => s.data.tags))].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
-/** Skills publiés, triés — `draft: true` écartés (cf. `getSortedPrompts`). */
+/** Filtre les `draft: true` puis trie (cf. `sortAndFilterPrompts`). */
+export function sortAndFilterSkills(skills: SkillEntry[]): SkillEntry[] {
+  return sortSkills(skills.filter((s) => !s.data.draft));
+}
+
+/** Skills publiés, triés. */
 export async function getSortedSkills(): Promise<SkillEntry[]> {
-  return sortSkills((await getCollection('skills')).filter((s) => !s.data.draft));
+  return sortAndFilterSkills(await getCollection('skills'));
 }

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { sortPrompts, collectTools, collectPromptTags, type PromptEntry } from './prompts';
+import {
+  sortPrompts,
+  collectTools,
+  collectPromptTags,
+  sortAndFilterPrompts,
+  type PromptEntry,
+} from './prompts';
 
 /** Fabrique d'entrées minimales — seuls les champs lus par les fonctions testées. */
 function prompt(id: string, data: Partial<PromptEntry['data']> = {}): PromptEntry {
@@ -61,5 +67,24 @@ describe('collectPromptTags', () => {
 
   it('ignore les entrées sans tag', () => {
     expect(collectPromptTags([prompt('a'), prompt('b', { tags: ['x'] })])).toEqual(['x']);
+  });
+});
+
+describe('sortAndFilterPrompts', () => {
+  it('écarte les entrées draft: true et conserve les draft: false', () => {
+    const out = sortAndFilterPrompts([
+      prompt('a', { title: 'A', draft: false }),
+      prompt('b', { title: 'B', draft: true }),
+    ]);
+    expect(out.map((p) => p.id)).toEqual(['a']);
+  });
+
+  it('trie les entrées restantes par titre A→Z après avoir écarté les drafts', () => {
+    const out = sortAndFilterPrompts([
+      prompt('c', { title: 'Zèbre', draft: false }),
+      prompt('b', { title: 'Masquée', draft: true }),
+      prompt('a', { title: 'Amorçage', draft: false }),
+    ]);
+    expect(out.map((p) => p.data.title)).toEqual(['Amorçage', 'Zèbre']);
   });
 });

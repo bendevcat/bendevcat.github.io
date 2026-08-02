@@ -22,10 +22,15 @@ export function collectPromptTags(prompts: PromptEntry[]): string[] {
 }
 
 /**
- * Prompts publiés, triés. Les `draft: true` sont écartés — même règle que le
- * blog (`sortAndFilter`, src/lib/posts.ts) : pas de route publique, donc les
- * lier depuis un skill produirait un lien mort.
+ * Filtre les `draft: true` puis trie — même règle que le blog
+ * (`sortAndFilter`, src/lib/posts.ts) : pas de route publique, donc les lier
+ * depuis un skill produirait un lien mort.
  */
+export function sortAndFilterPrompts(prompts: PromptEntry[]): PromptEntry[] {
+  return sortPrompts(prompts.filter((p) => !p.data.draft));
+}
+
+/** Prompts publiés, triés. */
 export async function getSortedPrompts(): Promise<PromptEntry[]> {
-  return sortPrompts((await getCollection('prompts')).filter((p) => !p.data.draft));
+  return sortAndFilterPrompts(await getCollection('prompts'));
 }
