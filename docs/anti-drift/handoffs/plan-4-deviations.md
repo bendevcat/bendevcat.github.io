@@ -37,6 +37,22 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D07 — Le bloc de prompt est hors de `.prose` : R9 violé de 2 461 px, et le style du code-block du Plan 1 jamais appliqué
+
+- **Date:** 2026-08-02
+- **Task affected:** T-B3 — `src/pages/prompts/[...slug].astro`. **Et T-C2, qui porte le même motif** pour `installCmd` : le plan y sera amendé **avant exécution**.
+- **Original plan:** le Step 6 de T-B3 fournit verbatim `<pre class="mt-4"><code>{prompt.data.prompt}</code></pre>`, placé dans une `<section>` **au-dessus** du `<div class="prose">`. L'implémenteur a transcrit exactement.
+- **Deviation taken:** faire en sorte que ce bloc reçoive réellement le style de code-block du Plan 1 — `overflow-x: auto`, padding, bordure, rayon — sans dupliquer de CSS et sans toucher au chemin du blog.
+- **Reason:** **le plan se contredit lui-même**, et la contradiction est mesurable. La spec §6.2 exige que le champ `prompt` soit « rendu dans un bloc de code **réutilisant le composant code-block du Plan 1** », et la contrainte globale R9 interdit tout débordement horizontal à 375px. Or la règle qui porte `overflow-x: auto` est `.prose :where(pre)` (`src/styles/global.css:115-122`) : elle est **scopée à `.prose`**, et le bloc du Step 6 est **en dehors**. **Mesuré par le contrôleur dans le navigateur** : `overflow-x` calculé = **`visible`**, `padding` = `0px`, `border` = `0px`, `border-radius` = `0px` — donc **aucune** partie du style du Plan 1 ne s'applique ; le `<code>` est rendu sur **3 946 px** et la page atteint **3 961 px** de large, soit **2 461 px de débordement**. Ce n'est pas un écart cosmétique : à 375px, la page entière défile latéralement.
+  À noter, parce que ça explique pourquoi personne ne l'a vu plus tôt : `astro build`, `astro check` et les 73 tests sont **tous verts**. Rien dans la chaîne automatisée ne mesure une largeur rendue — seul un smoke navigateur pouvait l'attraper.
+- **Reversibility:** cheap (le rendu d'un bloc dans une seule page ; aucun schéma, aucune donnée, aucun contrat partagé).
+- **Caught late:** no (loggé avant le correctif).
+- **Status:** pending-user
+- **User decision:**
+- **Follow-up:** si rejeté, restaurer le markup verbatim du Step 6 — et acter alors que **R9 est en échec sur `/prompts/<slug>`**, ce qui devra être tranché en `Deferred` ou `Cut` à la Phase Z, avec la déviation approuvée que le linter exigera.
+
+---
+
 ## D06 — Durcissement de `matchesFacets` au-delà du code fourni verbatim par le plan
 
 - **Date:** 2026-08-02
