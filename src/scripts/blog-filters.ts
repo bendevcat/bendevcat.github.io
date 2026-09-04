@@ -14,6 +14,14 @@
 const facetToolbar = document.querySelector<HTMLElement>('[data-facet-filters]');
 
 if (facetToolbar) {
+  // La puce est rendue `pointer-events-none` côté serveur (cf.
+  // ArticleCard.astro) : sans JS ou sans barre de facettes, le clic traverse
+  // jusqu'au lien étiré et la carte s'ouvre. On ne la rend cliquable qu'ici,
+  // c'est-à-dire uniquement sur une page qui porte une barre.
+  for (const chip of document.querySelectorAll<HTMLElement>('[data-facet-chip]')) {
+    chip.classList.remove('pointer-events-none');
+  }
+
   document.addEventListener('click', (event) => {
     const chip = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-facet-chip]');
     if (!chip) return;

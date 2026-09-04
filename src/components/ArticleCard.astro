@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { AI_USAGE_META } from '../lib/aiUsage';
+import { tagSlug } from '../lib/tags';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -31,7 +32,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 <article
   class="group relative flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
   data-facet-card
-  data-facet={JSON.stringify({ category: [category], tag: tags })}
+  data-facet={JSON.stringify({ category: [category], tag: tags.map(tagSlug) })}
 >
   {
     cover && (
@@ -47,13 +48,19 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
     Bouton plutôt que <span> : la puce doit rester cliquable pour filtrer
     sans imbriquer un <button> dans le lien étiré du titre (HTML invalide).
     `relative z-10` la place au-dessus du lien étiré porté par le <h3>.
+    `pointer-events-none` est l'état PAR DÉFAUT : sans JS, ou sur une page
+    sans barre de facettes (la home), la puce laisse passer le clic jusqu'au
+    lien étiré et la carte s'ouvre — comme avant ce plan. C'est
+    src/scripts/blog-filters.ts qui la rend cliquable, et seulement là où
+    filtrer a un sens.
   */}
   <button
     type="button"
     data-facet-chip
     data-facet-key="category"
     data-facet-value={category}
-    class="relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
+    aria-label={`Filtrer par catégorie ${category}`}
+    class="pointer-events-none relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
   >
     {category}
   </button>
