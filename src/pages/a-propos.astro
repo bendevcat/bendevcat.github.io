@@ -34,9 +34,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         espace aussi clean que possible, une sorte de base de données fun à utiliser.
       </p>
       <p>
-        Tu y trouveras quatre choses : des <a href="/blog/">articles</a>, des
-        <a href="/projets/">fiches projets</a>, des <a href="/prompts/">prompts</a> et des
-        <a href="/skills/">skills</a>.
+        {/* Phrase sur UNE seule ligne, volontairement : Astro supprime
+            l'espace d'indentation quand un saut de ligne sépare du texte d'un
+            élément, ce qui produisait « desfiches projets » et « choses :des ».
+            Ne pas reformater ce paragraphe sur plusieurs lignes. */}
+        Tu y trouveras quatre choses : <a href="/blog/">des articles</a>, <a href="/projets/">des fiches projets</a>, <a href="/prompts/">des prompts</a> et <a href="/skills/">des skills</a>.
       </p>
 
       <h2>L'IA : une aide, pas un <em>ghostwriter</em></h2>
