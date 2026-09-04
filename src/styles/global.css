@@ -221,6 +221,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 [data-projects-empty][hidden],
 [data-facet-card][hidden],
 [data-facet-filters][hidden],
-[data-facet-empty][hidden] {
+[data-facet-empty][hidden],
+[data-search-open][hidden] {
   display: none !important;
 }

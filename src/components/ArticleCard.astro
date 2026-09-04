@@ -2,13 +2,22 @@
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { AI_USAGE_META } from '../lib/aiUsage';
+import { tagSlug } from '../lib/tags';
 
 interface Props {
   post: CollectionEntry<'blog'>;
+  /**
+   * Vrai uniquement sur une page qui porte une barre de facettes (`/blog`).
+   * Ailleurs — la home, et toute page future qui réutiliserait cette carte —
+   * la puce redevient un simple `<span>` dans le lien de carte : rien à
+   * traverser au pointeur, rien à tabuler, et aucun nom accessible qui
+   * promettrait un filtre inexistant.
+   */
+  filterable?: boolean;
 }
 
-const { post } = Astro.props;
-const { title, description, pubDate, category, cover, coverAlt, aiUsage } = post.data;
+const { post, filterable = false } = Astro.props;
+const { title, description, pubDate, category, tags, cover, coverAlt, aiUsage } = post.data;
 
 const dateFr = pubDate.toLocaleDateString('fr-FR', {
   day: 'numeric',
@@ -28,9 +37,10 @@ const readingMinutes = estimateReadingMinutes(post.body ?? '');
 const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 ---
 
-<a
-  href={`/blog/${post.id}/`}
-  class="group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+<article
+  class="group relative flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+  data-facet-card
+  data-facet={JSON.stringify({ category: [category], tag: tags.map(tagSlug) })}
 >
   {
     cover && (
@@ -42,12 +52,36 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
     )
   }
 
-  <span class="w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc">
-    {category}
-  </span>
+  {
+    filterable ? (
+      /*
+        Bouton plutôt que <span> : la puce doit rester cliquable pour filtrer
+        sans imbriquer un <button> dans le lien étiré du titre (HTML invalide).
+        `relative z-10` la place au-dessus de ce lien étiré.
+        `pointer-events-none` et `tabindex={-1}` sont l'état PAR DÉFAUT, y
+        compris ici : sans JavaScript, la barre de facettes reste masquée et la
+        puce ne filtrerait rien — inerte, elle laisse le clic atteindre le lien
+        étiré et la carte s'ouvre. src/scripts/blog-filters.ts la réveille.
+      */
+      <button
+        type="button"
+        data-facet-chip
+        data-facet-key="category"
+        data-facet-value={category}
+        tabindex={-1}
+        class="pointer-events-none relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
+      >
+        {category}
+      </button>
+    ) : (
+      <span class="w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc">
+        {category}
+      </span>
+    )
+  }
 
   <h3 class="font-display text-lg font-semibold text-text group-hover:text-acc">
-    {title}
+    <a href={`/blog/${post.id}/`} class="after:absolute after:inset-0">{title}</a>
   </h3>
 
   <p class="text-sm text-muted">{description}</p>
@@ -64,4 +98,4 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
       )
     }
   </div>
-</a>
+</article>

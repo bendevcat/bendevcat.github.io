@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page introuvable — bencat_"
+  description="Cette page n'existe pas ou plus. Reviens à l'accueil, au blog, aux tags, ou cherche avec ⌘K."
+>
+  <main>
+    <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ 404</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">Page introuvable</h1>
+      <p class="mt-6 text-muted">
+        Cette page n'existe pas, ou plus — un lien cassé, une faute de frappe, ou un article
+        déplacé. Voici où aller ensuite.
+      </p>
+
+      <ul class="mt-8 flex flex-col gap-3">
+        <li>
+          <a href="/" class="text-acc underline underline-offset-4 hover:no-underline">
+            Retour à l'accueil
+          </a>
+        </li>
+        <li>
+          <a href="/blog" class="text-acc underline underline-offset-4 hover:no-underline">
+            Voir le blog
+          </a>
+        </li>
+        <li>
+          <a href="/tags" class="text-acc underline underline-offset-4 hover:no-underline">
+            Parcourir les tags
+          </a>
+        </li>
+      </ul>
+
+      <p class="mt-8 text-sm text-muted">
+        {/* Le texte qui suit </kbd> doit rester sur CETTE ligne : un saut de
+            ligne entre un élément et le texte suivant fait disparaître
+            l'espace d'indentation à la compilation Astro, ce qui produisait
+            « ⌘K— ça marche ». */}
+        Ou lance une recherche avec <kbd class="rounded border border-line px-1.5 py-0.5 font-mono">⌘K</kbd> — ça marche depuis n'importe quelle page, y compris celle-ci.
+      </p>
+    </section>
+  </main>
+</BaseLayout>

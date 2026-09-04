@@ -7,14 +7,15 @@ interface NavLink {
 }
 
 // Nav complète du site (spec design §4). Blog (Plan 1), Projets (Plan 3),
-// Prompts et Skills (Plan 4) ont une page ; « À propos » arrive au Plan 5 —
-// rendu non cliquable pour éviter tout lien mort (cf. spec Plan 1 §5).
+// Prompts et Skills (Plan 4), et « À propos » (Plan 5) ont tous une page.
+// Le rendu non cliquable reste possible pour un futur item sans page :
+// `href` absent → <span> inerte, pour éviter tout lien mort (spec Plan 1 §5).
 const navLinks: NavLink[] = [
   { label: 'Blog', href: '/blog' },
   { label: 'Projets', href: '/projets' },
   { label: 'Prompts', href: '/prompts' },
   { label: 'Skills', href: '/skills' },
-  { label: 'À propos' },
+  { label: 'À propos', href: '/a-propos' },
 ];
 ---
 
@@ -51,6 +52,17 @@ const navLinks: NavLink[] = [
         ))}
       </ul>
     </nav>
+
+    <button
+      type="button"
+      data-search-open
+      hidden
+      class="flex items-center gap-2 rounded-lg border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc"
+      aria-label="Rechercher sur le site"
+    >
+      <span aria-hidden="true">🔍</span>
+      <kbd class="hidden sm:inline">⌘K</kbd>
+    </button>
 
     <ThemeToggle />
   </div>

@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AiBanner from '../components/AiBanner.astro';
+import { AI_USAGE_META, type AiUsage } from '../lib/aiUsage';
+
+// Ordre du plus humain au plus assisté — c'est l'échelle, pas l'ordre
+// alphabétique.
+const LEVELS: AiUsage[] = ['none', 'partial', 'full'];
+---
+
+<BaseLayout
+  title="Transparence IA — bencat_"
+  description="Comment bencat_ déclare le niveau de contribution IA de chaque article : les 3 niveaux, leur signalétique."
+>
+  <main>
+    <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ transparence-ia</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">Transparence IA</h1>
+      <p class="mt-6 text-muted">
+        Certains articles de ce site sont écrits avec l'aide d'une IA, d'autres non. Plutôt que de
+        laisser planer le doute, chaque article déclare son niveau de contribution IA — c'est une
+        des valeurs distinctives de bencat_ : dire clairement qui a fait quoi.
+      </p>
+    </section>
+
+    <section class="mx-auto max-w-3xl px-4 pb-20 sm:px-6">
+      <ul class="flex flex-col gap-10">
+        {
+          LEVELS.map((level) => {
+            const meta = AI_USAGE_META[level];
+            return (
+              <li>
+                <p class="font-mono text-xs text-muted">{level}</p>
+                <p class="mt-1 font-display text-lg font-semibold text-text">
+                  <span aria-hidden="true">{meta.emoji}</span> {meta.label}
+                </p>
+                <p class="mt-2 text-muted">{meta.description}</p>
+                <div class="mt-4">
+                  <AiBanner usage={level} ariaLabel={`Exemple de bannière : ${meta.label}`} />
+                </div>
+              </li>
+            );
+          })
+        }
+      </ul>
+
+      <p class="mt-4 text-sm text-muted">
+        Un article qui ne déclare aucun niveau n'affiche aucune bannière — le champ est optionnel.
+      </p>
+    </section>
+  </main>
+</BaseLayout>
