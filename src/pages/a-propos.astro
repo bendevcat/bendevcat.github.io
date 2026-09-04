@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Contenu composé À PARTIR DES TEXTES DE L'AUTEUR, sur décision de
+// l'utilisateur au gate du 2026-09-04 : aucune phrase inventée. Sources :
+// - src/content/blog/bienvenue-dans-mon-foutoir/index.md (parcours, le
+//   pourquoi du site, la règle sur l'IA) ;
+// - src/components/Hero.astro (identité, GitHub).
+// Registre : tutoiement, comme le Hero et la spec de design §4.
+---
+
+<BaseLayout
+  title="À propos — bencat_"
+  description="Benoît Catillon, alias benCat_ : ingénieur DevOps, et pourquoi ce site existe."
+>
+  <main>
+    <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ a-propos</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">À propos</h1>
+    </section>
+
+    <section class="prose mx-auto max-w-3xl px-4 pb-20 sm:px-6">
+      <h2>Qui je suis</h2>
+      <p>
+        Benoît Catillon, <strong>benCat_</strong> en ligne. Bientôt la quarantaine — mais je le
+        vis bien. Ingénieur DevOps depuis 2019, en France. Passionné de tech, de geekerie en tout
+        genre, de science-fiction et de manga, depuis toujours.
+      </p>
+
+      <h2>Pourquoi ce site</h2>
+      <p>
+        Pour décharger mon cerveau : centraliser des idées, des réflexions, des snippets et des
+        tutos en lien avec mon « vis ma vie » de DevOps — ou pas. L'objectif est de garder cet
+        espace aussi clean que possible, une sorte de base de données fun à utiliser.
+      </p>
+      <p>
+        Tu y trouveras quatre choses : des <a href="/blog/">articles</a>, des
+        <a href="/projets/">fiches projets</a>, des <a href="/prompts/">prompts</a> et des
+        <a href="/skills/">skills</a>.
+      </p>
+
+      <h2>L'IA : une aide, pas un <em>ghostwriter</em></h2>
+      <p>
+        En 2025, il serait idiot de ne pas me faire aider par une IA. Mais tu sauras toujours ce
+        qui vient d'où : chaque article déclare son niveau de contribution IA. Je vérifie
+        attentivement les informations produites par l'IA — le but est de délivrer une
+        information juste et de qualité.
+      </p>
+      <p>
+        <a href="/transparence-ia/">Comment je déclare l'usage de l'IA</a>
+      </p>
+
+      <h2>Où me trouver</h2>
+      <p>
+        <a href="https://github.com/bendevcat" target="_blank" rel="noopener noreferrer">
+          GitHub — @bendevcat
+        </a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>
