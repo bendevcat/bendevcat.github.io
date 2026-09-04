@@ -185,7 +185,7 @@ Ajouter l'attribut `data-pagefind-body` sur le conteneur du contenu principal de
 Règle Pagefind à connaître : dès qu'**au moins une** page du site porte `data-pagefind-body`, **toute page qui ne le porte pas est exclue de l'index**. C'est le mécanisme qui limite l'index aux 13 pages de détail sans avoir à exclure les autres une par une.
 
 - `src/pages/blog/[...slug].astro:45` → `<article class="mx-auto max-w-3xl px-4 py-10" data-pagefind-body>`
-- `src/pages/projets/[...slug].astro`, `src/pages/prompts/[...slug].astro`, `src/pages/skills/[...slug].astro` → même attribut sur l'élément qui enveloppe titre + corps de la fiche (lire chaque fichier avant d'éditer : les trois n'ont pas la même balise racine).
+- `src/pages/projets/[...slug].astro`, `src/pages/prompts/[...slug].astro`, `src/pages/skills/[...slug].astro` → même attribut sur l'élément qui enveloppe titre + corps de la fiche. Les 4 gabarits partagent en fait la **même** racine `<article class="mx-auto max-w-3xl px-4 py-10">` (vérifié en T-A1).
 
 Ne pas ajouter d'attribut sur le `<Header />` : il est hors de chaque `data-pagefind-body`, donc déjà exclu.
 
