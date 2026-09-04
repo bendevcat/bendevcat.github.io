@@ -19,6 +19,14 @@ describe('tagSlug', () => {
   it('ne rend jamais de tirets en tête ou en queue', () => {
     expect(tagSlug('--k8s--')).toBe('k8s');
   });
+
+  it('rend une chaîne vide quand rien ne survit à la normalisation', () => {
+    // Saisissable depuis /admin. Ces valeurs ne doivent JAMAIS devenir une
+    // route : c'est la garde `!slug` de collectTagIndex qui les écarte.
+    expect(tagSlug('---')).toBe('');
+    expect(tagSlug('⚡')).toBe('');
+    expect(tagSlug('日本語')).toBe('');
+  });
 });
 
 describe('collectTagIndex', () => {
@@ -84,6 +92,18 @@ describe('collectTagIndex', () => {
     expect(index).toHaveLength(1);
     expect(index[0].count).toBe(1);
     expect(index[0].label).toBe('Kubernetes'); // première graphie, comme partout
+  });
+
+  it("écarte un tag dont le slug est vide — sinon la route /tags/ serait générée", () => {
+    const bruit = {
+      blog: [entry('---', 'devops'), entry('⚡')],
+      projects: [],
+      prompts: [],
+      skills: [],
+    } as any;
+    const index = collectTagIndex(bruit);
+    expect(index.map((t) => t.slug)).toEqual(['devops']);
+    expect(index.every((t) => t.slug.length > 0)).toBe(true);
   });
 });
 

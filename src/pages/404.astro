@@ -34,8 +34,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </ul>
 
       <p class="mt-8 text-sm text-muted">
-        Ou lance une recherche avec <kbd class="rounded border border-line px-1.5 py-0.5 font-mono">⌘K</kbd>
-        — ça marche depuis n'importe quelle page, y compris celle-ci.
+        {/* Le texte qui suit </kbd> doit rester sur CETTE ligne : un saut de
+            ligne entre un élément et le texte suivant fait disparaître
+            l'espace d'indentation à la compilation Astro, ce qui produisait
+            « ⌘K— ça marche ». */}
+        Ou lance une recherche avec <kbd class="rounded border border-line px-1.5 py-0.5 font-mono">⌘K</kbd> — ça marche depuis n'importe quelle page, y compris celle-ci.
       </p>
     </section>
   </main>

@@ -28,7 +28,6 @@ if (dialog && input && output) {
   ) => Promise<PagefindApi>;
 
   let api: PagefindApi | null = null;
-  let loadFailed = false;
   let token = 0; // anti-course : seule la dernière recherche a le droit d'écrire
 
   const message = (text: string) => {
@@ -40,14 +39,17 @@ if (dialog && input && output) {
   };
 
   const loadApi = async (): Promise<PagefindApi | null> => {
-    if (api || loadFailed) return api;
+    if (api) return api;
     try {
       const url = `${import.meta.env.BASE_URL}pagefind/pagefind.js`;
       const mod = await importPagefind(url);
       mod.init();
       api = mod;
-    } catch {
-      loadFailed = true; // en dev (`astro dev`), dist/pagefind/ n'existe pas
+    } catch (error) {
+      // En dev (`astro dev`), dist/pagefind/ n'existe pas — c'est attendu.
+      // En production, c'est un incident réseau : le visiteur ne doit pas
+      // lire une consigne de build, elle ne le concerne pas.
+      console.warn('Pagefind indisponible (lancer `npm run build` en dev) :', error);
     }
     return api;
   };
@@ -76,7 +78,17 @@ if (dialog && input && output) {
         title.textContent = result.title; // texte, jamais innerHTML
         const excerpt = document.createElement('span');
         excerpt.className = 'mt-0.5 block font-mono text-xs text-muted';
-        excerpt.innerHTML = result.excerpt; // Pagefind y met des <mark>
+        // Pagefind n'échappe rien : ni à l'indexation, ni dans `build_excerpt`.
+        // Du contenu réel de ce site contient déjà des jetons comme `<!--`,
+        // `<N>` ou `<command>` : injectés tels quels, le navigateur les lit
+        // comme du balisage et avale le reste de l'extrait. On échappe donc
+        // tout, puis on ré-autorise le seul balisage attendu, `<mark>`.
+        excerpt.innerHTML = result.excerpt
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/&lt;mark&gt;/g, '<mark>')
+          .replace(/&lt;\/mark&gt;/g, '</mark>');
         link.append(title, excerpt);
         item.append(link);
         list.append(item);
@@ -99,20 +111,29 @@ if (dialog && input && output) {
     const pagefind = await loadApi();
     if (stale()) return;
     if (!pagefind) {
-      message('Index de recherche indisponible — lancez `npm run build`.');
+      message('La recherche est momentanément indisponible.');
       return;
     }
     message('Recherche…');
-    const raw = await pagefind.search(term);
-    if (stale()) return;
-    const loaded = await Promise.all(raw.results.slice(0, 20).map((r) => r.data()));
-    if (stale()) return;
-    const results: SearchResult[] = loaded.map((d) => ({
-      url: d.url,
-      title: d.meta?.title ?? d.url,
-      excerpt: d.excerpt,
-    }));
-    render(groupResultsByCollection(results), term);
+    try {
+      const raw = await pagefind.search(term);
+      if (stale()) return;
+      const loaded = await Promise.all(raw.results.slice(0, 20).map((r) => r.data()));
+      if (stale()) return;
+      const results: SearchResult[] = loaded.map((d) => ({
+        url: d.url,
+        title: d.meta?.title ?? d.url,
+        excerpt: d.excerpt,
+      }));
+      render(groupResultsByCollection(results), term);
+    } catch (error) {
+      // Pagefind charge ses chunks d'index paresseusement, au moment même de
+      // la recherche : une coupure réseau ici rejette la promesse. Sans ce
+      // catch, le modal restait figé sur « Recherche… » indéfiniment.
+      if (stale()) return;
+      message('La recherche est momentanément indisponible.');
+      console.warn('Échec de la recherche Pagefind :', error);
+    }
   };
 
   let timer: ReturnType<typeof setTimeout>;
