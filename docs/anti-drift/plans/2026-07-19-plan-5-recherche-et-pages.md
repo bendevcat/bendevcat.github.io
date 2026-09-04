@@ -200,10 +200,10 @@ Attendu : le build Astro annonce **18 pages**, puis Pagefind affiche une ligne d
 Vérifier les fichiers et le décompte :
 
 ```bash
-ls dist/pagefind/pagefind.js && node -e "const m=require('fs').readFileSync('dist/pagefind/pagefind-entry.json','utf8');console.log(m)"
+ls dist/pagefind/pagefind.js && grep -c 'data-pagefind-body' -r src/pages
 ```
 
-Attendu : `dist/pagefind/pagefind.js` existe. **Si le compte n'est pas 13** (6 blog + 2 projets + 3 prompts + 2 skills), c'est qu'un `data-pagefind-body` manque ou qu'il y en a un de trop — corriger avant de continuer, ne pas « ajuster le chiffre attendu ».
+Attendu : `dist/pagefind/pagefind.js` existe, et **exactement 4 fichiers** de `src/pages` portent l'attribut. Le nombre de pages indexées est celui qu'annonce Pagefind en fin de build — le relever tel quel. **Si le compte n'est pas 13** (6 blog + 2 projets + 3 prompts + 2 skills), c'est qu'un `data-pagefind-body` manque ou qu'il y en a un de trop — corriger avant de continuer, ne pas « ajuster le chiffre attendu ».
 
 - [ ] **Step 6: Prouver que le garde-fou mord**
 
@@ -403,7 +403,7 @@ export function groupResultsByCollection(results: SearchResult[]): SearchGroup[]
 ```bash
 npx vitest run src/lib/search.test.ts
 ```
-Attendu : **9 passent**.
+Attendu : **6 passent**.
 
 - [ ] **Step 5: Écrire `src/components/SearchDialog.astro`**
 
@@ -625,7 +625,7 @@ Dans `src/layouts/BaseLayout.astro`, importer `SearchDialog` et le monter juste 
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **96/96** · `0 error, 0 warning` · 18 pages + `Indexed 13 pages`.
+Attendu : **102/102 (11 fichiers)** · `0 error, 0 warning` · 18 pages + `Indexed 13 pages`.
 
 - [ ] **Step 9: Smoke navigateur — R1, en production locale**
 
@@ -801,7 +801,7 @@ export interface TagSummary {
 export function tagSlug(tag: string): string {
   return tag
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '') // marques diacritiques combinantes
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
@@ -896,7 +896,7 @@ Prévoir l'état vide (`tags.length === 0`) : une phrase, pas une liste vide mue
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **107/107 (11 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
+Attendu : **113/113 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
 
 - [ ] **Step 7: Smoke — R2, par comptage**
 
@@ -937,7 +937,7 @@ R3 exige qu'un tag partagé fasse apparaître **blog + projets + prompts + skill
 ```bash
 node -e "
 const fs=require('fs');
-const slug=(t)=>t.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+\$/g,'');
+const slug=(t)=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+\$/g,'');
 const map=new Map();
 for (const c of ['blog','projects','prompts','skills']) {
   for (const d of fs.readdirSync('src/content/'+c,{withFileTypes:true}).filter(e=>e.isDirectory())) {
@@ -1012,7 +1012,7 @@ Rendu : kicker `~/ tags / {tag.label}`, `h1` avec le libellé, puis **une `<sect
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **107/107** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au Step 1 de T-B1).
+Attendu : **113/113 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
 
 - [ ] **Step 4: Prouver l'agrégation — R3, par comptage**
 
