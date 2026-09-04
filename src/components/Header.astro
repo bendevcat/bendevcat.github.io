@@ -52,6 +52,17 @@ const navLinks: NavLink[] = [
       </ul>
     </nav>
 
+    <button
+      type="button"
+      data-search-open
+      hidden
+      class="flex items-center gap-2 rounded-lg border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc"
+      aria-label="Rechercher sur le site"
+    >
+      <span aria-hidden="true">🔍</span>
+      <kbd class="hidden sm:inline">⌘K</kbd>
+    </button>
+
     <ThemeToggle />
   </div>
 </header>
