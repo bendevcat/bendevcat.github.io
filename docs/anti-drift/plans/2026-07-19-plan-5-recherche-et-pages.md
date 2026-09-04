@@ -453,7 +453,7 @@ Markup seul, aucune logique. Un `<dialog>` natif : il gère l'`Escape`, le focus
 
 Trois pièges à traiter explicitement, tous documentés dans le fichier :
 
-1. **Vite ne doit pas analyser l'import.** `/pagefind/pagefind.js` n'existe pas dans les sources — il est produit **après** le build. Un `import('/pagefind/pagefind.js')` littéral fait échouer `astro build`. On passe donc par une variable **et** `/* @vite-ignore */`.
+1. **Vite ne doit pas analyser l'import.** `/pagefind/pagefind.js` n'existe pas dans les sources — il est produit **après** le build. **Corrigé en T-A2 après mesure : la parade « variable + `/* @vite-ignore */` » NE MARCHE PAS.** Vite inline `import.meta.env.BASE_URL` à la compilation, le spécificateur redevient une constante, Vite route l'import par son helper `__vitePreload` et laisse le placeholder `__VITE_PRELOAD__` non remplacé ; le référencer lève une `ReferenceError` avalée par le `catch`, et le message de dégradation « dev » s'affiche **en production**. La seule parade mesurée est de sortir l'import du graphe de modules : `const importPagefind = new Function('specifier', 'return import(specifier)')`. Contrôle de non-régression : `grep -c '__VITE_PRELOAD__' dist/index.html` doit renvoyer **0**.
 2. **En dev, l'index n'existe pas** → le modal doit le dire, pas échouer en silence.
 3. **`excerpt` de Pagefind contient du HTML** (`<mark>`) — il va dans `innerHTML`, jamais le `title` ni l'`url`, qui passent par `textContent` / `setAttribute`.
 
@@ -488,11 +488,11 @@ if (dialog && input && output) {
   const loadApi = async (): Promise<PagefindApi | null> => {
     if (api || loadFailed) return api;
     try {
-      // `import.meta.env.BASE_URL` vaut '/' (base du site, spec §6.3) et
-      // rend l'URL non analysable statiquement par Vite — sans quoi le build
-      // échouerait sur un fichier qui n'existe pas encore.
+      // `import.meta.env.BASE_URL` vaut '/' (base du site, spec §6.3).
+      // L'import passe par `importPagefind` (cf. piège n°1) : un `import()`
+      // écrit littéralement ici serait réécrit par Vite et échouerait.
       const url = `${import.meta.env.BASE_URL}pagefind/pagefind.js`;
-      const mod = (await import(/* @vite-ignore */ url)) as PagefindApi;
+      const mod = await importPagefind(url);
       mod.init();
       api = mod;
     } catch {
