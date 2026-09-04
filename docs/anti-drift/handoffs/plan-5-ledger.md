@@ -14,7 +14,7 @@ Last updated by: main (contrôleur SDD)
 | R5 | `/a-propos` rendu — la page affiche la bio (**contenu réel fourni**) | Pending | T-C2. **Arbitrage du gate : la page est composée à partir des textes que l'utilisateur a déjà écrits lui-même** — l'article `bienvenue-dans-mon-foutoir` (parcours, le pourquoi du blog) et `src/components/Hero.astro` (identité). **Zéro phrase inventée** ; relecture de l'utilisateur avant le commit. |
 | R6 | `/transparence-ia` explique les 3 niveaux — `none`/`partial`/`full` **ET** leur signalétique (couleurs des bannières) | Pending | T-C1. La page **rend les 3 bannières réelles** via `AiBanner`, source unique `AI_USAGE_META` : la couleur montrée ne peut pas diverger de l'explication. |
 | R7 | `/404` custom — une URL inexistante affiche une 404 stylée | Pending | T-C3. `dist/404.html` servi automatiquement par GitHub Pages et `astro preview`. Consigner le **code HTTP** observé (404, pas 200). |
-| R8 | Index Pagefind généré au build **ET** déployé — `astro build` produit l'index **ET** la recherche fonctionne sur github.io | Pending | T-A1 (moitié build, prouvée localement + test de garde sur `package.json`) et **T-D1 (moitié prod, action utilisateur)**. **Arbitrage du gate : la question de publication est reportée à la fin du plan.** Tout est livré et prouvé localement (`astro preview` sert le vrai build) ; R8 restera `In progress` jusqu'à la décision de publier, et la question sera reposée avec l'état exact au moment de la Phase Z. |
+| R8 | Index Pagefind généré au build **ET** déployé — `astro build` produit l'index **ET** la recherche fonctionne sur github.io | In progress | T-A1 (moitié build, prouvée localement + test de garde sur `package.json`) et **T-D1 (moitié prod, action utilisateur)**. **Arbitrage du gate : la question de publication est reportée à la fin du plan.** Tout est livré et prouvé localement (`astro preview` sert le vrai build) ; R8 restera `In progress` jusqu'à la décision de publier, et la question sera reposée avec l'état exact au moment de la Phase Z. |
 
 ## Status legend
 - **Done** — verified, criteria passed (link to commit SHA)
@@ -27,7 +27,7 @@ Last updated by: main (contrôleur SDD)
 
 | Task | Phase | Covers | Status |
 |---|---|---|---|
-| A1 | A | R8 (moitié build : dépendance, script, portée de l'index, test de garde), R1 (index disponible) | Pending |
+| A1 | A | R8 (moitié build : dépendance, script, portée de l'index, test de garde), R1 (index disponible) | In progress |
 | A2 | A | R1 (modal ⌘K, groupement par collection, clic → page) | Pending |
 | B1 | B | R2 (`src/lib/tags.ts` + `/tags`) | Pending |
 | B2 | B | R3 (`/tags/<tag>` agrégation) | Pending |
@@ -72,3 +72,4 @@ Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisat
 
 - **2026-09-04 — pré-flight.** Branche `plan-5-recherche-et-pages` créée depuis `plan-4-librairies-prompts-skills` (base vérifiée : elle porte bien la spec du Plan 5, et son arbre est identique à `main` — même `tree 80fcc88`). Plan d'implémentation écrit depuis la spec et l'état réel du dépôt. Ledger et journal de déviations créés. Base mesurée : `vitest` **93/93 (9 fichiers)** · `astro check` **0 error / 0 warning** · `astro build` **18 pages**. Aucune tâche démarrée : le plan attend la validation de l'utilisateur.
 - **2026-09-04 — gate de pré-flight.** Les 4 décisions ci-dessus rendues par l'utilisateur. Les 4 additions sont `approved`. Aucune déviation ouverte. Exécution autorisée à partir de T-A1.
+- **2026-09-04 — T-A1 démarrée.** `plan defect: 7 erreurs du texte du plan (comptes de tests périmés en A2/B1/B2, renvoi vers un Step inexistant en B2, intervalle de diacritiques en caractères combinants littéraux en B1, vérification appuyée sur un nom de fichier interne de Pagefind en A1) — corrigées dans ad2cd1e`. Scan de pré-vol complet consigné dans `.superpowers/sdd/2026-07-19-plan-5-recherche-et-pages/progress.md`.
