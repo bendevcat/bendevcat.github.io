@@ -833,9 +833,16 @@ export function collectTagIndex(buckets: TagBuckets): TagSummary[] {
   const index = new Map<string, TagSummary>();
   for (const collection of TAG_COLLECTIONS) {
     for (const entry of buckets[collection] as TagEntryLike[]) {
+      // Dédoublonnage PAR ENTRÉE : `count` compte des entrées, pas des
+      // occurrences (R2). Une entrée portant deux graphies du même tag —
+      // `Kubernetes` et `kubernetes`, saisissables depuis /admin — ne doit
+      // compter qu'une fois, sinon le badge annonce plus d'entrées que la
+      // page n'en liste.
+      const seen = new Set<string>();
       for (const tag of entry.data.tags ?? []) {
         const slug = tagSlug(tag);
-        if (!slug) continue;
+        if (!slug || seen.has(slug)) continue;
+        seen.add(slug);
         const existing = index.get(slug);
         if (existing) existing.count += 1;
         else index.set(slug, { slug, label: tag, count: 1 });
@@ -878,7 +885,7 @@ export async function getTagBuckets(): Promise<TagBuckets> {
 ```bash
 npx vitest run src/lib/tags.test.ts
 ```
-Attendu : **12 passent**.
+Attendu : **13 passent**.
 
 - [ ] **Step 5: Écrire `src/pages/tags/index.astro`**
 
@@ -912,7 +919,7 @@ Prévoir l'état vide (`tags.length === 0`) : une phrase, pas une liste vide mue
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **115/115 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
+Attendu : **116/116 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
 
 - [ ] **Step 7: Smoke — R2, par comptage**
 
@@ -1055,7 +1062,7 @@ Rendu : kicker `~/ tags / {tag.label}`, `h1` avec le libellé, puis **une `<sect
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **115/115 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
+Attendu : **116/116 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
 
 - [ ] **Step 5: Prouver l'agrégation — R3, par comptage**
 
@@ -1105,25 +1112,50 @@ Dans `src/components/ArticleCard.astro`, transformer la racine `<a>` (`:31-34`) 
 <article
   class="group relative flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
   data-facet-card
-  data-facet={JSON.stringify({ category: [category], tag: tags })}
+  {/* Les tags sont normalisés en slug : la barre pose `tag.slug` en valeur,
+      et le moteur compare des chaînes exactes. Comparer la graphie brute
+      d'un côté et le libellé dédupliqué de l'autre sous-compterait dès que
+      deux entrées écriraient le même tag différemment. `category` reste brute :
+      c'est un enum Zod fermé. */}
+  data-facet={JSON.stringify({ category: [category], tag: tags.map(tagSlug) })}
 >
 ```
 
-Ajouter `tags` à la déstructuration de `post.data` (`:11`).
+Ajouter `tags` à la déstructuration de `post.data` (`:11`) et importer `tagSlug` depuis `../lib/tags`.
 
-La puce catégorie (`:45-47`) devient un bouton **au-dessus** du lien étiré :
+La puce catégorie (`:45-47`) devient un contrôle **uniquement sur une page qui filtre**. La carte reçoit une prop `filterable?: boolean` (défaut `false`) ; `/blog` la passe, la home non.
+
+**Corrigé après deux constats de revue** : un `<button>` inconditionnel crée un clic mort sur la home (aucune barre → l'écouteur sort, et le bouton absorbe le clic), et le rustiner avec `pointer-events-none` ne règle que le **pointeur** — la puce reste tabulable et son `aria-label` promet un filtre inexistant. D'où le rendu conditionnel :
 
 ```astro
-<button
-  type="button"
-  data-facet-chip
-  data-facet-key="category"
-  data-facet-value={category}
-  class="relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
->
-  {category}
-</button>
+{
+  filterable ? (
+    /*
+      `relative z-10` place la puce au-dessus du lien étiré du titre.
+      `pointer-events-none` + `tabindex={-1}` sont l'état par défaut, y compris
+      ici : sans JS, la barre reste masquée et la puce ne filtrerait rien —
+      inerte, elle laisse le clic atteindre le lien étiré. Le script la réveille
+      et lui donne alors seulement son nom accessible.
+    */
+    <button
+      type="button"
+      data-facet-chip
+      data-facet-key="category"
+      data-facet-value={category}
+      tabindex={-1}
+      class="pointer-events-none relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
+    >
+      {category}
+    </button>
+  ) : (
+    <span class="w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc">
+      {category}
+    </span>
+  )
+}
 ```
+
+`src/pages/blog/index.astro` passe la prop : `{posts.map((post) => <ArticleCard post={post} filterable />)}`. `src/pages/index.astro` n'est pas touchée.
 
 Le titre porte le lien étiré :
 
@@ -1157,7 +1189,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 ---
 ```
 
-Le markup reprend **exactement** le motif de `src/pages/prompts/index.astro:31-58` : conteneur `data-facet-filters` **`hidden`**, un bouton « toutes » avec `data-facet-value={ALL}` et `aria-pressed="true"`, puis un bouton par valeur. Deux groupes : `data-facet-key="category"` (les catégories utilisées) et `data-facet-key="tag"` (les tags du blog, libellé + compte). Ajouter un état vide `data-facet-empty` **`hidden`** sous la grille (« aucun article ne correspond »), et un lien discret « tous les tags → `/tags` » (addition n°3).
+Le markup reprend **exactement** le motif de `src/pages/prompts/index.astro:31-58` : conteneur `data-facet-filters` **`hidden`**, un bouton « toutes » avec `data-facet-value={ALL}` et `aria-pressed="true"`, puis un bouton par valeur. Deux groupes : `data-facet-key="category"` (les catégories utilisées) et `data-facet-key="tag"` (les tags du blog : **valeur = `tag.slug`**, affichage = `tag.label` + compte). Ajouter un état vide `data-facet-empty` **`hidden`** sous la grille (« aucun article ne correspond »), et un lien discret « tous les tags → `/tags` » (addition n°3).
 
 - [ ] **Step 3: Écrire `src/scripts/blog-filters.ts`**
 
