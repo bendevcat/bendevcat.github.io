@@ -697,7 +697,10 @@ describe('tagSlug', () => {
 describe('collectTagIndex', () => {
   const buckets = {
     blog: [entry('DevOps', 'linux'), entry('devops')],
-    projects: [entry('DevOps')],
+    // Troisième graphie, DIFFÉRENTE de la première : c'est ce qui rend le test
+    // de libellé discriminant. Avec 'DevOps' ici, une implémentation qui
+    // garderait la DERNIÈRE graphie passerait aussi.
+    projects: [entry('DEVOPS')],
     prompts: [entry('anti-drift')],
     skills: [entry('anti-drift')],
   } as any;
@@ -716,6 +719,19 @@ describe('collectTagIndex', () => {
   it('trie par compte décroissant puis libellé A→Z', () => {
     const index = collectTagIndex(buckets);
     expect(index.map((t) => t.slug)).toEqual(['devops', 'anti-drift', 'linux']);
+  });
+
+  it('départage deux tags à égalité de compte par libellé A→Z', () => {
+    // Comptes égaux : seul le départage par libellé décide. L'ordre
+    // d'insertion est zeta puis alpha ; sans le comparateur secondaire, le
+    // tri stable les laisserait dans cet ordre.
+    const egalite = {
+      blog: [entry('zeta', 'alpha')],
+      projects: [],
+      prompts: [],
+      skills: [],
+    } as any;
+    expect(collectTagIndex(egalite).map((t) => t.slug)).toEqual(['alpha', 'zeta']);
   });
 
   it('rend un index vide sans planter quand aucune entrée n’a de tag', () => {
@@ -862,7 +878,7 @@ export async function getTagBuckets(): Promise<TagBuckets> {
 ```bash
 npx vitest run src/lib/tags.test.ts
 ```
-Attendu : **11 passent**.
+Attendu : **12 passent**.
 
 - [ ] **Step 5: Écrire `src/pages/tags/index.astro`**
 
@@ -896,7 +912,7 @@ Prévoir l'état vide (`tags.length === 0`) : une phrase, pas une liste vide mue
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **114/114 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
+Attendu : **115/115 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
 
 - [ ] **Step 7: Smoke — R2, par comptage**
 
@@ -1028,7 +1044,7 @@ Rendu : kicker `~/ tags / {tag.label}`, `h1` avec le libellé, puis **une `<sect
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **114/114 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
+Attendu : **115/115 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
 
 - [ ] **Step 5: Prouver l'agrégation — R3, par comptage**
 
