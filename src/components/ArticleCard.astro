@@ -8,7 +8,7 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { title, description, pubDate, category, cover, coverAlt, aiUsage } = post.data;
+const { title, description, pubDate, category, tags, cover, coverAlt, aiUsage } = post.data;
 
 const dateFr = pubDate.toLocaleDateString('fr-FR', {
   day: 'numeric',
@@ -28,9 +28,10 @@ const readingMinutes = estimateReadingMinutes(post.body ?? '');
 const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 ---
 
-<a
-  href={`/blog/${post.id}/`}
-  class="group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+<article
+  class="group relative flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+  data-facet-card
+  data-facet={JSON.stringify({ category: [category], tag: tags })}
 >
   {
     cover && (
@@ -42,12 +43,23 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
     )
   }
 
-  <span class="w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc">
+  {/*
+    Bouton plutôt que <span> : la puce doit rester cliquable pour filtrer
+    sans imbriquer un <button> dans le lien étiré du titre (HTML invalide).
+    `relative z-10` la place au-dessus du lien étiré porté par le <h3>.
+  */}
+  <button
+    type="button"
+    data-facet-chip
+    data-facet-key="category"
+    data-facet-value={category}
+    class="relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
+  >
     {category}
-  </span>
+  </button>
 
   <h3 class="font-display text-lg font-semibold text-text group-hover:text-acc">
-    {title}
+    <a href={`/blog/${post.id}/`} class="after:absolute after:inset-0">{title}</a>
   </h3>
 
   <p class="text-sm text-muted">{description}</p>
@@ -64,4 +76,4 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
       )
     }
   </div>
-</a>
+</article>
