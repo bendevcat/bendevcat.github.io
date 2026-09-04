@@ -58,9 +58,16 @@ export function collectTagIndex(buckets: TagBuckets): TagSummary[] {
   const index = new Map<string, TagSummary>();
   for (const collection of TAG_COLLECTIONS) {
     for (const entry of buckets[collection] as TagEntryLike[]) {
+      // Dédoublonnage PAR ENTRÉE : `count` compte des entrées, pas des
+      // occurrences (R2). Une entrée qui porte deux graphies du même tag
+      // — `Kubernetes` et `kubernetes`, saisissables depuis /admin — ne doit
+      // compter qu'une fois, sinon le badge annonce plus d'entrées que la
+      // page n'en liste.
+      const seen = new Set<string>();
       for (const tag of entry.data.tags ?? []) {
         const slug = tagSlug(tag);
-        if (!slug) continue;
+        if (!slug || seen.has(slug)) continue;
+        seen.add(slug);
         const existing = index.get(slug);
         if (existing) existing.count += 1;
         else index.set(slug, { slug, label: tag, count: 1 });

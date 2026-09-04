@@ -69,6 +69,22 @@ describe('collectTagIndex', () => {
     const withoutTags = { data: {} } as any;
     expect(collectTagIndex({ blog: [withoutTags], projects: [], prompts: [], skills: [] } as any)).toEqual([]);
   });
+
+  it('compte des ENTRÉES, pas des occurrences — deux graphies dans la même entrée comptent 1', () => {
+    // Saisissable depuis /admin : deux graphies du même tag sur un seul
+    // article. Sans dédoublonnage par entrée, le badge annonce 2 alors que la
+    // page ne liste qu'une entrée.
+    const doublon = {
+      blog: [entry('Kubernetes', 'kubernetes')],
+      projects: [],
+      prompts: [],
+      skills: [],
+    } as any;
+    const index = collectTagIndex(doublon);
+    expect(index).toHaveLength(1);
+    expect(index[0].count).toBe(1);
+    expect(index[0].label).toBe('Kubernetes'); // première graphie, comme partout
+  });
 });
 
 describe('entriesWithTag', () => {
