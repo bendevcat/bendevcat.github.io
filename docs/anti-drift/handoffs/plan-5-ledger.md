@@ -30,7 +30,7 @@ Last updated by: main (contrôleur SDD)
 | A1 | A | R8 (moitié build : dépendance, script, portée de l'index, test de garde), R1 (index disponible) | Done (`199adf4`) |
 | A2 | A | R1 (modal ⌘K, groupement par collection, clic → page) | Done (`faa1d0f`) |
 | B1 | B | R2 (`src/lib/tags.ts` + `/tags`) | In progress |
-| B2 | B | R3 (`/tags/<tag>` agrégation) | Pending |
+| B2 | B | R3 (`/tags/<tag>` agrégation) **+ le retag `claude-code` décidé au gate** | Pending |
 | B3 | B | R4 (barre de puces + puce de carte) · **+ addition n°3** (lien vers `/tags`) · **+ addition n°4** (puce de carte cliquable) | Pending |
 | C1 | C | R6 (`/transparence-ia`) · **+ addition n°2** (lien depuis `AiBanner`) | Pending |
 | C2 | C | R5 (`/a-propos`) · **+ addition n°1** (nav « À propos » activée) — **dépend d'un contenu utilisateur** | Pending |
@@ -79,3 +79,4 @@ Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisat
   **Preuve de R1, mesurée sur `astro preview`** : ⌘K **et** Ctrl+K ouvrent le modal avec le focus dans le champ · `git` renvoie **4 groupes / 9 résultats** — Articles (4), Projets (2), Prompts (2), Skills (1) · **les 4 groupes** mènent à la bonne page, le `h1` d'arrivée étant à chaque fois identique au titre affiché dans le résultat.
   **Constat mesuré, remonté sans action** : la bannière `AiBanner` étant rendue sous le titre, ~90 caractères identiques polluent l'extrait de recherche de **chaque** article (« ✍️ 100% humain. Cet article est rédigé intégralement par un humain… ») ; la TOC duplique les titres. R1 reste satisfait tel qu'écrit — décision portée à la Phase Z.
 - **2026-09-04 — T-B1 démarrée.**
+- **2026-09-04 — plan complété (pas une déviation).** Le retag `claude-code` décidé par l'utilisateur au gate n'avait **aucune tâche pour le porter** : il est ajouté comme Step 2 de T-B2, avec les trois entrées cibles et la source qui justifie chacune, plus l'interdit explicite de taguer là où ce serait faux. Sans ce Step, une décision prise au gate serait restée lettre morte.

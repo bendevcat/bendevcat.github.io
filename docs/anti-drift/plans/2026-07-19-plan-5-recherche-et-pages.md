@@ -954,11 +954,27 @@ for(const [s,set] of [...map].sort((a,b)=>b[1].size-a[1].size)) console.log(set.
 "
 ```
 
-**Résultat attendu au 2026-09-04 : aucun tag ne couvre les 4 collections** (`devops` → blog+projets ; `anti-drift`, `claude-code`, `methodologie` → prompts+skills). La page peut donc être correcte sans que R3 soit démontrable sur le contenu réel.
+**Mesuré au pré-flight : aucun tag ne couvrait les 4 collections** (`devops` → blog+projets ; `anti-drift`, `claude-code`, `methodologie` → prompts+skills). La page pouvait donc être correcte sans que R3 soit démontrable sur le contenu réel.
 
-**Ce point est une question posée à l'utilisateur au gate de pré-flight, PAS une décision de l'implémenteur.** Si l'arbitrage n'est pas rendu quand cette tâche démarre : écrire la page, la prouver sur le meilleur cas disponible (2 collections), consigner le compte exact obtenu, et **laisser R3 `In progress` dans le ledger** — ne jamais la passer `Done` sur une lecture affaiblie du critère.
+**Arbitrage rendu par l'utilisateur au gate du 2026-09-04** : ajouter le tag `claude-code` **là où c'est factuellement vrai**, jamais ailleurs. Le Step 2 l'applique. Relancer ensuite la commande ci-dessus : `claude-code` doit passer à **4 collections**.
 
-- [ ] **Step 2: Écrire `src/pages/tags/[tag].astro`**
+- [ ] **Step 2: Appliquer le retag décidé au gate**
+
+Trois entrées à taguer `claude-code`, chacune pour une raison **sourcée**. Ajouter le tag, ne rien retirer, ne toucher à aucun autre champ.
+
+| Fichier | État actuel | Action | Ce qui l'établit |
+|---|---|---|---|
+| `src/content/blog/bienvenue-dans-mon-foutoir/index.md` | **aucun champ `tags`** | ajouter `tags: [claude-code]` | L'article écrit lui-même, ligne 50 : « ce blog a été créé from-scratch avec **Claude Code** sur Sonnet 4.5 ». |
+| `src/content/projects/site-bencat/index.md` | `tags: [astro, tailwind, cms]` | ajouter `claude-code` | Même sujet que l'article ci-dessus — ce projet **est** ce site, développé avec Claude Code (`docs/anti-drift/` en atteste). |
+| `src/content/skills/superpowers/index.md` | **aucun champ `tags`** | ajouter `tags: [claude-code]` | Le frontmatter porte déjà `type: claude-code` et `installCmd: /plugin install superpowers@claude-plugins-official` : c'est une skill Claude Code. |
+
+Les 2 prompts (`bootstrap-session-anti-drift`, `decouper-un-projet-en-plans-anti-drift`) portent **déjà** `claude-code` — ne pas y toucher.
+
+**Interdit :** poser `claude-code` sur une entrée où ce serait faux. Si l'une des trois justifications ci-dessus ne tient pas à la lecture du fichier, **ne pas taguer**, le dire dans le rapport, et laisser R3 `In progress`.
+
+**Contrôle après retag** : relancer la commande du Step 1 ; la ligne `claude-code` doit afficher **4** et lister `blog,projects,prompts,skills`.
+
+- [ ] **Step 3: Écrire `src/pages/tags/[tag].astro`**
 
 ```astro
 ---
@@ -1007,14 +1023,14 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
 
 Rendu : kicker `~/ tags / {tag.label}`, `h1` avec le libellé, puis **une `<section>` par groupe** — titre `font-mono text-sm text-acc` reprenant `{group.label} ({group.entries.length})`, et une `<ul>` de liens `{group.href}/{entry.id}/` affichant `entry.data.title` et `entry.data.description`. Un lien de retour vers `/tags`.
 
-- [ ] **Step 3: Build, typecheck, tests**
+- [ ] **Step 4: Build, typecheck, tests**
 
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
 Attendu : **114/114 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
 
-- [ ] **Step 4: Prouver l'agrégation — R3, par comptage**
+- [ ] **Step 5: Prouver l'agrégation — R3, par comptage**
 
 ```bash
 node -e "
@@ -1031,7 +1047,7 @@ for (const s of ['devops','anti-drift']) {
 
 Consigner les comptes obtenus **tels quels** dans le rapport. Vérifier aussi dans le navigateur qu'aucun groupe vide n'est rendu et qu'un clic mène bien à la page (375px, dark et light).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/pages/tags/
