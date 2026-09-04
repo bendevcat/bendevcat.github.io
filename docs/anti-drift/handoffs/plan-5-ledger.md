@@ -7,7 +7,7 @@ Last updated by: main (contrôleur SDD)
 
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
-| R1 | Recherche Pagefind sur tout le site via ⌘K — ⌘K ouvre la recherche **ET** taper un terme renvoie des résultats issus des **4** collections **ET** cliquer mène à la bonne page | **Done** — `faa1d0f` | T-A1 (index) puis T-A2 (modal). Terme de preuve : `git`, présent dans les 4 collections (mesuré sur les sources : blog 5, projets 2, prompts 2, skills 2). Les 3 clauses se vérifient séparément — le clic sur **chacun** des 4 groupes, pas sur un seul. |
+| R1 | Recherche Pagefind sur tout le site via ⌘K — ⌘K ouvre la recherche **ET** taper un terme renvoie des résultats issus des **4** collections **ET** cliquer mène à la bonne page | Done | **Établie en `faa1d0f`.** T-A1 (index) puis T-A2 (modal). Terme de preuve : `git`, présent dans les 4 collections (mesuré sur les sources : blog 5, projets 2, prompts 2, skills 2). Les 3 clauses se vérifient séparément — le clic sur **chacun** des 4 groupes, pas sur un seul. |
 | R2 | `/tags` liste tous les tags utilisés — chaque tag présent dans ≥ 1 collection, avec son compte | In progress | T-B1. Vérification **par comptage** des liens rendus, pas à l'œil. Clé = slug (`Sécurité` et `securite` = une seule page) ; libellé = première graphie rencontrée. |
 | R3 | `/tags/<tag>` agrège cross-collection — un tag partagé liste les entrées **blog + projets + prompts + skills** ensemble | Pending | T-B2, précédée du retag décidé au gate. **Réserve de données levée** : l'utilisateur a choisi d'ajouter `claude-code` là où c'est factuellement vrai, et la 4ᵉ patte (blog) existe — `bienvenue-dans-mon-foutoir` écrit lui-même « ce blog a été créé from-scratch avec Claude Code sur Sonnet 4.5 » (`src/content/blog/bienvenue-dans-mon-foutoir/index.md:50`) et n'a aujourd'hui aucun tag. Cible : blog `bienvenue-dans-mon-foutoir` · projets `site-bencat` · prompts (2, déjà tagués) · skills `anti-drift-planning` (déjà) + `superpowers`. |
 | R4 | Filtres catégorie/tag actifs sur `/blog` — cliquer une puce → **uniquement** les articles correspondants | Pending | T-B3. Barre de puces catégorie + tag **et** puce de carte cliquable (lien étiré). Vérification **par comptage dans les deux sens** (filtrer puis « toutes »). Non-régression home à contrôler : `ArticleCard` y est aussi utilisée. |
@@ -27,8 +27,8 @@ Last updated by: main (contrôleur SDD)
 
 | Task | Phase | Covers | Status |
 |---|---|---|---|
-| A1 | A | R8 (moitié build : dépendance, script, portée de l'index, test de garde), R1 (index disponible) | **Done** — `199adf4` |
-| A2 | A | R1 (modal ⌘K, groupement par collection, clic → page) | **Done** — `faa1d0f` |
+| A1 | A | R8 (moitié build : dépendance, script, portée de l'index, test de garde), R1 (index disponible) | Done (`199adf4`) |
+| A2 | A | R1 (modal ⌘K, groupement par collection, clic → page) | Done (`faa1d0f`) |
 | B1 | B | R2 (`src/lib/tags.ts` + `/tags`) | In progress |
 | B2 | B | R3 (`/tags/<tag>` agrégation) | Pending |
 | B3 | B | R4 (barre de puces + puce de carte) · **+ addition n°3** (lien vers `/tags`) · **+ addition n°4** (puce de carte cliquable) | Pending |
