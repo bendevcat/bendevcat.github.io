@@ -1,0 +1,51 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  skill: CollectionEntry<'skills'>;
+}
+
+const { skill } = Astro.props;
+const { title, description, type, version, tags } = skill.data;
+
+// Même contrat que PromptCard (T-B1), lu par src/scripts/facet-filters.ts.
+const facets = JSON.stringify({ type: [type], tag: tags });
+---
+
+<a
+  href={`/skills/${skill.id}/`}
+  class="group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+  data-facet-card
+  data-facet={facets}
+>
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="w-fit rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted">
+      {type}
+    </span>
+    {
+      version && (
+        <span class="w-fit rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted">
+          v{version}
+        </span>
+      )
+    }
+  </div>
+
+  <h3 class="font-display text-lg font-semibold text-text group-hover:text-acc">
+    {title}
+  </h3>
+
+  <p class="text-sm text-muted">{description}</p>
+
+  {
+    tags.length > 0 && (
+      <ul class="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Tags">
+        {tags.map((tag) => (
+          <li class="rounded border border-line px-2 py-0.5 font-mono text-xs text-muted">
+            {tag}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</a>

@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PromptCard from '../../components/PromptCard.astro';
+import { getSortedPrompts, collectTools, collectPromptTags } from '../../lib/prompts';
+import { PROMPT_FORMATS } from '../../content.config';
+import { ALL } from '../../lib/facetFilters';
+
+// getSortedPrompts() applique déjà l'ordre du plan (titre A→Z) et écarte les
+// `draft` — cf. src/lib/prompts.ts. Pas de re-tri ici.
+const prompts = await getSortedPrompts();
+const tools = collectTools(prompts);
+const tags = collectPromptTags(prompts);
+---
+
+<BaseLayout
+  title="Prompts — bencat_"
+  description="La bibliothèque de prompts de bencat_ : fiches copiables et guides."
+>
+  <main>
+    <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ prompts</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">Prompts</h1>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      {/*
+        `hidden` côté serveur : révélé par src/scripts/facet-filters.ts.
+        Sans JS, aucun contrôle mort n'est affiché et toutes les cartes restent
+        visibles (enhancement progressif, spec §6.3).
+      */}
+      <div
+        class="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+        data-facet-filters
+        hidden
+      >
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par format">
+          <button
+            type="button"
+            data-facet-key="format"
+            data-facet-value={ALL}
+            aria-pressed="true"
+            class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc aria-pressed:border-acc aria-pressed:text-acc"
+          >
+            tous
+          </button>
+          {
+            PROMPT_FORMATS.map((format) => (
+              <button
+                type="button"
+                data-facet-key="format"
+                data-facet-value={format}
+                aria-pressed="false"
+                class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc aria-pressed:border-acc aria-pressed:text-acc"
+              >
+                {format}
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          {
+            tools.length > 0 && (
+              <label class="flex items-center gap-2 font-mono text-xs text-muted">
+                outil
+                <select
+                  data-facet-key="tool"
+                  class="rounded-lg border border-line bg-surface px-2 py-1 font-mono text-xs text-text"
+                >
+                  <option value={ALL}>tous</option>
+                  {tools.map((tool) => (
+                    <option value={tool}>{tool}</option>
+                  ))}
+                </select>
+              </label>
+            )
+          }
+          {
+            tags.length > 0 && (
+              <label class="flex items-center gap-2 font-mono text-xs text-muted">
+                tag
+                <select
+                  data-facet-key="tag"
+                  class="rounded-lg border border-line bg-surface px-2 py-1 font-mono text-xs text-text"
+                >
+                  <option value={ALL}>tous</option>
+                  {tags.map((tag) => (
+                    <option value={tag}>{tag}</option>
+                  ))}
+                </select>
+              </label>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {prompts.map((prompt) => <PromptCard prompt={prompt} />)}
+      </div>
+
+      <p class="mt-8 font-mono text-sm text-muted" data-facet-empty hidden>
+        Aucun prompt ne correspond à ce filtre.
+      </p>
+    </section>
+
+    <script>
+      import '../../scripts/facet-filters.ts';
+    </script>
+  </main>
+</BaseLayout>

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro:content';
-import { CATEGORIES, PROJECT_STATUSES } from '../content.config';
+import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS } from '../content.config';
 
 /**
  * Charge la config réelle du CMS (public/admin/config.yml) telle qu'elle sera
@@ -11,6 +11,72 @@ import { CATEGORIES, PROJECT_STATUSES } from '../content.config';
  */
 export function loadCmsConfig(): any {
   return parse(readFileSync(new URL('../../public/admin/config.yml', import.meta.url), 'utf8'));
+}
+
+/**
+ * Génère des URLs candidates par produit cartésien de blocs (schéma × hôte ×
+ * port × chemin) pour stresser les motifs `repoUrl`/`demoUrl` du CMS contre le
+ * VRAI `z.string().url()`, au lieu d'une table choisie à la main.
+ *
+ * Constat I1 (revue Fix round 1/5, déviation D10) : la table à 10 cas choisis
+ * à la main ne contenait ni port invalide ni hôte malformé — exactement les
+ * URL que l'ancien motif `^https?://[^\s/]+(/[^\s]*)?$` laissait passer sans
+ * que `z.string().url()` les accepte (`https://github.com:bendevcat/x`,
+ * `http://exemple.fr:99999`, `https://exemple.fr:abc`, `http://[`). Le verdict
+ * `zodAccepts` de chaque cas est CALCULÉ ici en interrogeant le vrai schéma
+ * Zod — jamais deviné ni tapé à la main.
+ */
+function generateUrlProbeCases(): Array<{ value: string; zodAccepts: boolean }> {
+  const urlSchema = z.string().url();
+  const protocols = ['https://', 'http://', 'ftp://', 'javascript:', ''];
+  const hosts = [
+    // Hôtes valides, dont un cas de sous-domaine profond et un IDN punycode.
+    'exemple.fr', 'github.com', 'bendevcat.github.io', 'localhost',
+    'sub.deep.exemple.fr', 'xn--exmple-cva.fr',
+    // Hôtes malformés déjà couverts au fix round 1.
+    '', 'exa mple.com', '[', ']', '[::1]',
+    // Élargi au fix round 2 (constat I1 round 2) : la génération d'origine ne
+    // contenait AUCUN hôte avec `@ ? # % | < > ^`, donc ne pouvait pas voir que
+    // ces caractères manquaient de la classe d'hôte du motif. Une famille de
+    // caractères non listée ici est une famille non testée — d'où la liste
+    // volontairement redondante (caractère seul ET au milieu d'un hôte).
+    '@', 'user@', 'ex@emple.fr',
+    '?', 'ex?emple.fr',
+    '#', 'ex#emple.fr',
+    '%', 'ex%emple.fr', 'exemple.fr%20',
+    '|', 'ex|emple.fr',
+    '<', 'ex<emple.fr',
+    '>', 'ex>emple.fr',
+    '^', 'ex^emple.fr',
+    // Élargi au fix round 3 (constat I1 round 3, revue indépendante du
+    // contrôleur) : `\s` en regex couvre espace/tab/saut de ligne mais pas les
+    // autres caractères de contrôle — aucun hôte des deux générations
+    // précédentes n'en contenait, donc un octet NUL (ou tout autre `\x00`–
+    // `\x1f`/`\x7f`) dans l'hôte passait le motif sans que rien ne le révèle.
+    `ex${String.fromCharCode(0)}emple.fr`, // NUL
+    `ex${String.fromCharCode(1)}emple.fr`, // autre caractère de contrôle (SOH)
+  ];
+  const ports = ['', ':80', ':8080', ':3000', ':443', ':4321', ':0', ':65535', ':65536', ':99999', ':abc', ':bendevcat', ':-1', ':', ':00080'];
+  const paths = [
+    '', '/', '/a/b', '/a/b?c=d#e', '/a b', '/anti-drift-planning', '///',
+    // Élargi au fix round 2 : chemins ne commençant PAS par `/` — c'est ce qui
+    // manquait pour générer `http://?`, `https://#a=1`, `https://#frag`
+    // (userinfo/query/fragment collés directement à l'hôte, sans `/`).
+    '?a=1', '#frag',
+  ];
+
+  const values = new Set<string>();
+  for (const protocol of protocols) {
+    for (const host of hosts) {
+      for (const port of ports) {
+        for (const path of paths) {
+          values.add(`${protocol}${host}${port}${path}`);
+        }
+      }
+    }
+  }
+
+  return [...values].map((value) => ({ value, zodAccepts: urlSchema.safeParse(value).success }));
 }
 
 describe('config CMS — backend', () => {
@@ -24,10 +90,10 @@ describe('config CMS — backend', () => {
     expect(cfg.backend.auth_endpoint).toBeUndefined();
   });
 
-  it('déclare exactement deux collections : blog et projects', () => {
+  it('déclare exactement quatre collections : blog, projects, prompts, skills', () => {
     const cfg = loadCmsConfig();
-    expect(cfg.collections).toHaveLength(2);
-    expect(cfg.collections.map((c: any) => c.name)).toEqual(['blog', 'projects']);
+    expect(cfg.collections).toHaveLength(4);
+    expect(cfg.collections.map((c: any) => c.name)).toEqual(['blog', 'projects', 'prompts', 'skills']);
   });
 });
 
@@ -212,62 +278,330 @@ describe('config CMS — collection projects', () => {
   });
 });
 
-describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03)', () => {
-  const urlSchema = z.string().url();
+describe('config CMS — motif repoUrl/demoUrl aligné sur z.string().url() (D03, D10)', () => {
+  // Cas générés par produit cartésien (schéma × hôte × port × chemin),
+  // confrontés au vrai `z.string().url()` — remplace la table à 10 cas
+  // choisis à la main (constat I1, revue Fix round 1/5) qui ne couvrait ni
+  // les ports invalides, ni les hôtes malformés, et affirmait donc à tort que
+  // le motif n'était « jamais plus laxiste que Zod ».
+  const cases = generateUrlProbeCases();
 
-  // Table confrontée au VRAI schéma Zod (`z.string().url()`), pas à des exemples
-  // choisis à la main — c'est le constat de la revue T-C1 : le validateur de
-  // champ `string` de Sveltia 0.175.1 (`_A(n[0]).test(String(i))`) n'est PAS
-  // ancré à droite, donc un motif non ancré des deux côtés ne teste qu'un
-  // préfixe et laisse passer des valeurs que Zod rejette.
-  //
-  // `ftp://exemple.fr` est un écart CONNU et ASSUMÉ, pas un oubli : Zod accepte
-  // n'importe quel schéma reconnu par l'URL WHATWG (dont `ftp://`), alors que le
-  // motif n'accepte que http(s)://, comme l'exige le libellé du champ (« Doit
-  // être une URL complète et valide, commençant par http:// ou https:// »).
-  // Direction de l'écart : le motif est plus STRICT que Zod — un lien `ftp://`
-  // légitime serait refusé par le CMS, ce qui n'est jamais l'incident qu'on
-  // cherche à éviter ici (un build cassé après coup par une valeur acceptée à
-  // tort). Ne jamais retirer ce cas de la table : il doit rester visible.
-  const cases: Array<{ value: string; zodAccepts: boolean }> = [
-    { value: 'https://', zodAccepts: false },
-    { value: 'http://', zodAccepts: false },
-    { value: 'https:///', zodAccepts: false },
-    { value: 'http://exa mple.com', zodAccepts: false },
-    { value: 'pas-une-url', zodAccepts: false },
-    { value: 'ftp://exemple.fr', zodAccepts: true }, // écart connu, voir commentaire ci-dessus
-    { value: 'https://github.com/bendevcat/bendevcat.github.io', zodAccepts: true },
-    { value: 'https://bendevcat.github.io/', zodAccepts: true },
-    { value: 'http://localhost:4321', zodAccepts: true },
-    { value: 'https://exemple.fr/chemin?a=1#b', zodAccepts: true },
-  ];
-
-  it('la table de cas reflète le verdict réel de z.string().url() (pas une supposition)', () => {
-    for (const { value, zodAccepts } of cases) {
-      expect(urlSchema.safeParse(value).success).toBe(zodAccepts);
+  it('la génération couvre bien les catégories exigées par I1 (round 1, 2 et 3) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé (crochet), espace, schéma non-http, userinfo, hôte à caractère spécial seul, chemin sans « / » initial, caractère de contrôle dans l’hôte', () => {
+    const values = cases.map((c) => c.value);
+    // Round 1.
+    expect(values).toContain('http://exemple.fr:99999');
+    expect(values).toContain('https://exemple.fr:abc');
+    expect(values).toContain('https://github.com:bendevcat/anti-drift-planning');
+    expect(values).toContain('http://[');
+    expect(values).toContain('http://exa mple.com');
+    expect(values).toContain('ftp://exemple.fr');
+    // Round 2 (constat I1, revue Fix round 2/5) : la génération d'origine ne
+    // contenait aucun hôte avec `@ ? # % | < > ^`, donc ne pouvait pas révéler
+    // que ces caractères manquaient de la classe d'hôte du motif.
+    expect(values).toContain('https://@');
+    expect(values).toContain('https://user@');
+    expect(values).toContain('http://?');
+    expect(values).toContain('https://#');
+    expect(values).toContain('https://?a=1');
+    expect(values).toContain('https://#frag');
+    expect(values).toContain('https://exemple.fr%20/');
+    expect(values).toContain('https://ex|emple.fr');
+    expect(values).toContain('https://ex<emple.fr');
+    expect(values).toContain('https://ex^emple.fr');
+    expect(values).toContain('https://%');
+    // Round 3 (constat I1, revue indépendante du contrôleur, Fix round 3/5) :
+    // `\s` ne couvre pas les caractères de contrôle hors espace/tab/saut de
+    // ligne — aucun hôte des deux générations précédentes n'en contenait.
+    const nulHost = `https://ex${String.fromCharCode(0)}emple.fr`;
+    const ctrlHost = `https://ex${String.fromCharCode(1)}emple.fr`;
+    expect(values).toContain(nulHost);
+    expect(values).toContain(ctrlHost);
+    // Et Zod les rejette bien réellement (sinon la génération ne testerait rien).
+    const adversarials = [
+      'http://exemple.fr:99999', 'https://exemple.fr:abc', 'https://github.com:bendevcat/anti-drift-planning', 'http://[',
+      'https://@', 'https://user@', 'http://?', 'https://#', 'https://?a=1', 'https://#frag',
+      'https://exemple.fr%20/', 'https://ex|emple.fr', 'https://ex<emple.fr', 'https://ex^emple.fr', 'https://%',
+      nulHost, ctrlHost,
+    ];
+    for (const adversarial of adversarials) {
+      expect(cases.find((c) => c.value === adversarial)!.zodAccepts, adversarial).toBe(false);
     }
   });
 
   it.each(['repoUrl', 'demoUrl'] as const)(
-    'le motif de %s ne laisse jamais passer une valeur que Zod rejette',
+    'le motif de %s ne laisse JAMAIS passer une valeur que Zod rejette',
     (fieldName) => {
       const field = loadCmsConfig()
         .collections[1].fields.find((f: any) => f.name === fieldName);
       const pattern = new RegExp(field.pattern[0]);
 
       for (const { value, zodAccepts } of cases) {
-        const patternAccepts = pattern.test(value);
-        if (value === 'ftp://exemple.fr') {
-          // Écart encodé explicitement (D03) : le motif refuse ce que Zod
-          // accepte — direction sûre, jamais l'inverse.
-          expect(patternAccepts).toBe(false);
-          continue;
+        if (pattern.test(value)) {
+          // Le motif n'a le droit d'accepter que ce que Zod accepte aussi :
+          // sinon le CMS validerait et commiterait une valeur qui casse
+          // `astro build` après coup (le mode de panne récurrent du plan).
+          expect(zodAccepts, `${JSON.stringify(value)} passe le motif de ${fieldName} mais pas Zod`).toBe(true);
         }
-        // Sur tous les autres cas, le motif doit rendre exactement le même
-        // verdict que Zod : rien que le CMS accepte ne doit faire échouer
-        // `astro build` après coup, et rien de valide ne doit être refusé.
-        expect(patternAccepts).toBe(zodAccepts);
       }
     },
   );
+
+  it('reste délibérément plus strict que Zod sur les schémas non-http(s) (ftp:// refusé, écart connu et assumé)', () => {
+    // Zod accepte n'importe quel schéma reconnu par l'URL WHATWG (dont
+    // `ftp://`), alors que le motif n'accepte que http(s)://, comme l'exige
+    // le libellé du champ. Direction de l'écart : le motif est plus STRICT
+    // que Zod — jamais l'inverse, qui serait l'incident qu'on cherche à
+    // éviter. Ne jamais retirer ce cas : il doit rester visible.
+    const field = loadCmsConfig().collections[1].fields.find((f: any) => f.name === 'repoUrl');
+    const pattern = new RegExp(field.pattern[0]);
+    expect(pattern.test('ftp://exemple.fr')).toBe(false);
+    expect(z.string().url().safeParse('ftp://exemple.fr').success).toBe(true);
+  });
+
+  it('reste délibérément plus strict que Zod sur IPv6, userinfo et les ports vides/à zéros non significatifs (Minor, fix round 2, écarts connus et assumés)', () => {
+    // Relevé par la revue (Fix round 2/5) : ces 4 formes sont acceptées par
+    // Zod mais refusées par le motif — direction sûre (jamais l'inverse), mais
+    // jusqu'ici non testée ni documentée comme intentionnelle. Encodé ici
+    // explicitement, sur le même principe que le cas `ftp://` ci-dessus : un
+    // écart assumé et prouvé vaut mieux qu'un écart tacite.
+    const field = loadCmsConfig().collections[1].fields.find((f: any) => f.name === 'repoUrl');
+    const pattern = new RegExp(field.pattern[0]);
+    const urlSchema = z.string().url();
+    const knownStricterCases = [
+      'https://[::1]/', // littéral IPv6 — l'hôte exclut `[` et `]`
+      'https://user:pass@host/', // userinfo — l'hôte exclut `@`
+      'https://host:/', // port vide après `:` — le groupe port exige des chiffres
+      'https://exemple.fr:00080', // port à zéros non significatifs — hors des alternatives numériques couvertes
+    ];
+    for (const value of knownStricterCases) {
+      expect(pattern.test(value), `${value} devrait être refusé par le motif`).toBe(false);
+      expect(urlSchema.safeParse(value).success, `${value} devrait être accepté par Zod`).toBe(true);
+    }
+  });
+});
+
+/** Petit helper local : retrouve un champ par son nom dans une collection. */
+function field(cfg: any, collection: string, name: string): any {
+  const coll = cfg.collections.find((c: any) => c.name === collection);
+  return coll.fields.find((f: any) => f.name === name);
+}
+
+describe('config CMS — collection prompts', () => {
+  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'prompts');
+    expect(coll.folder).toBe('src/content/prompts');
+    expect(coll.path).toBe('{{slug}}/index');
+    expect(coll.extension).toBe('md');
+    expect(coll.format).toBe('yaml-frontmatter');
+    expect(coll.delete).toBe(false);
+    expect(coll.media_folder).toBe('');
+    expect(coll.public_folder).toBe('');
+  });
+
+  it('mappe TOUS les champs du schéma Zod, et rien de plus', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'prompts');
+    expect(coll.fields.map((f: any) => f.name)).toEqual([
+      'title',
+      'description',
+      'format',
+      'prompt',
+      'tool',
+      'model',
+      'tags',
+      'draft',
+      'relatedSkills',
+      'body',
+    ]);
+  });
+
+  it('rend obligatoires exactement les champs non-optionnels du Zod (I2, D10)', () => {
+    // Constat I2 (revue Fix round 1/5) : sans cette assertion, passer
+    // `description` en `required: false` laissait les 85 tests précédents
+    // verts — le champ aurait été omis à l'enregistrement puis rejeté par
+    // Zod (`z.string()` sans `.optional()`) au build.
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'prompts');
+    const required = coll.fields
+      .filter((f: any) => f.required !== false)
+      .map((f: any) => f.name)
+      .sort();
+    expect(required).toEqual(['body', 'description', 'format', 'title', 'tool']);
+  });
+
+  it('utilise les widgets attendus pour les champs typés (I3, D10)', () => {
+    // Constat I3 : sans cette assertion, passer `tags` de `list` à `string`,
+    // ou `draft` de `boolean` à `string`, laissait les tests précédents
+    // verts — la forme écrite dans le frontmatter (chaîne au lieu de
+    // tableau/booléen) aurait fait échouer la validation Zod au build.
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'prompts');
+    const byName = Object.fromEntries(coll.fields.map((f: any) => [f.name, f]));
+    expect(byName.title.widget).toBe('string');
+    expect(byName.description.widget).toBe('text');
+    expect(byName.format.widget).toBe('select');
+    expect(byName.prompt.widget).toBe('text');
+    expect(byName.tool.widget).toBe('string');
+    expect(byName.model.widget).toBe('string');
+    expect(byName.tags.widget).toBe('list');
+    expect(byName.draft.widget).toBe('boolean');
+    expect(byName.body.widget).toBe('markdown');
+  });
+
+  it('offre exactement les formats de PROMPT_FORMATS, avec le même défaut que Zod', () => {
+    const cfg = loadCmsConfig();
+    const f = field(cfg, 'prompts', 'format');
+    expect(f.options.map((o: any) => o.value)).toEqual([...PROMPT_FORMATS]);
+    expect(f.default).toBe('fiche');
+  });
+
+  it('garde le défaut `Claude` sur `tool`, comme le schéma Zod', () => {
+    expect(field(loadCmsConfig(), 'prompts', 'tool').default).toBe('Claude');
+  });
+
+  it('lie relatedSkills à la collection skills par slug', () => {
+    const f = field(loadCmsConfig(), 'prompts', 'relatedSkills');
+    expect(f.widget).toBe('relation');
+    expect(f.collection).toBe('skills');
+    expect(f.multiple).toBe(true);
+    expect(f.value_field).toBe('{{slug}}');
+  });
+});
+
+describe('config CMS — collection skills', () => {
+  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+    // Complété (I4, D10) : cette assertion omettait `extension`, `format`,
+    // `media_folder` et `public_folder`, pourtant vérifiés sur `prompts` —
+    // asymétrie du garde-fou entre les deux collections jumelles.
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'skills');
+    expect(coll.folder).toBe('src/content/skills');
+    expect(coll.path).toBe('{{slug}}/index');
+    expect(coll.extension).toBe('md');
+    expect(coll.format).toBe('yaml-frontmatter');
+    expect(coll.delete).toBe(false);
+    expect(coll.media_folder).toBe('');
+    expect(coll.public_folder).toBe('');
+  });
+
+  it('mappe TOUS les champs du schéma Zod, et rien de plus', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'skills');
+    expect(coll.fields.map((f: any) => f.name)).toEqual([
+      'title',
+      'name',
+      'description',
+      'type',
+      'version',
+      'repoUrl',
+      'installCmd',
+      'tags',
+      'draft',
+      'relatedPrompts',
+      'body',
+    ]);
+  });
+
+  it('rend obligatoires exactement les champs non-optionnels du Zod (I2, D10)', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'skills');
+    const required = coll.fields
+      .filter((f: any) => f.required !== false)
+      .map((f: any) => f.name)
+      .sort();
+    expect(required).toEqual(['body', 'description', 'title', 'type']);
+  });
+
+  it('utilise les widgets attendus pour les champs typés (I3, D10)', () => {
+    const cfg = loadCmsConfig();
+    const coll = cfg.collections.find((c: any) => c.name === 'skills');
+    const byName = Object.fromEntries(coll.fields.map((f: any) => [f.name, f]));
+    expect(byName.title.widget).toBe('string');
+    expect(byName.name.widget).toBe('string');
+    expect(byName.description.widget).toBe('text');
+    expect(byName.type.widget).toBe('string');
+    expect(byName.version.widget).toBe('string');
+    expect(byName.repoUrl.widget).toBe('string');
+    expect(byName.installCmd.widget).toBe('string');
+    expect(byName.tags.widget).toBe('list');
+    expect(byName.draft.widget).toBe('boolean');
+    expect(byName.body.widget).toBe('markdown');
+  });
+
+  it('garde le défaut `claude-code` sur `type`, comme le schéma Zod', () => {
+    expect(field(loadCmsConfig(), 'skills', 'type').default).toBe('claude-code');
+  });
+
+  it('lie relatedPrompts à la collection prompts par slug', () => {
+    const f = field(loadCmsConfig(), 'skills', 'relatedPrompts');
+    expect(f.widget).toBe('relation');
+    expect(f.collection).toBe('prompts');
+    expect(f.multiple).toBe(true);
+    expect(f.value_field).toBe('{{slug}}');
+  });
+});
+
+describe('config CMS — motif repoUrl du skill vs Zod (D03, D10)', () => {
+  const pattern = new RegExp(field(loadCmsConfig(), 'skills', 'repoUrl').pattern[0]);
+
+  // Motif lu DEPUIS le YAML et confronté aux mêmes cas générés que
+  // `projects.repoUrl`/`demoUrl` (voir generateUrlProbeCases) — les 3 champs
+  // partagent littéralement le même motif (I1) ; le remplacement de la table
+  // à 10 cas choisis à la main par une génération vaut donc ici aussi.
+  const cases = generateUrlProbeCases();
+
+  it('n’est JAMAIS plus laxiste que Zod (une URL acceptée par le CMS ne casse pas le build)', () => {
+    for (const { value, zodAccepts } of cases) {
+      if (pattern.test(value)) {
+        expect(zodAccepts, `${JSON.stringify(value)} passe le CMS mais pas Zod`).toBe(true);
+      }
+    }
+  });
+
+  it('rejette bien les URL adversariales trouvées en revue (I1, round 1, 2 et 3) : port hors plage, port non numérique, « : » au lieu de « / », hôte malformé, userinfo, `?`/`#`/`%`/`|`/`<`/`^` seuls ou en hôte, caractère de contrôle dans l’hôte', () => {
+    for (const adversarial of [
+      // Round 1.
+      'http://exemple.fr:99999',
+      'https://exemple.fr:abc',
+      'https://github.com:bendevcat/anti-drift-planning',
+      'http://[',
+      // Round 2.
+      'https://@',
+      'https://user@',
+      'http://?',
+      'https://#',
+      'https://?a=1',
+      'https://#frag',
+      'https://exemple.fr%20/',
+      'https://ex|emple.fr',
+      'https://ex<emple.fr',
+      'https://ex^emple.fr',
+      'https://%',
+      // Round 3.
+      `https://ex${String.fromCharCode(0)}emple.fr`,
+      `https://ex${String.fromCharCode(1)}emple.fr`,
+    ]) {
+      expect(pattern.test(adversarial), adversarial).toBe(false);
+    }
+  });
+
+  it('est délibérément plus strict que Zod sur le schéma d’URL (ftp:// refusé)', () => {
+    expect(pattern.test('ftp://exemple.fr')).toBe(false);
+    expect(z.string().url().safeParse('ftp://exemple.fr').success).toBe(true);
+  });
+
+  it('reste délibérément plus strict que Zod sur IPv6, userinfo et les ports vides/à zéros non significatifs (Minor, fix round 2, écarts connus et assumés)', () => {
+    const urlSchema = z.string().url();
+    const knownStricterCases = [
+      'https://[::1]/',
+      'https://user:pass@host/',
+      'https://host:/',
+      'https://exemple.fr:00080',
+    ];
+    for (const value of knownStricterCases) {
+      expect(pattern.test(value), `${value} devrait être refusé par le motif`).toBe(false);
+      expect(urlSchema.safeParse(value).success, `${value} devrait être accepté par Zod`).toBe(true);
+    }
+  });
 });

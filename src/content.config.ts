@@ -3,6 +3,7 @@ import { glob } from 'astro/loaders';
 
 export const CATEGORIES = ['Actus', 'DevOps', 'Outils', 'Sécurité', 'Geekerie', 'Tutos', 'IA'] as const;
 export const PROJECT_STATUSES = ['actif', 'wip', 'archivé'] as const;
+export const PROMPT_FORMATS = ['fiche', 'guide'] as const;
 
 const blog = defineCollection({
   loader: glob({ pattern: '**/index.{md,mdx}', base: './src/content/blog' }),
@@ -44,4 +45,42 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { blog, projects };
+// Schémas repris verbatim de la spec de design §3.3 et §3.4. Page bundles comme
+// `blog` et `projects` : `src/content/<coll>/<slug>/index.md`. Pas de champ
+// `cover` dans ces deux schémas — d'où la forme `schema: z.object(...)` et non
+// `schema: ({ image }) => ...` : le helper `image()` n'a rien à optimiser ici.
+const prompts = defineCollection({
+  loader: glob({ pattern: '**/index.{md,mdx}', base: './src/content/prompts' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    format: z.enum(PROMPT_FORMATS).default('fiche'),
+    prompt: z.string().optional(),
+    tool: z.string().default('Claude'),
+    model: z.string().optional(),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    relatedSkills: z.array(reference('skills')).optional(),
+  }),
+});
+
+// `type` reste une chaîne libre avec défaut 'claude-code' : la spec de design
+// §3.4 le prévoit extensible (competence, howto…), et la spec P4 §5 garde
+// l'élargissement hors périmètre du v1 — le champ est prêt, pas la donnée.
+const skills = defineCollection({
+  loader: glob({ pattern: '**/index.{md,mdx}', base: './src/content/skills' }),
+  schema: z.object({
+    title: z.string(),
+    name: z.string().optional(),
+    description: z.string(),
+    type: z.string().default('claude-code'),
+    tags: z.array(z.string()).default([]),
+    version: z.string().optional(),
+    repoUrl: z.string().url().optional(),
+    installCmd: z.string().optional(),
+    draft: z.boolean().default(false),
+    relatedPrompts: z.array(reference('prompts')).optional(),
+  }),
+});
+
+export const collections = { blog, projects, prompts, skills };

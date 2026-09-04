@@ -1,13 +1,16 @@
 /**
- * Prédicat de filtrage de la grille `/projets`.
+ * Prédicat de filtrage de la grille `/projets` (Plan 3).
  *
- * AUCUN import ici — surtout pas `astro:content`. Ce module est chargé par le
- * navigateur (src/scripts/project-filters.ts) ET par les tests unitaires ; le
- * garder sans dépendance est ce qui rend les deux possibles.
+ * Depuis le Plan 4, ce module est un ADAPTATEUR au-dessus de
+ * `facetFilters.ts` : il n'y a plus qu'un seul moteur de filtrage dans le
+ * repo. Son API publique est inchangée, et `projectFilters.test.ts` — non
+ * modifié — sert de preuve de non-régression.
+ *
+ * AUCUN import `astro:content` ici : ce module est chargé par le navigateur.
  */
+import { ALL, matchesFacets } from './facetFilters';
 
-/** Valeur sentinelle « aucun filtre » — jamais un statut ni une techno réels. */
-export const ALL = '__all__';
+export { ALL };
 
 export interface ProjectFilterEntry {
   status: string;
@@ -19,12 +22,13 @@ export interface ProjectFilterSelection {
   stack: string;
 }
 
-/** Les deux critères se combinent en ET (spec R3). */
+/** Les deux critères se combinent en ET (spec P3 R3). */
 export function matchesFilters(
   entry: ProjectFilterEntry,
   selected: ProjectFilterSelection,
 ): boolean {
-  const statusOk = selected.status === ALL || entry.status === selected.status;
-  const stackOk = selected.stack === ALL || entry.stack.includes(selected.stack);
-  return statusOk && stackOk;
+  return matchesFacets(
+    { status: [entry.status], stack: entry.stack },
+    { status: selected.status, stack: selected.stack },
+  );
 }

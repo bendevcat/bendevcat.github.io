@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SkillCard from '../../components/SkillCard.astro';
+import { getSortedSkills, collectTypes, collectSkillTags } from '../../lib/skills';
+import { ALL } from '../../lib/facetFilters';
+
+// getSortedSkills() applique déjà l'ordre du plan (titre A→Z) et écarte les
+// `draft` — cf. src/lib/skills.ts. Pas de re-tri ici.
+const skills = await getSortedSkills();
+const types = collectTypes(skills);
+const tags = collectSkillTags(skills);
+---
+
+<BaseLayout
+  title="Skills — bencat_"
+  description="Les skills Claude Code de bencat_ : instructions, installation et prompts liés."
+>
+  <main>
+    <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ skills</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">Skills</h1>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      {/*
+        `hidden` côté serveur : révélé par src/scripts/facet-filters.ts.
+        Sans JS, aucun contrôle mort n'est affiché et toutes les cartes restent
+        visibles (enhancement progressif, spec §6.3).
+      */}
+      <div
+        class="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+        data-facet-filters
+        hidden
+      >
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par type">
+          <button
+            type="button"
+            data-facet-key="type"
+            data-facet-value={ALL}
+            aria-pressed="true"
+            class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc aria-pressed:border-acc aria-pressed:text-acc"
+          >
+            tous
+          </button>
+          {
+            types.map((type) => (
+              <button
+                type="button"
+                data-facet-key="type"
+                data-facet-value={type}
+                aria-pressed="false"
+                class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc aria-pressed:border-acc aria-pressed:text-acc"
+              >
+                {type}
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          {
+            tags.length > 0 && (
+              <label class="flex items-center gap-2 font-mono text-xs text-muted">
+                tag
+                <select
+                  data-facet-key="tag"
+                  class="rounded-lg border border-line bg-surface px-2 py-1 font-mono text-xs text-text"
+                >
+                  <option value={ALL}>tous</option>
+                  {tags.map((tag) => (
+                    <option value={tag}>{tag}</option>
+                  ))}
+                </select>
+              </label>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {skills.map((skill) => <SkillCard skill={skill} />)}
+      </div>
+
+      <p class="mt-8 font-mono text-sm text-muted" data-facet-empty hidden>
+        Aucun skill ne correspond à ce filtre.
+      </p>
+    </section>
+
+    <script>
+      import '../../scripts/facet-filters.ts';
+    </script>
+  </main>
+</BaseLayout>
