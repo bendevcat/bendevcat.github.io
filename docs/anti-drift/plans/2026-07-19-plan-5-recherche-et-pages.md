@@ -896,7 +896,7 @@ Prévoir l'état vide (`tags.length === 0`) : une phrase, pas une liste vide mue
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **113/113 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
+Attendu : **114/114 (12 fichiers)** · `0 error, 0 warning` · **19 pages** (18 + `/tags`) · `Indexed 13 pages` (inchangé : `/tags` ne porte pas `data-pagefind-body`).
 
 - [ ] **Step 7: Smoke — R2, par comptage**
 
@@ -1012,7 +1012,7 @@ Rendu : kicker `~/ tags / {tag.label}`, `h1` avec le libellé, puis **une `<sect
 ```bash
 npx vitest run && npx astro check && npm run build
 ```
-Attendu : **113/113 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
+Attendu : **114/114 (12 fichiers)** · `0 error, 0 warning` · **19 + N pages** (N = nombre de tags distincts, relevé au **Step 1 de cette tâche**).
 
 - [ ] **Step 4: Prouver l'agrégation — R3, par comptage**
 
