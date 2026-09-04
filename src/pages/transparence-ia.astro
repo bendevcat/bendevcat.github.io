@@ -36,7 +36,7 @@ const LEVELS: AiUsage[] = ['none', 'partial', 'full'];
                 </p>
                 <p class="mt-2 text-muted">{meta.description}</p>
                 <div class="mt-4">
-                  <AiBanner usage={level} />
+                  <AiBanner usage={level} ariaLabel={`Exemple de bannière : ${meta.label}`} />
                 </div>
               </li>
             );

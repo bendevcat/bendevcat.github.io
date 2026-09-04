@@ -4,16 +4,25 @@ import { AI_USAGE_META } from '../lib/aiUsage';
 
 interface Props {
   usage: AiUsage;
+  /**
+   * Nom accessible de la bannière. Par défaut, celui d'une bannière posée sur
+   * un article — le cas de très loin le plus fréquent. La page
+   * /transparence-ia rend ces bannières hors de tout article, pour illustrer
+   * les 3 niveaux : elle passe donc son propre libellé, sinon un lecteur
+   * d'écran y entendrait trois fois « de cet article » sur une page qui n'en
+   * est pas un.
+   */
+  ariaLabel?: string;
 }
 
-const { usage } = Astro.props;
+const { usage, ariaLabel = 'Transparence IA de cet article' } = Astro.props;
 const meta = AI_USAGE_META[usage];
 ---
 
 <div
   class={`mb-8 flex items-start gap-3 rounded-lg border px-4 py-3 ${meta.bannerClass}`}
   role="note"
-  aria-label="Transparence IA de cet article"
+  aria-label={ariaLabel}
 >
   <span class="text-lg leading-none" aria-hidden="true">{meta.emoji}</span>
   <div class="text-sm">
