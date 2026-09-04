@@ -13,6 +13,20 @@ if (dialog && input && output) {
   type PagefindResult = { data: () => Promise<{ url: string; excerpt: string; meta?: { title?: string } }> };
   type PagefindApi = { init: () => void; search: (t: string) => Promise<{ results: PagefindResult[] }> };
 
+  // Vite réécrit TOUT `import()` dont il croit pouvoir deviner la cible — y
+  // compris à travers `import.meta.env.BASE_URL`, qu'il remplace à la
+  // compilation. Le spécificateur redevient alors une constante, Vite route
+  // l'import par son helper `__vitePreload` et laisse le placeholder
+  // `__VITE_PRELOAD__` non remplacé : le référencer lève une ReferenceError,
+  // que le `catch` ci-dessous transformait en « index indisponible » — en
+  // production comme en dev. `/* @vite-ignore */` n'y change rien.
+  // `new Function` construit l'import HORS du graphe de modules : c'est le
+  // seul moyen mesuré de charger un fichier que seul le build Pagefind
+  // produit. Aucune CSP n'est servie par GitHub Pages, donc rien ne le bloque.
+  const importPagefind = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<PagefindApi>;
+
   let api: PagefindApi | null = null;
   let loadFailed = false;
   let token = 0; // anti-course : seule la dernière recherche a le droit d'écrire
@@ -28,11 +42,8 @@ if (dialog && input && output) {
   const loadApi = async (): Promise<PagefindApi | null> => {
     if (api || loadFailed) return api;
     try {
-      // `import.meta.env.BASE_URL` vaut '/' (base du site, spec §6.3) et
-      // rend l'URL non analysable statiquement par Vite — sans quoi le build
-      // échouerait sur un fichier qui n'existe pas encore.
       const url = `${import.meta.env.BASE_URL}pagefind/pagefind.js`;
-      const mod = (await import(/* @vite-ignore */ url)) as PagefindApi;
+      const mod = await importPagefind(url);
       mod.init();
       api = mod;
     } catch {
@@ -77,19 +88,25 @@ if (dialog && input && output) {
 
   const run = async (term: string) => {
     const current = ++token;
+    // Vrai dès qu'une frappe plus récente a pris la main : plus aucune
+    // écriture dans le DOM n'est légitime après ça.
+    const stale = () => current !== token;
+
     if (term.trim().length < 2) {
       message('Tapez au moins 2 caractères.');
       return;
     }
     const pagefind = await loadApi();
+    if (stale()) return;
     if (!pagefind) {
       message('Index de recherche indisponible — lancez `npm run build`.');
       return;
     }
     message('Recherche…');
     const raw = await pagefind.search(term);
+    if (stale()) return;
     const loaded = await Promise.all(raw.results.slice(0, 20).map((r) => r.data()));
-    if (current !== token) return; // une frappe plus récente a pris la main
+    if (stale()) return;
     const results: SearchResult[] = loaded.map((d) => ({
       url: d.url,
       title: d.meta?.title ?? d.url,
@@ -112,6 +129,13 @@ if (dialog && input && output) {
   };
 
   for (const trigger of triggers) trigger.addEventListener('click', open);
+
+  // Le bouton de fermeture est explicite depuis qu'il n'y a plus de
+  // <form method="dialog"> : ce formulaire faisait de la touche Entrée une
+  // soumission, qui fermait le modal en jetant la recherche en cours.
+  for (const closer of document.querySelectorAll<HTMLElement>('[data-search-close]')) {
+    closer.addEventListener('click', () => dialog.close());
+  }
 
   document.addEventListener('keydown', (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {

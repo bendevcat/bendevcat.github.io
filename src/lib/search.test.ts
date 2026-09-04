@@ -20,6 +20,14 @@ describe('collectionFromUrl', () => {
     // Piège : le préfixe doit être un SEGMENT entier, pas une sous-chaîne.
     expect(collectionFromUrl('/blogueurs/x/')).toBeNull();
   });
+
+  it("écarte les URL d'index de collection — un seul segment n'est pas une entrée", () => {
+    // Ces segments SONT dans le dictionnaire : seule la garde sur le nombre
+    // de segments les écarte. Sans elle, /blog/ passerait pour un article.
+    expect(collectionFromUrl('/blog/')).toBeNull();
+    expect(collectionFromUrl('/prompts')).toBeNull();
+    expect(collectionFromUrl('/projets/')).toBeNull();
+  });
 });
 
 describe('groupResultsByCollection', () => {
