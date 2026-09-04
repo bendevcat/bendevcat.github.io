@@ -9,12 +9,12 @@ Last updated by: main (contrôleur SDD)
 |---|---|---|---|
 | R1 | Recherche Pagefind sur tout le site via ⌘K — ⌘K ouvre la recherche **ET** taper un terme renvoie des résultats issus des **4** collections **ET** cliquer mène à la bonne page | Pending | T-A1 (index) puis T-A2 (modal). Terme de preuve : `git`, présent dans les 4 collections (mesuré sur les sources : blog 5, projets 2, prompts 2, skills 2). Les 3 clauses se vérifient séparément — le clic sur **chacun** des 4 groupes, pas sur un seul. |
 | R2 | `/tags` liste tous les tags utilisés — chaque tag présent dans ≥ 1 collection, avec son compte | Pending | T-B1. Vérification **par comptage** des liens rendus, pas à l'œil. Clé = slug (`Sécurité` et `securite` = une seule page) ; libellé = première graphie rencontrée. |
-| R3 | `/tags/<tag>` agrège cross-collection — un tag partagé liste les entrées **blog + projets + prompts + skills** ensemble | Pending | T-B2. **Réserve de données connue au pré-flight : aucun tag du contenu réel ne couvre les 4 collections** (`devops` → blog+projets ; `anti-drift`/`claude-code`/`methodologie` → prompts+skills). Question posée à l'utilisateur au gate — voir §Questions ouvertes. Ne pas passer `Done` sur une lecture affaiblie du critère. |
+| R3 | `/tags/<tag>` agrège cross-collection — un tag partagé liste les entrées **blog + projets + prompts + skills** ensemble | Pending | T-B2, précédée du retag décidé au gate. **Réserve de données levée** : l'utilisateur a choisi d'ajouter `claude-code` là où c'est factuellement vrai, et la 4ᵉ patte (blog) existe — `bienvenue-dans-mon-foutoir` écrit lui-même « ce blog a été créé from-scratch avec Claude Code sur Sonnet 4.5 » (`src/content/blog/bienvenue-dans-mon-foutoir/index.md:50`) et n'a aujourd'hui aucun tag. Cible : blog `bienvenue-dans-mon-foutoir` · projets `site-bencat` · prompts (2, déjà tagués) · skills `anti-drift-planning` (déjà) + `superpowers`. |
 | R4 | Filtres catégorie/tag actifs sur `/blog` — cliquer une puce → **uniquement** les articles correspondants | Pending | T-B3. Barre de puces catégorie + tag **et** puce de carte cliquable (lien étiré). Vérification **par comptage dans les deux sens** (filtrer puis « toutes »). Non-régression home à contrôler : `ArticleCard` y est aussi utilisée. |
-| R5 | `/a-propos` rendu — la page affiche la bio (**contenu réel fourni**) | Pending | T-C2. **Dépend d'un contenu fourni par l'utilisateur** (bio, parcours, le pourquoi). Aucune bio inventée : cela publierait des affirmations fausses sur une personne réelle tout en passant le critère en apparence. |
+| R5 | `/a-propos` rendu — la page affiche la bio (**contenu réel fourni**) | Pending | T-C2. **Arbitrage du gate : la page est composée à partir des textes que l'utilisateur a déjà écrits lui-même** — l'article `bienvenue-dans-mon-foutoir` (parcours, le pourquoi du blog) et `src/components/Hero.astro` (identité). **Zéro phrase inventée** ; relecture de l'utilisateur avant le commit. |
 | R6 | `/transparence-ia` explique les 3 niveaux — `none`/`partial`/`full` **ET** leur signalétique (couleurs des bannières) | Pending | T-C1. La page **rend les 3 bannières réelles** via `AiBanner`, source unique `AI_USAGE_META` : la couleur montrée ne peut pas diverger de l'explication. |
 | R7 | `/404` custom — une URL inexistante affiche une 404 stylée | Pending | T-C3. `dist/404.html` servi automatiquement par GitHub Pages et `astro preview`. Consigner le **code HTTP** observé (404, pas 200). |
-| R8 | Index Pagefind généré au build **ET** déployé — `astro build` produit l'index **ET** la recherche fonctionne sur github.io | Pending | T-A1 (moitié build, prouvée localement + test de garde sur `package.json`) et **T-D1 (moitié prod, action utilisateur)**. La moitié prod exige un push sur `main`, qui publierait les Plans 2→5 d'un coup — voir §Questions ouvertes. |
+| R8 | Index Pagefind généré au build **ET** déployé — `astro build` produit l'index **ET** la recherche fonctionne sur github.io | Pending | T-A1 (moitié build, prouvée localement + test de garde sur `package.json`) et **T-D1 (moitié prod, action utilisateur)**. **Arbitrage du gate : la question de publication est reportée à la fin du plan.** Tout est livré et prouvé localement (`astro preview` sert le vrai build) ; R8 restera `In progress` jusqu'à la décision de publier, et la question sera reposée avec l'état exact au moment de la Phase Z. |
 
 ## Status legend
 - **Done** — verified, criteria passed (link to commit SHA)
@@ -38,9 +38,9 @@ Last updated by: main (contrôleur SDD)
 | D1 | D | R8 (moitié prod — **action utilisateur**) | Pending |
 | Z1 | Z | Audit `/anti-drift-planning:verify 5` (couverture R1–R8) | Pending |
 
-## Additions au-delà de la lettre de la spec (à ratifier au gate de pré-flight)
+## Additions au-delà de la lettre de la spec — **ratifiées au gate de pré-flight (2026-09-04)**
 
-Aucune n'est exigée par un critère R. Listées ici pour être approuvées ou coupées **explicitement**, jamais glissées en silence.
+Aucune n'est exigée par un critère R. **Les 4 sont approuvées** par l'utilisateur au gate, option « J'approuve les 4 additions ».
 
 1. **Lien de nav « À propos » activé** (T-C2) — `src/components/Header.astro:17` le rend aujourd'hui non cliquable (« Bientôt disponible »). Sans cela, `/a-propos` n'est atteignable qu'en tapant l'URL. Même addition, même justification qu'aux Plans 3 (« Projets ») et 4 (« Prompts »/« Skills »).
 2. **Lien « en savoir plus » de `AiBanner` vers `/transparence-ia`** (T-C1) — R6 exige que la page explique, pas qu'on y accède. Sans ce lien, la page n'est atteignable depuis **aucune** surface : elle n'est pas dans la nav (design §4).
@@ -59,12 +59,16 @@ Aucune n'est exigée par un critère R. Listées ici pour être approuvées ou c
 - **Pas de `public/CNAME`, pas de changement de `site` ni de `base`** : le domaine custom est explicitement hors périmètre (spec §5).
 - **`.github/workflows/deploy.yml` non modifié** : `withastro/action@v3` lance `npm run build` par défaut (vérifié dans `action.yml` de l'action : `"${{ inputs.build-cmd || '$PACKAGE_MANAGER run build' }}"`), donc enchaîner Pagefind dans le script suffit pour que la CI produise l'index.
 
-## Questions ouvertes — posées à l'utilisateur au gate de pré-flight
+## Décisions rendues au gate de pré-flight (2026-09-04)
 
-1. **R3 et les données** — aucun tag du contenu réel ne couvre les 4 collections. Le code d'agrégation peut être juste sans que le critère soit démontrable. Arbitrage attendu : ajouter des tags à du contenu réel pour créer un tag transverse, ou autre chose.
-2. **R5 et le contenu** — la bio de `/a-propos` doit être **fournie** ; elle ne sera pas inventée.
-3. **R8 et la publication** — la moitié « servi en prod » exige un push sur `main`, qui publierait les Plans 2, 3, 4 et 5 d'un coup (`origin/main` est resté à la fin du Plan 1). S'y ajoute une question d'ordre : la Phase Z exige tous les critères `Done`, or cette moitié de R8 ne peut être mesurée qu'après déploiement.
+Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisateur avant la première tâche.
+
+1. **Additions n°1 à n°4 : approuvées.** Option choisie : « J'approuve les 4 additions ».
+2. **R3 — tag transverse : « J'ajoute `claude-code` où c'est vrai ».** L'option présentée annonçait 3 collections sur 4, le blog restant découvert. **Constat postérieur à la décision, qui la renforce** : `src/content/blog/bienvenue-dans-mon-foutoir/index.md:50` contient la phrase de l'utilisateur « ce blog a été créé from-scratch avec Claude Code sur Sonnet 4.5 », et cet article n'a aucun tag. Le taguer `claude-code` est donc factuellement vrai et sourcé — **les 4 collections sont couvertes** et R3 devient pleinement démontrable. Aucune étiquette n'est posée là où elle serait fausse.
+3. **R5 — bio : « Compose depuis mes textes existants ».** Sources autorisées : l'article `bienvenue-dans-mon-foutoir` et `src/components/Hero.astro`. Relecture de l'utilisateur avant le commit de T-C2.
+4. **R8 — publication : « On en reparle à la fin ».** Rien n'est poussé. La question sera reposée avec l'état exact au moment de la Phase Z.
 
 ## Updates log
 
 - **2026-09-04 — pré-flight.** Branche `plan-5-recherche-et-pages` créée depuis `plan-4-librairies-prompts-skills` (base vérifiée : elle porte bien la spec du Plan 5, et son arbre est identique à `main` — même `tree 80fcc88`). Plan d'implémentation écrit depuis la spec et l'état réel du dépôt. Ledger et journal de déviations créés. Base mesurée : `vitest` **93/93 (9 fichiers)** · `astro check` **0 error / 0 warning** · `astro build` **18 pages**. Aucune tâche démarrée : le plan attend la validation de l'utilisateur.
+- **2026-09-04 — gate de pré-flight.** Les 4 décisions ci-dessus rendues par l'utilisateur. Les 4 additions sont `approved`. Aucune déviation ouverte. Exécution autorisée à partir de T-A1.
