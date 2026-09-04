@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import {
+  collectTagIndex,
+  entriesWithTag,
+  getTagBuckets,
+  TAG_COLLECTIONS,
+  TAG_COLLECTION_LABELS,
+  type TagCollection,
+} from '../../lib/tags';
+
+export async function getStaticPaths() {
+  const buckets = await getTagBuckets();
+  // Une route par tag présent dans >= 1 collection — exactement l'ensemble
+  // listé par /tags, donc aucun lien de /tags ne peut tomber en 404.
+  return collectTagIndex(buckets).map((tag) => ({
+    params: { tag: tag.slug },
+    props: { tag, buckets },
+  }));
+}
+
+const { tag, buckets } = Astro.props;
+
+// Chemin d'une entrée par collection : les routes sont en français (design §4)
+// mais les clés de collection sont en anglais — la table évite de recalculer
+// ce mapping dans le gabarit.
+const HREF_PREFIX: Record<TagCollection, string> = {
+  blog: '/blog',
+  projects: '/projets',
+  prompts: '/prompts',
+  skills: '/skills',
+};
+
+// Champs communs aux 4 schémas de collection, seuls affichés par ce gabarit.
+// `buckets[collection]` indexé par une clé union (`TagCollection`) résout en
+// union de 4 types d'entrée disjoints (littéral `collection` différent par
+// collection) : `entriesWithTag<T>` ne peut pas inférer un T unique dessus.
+// Fixer T explicitement à ce sous-ensemble commun contourne le problème sans
+// perdre les champs utilisés plus bas (id, titre, description).
+interface DisplayEntry {
+  id: string;
+  data: { title: string; description: string; tags?: string[] };
+}
+
+// Groupes non vides seulement, dans l'ordre TAG_COLLECTIONS. `entriesWithTag`
+// préserve l'ordre canonique déjà appliqué par les helpers de collection.
+const groups = TAG_COLLECTIONS.map((collection) => ({
+  collection,
+  label: TAG_COLLECTION_LABELS[collection],
+  href: HREF_PREFIX[collection],
+  entries: entriesWithTag<DisplayEntry>(buckets[collection], tag.slug),
+})).filter((group) => group.entries.length > 0);
+---
+
+<BaseLayout
+  title={`${tag.label} — Tags — bencat_`}
+  description={`Tous les articles, projets, prompts et skills tagués ${tag.label} sur bencat_.`}
+>
+  <main>
+    <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ tags / {tag.label}</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">{tag.label}</h1>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      <div class="flex flex-col gap-10">
+        {
+          groups.map((group) => (
+            <section>
+              <h2 class="font-mono text-sm text-acc">
+                {group.label} ({group.entries.length})
+              </h2>
+              <ul class="mt-4 flex flex-col gap-4">
+                {group.entries.map((entry) => (
+                  <li>
+                    <a
+                      href={`${group.href}/${entry.id}/`}
+                      class="block rounded-lg border border-line p-4 transition-colors hover:border-acc"
+                    >
+                      <p class="font-display text-lg font-bold text-text">{entry.data.title}</p>
+                      <p class="mt-1 text-sm text-muted">{entry.data.description}</p>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        }
+      </div>
+
+      <p class="mt-16">
+        <a href="/tags/" class="font-mono text-sm text-muted transition-colors hover:text-acc">
+          ← retour aux tags
+        </a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>

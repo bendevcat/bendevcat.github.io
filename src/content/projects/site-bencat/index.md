@@ -4,7 +4,7 @@ description: "Le site que tu es en train de lire : blog, projets, prompts et ski
 status: wip
 startDate: 2026-07-30
 stack: [Astro, Tailwind CSS, TypeScript, Sveltia CMS, GitHub Pages]
-tags: [astro, tailwind, cms]
+tags: [astro, tailwind, cms, claude-code]
 repoUrl: https://github.com/bendevcat/bendevcat.github.io
 demoUrl: https://bendevcat.github.io/
 featured: true

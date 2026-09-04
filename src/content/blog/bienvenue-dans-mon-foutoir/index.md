@@ -4,6 +4,7 @@ description: "Je te présente ce blog, son objectif et la manière dont j'indiqu
 pubDate: 2025-10-20T13:37:00.000+02:00
 draft: false
 category: "Actus"
+tags: [claude-code]
 cover: "./theitcrown.png"
 coverAlt: "Bureau bordélique façon The IT Crowd, rempli de posters et de gadgets geek"
 aiUsage: "none"
