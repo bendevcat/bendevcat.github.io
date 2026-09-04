@@ -1026,13 +1026,24 @@ const HREF_PREFIX: Record<TagCollection, string> = {
   skills: '/skills',
 };
 
+// Champs communs aux 4 schémas de collection, seuls affichés par ce gabarit.
+// `buckets[collection]` indexé par une clé union (`TagCollection`) résout en
+// union de 4 types d'entrée disjoints : `entriesWithTag<T>` ne peut pas
+// inférer un T unique dessus (ts 2345). Fixer T explicitement à ce
+// sous-ensemble commun satisfait le compilateur sans l'éteindre — surtout
+// pas de `any`, de `as unknown as` ni de `@ts-ignore`.
+interface DisplayEntry {
+  id: string;
+  data: { title: string; description: string; tags?: string[] };
+}
+
 // Groupes non vides seulement, dans l'ordre TAG_COLLECTIONS. `entriesWithTag`
 // préserve l'ordre canonique déjà appliqué par les helpers de collection.
 const groups = TAG_COLLECTIONS.map((collection) => ({
   collection,
   label: TAG_COLLECTION_LABELS[collection],
   href: HREF_PREFIX[collection],
-  entries: entriesWithTag(buckets[collection], tag.slug),
+  entries: entriesWithTag<DisplayEntry>(buckets[collection], tag.slug),
 })).filter((group) => group.entries.length > 0);
 ---
 ```
@@ -1066,7 +1077,10 @@ Consigner les comptes obtenus **tels quels** dans le rapport. Vérifier aussi da
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/pages/tags/
+# Le retag du Step 2 fait partie du MÊME commit : l'oublier laisserait la
+# décision du gate hors de l'historique de la tâche.
+git add src/pages/tags/ src/content/blog/bienvenue-dans-mon-foutoir/index.md \
+        src/content/projects/site-bencat/index.md src/content/skills/superpowers/index.md
 git commit -m "feat(p5): page /tags/<tag> agregeant les 4 collections"
 ```
 
