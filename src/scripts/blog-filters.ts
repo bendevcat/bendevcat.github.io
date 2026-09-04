@@ -14,12 +14,16 @@
 const facetToolbar = document.querySelector<HTMLElement>('[data-facet-filters]');
 
 if (facetToolbar) {
-  // La puce est rendue `pointer-events-none` côté serveur (cf.
-  // ArticleCard.astro) : sans JS ou sans barre de facettes, le clic traverse
-  // jusqu'au lien étiré et la carte s'ouvre. On ne la rend cliquable qu'ici,
-  // c'est-à-dire uniquement sur une page qui porte une barre.
+  // La puce est rendue inerte côté serveur (cf. ArticleCard.astro) : sans JS,
+  // ou sur une page sans barre de facettes, elle ne capte ni le pointeur ni le
+  // clavier et le clic atteint le lien étiré de la carte. On ne la rend
+  // filtrante qu'ici — et c'est aussi ici, et seulement ici, qu'on lui donne
+  // un nom accessible annonçant ce qu'elle fait vraiment.
   for (const chip of document.querySelectorAll<HTMLElement>('[data-facet-chip]')) {
     chip.classList.remove('pointer-events-none');
+    chip.removeAttribute('tabindex');
+    const value = chip.dataset.facetValue;
+    if (value) chip.setAttribute('aria-label', `Filtrer par catégorie ${value}`);
   }
 
   document.addEventListener('click', (event) => {

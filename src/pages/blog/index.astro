@@ -95,7 +95,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 			</div>
 
 			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{posts.map((post) => <ArticleCard post={post} />)}
+				{posts.map((post) => <ArticleCard post={post} filterable />)}
 			</div>
 
 			<p class="mt-8 font-mono text-sm text-muted" data-facet-empty hidden>
