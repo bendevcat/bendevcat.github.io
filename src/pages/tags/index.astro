@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { collectTagIndex, getTagBuckets } from '../../lib/tags';
+
+const tags = collectTagIndex(await getTagBuckets());
+---
+
+<BaseLayout title="Tags — bencat_" description="Tous les tags des articles, projets, prompts et skills de bencat_.">
+  <main>
+    <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <p class="font-mono text-sm text-acc">~/ tags</p>
+      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">Tags</h1>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      {
+        tags.length === 0 ? (
+          <p class="font-mono text-sm text-muted">Aucun tag n'a encore été renseigné.</p>
+        ) : (
+          <ul class="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <li>
+                <a
+                  href={`/tags/${tag.slug}/`}
+                  class="flex items-center gap-2 rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc"
+                >
+                  {tag.label}
+                  <span class="text-acc">{tag.count}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </section>
+  </main>
+</BaseLayout>
