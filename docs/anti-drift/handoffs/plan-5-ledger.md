@@ -35,7 +35,7 @@ Last updated by: main (contrôleur SDD)
 | C1 | C | R6 (`/transparence-ia`) · **+ addition n°2** (lien depuis `AiBanner`) | Done (`5ac6f9d`) |
 | C2 | C | R5 (`/a-propos`) · **+ addition n°1** (nav « À propos » activée) — **dépend d'un contenu utilisateur** | In progress |
 | C3 | C | R7 (`/404`) | Done (`aa2f4ac`) |
-| D1 | D | R8 (moitié prod — **action utilisateur**) | Pending |
+| D1 | D | R8 (moitié prod — **action utilisateur**) | In progress |
 | Z1 | Z | Audit `/anti-drift-planning:verify 5` (couverture R1–R8) | Pending |
 
 ## Additions au-delà de la lettre de la spec — **ratifiées au gate de pré-flight (2026-09-04)**
@@ -98,3 +98,5 @@ Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisat
   **R7, mesuré en conditions réelles** : `curl` sur `/cette-page-nexiste-pas/` → **HTTP 404** (pas 200), page custom avec header, tokens du thème, `#search-dialog`, `h1` « Page introuvable » et les 3 sorties. ⌘K opérationnel depuis la 404. Aucun contrôle interactif inutile : le rappel de ⌘K est un `<kbd>` textuel, pas un bouton — la leçon du clic mort de T-B3 appliquée par anticipation.
   **Un `Important` corrigé** : `AiBanner` portait en dur `aria-label="Transparence IA de cet article"`, or `/transparence-ia` en rend **trois** exemplaires hors de tout article — un lecteur d'écran y entendait trois fois « de cet article » sur une page qui n'en est pas un. Nom accessible rendu paramétrable, défaut inchangé pour les articles. Vérifié : 3 libellés **distincts** sur la page (« Exemple de bannière : … »), **0** contenant « de cet article » ; l'article conserve exactement l'ancien libellé.
   **Note de procédure** : le dispatch groupé C1+C3 ayant été interrompu, le code de C1 était sur le disque sans rapport d'implémenteur. Je l'ai lu intégralement avant de l'adopter, et il est **passé par la même revue de tâche** que les autres — la relectrice en a été prévenue et l'a relu en sachant qu'elle était le seul filet.
+- **2026-09-05 — décisions de l'utilisateur, deuxième gate.** (1) **`/a-propos` : « Committe tel quel »** — le texte lui a été présenté phrase par phrase avec sa source ; il l'a validé. Commité en `b093bb2`. (2) **R8 : « Publie — merge et push »** — la moitié « servi en prod » sera mesurée après déploiement. **Distinction explicite** : ce merge/push sert à *mesurer R8*, il n'est **pas** la release. Le tag `milestone-plan-5` / `v1.0.0` reste derrière la Phase Z, comme le veut le verrou 4.
+- **2026-09-05 — T-C2 livrée (`b093bb2` + `a364b82`), en revue.** Bug de rendu trouvé par le contrôleur **avant publication** : Astro supprime l'espace d'indentation quand un saut de ligne sépare du texte d'un élément, ce qui affichait « des**fiches projets** » et « choses :**des prompts** » sur la page. Corrigé en mettant le paragraphe sur une seule ligne, avec un commentaire qui interdit de le reformater. **Balayage de tout `dist/` après correction : 0 collision de ce type ailleurs sur le site.**
