@@ -7,7 +7,7 @@ tags: [claude-code]
 cover: ./theitcrown.png
 coverAlt: Bureau bordélique façon The IT Crowd, rempli de posters et de gadgets geek
 aiUsage: none
-draft: true
+draft: false
 relatedProjects: [site-bencat]
 ---
 

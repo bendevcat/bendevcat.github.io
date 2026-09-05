@@ -47,8 +47,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Ce qui N'EST PAS affecté, vérifié après fusion :** R1 (⌘K → toujours **4 groupes / 9 résultats** pour « git ») · R2 (**30** liens de tag rendus) · R4 (filtrage revérifié par comptage sur la nouvelle donnée : DevOps **2**, Outils **3**, retour **5** ; kubernetes **2**, devops **3**, retour **5** — tous conformes aux sources recalculées, et la catégorie « Actus » a correctement disparu de la barre) · R5, R6, R7 · la moitié « build » de R8.
 - **Reversibility:** `cheap` — un seul champ de frontmatter. Repasser l'article en `draft: false` restaure la 4ᵉ patte immédiatement, sans toucher à une ligne de code.
 - **Caught late:** no — loggé avant toute publication, et **avant** que la Phase Z soit lancée.
-- **Status:** pending-user
-- **User decision:** _(en attente — l'utilisateur a explicitement choisi, le 2026-09-05, de laisser l'article hors ligne ET de trancher cette entrée séparément plutôt que de l'approuver dans la foulée)_
+- **Status:** rejected
+- **User decision:** **Rejetée** par l'utilisateur le 2026-09-05, option choisie : « **Rejette D01 — republie l'article** ». Le Follow-up ci-dessous a été exécuté : `draft: false` réappliqué sur `src/content/blog/bienvenue-dans-mon-foutoir/index.md`. Mesuré après rebuild : `/tags/claude-code/` rend de nouveau **4 groupes** (blog 1, projets 1, prompts 2, skills 2), `/blog` **6 cartes**, index **13 pages**, build **52 pages**. R3 repasse `Done`.
 - **Follow-up:** si rejeté, repasser `draft: false` sur `src/content/blog/bienvenue-dans-mon-foutoir/index.md` et rebuilder : R3 revient à 4 collections, `/blog` à 6 cartes, l'index à 13 pages. Si approuvé, R3 est acté `Deferred` ou `Cut` selon le mot de l'utilisateur, et la spec du prochain cycle devra dire comment la 4ᵉ collection sera couverte.
 
 ---
