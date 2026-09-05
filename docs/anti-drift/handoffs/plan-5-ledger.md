@@ -36,7 +36,7 @@ Last updated by: main (contrôleur SDD)
 | C2 | C | R5 (`/a-propos`) · **+ addition n°1** (nav « À propos » activée) — **dépend d'un contenu utilisateur** | Done (`a364b82`) |
 | C3 | C | R7 (`/404`) | Done (`aa2f4ac`) |
 | D1 | D | R8 (moitié prod — **action utilisateur**) | Done |
-| Z1 | Z | Audit `/anti-drift-planning:verify 5` (couverture R1–R8) | In progress |
+| Z1 | Z | Audit `/anti-drift-planning:verify 5` (couverture R1–R8) | Done — **verdict PASS** |
 
 ## Additions au-delà de la lettre de la spec — **ratifiées au gate de pré-flight (2026-09-04)**
 
@@ -117,3 +117,13 @@ Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisat
   **Comptage à corriger dans mes propres traces** : un `grep` intermédiaire a annoncé « 2 entrées de déviation, dont 1 `pending-user` » — il attrapait le **template commenté**. Le décompte réel, hors commentaires, est **1 entrée, `rejected`, 0 ouverte** ; le check `artifact-parsing` du lint le confirme.
 - **2026-09-05 — T-D1 Done, R8 établie : le site est déployé.** L'utilisateur a résolu le 403 (`gh auth login` en `bendevcat`, ce qui a réécrit l'entrée trousseau utilisée par git) puis poussé `main`. **Mesuré par le contrôleur sur le site public**, pas seulement sur le code HTTP du fichier d'index : le modal s'ouvre, `git` renvoie **4 groupes / 9 résultats** couvrant les 4 collections, un clic atterrit sur la bonne page, et `anti-drift` — le terme même dont l'extrait était avalé par un `<!--` avant la revue finale — rend **0 extrait vide**. Le correctif d'échappement est donc validé en production, pas seulement en local.
 - **2026-09-05 — observation reportée, née de la mesure en prod** : Pagefind concatène le texte de blocs adjacents sans séparateur, ce qui produit dans les extraits « ficheClaude Codeclaude-opus-5 » ou « claude-codev0.4.0anti-drift-planning » (les pastilles de métadonnées des fiches prompt/skill). Artefact d'indexation, pas un défaut de ce plan ; même famille que le bruit de boilerplate déjà listé. Se traiterait par `data-pagefind-ignore` sur ces pastilles.
+- **2026-09-05 — Phase Z relancée : VERDICT PASS.** Les cinq étapes de l'audit canonique :
+  | Étape | Résultat |
+  |---|---|
+  | Lint mécanique (verrou 5) | **13/13, 0 violation**, exit 0 |
+  | Couverture spec (auditée sur la **spec**, pas sur le ledger) | **8/8 `Done`** · 0 `Pending` · 0 `In progress` · 0 `Deferred` · 0 `Cut` |
+  | Revue des déviations (garde anti-blanchiment) | **1 entrée réelle, `rejected`**, remédiation exécutée et vérifiée · **0 `pending-user`** · **aucun statut inventé** |
+  | Suite de tests (relancée fraîche) | `vitest` **118/118 (12 fichiers)** · `astro check` **0 error / 0 warning** (66 hints) · `astro build` **52 pages**, `Indexed 13 pages` |
+  | Walkthrough user story | **5 pas sur 5 confirmés par l'utilisateur**, sur le site déployé |
+  | Smoke visuel | **Confirmé par l'utilisateur** — dark et light, aucune surface à signaler |
+  La seule déviation du plan a été **rejetée** par l'utilisateur, et son Follow-up exécuté : aucune exigence n'est partie en `Deferred` ni en `Cut`. **Le périmètre de la spec est livré intégralement.**
