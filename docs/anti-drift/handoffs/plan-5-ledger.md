@@ -36,7 +36,7 @@ Last updated by: main (contrôleur SDD)
 | C2 | C | R5 (`/a-propos`) · **+ addition n°1** (nav « À propos » activée) — **dépend d'un contenu utilisateur** | Done (`a364b82`) |
 | C3 | C | R7 (`/404`) | Done (`aa2f4ac`) |
 | D1 | D | R8 (moitié prod — **action utilisateur**) | In progress |
-| Z1 | Z | Audit `/anti-drift-planning:verify 5` (couverture R1–R8) | Pending |
+| Z1 | Z | Audit `/anti-drift-planning:verify 5` (couverture R1–R8) | In progress |
 
 ## Additions au-delà de la lettre de la spec — **ratifiées au gate de pré-flight (2026-09-04)**
 
@@ -111,3 +111,7 @@ Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisat
   **Re-mesures après fusion** : `vitest` **118/118** · `astro check` 0 error / 0 warning / 66 hints · build **51 pages**, **12 indexées** · R1 **4 groupes / 9 résultats** (inchangé) · R2 **30** liens · R4 revérifié par comptage sur la nouvelle donnée — DevOps **2**, Outils **3**, retour **5** ; kubernetes **2**, devops **3**, retour **5**, tous conformes aux sources recalculées, et « Actus » a correctement disparu de la barre puisque son unique article est désormais en draft.
   **La Phase Z n'est pas lancée** : elle échouerait par construction sur D01, et son étape de walkthrough demande l'utilisateur de toute façon. Une seule décision débloque toute la chaîne.
 - **2026-09-05 — D01 `rejected`, R3 rétablie.** L'utilisateur a choisi « Rejette D01 — republie l'article ». Le Follow-up de l'entrée a été exécuté : `draft: false` sur « Bienvenue dans mon foutoir ». **Re-mesuré** : `/tags/claude-code/` de nouveau à **4 collections sur 4**, `/blog` **6 cartes**, **30** liens de tag, build **52 pages**, **13 indexées**. **Aucune entrée `pending-user` ne subsiste** — la Phase Z peut être lancée.
+- **2026-09-05 — Phase Z lancée : VERDICT FAIL, un seul bloqueur.** Lint mécanique **13/13, exit 0** · couverture spec auditée **sur la spec** : **7 critères sur 8 `Done`**, **R8 `In progress`** · revue des déviations : **1 entrée réelle (D01), `rejected`**, remédiation exécutée, **0 `pending-user`**, aucun statut inventé · suite de tests **relancée fraîche** : `vitest` **118/118 (12 fichiers)**, `astro check` **0 error / 0 warning / 66 hints**, build **52 pages / 13 indexées**.
+  **Le bloqueur n'est pas du travail manquant.** R8 exige que la recherche fonctionne sur `github.io` ; le `git push origin main` est refusé en **403 — « Permission to bendevcat/bendevcat.github.io.git denied to bencat-sixense »**. Le dépôt appartient au compte personnel `bendevcat` (et l'identité de commit locale est correcte : `bendevcat <bendevcat@gmail.com>`), mais les identifiants de push proviennent de `gh`, authentifié en `bencat-sixense` — seul compte enregistré. **Une authentification est une manipulation d'identifiants : la session ne la fait pas.** Action utilisateur requise.
+  **Conformément au verrou 4 : aucun tag posé, aucune étape de release exécutée, la ligne de vérification du ledger n'est PAS passée `Done`, et aucune émission d'étape suivante n'a eu lieu** — l'émission est réservée au verdict PASS.
+  **Comptage à corriger dans mes propres traces** : un `grep` intermédiaire a annoncé « 2 entrées de déviation, dont 1 `pending-user` » — il attrapait le **template commenté**. Le décompte réel, hors commentaires, est **1 entrée, `rejected`, 0 ouverte** ; le check `artifact-parsing` du lint le confirme.

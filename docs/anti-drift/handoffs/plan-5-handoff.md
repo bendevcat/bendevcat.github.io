@@ -3,7 +3,7 @@
 **Date :** 2026-09-05
 **Branche :** `plan-5-recherche-et-pages`, **mergée dans `main`** (`f790a87`), puis `origin/main` intégré (`60d50f7`)
 **Commits :** 124 d'avance sur `origin/main`, **non poussés**
-**État :** **7 critères sur 8 mesurés. Prêt à publier, UNE décision en attente (D01).** Ni push, ni tag, ni Phase Z lancés — c'est délibéré.
+**État :** **Phase Z lancée, verdict FAIL sur un seul bloqueur : R8.** D01 a été tranchée (`rejected`) et sa remédiation exécutée. Il ne reste **aucune décision** en attente — il reste **une action utilisateur** : le push, refusé en 403 pour cause de compte GitHub. Aucun tag posé.
 
 ---
 
@@ -24,7 +24,24 @@
 
 **Tâches :** A1, A2, B1, B2, B3, C1, C2, C3 → **Done** (8/8 des tâches d'implémentation). D1 (moitié prod de R8) et Z1 (Phase Z) → **bloquées par D01**.
 
-## 2. Pourquoi ni push, ni tag, ni Phase Z
+## 2. Le seul bloqueur : le push est refusé (403)
+
+`git push origin main` échoue :
+
+> `remote: Permission to bendevcat/bendevcat.github.io.git denied to bencat-sixense`
+
+Le dépôt appartient au compte personnel **`bendevcat`**, et l'identité de commit locale est correcte (`bendevcat <bendevcat@gmail.com>`). Mais les identifiants de push viennent de `gh` (helper `osxkeychain`), authentifié en **`bencat-sixense`** — le compte de travail, seul enregistré dans `gh`.
+
+**La session ne s'authentifie pas à la place de l'utilisateur** : c'est une manipulation d'identifiants. Action requise :
+
+```bash
+gh auth login --hostname github.com --git-protocol https --web   # se connecter en bendevcat
+git push origin main
+```
+
+Puis relancer `/anti-drift-planning:verify 5`. Tout le reste de l'audit est déjà vert.
+
+## 2bis. Historique — pourquoi le push n'avait pas eu lieu plus tôt
 
 L'utilisateur avait autorisé « Publie — merge et push » pour permettre de mesurer la moitié prod de R8. **Au moment de pousser, `main` s'est révélé en retard d'un commit** : un commit CMS de l'utilisateur (`d2f4ab2`, 2026-08-02) jamais récupéré localement, touchant exactement l'article retagué au gate. Rien n'a été poussé.
 
