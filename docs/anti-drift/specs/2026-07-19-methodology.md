@@ -3,7 +3,7 @@
 **Date:** 2026-07-19
 **Author:** Benoît Catillon (bendevcat)
 **Predecessor:** ancien site Hugo + Decap CMS (`bencat-website`) ; spec de design [`2026-07-19-site-perso-design.md`](./2026-07-19-site-perso-design.md)
-**Target:** methodology shared across plans 1–5
+**Target:** methodology shared across plans 1–10 (vague 1 : plans 1–5 ; vague 2 — refonte visuelle : plans 6–10, voir §4bis)
 
 ---
 
@@ -49,7 +49,7 @@ Generate it with `/anti-drift-planning:start-session N` and paste it as the firs
 
 **Session chaining:** after the first plan you rarely run `start-session` by hand. When a plan's Phase Z passes, `/anti-drift-planning:verify N` automatically emits the next actionable step — the next plan's bootstrap if its spec exists, otherwise `/anti-drift-planning:new-plan N+1`, and when N is the last plan, the cross-plan audit `/anti-drift-planning:status`, which announces project completion. A plan interrupted mid-execution is resumed with `/anti-drift-planning:resume N`. Emission happens only on a PASS verdict — a failed or pending plan never hands off forward.
 
-## 4. Decomposition into 5 plans (vertical slicing)
+## 4. Decomposition into 10 plans (vertical slicing)
 
 | Plan | Topic | User-facing goal (binary) | Spec path |
 |---|---|---|---|
@@ -58,10 +58,32 @@ Generate it with `/anti-drift-planning:start-session N` and paste it as the firs
 | **P3** | vitrine-projets | « On peut parcourir mes fiches projets » | [`…-plan-3-vitrine-projets.md`](./2026-07-19-plan-3-vitrine-projets.md) |
 | **P4** | librairies-prompts-skills | « Mes prompts et mes skills sont parcourables et copiables » | [`…-plan-4-librairies-prompts-skills.md`](./2026-07-19-plan-4-librairies-prompts-skills.md) |
 | **P5** | recherche-et-pages | « On cherche et on découvre (recherche, tags, à-propos, transparence-IA) » | [`…-plan-5-recherche-et-pages.md`](./2026-07-19-plan-5-recherche-et-pages.md) |
+| **P6** | socle-design-system | « Tout le site a la nouvelle peau — tokens, polices, nav en pilules, clair et sombre — et aucune page n'a changé de structure » | [`…-plan-6-socle-design-system.md`](./2026-09-12-plan-6-socle-design-system.md) |
 
 **Order:** strictly sequential (each plan builds on the previous). Each plan is executed in its own fresh Claude Code session.
 
-**Implementation plans:** only the first plan's impl plan is written upfront. Subsequent impl plans are written at the start of their execution session, from the spec + the real state of the repo after the previous plan.
+**Implementation plans:** only the first plan of a wave has its impl plan written upfront. Subsequent impl plans are written at the start of their execution session, from the spec + the real state of the repo after the previous plan. Same rule for the spec itself from P7 onward: it is authored with `/anti-drift-planning:new-plan <N>` when the wave reaches it, and its roster cell above is filled at that moment.
+
+### 4.1 Vague 1 — construction du site (P1–P5)
+
+Greenfield → site complet. Livrée : `v1.0.0`, tag `milestone-plan-5`.
+
+### 4.2 Vague 2 — refonte visuelle (P6–P10)
+
+**Ajoutée le 2026-09-12.** Les verrous de la §2 s'appliquent à l'identique : ils ne sont pas redits ici.
+
+**Gap :** le site `v1.0.0` est en ligne avec le thème « dark editorial-dev » du design initial. Un nouveau design complet a été produit dans Claude Design et fait désormais foi — voir [`2026-09-12-refonte-visuelle-design.md`](./2026-09-12-refonte-visuelle-design.md), qui remplace la couche visuelle de la spec de design d'origine sans toucher à sa vision ni à son modèle de contenu.
+
+**Séquence de la vague** (les rosters P7–P10 sont ajoutés à la table ci-dessus au moment où leur spec est écrite, pas avant) :
+
+- **P7** `accueil-et-blog-v2` — « L'accueil et /blog ont la structure de la maquette : à la une, panneaux, filtres, tri, vignettes »
+- **P8** `vitrine-projets-v2` — « Une fiche projet se parcourt par onglets, et la liste se filtre par tech et par statut »
+- **P9** `prompts-et-skills-v2` — « Prompts et Skills reprennent le patron liste + détail établi en P8 »
+- **P10** `pages-restantes-et-finition` — « /transparence-ia, /tags, /404 et la recherche sont au nouveau design, en 375px, contrastes AA »
+
+**Ordre interne :** P6 conditionne tout le reste — implémenter une structure de page avant que les tokens existent produit des valeurs codées en dur qu'il faut ensuite déterrer. P8 précède P9 : les trois listes filtrables partagent un patron unique, résolu une seule fois.
+
+**Spécificité de cette vague :** le résultat est majoritairement **visuel**, donc non couvert par des tests unitaires. La Phase Z de chaque plan ajoute une vérification de rendu sur **375 / 768 / 1180 px** dans les deux thèmes, et le contrat visuel fournit 8 critères auditables (`V1`–`V8`, §10 de la spec de design). La logique nouvelle — filtres, tri, onglets — reste testée en vitest dans `src/lib/`, comme l'existant.
 
 ## 5. Artifact formats
 
