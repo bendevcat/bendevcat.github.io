@@ -15,7 +15,7 @@ Le site perso de benCat passe de **Hugo + Decap CMS** à une stack **Astro v5 + 
 
 Sans cadre, ce type de build multi-sessions **perd du périmètre en silence** : une page à moitié faite, une collection oubliée, un critère validé « à peu près ». Cette méthodologie découpe la vision en **5 slices verticaux** — chacun livrant un résultat observable par l'utilisateur final — pour que rien ne se perde entre les sessions.
 
-## 2. The 4 locks (verrous)
+## 2. The 5 locks (verrous)
 
 Each lock has ONE canonical artifact. This section names the rules; the detailed wording lives in the artifact and is not restated here — restated rules drift.
 
@@ -41,7 +41,13 @@ Each lock has ONE canonical artifact. This section names the rules; the detailed
 
 **Rule:** the last phase of every plan is a non-skippable audit. It is the only path to the release script and the milestone tag, and it fails on any `pending-user` deviation.
 
-**Canonical artifact:** `/anti-drift-planning:verify N` — the five audit steps (spec coverage, user-story walkthrough, tests, visual smoke, deviations review) live in that command and nowhere else.
+**Canonical artifact:** `/anti-drift-planning:verify N` — the audit steps (mechanical lint first, then spec coverage, user-story walkthrough, tests, visual smoke, deviations review) live in that command and nowhere else.
+
+### 2.5 Lock 5 — Mechanical invariants
+
+**Rule:** what is countable is counted by code, never by prose review — spec ↔ ledger coverage in both directions, status vocabularies, deviation references, required files per plan, unfilled placeholders, commit SHAs that must resolve. Code counts; prose keeps judgment. The check runs as the first step of the verification phase, and on demand mid-plan. **Guardrail:** a new check is added only for a failure observed in a real run — a linter grown speculatively becomes a cost nobody reads.
+
+**Canonical artifact:** `/anti-drift-planning:lint [N]`. The checks themselves live in `scripts/anti_drift_lint.py` (its `CHECKS` tuple) and nowhere else — their number and their content are that file's business, not this document's.
 
 ## 3. Bootstrap prompt per session
 
@@ -101,10 +107,11 @@ Greenfield → site complet. Livrée : `v1.0.0`, tag `milestone-plan-5`.
 | Each plan ends with a verification phase (no shortcut) | Phase Z present in the Work breakdown of every plan spec |
 | Verification produces explicit Done/Deferred/Cut per criterion | Output = updated ledger committed by `/anti-drift-planning:verify` |
 | No deviation entry carries an invented status | Every entry is `pending-user`, `approved`, or `rejected` — anything else is audited as `pending-user` |
+| The plan artifacts hold together mechanically | `/anti-drift-planning:lint` exits `0` across all plans |
 
 ## 7. Out of scope (of the methodology itself)
 
-- Automated CI enforcement (no hooks blocking commits) — discipline comes from the bootstrap prompt + verification phase
+- Automated CI enforcement (no hooks blocking commits) — discipline comes from the bootstrap prompt, the verification phase, and the mechanical lint run inside it. The lint is a read-only audit invoked by an agent or a human; it never gates a commit.
 - Multi-author sync — solo, sequential workflow
 - Time tracking — measurable a posteriori via git log if needed
 - Cost budget per plan — observed but not capped
@@ -116,3 +123,4 @@ Greenfield → site complet. Livrée : `v1.0.0`, tag `milestone-plan-5`.
 - Specs: `docs/anti-drift/specs/2026-07-19-plan-N-…md`
 - Ledgers: `docs/anti-drift/handoffs/plan-N-ledger.md`
 - Deviations: `docs/anti-drift/handoffs/plan-N-deviations.md`
+- Mechanical lint: `/anti-drift-planning:lint` (implementation: `scripts/anti_drift_lint.py` in the `anti-drift-planning` skill)
