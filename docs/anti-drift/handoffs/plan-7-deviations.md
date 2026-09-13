@@ -51,9 +51,24 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   le prescrit pour R8, on change aussi ce que l'accueil affiche. Mesuré sur le rendu buildé :
   - le **rayon** des 5 vignettes de l'accueil passe de `rounded-inner` (**14 px**) à
     `rounded-thumb` (**10 px**) — c'est le changement visible ;
-  - l'accueil émet en plus 5 `data-entry-id`, `data-date` et `data-minutes`. Ceux-là sont
-    **inertes** : `list-pattern.ts` ne s'active que sur un `[data-list]`, et l'accueil n'en a aucun
-    (`grep -c 'data-list' dist/index.html` → **0**). Aucun comportement n'est ajouté.
+  - l'accueil émet en plus 5 `data-entry-id`, `data-date`, `data-minutes` **et `data-facet`** (ce
+    dernier porte du JSON réel — catégorie et tags). Tous **inertes** : `list-pattern.ts` ne
+    s'active que sur un `[data-list]`, et l'accueil n'en a aucun (`grep -c 'data-list'
+    dist/index.html` → **0**). Aucun comportement n'est ajouté ;
+  - **un changement de comportement latent du composant partagé** : avant, `{cover && <Image/>}` ne
+    rendait **rien** quand l'article n'avait pas de couverture ; `<Thumbnail>` rend désormais
+    **toujours** quelque chose — le visuel dérivé (bloc `rail`, trame, monogramme). Invisible
+    aujourd'hui, les 5 articles publiés ayant tous un `cover`, mais le premier article publié sans
+    couverture ferait apparaître un monogramme sur l'accueil, là où la page n'affichait rien.
+
+  **Les deux derniers points ont été ajoutés après coup**, sur constat du relecteur de T-C1 à qui il
+  avait été demandé de borner le rayon d'impact plutôt que de le prendre pour acquis : la première
+  version de cette entrée ne citait que le rayon et trois attributs. Une décision se prend sur ce
+  que l'entrée décrit — une entrée partielle produit une approbation partiellement informée.
+
+  Ce qui, en revanche, **ne change pas** sur l'accueil, vérifié par le relecteur : disposition,
+  espacement, comportement de survol, classes de l'`<article>` et de la grille — aucune imbrication
+  supplémentaire n'est introduite par `<Thumbnail>`.
 - **Reason:** ce n'est **pas une erreur de l'implémenteur** — il a exécuté le plan à la lettre, et il
   a signalé l'effet de bord spontanément dans son rapport. C'est le **plan** qui entre en conflit
   avec la spec : il prescrit de faire passer `ArticleCard` par `<Thumbnail>` sans avoir remarqué que

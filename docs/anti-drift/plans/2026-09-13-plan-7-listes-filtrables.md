@@ -1279,6 +1279,11 @@ Six éléments, même ordre, mêmes attributs qu'en B3 — **y compris** :
 Facette primaire : `category` (I1). Dropdowns, dans l'ordre : **tri** (celui de R7), puis `tag`
 (conservé, I2).
 
+> **Le compteur par tag se conserve aussi.** `/blog` affichait `{tag.label} <span>{tag.count}</span>`
+> sur ses pilules de tag depuis le Plan 5. Un `<option>` n'accepte pas de balisage, mais il accepte
+> du texte : écrire `{tag.label} ({tag.count})`. La décision ratifiée au gate était de **conserver**
+> la facette `tag` en la déplaçant, pas d'en retirer l'information.
+
 > **`/blog` est la seule page où le tri s'exerce, donc la seule qui teste le correctif P-12.**
 > L'entrée à la une doit rester **la même carte** quel que soit l'ordre choisi — elle se dérive de
 > l'ordre canonique, pas du tri. Changer de tri réordonne la grille et **rien d'autre**. Mesurer ce
