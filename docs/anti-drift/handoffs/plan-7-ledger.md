@@ -1,14 +1,14 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (pré-flight — plan seedé, aucune tâche démarrée)
+Last updated: 2026-09-13 (gate de validation du plan franchi — T-A1 démarrée)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
 
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
-| R1 | Les 4 patrons sont dans `@layer components` et redeviennent surchargeables — mesuré **au rendu** : un élément `class="pill bg-nav"` calcule `--color-nav` et non `--color-accentSoft` | Pending | Couvert par T-A1. |
-| R2 | Le changement de cascade ne régresse rien — squelette DOM identique à `milestone-plan-6` **ET** les 3 paires de contraste du Plan 6 restent ≥ 4.5:1 dans les 2 thèmes | Pending | Couvert par T-A1. Mesuré **à la fin de la Phase A**, avant toute construction : les phases B et C changent délibérément la structure des 4 listes. |
+| R1 | Les 4 patrons sont dans `@layer components` et redeviennent surchargeables — mesuré **au rendu** : un élément `class="pill bg-nav"` calcule `--color-nav` et non `--color-accentSoft` | In progress | Couvert par T-A1. |
+| R2 | Le changement de cascade ne régresse rien — squelette DOM identique à `milestone-plan-6` **ET** les 3 paires de contraste du Plan 6 restent ≥ 4.5:1 dans les 2 thèmes | In progress | Couvert par T-A1. Mesuré **à la fin de la Phase A**, avant toute construction : les phases B et C changent délibérément la structure des 4 listes. |
 | R3 | `/projets` rend les **6** éléments du patron §5.1, dans l'ordre | Pending | Couvert par T-B3. |
 | R4 | La ligne de méta annonce le compte **exact** — par comptage du DOM, sans filtre, avec un filtre, avec deux facettes | Pending | Couvert par T-B1 (logique) et T-B3 (mesure). |
 | R5 | L'entrée « à la une » est **conditionnelle** : 1 sans filtre, 0 dès qu'une facette est active | Pending | Couvert par T-B1 et T-B3. Règle de dérivation (spec §6.1) : `featured: true` là où le champ existe, à défaut la première entrée de l'ordre canonique. Mesuré au pré-flight : **aucun** article n'a `featured: true` — c'est donc la dérivation qui s'applique sur `/blog`. |
@@ -31,7 +31,7 @@ Last updated by: main (contrôleur SDD)
 
 | Task | Phase | Covers | Status |
 |---|---|---|---|
-| A1 | A | R1, R2 — les 4 patrons entrent dans `@layer components` | Pending |
+| A1 | A | R1, R2 — les 4 patrons entrent dans `@layer components` | In progress |
 | B1 | B | R4, R5, R6, R7, R11 — `src/lib/listPattern.ts` : toute la logique du patron, pure et testée | Pending |
 | B2 | B | R8, R10 — `Thumbnail.astro` : vignette dérivée, sans fichier ni champ | Pending |
 | B3 | B | R3, R4, R5, R6, R7, R10 — `/projets` rend les 6 éléments + le script de glue unique | Pending |
@@ -70,6 +70,17 @@ validation du plan d'impl, avant T-A1.
 | I4 | **Un seul** script de glue, `src/scripts/list-pattern.ts`, remplace `facet-filters.ts` et `project-filters.ts`. Deux scripts = deux comportements qui divergent. |
 | I5 | `src/lib/projectFilters.ts` n'est **pas** supprimé : il gagne `projectFacets()` et garde `matchesFilters` + sa suite, que R11 exige de laisser verte. |
 | I6 | Visuel dérivé : bloc `rail`, rayon 10px, trame `hatch` en CSS, monogramme de 2 lettres en mono. Consomme deux tokens que le contrat §6.4 dit n'être peints par rien. |
+
+## Décisions de l'utilisateur au gate de validation du plan (2026-09-13)
+
+Trois questions posées avant T-A1, trois options retenues **verbatim**. Elles ratifient le plan
+d'impl et ferment les décisions I1–I6 ci-dessus.
+
+| # | Question | Décision retenue |
+|---|---|---|
+| G-01 | Valider le plan d'impl, y compris I1–I6 — dont le passage des tags de `/blog` des pilules au dropdown secondaire ? | « **Valider le plan tel quel** ». Les 6 décisions sont ratifiées. Raison portée à l'appui : R3 dit « **une** barre de pilules » ; deux lignes de pilules sur `/blog` et une seule ailleurs feraient diverger cette liste des trois autres, ce que R9 interdit. |
+| G-02 | Comment tenir R7 sur `/skills`, dont le `type` n'a qu'une valeur dans le contenu ? | « **Mesurer sur tag, rapporter type tel quel** ». Le dropdown `type` est livré et fonctionnel ; la preuve que le filtrage change le sous-ensemble est faite sur `tag` (`anti-drift` → 1/2). Le comportement de `type` est rapporté honnêtement en Phase Z : **conforme, mais non discriminant faute de contenu varié**. Le contenu n'est pas modifié, aucune déviation n'est ouverte. |
+| G-03 | Quelle forme pour le visuel dérivé, les projets/prompts/skills n'ayant aucune image ? | « **Monogramme + trame hachurée** » — bloc en `rail`, trame diagonale en `hatch`, 2 premières lettres de la catégorie/type en mono. C'est la décision I6, confirmée. |
 
 ## Défauts de plan corrigés (texte faux sur la réalité — pas des déviations)
 
