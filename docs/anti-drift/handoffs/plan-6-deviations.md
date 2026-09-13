@@ -62,8 +62,10 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Caught late:** `yes` — exécutée avant ratification. À dire franchement : le sous-agent l'a
   **signalée spontanément dans son rapport** au lieu de la passer sous silence, et ne l'a pas
   maquillée en choix d'implémentation. Elle n'a pas été découverte en revue.
-- **Status:** pending-user
-- **User decision:** _(vide jusqu'à une décision explicite de l'utilisateur)_
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-09-13 au gate de la revue finale,
+  option choisie : « **Approuver — ⌘K à côté** ». Les trois boutons restent strictement ronds à
+  32 px et R7 est satisfait à la lettre. Aucune action de suivi : la branche est déjà dans cet état.
 - **Follow-up:** si rejetée, remettre le `<kbd>` à l'intérieur du bouton de recherche et accepter que
   ce bouton-là ne soit plus rond mais une pilule dès `sm` — ce qui rend R7 (« trois boutons ronds »)
   faux à la lettre et demandera soit un arbitrage sur R7, soit de masquer `⌘K` entièrement.
@@ -116,8 +118,14 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   Le rattachement aux tons de §2.3 est un remplacement de chaînes de classes.
 - **Caught late:** `no` — signalée **avant** exécution, et rien n'a été modifié dans ces deux
   fichiers. C'est le cas nominal du protocole.
-- **Status:** pending-user
-- **User decision:** _(vide jusqu'à une décision explicite de l'utilisateur)_
+- **Status:** approved
+- **User decision:** **Approuvée avec la troisième option** par l'utilisateur le 2026-09-13, option
+  choisie : « **Approuver + option 3** ». Donc : le `slate` du niveau `none` est remplacé par le
+  token de contrat `--color-chip`, ce qui lui rend son aplat en thème clair **immédiatement** ;
+  l'ambre, le bleu et le `backdrop:bg-black/60` de la modale restent en l'état et partent en P8.
+  Aucun des 5 tons de tags du §2.3 n'est avancé depuis P8. **Suivi obligatoire : la spec de P8 doit
+  porter la reprise des deux palettes ET du voile de modale comme un item nommé, pas comme un
+  sous-entendu.**
 - **Follow-up:** si rejetée, rattacher dès ce plan les deux palettes aux 5 tons du contrat §2.3 —
   ce qui oblige à faire entrer ces 5 triplets dans `global.css` maintenant au lieu de P8, et donc à
   livrer en P6 une partie de ce que la spec §5 a explicitement reporté. Si approuvée, la spec de P8
@@ -142,8 +150,10 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reversibility:** `cheap` — un nom de token dans une règle CSS.
 - **Caught late:** `yes` — trouvé à la revue finale, après la clôture de T-B2. Personne ne l'avait
   mesuré : c'est précisément l'angle mort d'un critère écrit comme une liste fermée.
-- **Status:** pending-user
-- **User decision:** _(vide jusqu'à une décision explicite de l'utilisateur)_
+- **Status:** approved
+- **User decision:** **Approuvée** par l'utilisateur le 2026-09-13, option choisie : « **Approuver —
+  passer à muted** ». Les puces repassent au-dessus d'AA dans les deux thèmes. Aucune valeur du
+  contrat n'est modifiée.
 - **Follow-up:** si rejetée, remettre `--color-dim` et consigner en clair que le site publie des
   puces de liste ordonnée à 4.19:1 en thème clair — ce qui devra alors figurer dans la spec de P8,
   qui porte déjà « contrastes AA ».
