@@ -59,7 +59,7 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
   <main>
     <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <p class="font-mono text-sm text-acc">~/ tags / {tag.label}</p>
-      <h1 class="mt-4 font-display text-4xl font-bold text-text sm:text-5xl">{tag.label}</h1>
+      <h1 class="mt-4 font-sans text-4xl font-bold text-text sm:text-5xl">{tag.label}</h1>
     </section>
 
     <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
@@ -77,7 +77,7 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
                       href={`${group.href}/${entry.id}/`}
                       class="block rounded-lg border border-line p-4 transition-colors hover:border-acc"
                     >
-                      <p class="font-display text-lg font-bold text-text">{entry.data.title}</p>
+                      <p class="font-sans text-lg font-bold text-text">{entry.data.title}</p>
                       <p class="mt-1 text-sm text-muted">{entry.data.description}</p>
                     </a>
                   </li>

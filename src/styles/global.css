@@ -1,15 +1,26 @@
 @import "tailwindcss";
-@import "@fontsource-variable/space-grotesk";
-@import "@fontsource-variable/inter";
+@import "@fontsource/nebula-sans/300.css";
+@import "@fontsource/nebula-sans/400.css";
+@import "@fontsource/nebula-sans/500.css";
+@import "@fontsource/nebula-sans/600.css";
+@import "@fontsource/nebula-sans/700.css";
 @import "@fontsource-variable/jetbrains-mono";
 
 /* bascule de thème pilotée par [data-theme] sur <html> */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-sans:    "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* ==========================================================================
+     Polices (Plan 6 / T-A1) — Nebula Sans (300/400/500/600/700, SIL OFL-1.1,
+     @fontsource/nebula-sans@5.3.0) remplace les deux anciennes polices
+     variables retirées à l'étape 2 de T-A1. Un seul token sans-serif : plus
+     de `--font-display` (contrat §3.1) — la distinction des titres passe par
+     la graisse (`font-bold`/`font-semibold`), pas par la famille. NE PAS
+     PERDRE CES TOKENS lors de la réécriture des couleurs de `@theme` (ruling
+     R-01, plan 6).
+     ========================================================================== */
+  --font-sans: "Nebula Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* palette LIGHT (défaut) — surchargée en dark ci-dessous */
   --color-bg: #FCFCFD;
@@ -58,7 +69,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 .prose :where(h2, h3, h4) {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 700;
   color: var(--color-text);
   scroll-margin-top: 5rem; /* ancre TOC lisible, pas cachée en haut de viewport */

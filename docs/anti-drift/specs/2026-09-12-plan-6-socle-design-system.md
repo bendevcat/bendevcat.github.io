@@ -126,8 +126,8 @@ vertical de toutes les pages. Corriger les cartes avant lui obligerait à repass
 | D | Diff visuel route par route contre `v1.0.0` ; `scrollWidth` à 375 px |
 | Z | `/anti-drift-planning:verify 6` + parcours humain |
 
-**Pas de nouveau test unitaire dans ce plan** : il n'introduit aucune logique. Les 10 suites vitest
-existantes doivent rester vertes — c'est le filet de non-régression de R10.
+**Pas de nouveau test unitaire dans ce plan** : il n'introduit aucune logique. Les 12 suites vitest
+existantes (118 tests) doivent rester vertes — c'est le filet de non-régression de R10.
 
 ## 8. Plan self-review
 
