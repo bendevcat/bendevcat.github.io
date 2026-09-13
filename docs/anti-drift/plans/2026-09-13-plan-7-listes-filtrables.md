@@ -94,7 +94,7 @@ Conséquences directes, à ne pas redécouvrir en cours d'exécution :
 |---|---|---|---|
 | I1 | R7 nomme le **dropdown** de chaque famille, jamais la **facette primaire** des pilules | Pilules = `stack` (projets) · `category` (blog) · `tool` (prompts) · `tag` (skills) | Chaque famille garde ses facettes livrées ; seul le **contrôle** qui les porte change. Sur `/projets` c'est une permutation exacte de l'existant (statut ↔ techno). |
 | I2 | Où vont les facettes surnuméraires (`tag` sur blog et prompts) ? | Conservées, en **dropdown secondaire** après celui nommé par R7 | Les retirer serait une réduction de fonctionnalité livrée (Plans 4 et 5) — donc une déviation. Sur `/blog`, `tag` passe donc de pilules à dropdown : R3 dit « **une** barre de pilules ». |
-| I3 | L'entrée à la une disparaît quand un filtre s'active (R5) — que devient sa carte ? | Elle est rendue **deux fois** : en format « à la une » dans son conteneur, et en carte normale dans la grille. Le script n'en montre **jamais** qu'une. | Sans cela, filtrer sur la catégorie de l'entrée à la une l'exclurait du résultat — un filtre qui perd une entrée. La copie masquée porte `hidden`, donc sort de l'arbre d'accessibilité. |
+| I3 | L'entrée à la une disparaît quand un filtre s'active (R5) — que devient sa carte ? | Elle est rendue **deux fois** : **une seule** carte en format « à la une » dans son conteneur, et la même entrée en carte normale dans la grille, rendue `hidden` **par le serveur**. Le script n'en montre jamais qu'une. | Sans le doublon, filtrer sur la catégorie de l'entrée à la une l'exclurait du résultat — un filtre qui perd une entrée. Le `hidden` serveur est ce qui tient la contrainte n°5 : **sans JS**, la page montre 1 entrée à la une et N-1 en grille, soit chaque entrée exactement une fois. La copie masquée porte `hidden`, donc sort de l'arbre d'accessibilité. |
 | I4 | Un script de glue par page, ou un seul ? | **Un seul** : `src/scripts/list-pattern.ts` remplace `facet-filters.ts` et `project-filters.ts` | Le premier thème de douleur de la spec est « quatre listes qui divergent ». Deux scripts de glue = deux comportements. `blog-filters.ts` (relais des puces de carte) est conservé tel quel. |
 | I5 | `src/lib/projectFilters.ts` perd son seul appelant en I4 — le supprimer ? | **Non.** Il gagne une fonction de sérialisation `projectFacets()` utilisée par `ProjectCard.astro`, et garde `matchesFilters` + sa suite | R11 exige que **les 12 suites existantes restent vertes** ; supprimer `projectFilters.test.ts` les ramènerait à 11. Le module reste vivant et testé. |
 | I6 | Forme du visuel dérivé (R8) quand il n'y a pas de `cover` | Bloc en `rail`, rayon `thumb` (10px), trame `hatch` en CSS, et **monogramme** = les 2 premières lettres de la catégorie/type, en mono | Consomme `rail` et `hatch` — deux des dix tokens que le contrat §6.4 dit n'être peints par rien. Zéro fichier, zéro champ. |
@@ -119,8 +119,12 @@ Conséquences directes, à ne pas redécouvrir en cours d'exécution :
 - `src/lib/posts.ts` — accueille `estimateReadingMinutes()`, extraite de `ArticleCard.astro`.
 
 **Supprimés**
-- `src/scripts/facet-filters.ts`, `src/scripts/project-filters.ts` — remplacés par
-  `list-pattern.ts` (I4). Ce sont des scripts de glue, pas des suites de tests.
+- `src/scripts/project-filters.ts` — en **T-B3**, dès que `/projets` est migré (sa seule page).
+- `src/scripts/facet-filters.ts` — en **T-C2/Step 4**, et pas avant : `/blog`, `/prompts` et
+  `/skills` l'importent encore jusque-là, et le retirer en T-B3 casserait leur build.
+
+Ce sont des scripts de glue, pas des suites de tests : `src/lib/facetFilters.ts` et
+`src/lib/projectFilters.ts` restent tous les deux, avec leurs suites (I5, R11).
 
 ---
 
@@ -186,20 +190,25 @@ Attendu : la valeur de `--color-nav` (`#FFFFFF` en clair, `rgba(255,255,255,0.05
 
 - [ ] **Step 4: Prouver que rien n'a bougé ailleurs (la mesure de R2, volet squelette)**
 
+Le squelette de référence se build dans un **worktree séparé** : ne jamais faire de `git stash` +
+`git checkout <ref> -- .` sur le working tree de la branche — c'est destructif et un `stash pop` qui
+échoue laisse la branche dans un état mixte.
+
 ```bash
-npm run build
-# comparer le squelette DOM des pages générées avec celui de milestone-plan-6
-git stash && git checkout milestone-plan-6 -- . 2>/dev/null; npm run build && cp -R dist /tmp/p7-dist-m6
-git checkout plan-7-listes-filtrables -- . && git stash pop 2>/dev/null || true
+git worktree add /tmp/p7-m6 milestone-plan-6
+ln -s "$PWD/node_modules" /tmp/p7-m6/node_modules
+(cd /tmp/p7-m6 && npx astro build)        # pagefind inutile ici : on compare le HTML
 npm run build
 for f in $(cd dist && find . -name '*.html' | sort); do
-  diff <(sed -e 's/<[^>]*>/&\n/g' "/tmp/p7-dist-m6/$f" | grep -o '^<[a-z][a-z0-9]*' | tr -d '<') \
+  [ -f "/tmp/p7-m6/dist/$f" ] || { echo "ABSENT dans m6: $f"; continue; }
+  diff <(sed -e 's/<[^>]*>/&\n/g' "/tmp/p7-m6/dist/$f" | grep -o '^<[a-z][a-z0-9]*' | tr -d '<') \
        <(sed -e 's/<[^>]*>/&\n/g' "dist/$f"            | grep -o '^<[a-z][a-z0-9]*' | tr -d '<') \
     >/dev/null || echo "DIFF: $f"
 done
+git worktree remove --force /tmp/p7-m6
 ```
 
-Attendu : **aucune ligne `DIFF:`** — mêmes balises, même ordre, sur les 14 routes.
+Attendu : **aucune ligne `DIFF:`** ni `ABSENT` — mêmes balises, même ordre, sur les 14 routes.
 
 - [ ] **Step 5: Recalculer les 3 paires de contraste (la mesure de R2, volet contraste)**
 
@@ -279,6 +288,17 @@ export interface ListState {
   empty: string | null;       // message d'état vide contextualisé, ou null s'il y a des résultats
 }
 
+/**
+ * Règle de dérivation de l'entrée à la une (spec §6.1) : `featured: true` là où
+ * le champ existe, à défaut la PREMIÈRE entrée de l'ordre canonique. Exportée
+ * pour que les pages l'appellent CÔTÉ SERVEUR et désignent exactement la même
+ * entrée que le script — c'est ce qui permet de rendre le bloc « à la une »
+ * avec une seule carte, et donc de ne pas afficher de doublon sans JavaScript.
+ */
+export function pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[]): T | null {
+  return entries.find((entry) => entry.featured) ?? entries[0] ?? null;
+}
+
 export function computeListState(
   entries: ListEntry[],
   selection: FacetSelection,
@@ -287,6 +307,13 @@ export function computeListState(
 ): ListState;
 
 export function isAnyFacetActive(selection: FacetSelection): boolean;
+
+/**
+ * La règle de dérivation de la spec §6.1, isolée pour que le SERVEUR et le
+ * CLIENT désignent la même entrée. Les pages l'appellent au rendu pour savoir
+ * quelle carte va dans le bloc « à la une » et laquelle masquer dans la grille.
+ */
+export function pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[]): T | null;
 ```
 
 - [ ] **Step 1: Écrire les tests qui échouent**
@@ -296,7 +323,13 @@ Créer `src/lib/listPattern.test.ts` :
 ```ts
 import { describe, expect, it } from 'vitest';
 import { ALL } from './facetFilters';
-import { computeListState, isAnyFacetActive, type ListEntry, type ListLabels } from './listPattern';
+import {
+  computeListState,
+  isAnyFacetActive,
+  pickFeaturedEntry,
+  type ListEntry,
+  type ListLabels,
+} from './listPattern';
 
 const LABELS: ListLabels = {
   singular: 'projet',
@@ -320,6 +353,21 @@ describe('isAnyFacetActive', () => {
   });
   it('est vrai dès qu’une seule facette porte une valeur', () => {
     expect(isAnyFacetActive({ stack: 'Astro', status: ALL })).toBe(true);
+  });
+});
+
+describe('pickFeaturedEntry — la règle de dérivation (spec §6.1)', () => {
+  it('préfère une entrée featured où qu’elle soit dans la liste', () => {
+    expect(pickFeaturedEntry([{ featured: false }, { featured: true, id: 'x' }])).toEqual({
+      featured: true,
+      id: 'x',
+    });
+  });
+  it('à défaut, retient la première entrée de l’ordre canonique', () => {
+    expect(pickFeaturedEntry([{ id: 'first' }, { id: 'second' }])).toEqual({ id: 'first' });
+  });
+  it('retourne null sur une collection vide', () => {
+    expect(pickFeaturedEntry([])).toBeNull();
   });
 });
 
@@ -397,7 +445,8 @@ describe('computeListState — tri (R7)', () => {
   for (const [order, expected] of ORDERS) {
     it(`ordonne la grille selon « ${order} »`, () => {
       const plain = ENTRIES.map((e) => ({ ...e, featured: false }));
-      // une facette active, pour qu’aucune entrée ne soit retirée de la grille
+      // aucune facette active : l’entrée à la une est donc sorted[0], et
+      // [featuredId, ...visibleIds] reconstitue l’ordre trié complet.
       const state = computeListState(plain, { stack: ALL, status: ALL }, order, LABELS);
       expect([state.featuredId, ...state.visibleIds]).toEqual(expected);
     });
@@ -502,9 +551,7 @@ export function computeListState(
   // R5 : l'entrée à la une n'existe QUE sans filtre. Règle de dérivation de la
   // spec §6.1 : `featured: true` là où le champ existe, à défaut la première
   // entrée de l'ordre canonique — ce qui, ici, est la première du tableau.
-  const featured = isAnyFacetActive(selected)
-    ? null
-    : (sorted.find((entry) => entry.featured) ?? sorted[0] ?? null);
+  const featured = isAnyFacetActive(selected) ? null : pickFeaturedEntry(sorted);
 
   const visibleIds = sorted.filter((entry) => entry.id !== featured?.id).map((entry) => entry.id);
 
@@ -535,7 +582,7 @@ export function computeListState(
 npx vitest run src/lib/listPattern.test.ts
 ```
 
-Attendu : PASS, 15 tests.
+Attendu : PASS, 18 tests.
 
 - [ ] **Step 5: Extraire `estimateReadingMinutes` vers `src/lib/posts.ts`**
 
@@ -915,9 +962,12 @@ import { projectFacets } from '../lib/projectFilters';
 
 interface Props {
   project: CollectionEntry<'projects'>;
+  /** Variante « à la une » : carte large, vignette en 16/7. */
   featured?: boolean;
+  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
+  hidden?: boolean;
 }
-const { project, featured = false } = Astro.props;
+const { project, featured = false, hidden = false } = Astro.props;
 // …
 const facets = JSON.stringify(projectFacets({ status, stack }));
 ---
@@ -933,6 +983,7 @@ const facets = JSON.stringify(projectFacets({ status, stack }));
   data-date={project.data.startDate?.getTime() ?? 0}
   data-minutes={0}
   data-featured={project.data.featured ? '' : undefined}
+  hidden={hidden}
 >
   <Thumbnail cover={cover} coverAlt={coverAlt} derivedFrom={status} size={featured ? 'featured' : 'card'} />
   …
@@ -976,14 +1027,18 @@ I1 ; c'est la permutation exacte de l'existant) :
   {/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
   <p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} projets</p>
 
-  {/* 4 · entrée à la une */}
+  {/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
   <div class="mb-6" data-list-featured>
-    {projects.map((project) => <ProjectCard project={project} featured />)}
+    {featured && <ProjectCard project={featured} featured />}
   </div>
 
-  {/* 5 · grille — contient TOUTES les entrées (décision I3) */}
+  {/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
+       rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
+       chaque entrée exactement une fois (contrainte globale n°5). */}
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
-    {projects.map((project) => <ProjectCard project={project} />)}
+    {projects.map((project) => (
+      <ProjectCard project={project} hidden={project.id === featured?.id} />
+    ))}
   </div>
 
   {/* 6 · état vide */}
@@ -1001,10 +1056,22 @@ I1 ; c'est la permutation exacte de l'existant) :
 </script>
 ```
 
-Le conteneur `data-list-featured` rend **toutes** les cartes en variante `featured` ; le script
-n'en laisse visible qu'une (celle dont l'id est `state.featuredId`) et masque les autres. C'est ce
-qui permet à l'entrée à la une de changer quand la sélection change, sans que le serveur ait à la
-deviner.
+Le frontmatter de la page appelle la **même** règle de dérivation que le script :
+
+```ts
+import { pickFeaturedEntry } from '../../lib/listPattern';
+const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data.featured })));
+```
+
+Pourquoi une seule carte et un `hidden` serveur, et pas le rendu de toutes les cartes featured :
+l'entrée à la une ne dépend **pas** de la sélection — seulement de « une facette est-elle active ».
+Le serveur peut donc la désigner, et c'est la seule forme qui tient la contrainte n°5 : **sans
+JavaScript**, la page montre 1 entrée à la une et N-1 en grille, soit chaque entrée exactement une
+fois. Rendre toutes les cartes featured aurait affiché `/projets` avec 2 entrées « à la une » et
+chaque projet deux fois, en contradiction directe avec R5.
+
+`ProjectCard` reçoit donc aussi une prop `hidden?: boolean`, posée sur son `<a>` — l'attribut
+`hidden`, jamais une classe (contrainte n°5).
 
 - [ ] **Step 5: Supprimer le script remplacé**
 
@@ -1111,8 +1178,10 @@ bouton de la barre et n'est **pas** modifié (il cible `[data-facet-filters]`) �
 
 - [ ] **Step 2: Réécrire la section de liste de `/blog`**
 
-Six éléments, même ordre, mêmes attributs qu'en B3. Facette primaire : `category` (I1). Dropdowns,
-dans l'ordre : **tri** (celui de R7), puis `tag` (conservé, I2).
+Six éléments, même ordre, mêmes attributs qu'en B3 — **y compris le rendu de l'entrée à la une** :
+`pickFeaturedEntry()` appelée dans le frontmatter, **une seule** carte dans `data-list-featured`, et
+la même entrée rendue `hidden` par le serveur dans la grille (décision I3). Facette primaire :
+`category` (I1). Dropdowns, dans l'ordre : **tri** (celui de R7), puis `tag` (conservé, I2).
 
 ```astro
 <label class="flex items-center gap-2 font-mono text-xs text-muted">
@@ -1178,7 +1247,9 @@ champ, et R10 interdit de l'ajouter.
 
 - [ ] **Step 2: Les deux pages**
 
-Six éléments, même ordre. Facettes (I1, I2) :
+Six éléments, même ordre, **y compris le rendu de l'entrée à la une** : `pickFeaturedEntry()` dans
+le frontmatter, une seule carte dans `data-list-featured`, la même entrée `hidden` par le serveur
+dans la grille (décision I3). Facettes (I1, I2) :
 
 | Page | Pilules | Dropdown 1 (R7) | Dropdown 2 |
 |---|---|---|---|
@@ -1200,11 +1271,26 @@ valeur sélectionnée change l'ordre ou le sous-ensemble » : la mesure porte ic
 `anti-drift` donne 1/2, et le comportement de `type` est rapporté tel quel. **Ce point est arbitré
 au gate de validation du plan** ; la décision retenue est reportée ici avant l'exécution de C2.
 
-- [ ] **Step 4: Tests, check, commit**
+- [ ] **Step 4: Supprimer le dernier script de glue remplacé**
+
+`/prompts` et `/skills` étaient les deux dernières pages à importer
+`src/scripts/facet-filters.ts` ; elles importent désormais `list-pattern.ts`. C'est **ici** — et
+pas avant — qu'il se supprime : le retirer en T-B3 aurait cassé le build de `/blog`, `/prompts` et
+`/skills`, qui l'importaient encore.
+
+```bash
+git rm src/scripts/facet-filters.ts
+grep -rn 'facet-filters' src/     # doit être VIDE
+```
+
+`src/lib/facetFilters.ts` **reste** : c'est le prédicat, consommé par `listPattern.ts`, et sa suite
+est l'une des 12 que R11 exige de garder vertes. Seul le script de glue disparaît.
+
+- [ ] **Step 5: Tests, check, commit**
 
 ```bash
 npm test && npm run check
-git add src/pages/prompts src/pages/skills src/components/PromptCard.astro src/components/SkillCard.astro
+git add -A src/pages/prompts src/pages/skills src/components/PromptCard.astro src/components/SkillCard.astro src/scripts
 git commit -m "feat(p7): /prompts et /skills rendent le patron (R9)"
 ```
 
@@ -1295,10 +1381,20 @@ V4 → contrainte n°8. V1, V3, V7, V8 sont acquis du Plan 6 et re-vérifiés en
 **2. Placeholders.** Chaque étape de code porte le code réel. Aucun « TBD », aucun « similaire à la
 tâche N » — le contrat DOM est reproduit en table dans B3 et référencé, pas paraphrasé.
 
-**3. Cohérence des types.** `computeListState` / `isAnyFacetActive` / `ListEntry` / `ListLabels` /
-`ListState` / `SortOrder` sont définis une fois en B1 et utilisés sous ces noms exacts en B3, C1,
-C2. `projectFacets` (B1/Step 6) est consommé par `ProjectCard` (B3/Step 3). `<Thumbnail>` (B2) a la
+**3. Cohérence des types.** `computeListState` / `isAnyFacetActive` / `pickFeaturedEntry` /
+`ListEntry` / `ListLabels` / `ListState` / `SortOrder` sont définis une fois en B1 et utilisés sous
+ces noms exacts en B3, C1, C2. `pickFeaturedEntry` est appelée **des deux côtés** — par
+`computeListState` côté client, par le frontmatter des 4 pages côté serveur — pour que la même
+entrée soit désignée partout. `projectFacets` (B1/Step 6) est consommé par `ProjectCard` (B3/Step 3). `<Thumbnail>` (B2) a la
 même signature dans ses quatre appels.
+
+**3bis. Défauts corrigés au scan pré-vol (avant T-A1).** P-02 : aucune tâche ne supprimait
+`facet-filters.ts` → suppression placée en C2/Step 4, après la dernière page qui l'importe. P-03 :
+A1/Step 4 faisait un `git stash` + `git checkout <ref> -- .` destructif → worktree temporaire.
+P-04 : le bloc « à la une » rendait toutes les cartes featured, ce qui affichait sans JavaScript
+2 entrées à la une sur `/projets` et chaque entrée deux fois, en contradiction avec R5 et la
+contrainte n°5 → `pickFeaturedEntry()` partagée serveur/client, une seule carte, double masqué par
+le serveur. P-05 : un commentaire de test décrivait l'inverse de la sélection testée.
 
 **4. Volume.** 8 tâches, 4 phases. Le Plan 6 en a demandé 9 pour un périmètre qui ne changeait
 aucune structure ; celui-ci en change quatre mais les résout **une fois** puis les réplique. Le
