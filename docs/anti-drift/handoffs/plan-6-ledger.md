@@ -259,3 +259,32 @@ un aplat de bandeau devenu invisible (distance colorimétrique 2.24) · des puce
 
 Aucun des cinq n'aurait fait échouer un test. C'est l'argument de fond pour que la Phase Z d'une
 vague visuelle exige des mesures au rendu, et non une relecture.
+
+## Fusion dans `main` (2026-09-13) — un commit distant a changé le contenu qui part en production
+
+`origin/main` portait un commit CMS du **2026-09-05** (`0b487c6`) jamais rapatrié localement, qui
+repasse `src/content/blog/bienvenue-dans-mon-foutoir/index.md` en **`draft: true`**. Il a été
+inspecté **avant** la fusion, pas découvert après — c'est la leçon directe de la déviation D01 du
+Plan 5, où exactement le même commit, sur exactement le même article, avait invalidé R3 après coup.
+
+**Décision de l'utilisateur, 2026-09-13 : « Garder le brouillon — c'était voulu ».** Le commit est
+donc intégré tel quel ; l'article reste dépublié.
+
+**Impact mesuré sur le build fusionné**, avant le tag et avant le push :
+
+| | avant la fusion | après |
+|---|---|---|
+| pages HTML générées | 55 | **52** |
+| pages indexées par Pagefind | 13 | **12** |
+| cartes sur `/blog` | 6 | **5** |
+| groupes sur `/tags/claude-code/` | 4 | **3** |
+| `/blog/bienvenue-dans-mon-foutoir/` | publié | **dépublié** |
+
+**Ce que cela ne casse pas, re-vérifié sur l'état fusionné :** les 10 routes du périmètre répondent
+toutes `200`, l'item de nav actif est correct sur les 10 (dont les 4 routes filles), le texte
+courant est en `Nebula Sans`, le fond de bloc de code vaut `rgb(239,243,247)` = `--color-code`
+clair. 118 tests verts, `astro check` 0 erreur, build vert. **Aucun critère du Plan 6 ne dépend de
+cet article** — la route fille utilisée pour R10/R11 est `/blog/docker-kubernetes-devops/`.
+
+**Ce que cela touche, en revanche, c'est le Plan 5 :** son critère R3 (agrégation cross-collection)
+ne se démontre plus que sur **3 collections**. Voir l'addendum daté du registre du Plan 5.

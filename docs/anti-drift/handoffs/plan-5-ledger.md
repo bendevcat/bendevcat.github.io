@@ -127,3 +127,20 @@ Les quatre questions ouvertes du pré-flight ont été tranchées par l'utilisat
   | Walkthrough user story | **5 pas sur 5 confirmés par l'utilisateur**, sur le site déployé |
   | Smoke visuel | **Confirmé par l'utilisateur** — dark et light, aucune surface à signaler |
   La seule déviation du plan a été **rejetée** par l'utilisateur, et son Follow-up exécuté : aucune exigence n'est partie en `Deferred` ni en `Cut`. **Le périmètre de la spec est livré intégralement.**
+
+## Addendum du 2026-09-13 — R3 ne se démontre plus que sur 3 collections
+
+Constaté à la fusion du Plan 6. Le commit CMS `0b487c6` du 2026-09-05, présent sur `origin/main`,
+repasse `bienvenue-dans-mon-foutoir` en `draft: true`. C'est le **seul** article de blog portant le
+tag `claude-code` : `/tags/claude-code/` rend donc désormais **3 groupes** (projets, prompts,
+skills) au lieu de 4.
+
+**L'utilisateur a confirmé le 2026-09-13 que la mise en brouillon est délibérée** — c'est la
+décision inverse de celle prise le 2026-09-05, où la déviation D01 de ce plan avait été *rejetée*
+et l'article republié. Les deux décisions sont authentiques et datées ; celle-ci est la plus
+récente.
+
+**Le statut de R3 n'est pas modifié.** Le critère a été mesuré et vérifié à l'époque, et le code
+d'agrégation n'a **jamais** bougé : c'est la donnée qui ne permet plus la démonstration à 4
+collections. Exactement ce que D01 décrivait. Cet addendum existe pour que l'audit inter-plans
+(`/anti-drift-planning:status`) ne lise pas « 4 collections » comme un fait encore vrai aujourd'hui.
