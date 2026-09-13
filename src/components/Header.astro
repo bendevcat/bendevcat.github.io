@@ -42,6 +42,18 @@ const isActive = (href: string) =>
 const NAV_PILL =
   'inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-sm transition-colors ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+
+// R7 — look unique des trois boutons ronds de la barre d'actions (32 px,
+// rayon 999 via `--radius-pill`). Une seule chaîne : les trois doivent être
+// indiscernables, y compris celui que rend `ThemeToggle.astro` (à qui elle est
+// passée en prop). Fond transparent : ils sont posés sur la pilule `nav`, ils
+// n'ajoutent pas de niveau de surface (hiérarchie §2.1). `chip` n'est pas un
+// niveau de surface mais le fond de puce neutre du contrat : c'est lui qui
+// porte le survol.
+const ROUND_BTN =
+  'grid size-8 place-items-center rounded-pill text-muted transition-colors ' +
+  'hover:bg-chip hover:text-ink ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 ---
 
 <header class="border-b border-line">
@@ -109,17 +121,60 @@ const NAV_PILL =
       </ul>
     </nav>
 
-    <button
-      type="button"
-      data-search-open
-      hidden
-      class="flex items-center gap-2 rounded-pill border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-      aria-label="Rechercher sur le site"
-    >
-      <Icon name="search" size={16} />
-      <kbd class="hidden sm:inline">⌘K</kbd>
-    </button>
+    {/*
+      R7 — barre d'actions : un conteneur en pilule (rayon 999, fond `nav`,
+      bordure `line` — les propriétés de `.pill` sauf son fond d'accent, qui
+      n'a pas sa place ici : c'est de la navigation, pas de l'action de
+      contenu) portant trois boutons ronds de 32 px.
+      Il est posé sur `bg` et porte `nav` : un seul niveau d'écart (§2.1).
+    */}
+    <div class="flex items-center gap-1 rounded-pill border border-line bg-nav p-1">
+      {/*
+        CONTRAT À NE PAS CASSER : `data-search-open` est ce que
+        `src/scripts/search.ts` cherche pour (a) retirer le `hidden` et (b)
+        brancher l'ouverture du <dialog>. Le `hidden` posé par le serveur est
+        l'enhancement progressif du Plan 5 : sans JS, aucun contrôle mort n'est
+        affiché (la règle `[data-search-open][hidden]` de global.css le garde
+        invisible en `!important`, sinon l'utilitaire `grid` ci-dessous
+        gagnerait). Ne renommer ni l'un ni l'autre.
+      */}
+      <button
+        type="button"
+        data-search-open
+        hidden
+        class={ROUND_BTN}
+        aria-label="Rechercher sur le site"
+      >
+        <Icon name="search" size={16} />
+      </button>
 
-    <ThemeToggle />
+      {/*
+        Le rappel `⌘K` de la v1 est conservé (≥ sm). Il est SŒUR du bouton et
+        non dedans, pour que les trois boutons restent strictement ronds. Il
+        porte lui aussi `data-search-open` : `search.ts` itère sur TOUS les
+        éléments portant l'attribut — il est donc révélé et rendu cliquable par
+        le même code, sans une ligne de logique nouvelle, et il reste masqué
+        sans JS. `aria-hidden` : le bouton voisin porte déjà le nom accessible,
+        l'annoncer une seconde fois serait du bruit.
+      */}
+      <kbd
+        data-search-open
+        hidden
+        aria-hidden="true"
+        class="hidden h-8 cursor-pointer place-items-center rounded-pill px-2 font-mono text-[11px] text-dim transition-colors hover:text-muted sm:grid"
+      >⌘K</kbd>
+
+      <a
+        href="https://github.com/bendevcat"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub de benCat"
+        class={ROUND_BTN}
+      >
+        <Icon name="github" size={16} />
+      </a>
+
+      <ThemeToggle class={ROUND_BTN} />
+    </div>
   </div>
 </header>
