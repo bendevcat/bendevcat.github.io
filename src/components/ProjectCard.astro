@@ -1,7 +1,7 @@
 ---
-import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { PROJECT_STATUS_META } from '../lib/projectStatus';
+import Thumbnail from './Thumbnail.astro';
 
 interface Props {
   project: CollectionEntry<'projects'>;
@@ -24,15 +24,7 @@ const statusMeta = PROJECT_STATUS_META[status];
   data-status={status}
   data-stack={JSON.stringify(stack)}
 >
-  {
-    cover && (
-      <Image
-        src={cover}
-        alt={coverAlt ?? title}
-        class="aspect-video w-full rounded-inner object-cover"
-      />
-    )
-  }
+  <Thumbnail cover={cover} coverAlt={coverAlt} derivedFrom={status} />
 
   <span
     class={`w-fit rounded-pill border px-2 py-0.5 font-mono text-xs ${statusMeta.chipClass}`}

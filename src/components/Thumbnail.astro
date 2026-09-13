@@ -1,0 +1,42 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  /** Image du contenu, quand la collection en a une (blog, projects). */
+  cover?: ImageMetadata;
+  coverAlt?: string;
+  /** Chaîne dont le visuel dérivé est tiré : catégorie, statut ou type. */
+  derivedFrom: string;
+  /** `featured` = format large de l'entrée à la une ; `card` = vignette de grille. */
+  size?: 'card' | 'featured';
+}
+
+const { cover, coverAlt, derivedFrom, size = 'card' } = Astro.props;
+
+// R8 / spec §6.1 : sans `cover`, le visuel est DÉRIVÉ — aucun fichier image,
+// aucun champ de schéma. Le monogramme est purement fonction de la chaîne, donc
+// stable d'un build à l'autre.
+const monogram = derivedFrom.slice(0, 2).toUpperCase();
+const ratio = size === 'featured' ? 'aspect-[16/7]' : 'aspect-video';
+---
+
+{
+  cover ? (
+    <Image src={cover} alt={coverAlt ?? ''} class={`${ratio} w-full rounded-thumb object-cover`} />
+  ) : (
+    /*
+      Niveau 4 de la hiérarchie des surfaces (§2.1) : `rail` est le creux — il
+      est posé ici DANS une carte, jamais directement sur `surface` (V2).
+      `hatch` fournit la trame ; les deux tokens ne peignaient rien avant ce
+      plan (spec §6.4).
+    */
+    <div
+      class={`${ratio} flex w-full items-center justify-center rounded-thumb bg-rail`}
+      style="background-image: repeating-linear-gradient(135deg, var(--color-hatch) 0 1px, transparent 1px 9px);"
+      aria-hidden="true"
+    >
+      <span class="font-mono text-2xl font-medium tracking-[.06em] text-dim">{monogram}</span>
+    </div>
+  )
+}
