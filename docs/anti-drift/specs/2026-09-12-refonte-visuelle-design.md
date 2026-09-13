@@ -216,9 +216,17 @@ Inventaire de ce que le prototype ajoute et que le code n'a pas. Chaque ligne es
 
 | Plan | Sujet | But binaire |
 |---|---|---|
-| **P6** | `socle-design-system` | Tout le site a la nouvelle peau — tokens, polices, nav en pilules, clair et sombre — et **aucune page n'a changé de structure** |
-| **P7** | `structures-v2` | L'accueil et les **quatre familles** (blog, projets, prompts, skills) ont la structure de la maquette : à la une, panneaux, filtres, tri, onglets |
-| **P8** | `pages-restantes-et-finition` | `/transparence-ia`, `/tags`, `/404`, recherche au nouveau design ; 375px ; contrastes AA |
+| **P6** | `socle-design-system` | Tout le site a la nouvelle peau — tokens, polices, nav en pilules, clair et sombre — et **aucune page n'a changé de structure** — **livré le 2026-09-13, `v1.1.0`** |
+| **P7** | `listes-filtrables` | Les **quatre listes** ont le patron « liste filtrable » du §5.1, et elles se comportent à l'identique (E4, E5, E6) |
+| **P8** | `details-a-onglets` | Les **trois fiches** ont le patron « détail à onglets » du §5.2 (E7, E8, E9) |
+| **P9** | `accueil-et-finition` | L'accueil a sa carte à la une et ses panneaux (E3) ; `/transparence-ia`, `/tags`, `/404`, recherche au nouveau design ; 375px ; contrastes AA (E10, E11) |
+
+> **Ce découpage a été rouvert le 2026-09-13**, avant toute exécution de P7 et sur une donnée que ce
+> document n'avait pas quand il a été écrit : le Plan 6, qui ne changeait **aucune** structure, a
+> tout de même demandé 12 critères, 9 tâches et 3 décisions utilisateur. Un P7 portant E3 à E9
+> aurait saturé son budget de décisions bien avant sa Phase Z. Le découpage suit désormais **les
+> patrons** du §5 plutôt que les pages — ce que le « risque assumé » ci-dessous prescrivait déjà à
+> l'intérieur de P7, et qui devient l'ordre des plans.
 
 **Ordre strictement séquentiel.** P6 précède tout : implémenter une structure avant que les tokens
 existent produit des valeurs codées en dur qu'il faut ensuite déterrer.
@@ -229,10 +237,11 @@ sur `/projets`**, puis répliqué sur blog, prompts et skills ; **le patron « d
 est résolu une fois sur `/projets/[slug]`**, puis répliqué sur prompts et skills. Résoudre quatre
 listes en parallèle les ferait diverger.
 
-> **Risque assumé de la fusion.** P7 remplace trois plans : son ledger est long et sa Phase Z lourde
-> à tenir en une session. Le budget de décisions (3 `pending-user` maximum) saute plus vite. Si la
-> session s'arrête en cours, c'est un cas nominal : `/anti-drift-planning:resume 7` reprend au
-> premier `R` non `Done`. Ce n'est pas un échec du plan, c'est le mode d'emploi.
+> **Le risque que ce découpage retire.** La version précédente de ce document fusionnait E3 à E9 dans
+> un seul P7 et l'assumait ainsi : « son ledger est long et sa Phase Z lourde à tenir en une session,
+> le budget de décisions saute plus vite, et s'arrêter en cours est le mode d'emploi, pas un échec ».
+> C'était lucide, et c'est précisément ce qui a justifié de rouvrir le découpage une fois la donnée
+> du Plan 6 acquise. `/anti-drift-planning:resume <N>` reste le filet, mais il n'est plus le plan A.
 
 ---
 
@@ -250,10 +259,20 @@ embarquable (OFL-1.1 l'autorise explicitement, y compris commercialement).
 retenue verbatim. Le paquet `@fontsource/nebula-sans@5.3.0` est installé en dépendance directe
 (voir plan 6 / T-A1) — plus de service depuis jsDelivr.
 
-### 8.2 Vignettes d'articles
-Le design attend une image par entrée de liste. État actuel : 3 articles sur 6 ont un `cover`.
-Options : produire les images manquantes (travail de contenu), ou définir un placeholder par
-catégorie. **À trancher avant la Phase de `/blog` du plan 7.**
+### 8.2 Vignettes d'articles — **TRANCHÉ (gate d'écriture de la spec P7, 2026-09-13)**
+
+~~État actuel : 3 articles sur 6 ont un `cover`.~~ **Chiffre périmé.** Mesuré le 2026-09-13 :
+**5 des 5 articles publiés** portent un `cover`. Le véritable obstacle est ailleurs, et il est
+structurel : `projects` n'a **aucune** entrée pourvue (0/2), et les schémas Zod de `prompts` et
+`skills` **n'ont pas de champ `cover` du tout** — l'ajouter serait un changement du modèle de
+contenu, que le §9 interdit.
+
+**Décision de l'utilisateur : placeholder dérivé.** La vignette vient du contenu quand il en a une,
+et sinon d'un visuel **dérivé de la catégorie ou du type**, généré en CSS/SVG — sans fichier image
+et sans champ de schéma. E5 est donc tenu sur les quatre familles sans toucher au modèle de contenu.
+
+Le champ `featured` a exactement le même trou (présent sur `blog` et `projects`, absent de `prompts`
+et `skills`) : l'entrée « à la une » du §5.1 suit la même règle de dérivation. Voir la spec P7 §6.1.
 
 ### 8.3 Attribution des tons de tags
 Le prototype code en dur 5 tags de démo avec 5 tons. Il faut une règle pour N tags réels : hash
