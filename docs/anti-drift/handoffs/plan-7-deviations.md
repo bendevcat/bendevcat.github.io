@@ -39,6 +39,59 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D04 — le saut de niveau de surface n'est pas résolu : V2 échoue à la lettre
+
+- **Date:** 2026-09-13
+- **Task affected:** T-D1 (`src/components/Thumbnail.astro` et les 4 composants de carte) — et le
+  verdict **V2** en Phase Z.
+- **Original plan:** T-D1/Step 3 prescrit de **trancher** : « soit la carte de liste passe en
+  `.card-inner` (niveau `card`), soit la vignette monte en `chip`. Mesurer avant de choisir. »
+- **Deviation taken:** **ni l'une ni l'autre.** Le saut est mesuré, confirmé, documenté — et laissé
+  en place. Aucun code n'a changé en T-D1 (zéro commit).
+- **Reason:** les deux réparations prescrites ont été évaluées au rendu, en thème sombre, et chacune
+  coûte plus que le défaut qu'elle répare :
+  - **`.card-inner`** — pour que les 4 listes restent identiques (R9), il faudrait toucher les 4
+    composants de carte, ce qui imbrique visuellement une carte dans une carte sur une grille
+    compacte, empile trois rayons (20/14/10) qui n'ont jamais coexisté à cette échelle, et ajoute
+    l'ombre que `.card-inner` porte. Rayon d'impact large, sur les 4 familles, en dernière tâche ;
+  - **`chip`** — un seul fichier, mais cela rouvre la décision **I6** que l'utilisateur a ratifiée
+    au gate (« bloc `rail` »), troque le creux voulu contre un aplat neutre, et surtout : `chip`
+    **n'appartient pas** à la chaîne ordonnée à quatre niveaux. Ce choix ferait donc *sortir* la
+    vignette du périmètre de l'audit V2 au lieu de résoudre la question qu'il pose. Passer un audit
+    en quittant son champ d'application n'est pas le passer.
+- **Fait mesuré, sans échappatoire :** V2 se lit « Aucune occurrence de `card` sur `bg` ni de `rail`
+  sur `surface` ». Les 4 cartes sont `bg-surface`, la vignette est `bg-rail`. **V2 échoue à la
+  lettre**, et la méthodologie §4.2 le rend applicable en Phase Z de ce plan.
+- **Ce qu'il faut dire honnêtement sur l'origine de cette entrée :** le contrôleur a **lui-même
+  autorisé** cette troisième voie dans le dispatch de T-D1 (« mesurer, conclure que le défaut est
+  réel, et ne rien changer est un résultat défendable »). L'implémenteur s'est arrêté avant
+  d'exécuter, comme le protocole l'exige quand le budget de déviations est plein — c'est le
+  comportement attendu. La déviation est donc **autant celle du contrôleur que la sienne** : une
+  autorisation ne fait pas disparaître un écart, elle le rend seulement conscient.
+- **Ce que ce défaut révèle, et qui vaut au-delà de ce plan :** V2 n'avait jamais rien eu à mesurer.
+  Avant le Plan 7, aucune surface de niveau 3 ou 4 n'existait sur le site — le ledger du Plan 6 le
+  dit lui-même : « V2 passe, mais c'est P7 qui lui donnera de quoi échouer ». C'est fait. **Le
+  premier vrai cas de test du critère le fait échouer**, ce qui est une information sur le contrat
+  autant que sur ce plan : la règle des quatre niveaux n'a jamais été éprouvée sur une carte de
+  grille compacte, où le niveau intermédiaire n'a pas de place évidente.
+- **Reversibility:** `cheap` pour l'option `chip` (un fichier) ; **`expensive`** pour `.card-inner`
+  (4 composants, 4 pages, rendu à re-mesurer partout). C'est précisément pourquoi rien n'a été
+  exécuté : le protocole interdit de procéder sur une déviation `expensive` dont la décision est en
+  attente.
+- **Caught late:** `no` — consignée avant toute Phase Z et avant tout ship. Rien n'a été exécuté.
+- **Status:** pending-user
+- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Follow-up:** trois issues, à trancher par l'utilisateur :
+  1. **Approuver le report** — V2 est consigné en échec sur ce plan et la hiérarchie des surfaces
+     est reprise par le plan qui la possède (P9, qui porte déjà la finition et les contrastes). Coût :
+     le site ship avec un saut de niveau documenté ;
+  2. **`.card-inner`** — réparer vraiment, en acceptant de toucher les 4 cartes et de re-mesurer les
+     4 listes. Coût : une tâche supplémentaire, en fin de plan ;
+  3. **`chip`** — réparer à moindre coût, en acceptant que la vignette quitte la chaîne des quatre
+     niveaux et que la décision I6 soit rouverte.
+
+---
+
 ## D03 — sur `/skills`, R6 n'est pas déclenchable avec le contenu réel
 
 - **Date:** 2026-09-13

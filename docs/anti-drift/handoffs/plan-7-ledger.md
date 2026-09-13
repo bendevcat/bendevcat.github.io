@@ -1,6 +1,6 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (Phase C close — les 4 listes sont livrées — T-D1 démarrée)
+Last updated: 2026-09-13 (T-D1 Done — **exécution ARRÊTÉE : budget de décisions dépassé, 4 entrées `pending-user`**)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -18,7 +18,7 @@ Last updated by: main (contrôleur SDD)
 | R9 | Le patron est répliqué **à l'identique** sur les 4 familles | Done | **`f33b4e0` · `6a53050`.** Les 4 listes rendent les **mêmes 6 éléments dans le même ordre**, et le relecteur a **parcouru les quatre pages dans le même ordre en faisant les mêmes gestes**, plutôt que de comparer du code : attributs de conteneurs strictement identiques sur les 4, même geste → même résultat (méta recalculée et accordée, bloc à la une masqué, grille filtrée, `aria-pressed` synchronisé). **Aucune divergence non décidée.** Les 4 différences relevées sont toutes justifiées : le 2ᵉ `<select>` de `/blog` (tri, décision I1/I2) · sa carte en `<article>` plutôt qu'en `<a>` (nécessité du relais de puce, antérieure à ce plan) · son lien « tous les tags → » (antérieur, hors des 6 éléments) · `data-featured` absent des cartes prompt et skill (ces schémas n'ont pas le champ — R10 —, sans effet observable, le repli sur l'ordre canonique étant identique des deux côtés). **Deux réserves nommées sur `/skills`** : R7/`type` (décision **G-02**) et R6, non déclenchable faute de combinaison vidant la liste (**D03**, `pending-user`). |
 | R10 | Le modèle de contenu est **inchangé** — `git diff milestone-plan-6 -- src/content.config.ts` vide | Done | `git diff milestone-plan-6 -- src/content.config.ts` **vide**, vérifié en T-B2 et en T-B3 par l'implémenteur **puis indépendamment par les deux relecteurs**. Aucune tâche restante ne touche le schéma ; re-vérifié en Phase Z. |
 | R11 | La logique nouvelle est testée — fonctions pures dans `src/lib/`, couvertes par vitest ; les 12 suites existantes restent vertes | Done | **`e0348e7`.** `src/lib/listPattern.ts` : `computeListState`, `isAnyFacetActive`, `pickFeaturedEntry`, toutes pures (`filter`/`map`/`sort` sur copies — la non-mutation est elle-même testée). **22 tests** dans la 13ᵉ suite ; **13 suites / 142 tests** verts ; `astro check` 0 erreur. Le module n'importe que `./facetFilters`, lequel n'a aucun import : **zéro `astro:content`**, direct ou transitif — vérifié par le contrôleur puis par le relecteur sur le graphe d'imports, pas sur le rapport. Les 2 suites préexistantes modifiées (`posts.test.ts`, `projectFilters.test.ts`) le sont **par ajout seul** : aucune assertion existante affaiblie, renommée ou supprimée. Le relecteur a **recalculé à la main** les valeurs attendues de chaque `describe` — les 5 ordres de tri, l'arithmétique du compte, la chaîne de méta caractère par caractère, le message d'état vide : toutes découlent de l'implémentation, aucune n'a été ajustée après coup, et aucun test tautologique. À re-vérifier en Phase Z. |
-| R12 | 375 px et deux thèmes sur les 4 listes, sans contrôle inatteignable | Pending | Couvert par T-D1. |
+| R12 | 375 px et deux thèmes sur les 4 listes, sans contrôle inatteignable | Done | **Aucun commit — rien n'était à corriger.** 4 listes × 2 thèmes × 375/768/1180 px = **24 mesures sur 24** conformes, `scrollWidth === innerWidth` partout : aucun débordement, et aucun coussin non plus. Contrôles à 375 px tous atteignables dans les 2 thèmes, rect non nul (le plus petit mesuré : 40×26 px) ; le bouton de réinitialisation est à 0×0 tant que son conteneur est `hidden`, et devient atteignable (184×26) dès qu'un état vide est réellement produit — comportement voulu, pas défaut. Mesures prises en posant `localStorage.theme` puis en **rechargeant**, jamais après une bascule à chaud (contrainte n°4). |
 
 ## Status legend
 - **Done** — verified, criteria passed (link to commit SHA)
@@ -37,7 +37,7 @@ Last updated by: main (contrôleur SDD)
 | B3 | B | R3, R4, R5, R6, R7, R10 — `/projets` rend les 6 éléments + le script de glue unique | Done (`5622987`, correctif `26757a9`) |
 | C1 | C | R9, R7 (tri), R8 — `/blog` | Done (`f33b4e0`, correctif `fe56fe5`) — voir D02 |
 | C2 | C | R9, R8 — `/prompts` et `/skills` | Done (`6a53050`) — voir D03 |
-| D1 | D | R12 (+ V2, V6) — 4 listes × 2 thèmes × 375/768/1180 px | In progress |
+| D1 | D | R12 (+ V2, V6) — 4 listes × 2 thèmes × 375/768/1180 px | Done (aucun commit) — **V2 en échec, voir D04** |
 | Z1 | Z | Audit `/anti-drift-planning:verify 7` (couverture R1–R12 + V1–V8) | Pending |
 
 ## Critères du contrat visuel (V1–V8, §10) — rattachement
@@ -48,11 +48,11 @@ La méthodologie §4.2 les rend applicables en Phase Z de chaque plan de la vagu
 | V | Critère | Tâche | Statut |
 |---|---|---|---|
 | V1 | Les 23 tokens dans les 2 thèmes | — | Acquis au Plan 6 (`6af9329`) ; aucune tâche de P7 ne touche `@theme`. Re-vérifié en Z1. |
-| V2 | Aucun saut de niveau de surface | D1 | Pending — **c'est le plan qui donne enfin du travail à V2** (spec §6.4) : la vignette consomme `rail`, jusqu'ici peint par rien. Audit **en sombre** uniquement. |
-| V3 | Grammaire des accents respectée en sombre | D1 | Pending — les contrôles nouveaux (pilules, dropdowns, bouton de reset) ne doivent pas mélanger vert et bleu. |
+| V2 | Aucun saut de niveau de surface | D1 | **ÉCHEC — `pending-user` via D04.** Le critère se lit « aucune occurrence de `rail` sur `surface` » : les 4 cartes sont `bg-surface`, la vignette est `bg-rail`. Le saut est réel, mesuré en sombre, et **rien n'a été exécuté** — les deux réparations prescrites coûtent chacune plus que le défaut (voir D04). **C'est le premier vrai cas de test de V2 depuis que le contrat existe** : le ledger du Plan 6 annonçait que « P7 lui donnera de quoi échouer », et c'est fait. Le premier cas réel le fait échouer. |
+| V3 | Grammaire des accents respectée en sombre | D1 | **Done.** Les contrôles nouveaux (pilules de filtre, dropdowns, bouton de réinitialisation, ligne de méta) prennent `line`/`muted`/`dim`/`accent` — aucun ne porte de bleu, donc aucun ne porte les deux accents. Vérifié au rendu en sombre sur les 4 listes. |
 | V4 | Thème clair sans bleu | — | Acquis au Plan 6. Contrainte globale n°8 du plan d'impl. |
-| V5 | Mono réservé à la donnée machine | B3, C1, C2 | Pending — la **ligne de méta** est de la donnée (compteur, mono) ; le **message d'état vide** est de la prose (jamais mono). Contrainte globale n°7. |
-| V6 | Rayons ∈ {9, 10, 14, 20, 999}px | D1 | Pending — gate repo-wide en T-D1/Step 4. |
+| V5 | Mono réservé à la donnée machine | B3, C1, C2 | **Done.** La ligne de méta est un compteur — donnée machine, `font-mono` justifié. Le message d'état vide est de la prose et rendu en `text-sm text-muted`, **jamais en mono** : vérifié au rendu sur les 4 listes par les relecteurs de T-B3, T-C1 et T-C2. |
+| V6 | Rayons ∈ {9, 10, 14, 20, 999}px | D1 | **Done.** Gate repo-wide : **sortie vide**. Les cinq utilitaires nommés restent le seul chemin ; aucune valeur brute n'a été introduite par ce plan. |
 | V7 | Space Grotesk et Inter retirés | — | Acquis au Plan 6 (`30c9ed0`). |
 | V8 | Contrastes AA | A1 | **Done (`53441e6`).** 6 ratios sur 6 ≥ 4.5, mesurés deux fois indépendamment. La formule du plan ignorait l'alpha et garantissait 1.0 sur `accent`/`accentSoft` : corrigée (P-06), la mesure passe par un compositing sur le fond opaque réel. |
 
