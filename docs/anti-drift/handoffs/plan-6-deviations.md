@@ -68,6 +68,38 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   ce bouton-là ne soit plus rond mais une pilule dès `sm` — ce qui rend R7 (« trois boutons ronds »)
   faux à la lettre et demandera soit un arbitrage sur R7, soit de masquer `⌘K` entièrement.
 
+## D02 — deux palettes hors des 23 tokens restent en place, rattachement reporté à P8
+
+- **Date:** 2026-09-13
+- **Task affected:** T-D1 — **non exécutée**, signalée avant toute modification.
+  Fichiers concernés : `src/lib/aiUsage.ts` (signalétique de transparence IA : slate / ambre / bleu,
+  consommée par `AiBanner`) et `src/lib/projectStatus.ts` (statut `wip` en ambre).
+- **Original plan:** la contrainte globale n°1 du plan d'impl dit « Aucune valeur de couleur […]
+  écrite en dur dans un template. Toute valeur vient d'un token défini dans `@theme` ». Le contrat
+  visuel §2 fixe **23 tokens**, et la Phase D a pour mandat de faire consommer les nouveaux tokens
+  aux composants existants.
+- **Deviation taken:** les deux palettes sont **laissées en l'état**. Elles utilisent des couleurs
+  Tailwind par défaut (`amber`, `blue`, `slate`) qui ne sont ni parmi les 23 tokens, ni des valeurs
+  codées en dur au sens littéral.
+- **Reason:** fait établi **sur les critères, pas sur une impression** : aucun critère mesurable
+  n'est violé — V3 passe (l'ambre n'est ni le vert ni le bleu d'accent), V4 passe (le bleu Tailwind
+  n'est pas `#7DD3FC`). Et surtout : neutraliser tout de suite ces palettes sur `chip`/`ink`/`dim`
+  **ferait perdre son code couleur à la signalétique de transparence IA** — les trois niveaux
+  `none`/`partial`/`full` ne se distingueraient plus, alors que c'est le dispositif distinctif du
+  site et l'objet entier de `/transparence-ia`. Le foyer naturel de ces teintes est le système des
+  **5 tons de tags du contrat §2.3**, que la spec §5 place explicitement en **P8** (« les 5 teintes
+  sont dans le contrat visuel mais ne sont consommées qu'en P8 avec `/tags` »).
+- **Reversibility:** `cheap` — deux fichiers de `src/lib/`, aucune structure touchée, aucune donnée.
+  Le rattachement aux tons de §2.3 est un remplacement de chaînes de classes.
+- **Caught late:** `no` — signalée **avant** exécution, et rien n'a été modifié dans ces deux
+  fichiers. C'est le cas nominal du protocole.
+- **Status:** pending-user
+- **User decision:** _(vide jusqu'à une décision explicite de l'utilisateur)_
+- **Follow-up:** si rejetée, rattacher dès ce plan les deux palettes aux 5 tons du contrat §2.3 —
+  ce qui oblige à faire entrer ces 5 triplets dans `global.css` maintenant au lieu de P8, et donc à
+  livrer en P6 une partie de ce que la spec §5 a explicitement reporté. Si approuvée, la spec de P8
+  doit porter la reprise des deux palettes comme un item nommé, pas comme un sous-entendu.
+
 ---
 
 ## Rappel du discriminant déviation / défaut de plan

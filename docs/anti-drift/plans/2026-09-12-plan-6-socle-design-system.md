@@ -528,10 +528,16 @@ apparaître, c'est un défaut à corriger, pas à harmoniser.
 Les 19 `rounded-lg`, 5 `rounded-xl`, 7 `rounded`, 1 `rounded-md` deviennent `rounded-card` (20),
 `rounded-inner` (14), `rounded-thumb` (10), `rounded-badge` (9) ou `rounded-pill` (999) selon
 l'usage du contrat §3.2. Après la passe :
+Le gate de T-D1 est **scopé à ses propres fichiers** — `src/pages/` appartient à T-D2 et portera
+encore ses anciens rayons à ce stade. Il exclut aussi les lignes de commentaire : un commentaire qui
+cite `rounded-full` pour l'interdire n'est pas un rayon.
+
 ```bash
-grep -rnE 'rounded(-(sm|md|lg|xl|2xl|3xl|none|full))?\b' src/ | grep -vE 'rounded-(card|inner|thumb|badge|pill)'
+grep -rnE 'rounded(-(sm|md|lg|xl|2xl|3xl|none|full))?\b' src/components/ src/lib/ src/scripts/ \
+  | grep -vE 'rounded-(card|inner|thumb|badge|pill)' | grep -vE ':\s*(//|/\*|\*)'
 ```
-Attendu : **aucune ligne**.
+Attendu : **aucune ligne**. Le gate **repo-wide** est le critère d'acceptation de **T-D2**, pas de
+celui-ci (ruling R-03 du scan de pré-flight).
 
 - [ ] **Step 4 — Vérifier la non-régression de structure (R10)**
 
@@ -583,12 +589,23 @@ Toute correction est un changement de classe utilitaire. Si une correction exige
 retirer ou déplacer un élément du DOM, **c'est une déviation à consigner avant de l'exécuter**
 (R10 l'interdit explicitement).
 
-- [ ] **Step 5 — Contrôle de non-régression des 4 routes hors périmètre**
+- [ ] **Step 5 — Le gate V6 repo-wide**
+
+C'est ici, et pas en T-D1, que le contrôle des rayons couvre tout le dépôt : T-D1 ne pouvait pas
+satisfaire un gate portant sur des fichiers que T-D2 possède.
+
+```bash
+grep -rnE 'rounded(-(sm|md|lg|xl|2xl|3xl|none|full))?\b' src/ \
+  | grep -vE 'rounded-(card|inner|thumb|badge|pill)' | grep -vE ':\s*(//|/\*|\*)'
+```
+Attendu : **aucune ligne**.
+
+- [ ] **Step 6 — Contrôle de non-régression des 4 routes hors périmètre**
 
 `/transparence-ia`, `/tags`, `/tags/[tag]`, `/404` doivent builder et rendre avec les nouveaux
 tokens. Leur audit 375 px / AA appartient à P8 : consigner les constats, ne pas les traiter ici.
 
-- [ ] **Step 6 — Commit** — `chore(p6): passe de non-regression visuelle sur les 10 routes`
+- [ ] **Step 7 — Commit** — `chore(p6): passe de non-regression visuelle sur les 10 routes`
 
 ---
 
