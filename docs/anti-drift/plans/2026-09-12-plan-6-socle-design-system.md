@@ -46,6 +46,18 @@ Ces contraintes s'appliquent à **toutes** les tâches. Elles ne sont pas redite
    déviation, pas une correction.
 10. Chaque tâche finit par **un commit** et par la **mise à jour du ledger**
     (`chore(p6): ledger after T-<x>`).
+11. **`@theme static` ne se supprime pas.** Tailwind v4 élague les variables `@theme` que rien ne
+    référence ; le mot-clé `static` désactive cet élagage. Sans lui, six tokens clairs (`card`,
+    `rail`, `chip`, `panel`, `nav`, `hatch`) disparaissent du bundle **en silence** — ni build
+    rouge, ni test rouge, seulement un trou visible en thème clair. Mesuré sur ce dépôt en T-A2.
+    Le contrôle qui l'attrape n'est pas un `grep` de `global.css` mais l'extraction du bloc
+    `:root` émis dans `dist/_astro/*.css` après `npm run build`.
+12. **L'ombre ne se consomme pas par l'utilitaire `.shadow`.** Mesuré en T-A2 sur le bundle :
+    Tailwind v4 **inline la valeur claire à la compilation** dans `.shadow`, donc la surcharge
+    sombre ne l'atteint jamais. La variable `var(--shadow)`, elle, bascule correctement. Le seul
+    chemin de consommation valide est `box-shadow: var(--shadow)` en CSS dans `global.css` —
+    ce que le contrat §4 prescrit de toute façon. Les utilitaires de rayon, eux, lisent bien leur
+    variable : pas de piège équivalent.
 
 ### Conventions de nommage arrêtées par ce plan (spec muette)
 
