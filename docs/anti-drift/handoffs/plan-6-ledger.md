@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (T-D1 en cours)
+Last updated: 2026-09-13 (T-D2 en cours)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -37,8 +37,8 @@ Last updated by: main (contrôleur SDD)
 | B2 | B | R9 (+ V5, V6) — `.prose` accordé | Done (`8c3e1c4`, correctif `ea31341`) |
 | C1 | C | R5, R6 (+ E1) — logo en pilule, nav en pilules à icônes, actif par famille de routes | Done (`513ae83`) |
 | C2 | C | R7, R11 header (+ E2) — barre d'actions ronde, responsive 375 px | Done (`8dc8976`) — voir D01 |
-| D1 | D | R10 composants (+ V2, V3, V6) — les 8 composants sur les tokens v2 | In progress |
-| D2 | D | R10, R11, R12 (+ V5) — parcours 10 routes × 2 thèmes × 3 largeurs | Pending |
+| D1 | D | R10 composants (+ V2, V3, V6) — les 8 composants sur les tokens v2 | Done (`c313362`) — voir D02 |
+| D2 | D | R10, R11, R12 (+ V5) — parcours 10 routes × 2 thèmes × 3 largeurs · + le gate V6 repo-wide | In progress |
 | Z1 | Z | Audit `/anti-drift-planning:verify 6` (couverture R1–R12 + V1–V8) | Pending |
 
 ## Critères du contrat visuel (V1–V8, §10) — rattachement
@@ -49,11 +49,11 @@ dans la spec §3 : les rattacher explicitement évite qu'ils surgissent en Phase
 | V | Critère | Tâche | Statut |
 |---|---|---|---|
 | V1 | Les 23 tokens dans les 2 thèmes | A2 | Done (`6af9329`) |
-| V2 | Aucun saut de niveau de surface | D1 | Pending |
-| V3 | Grammaire des accents respectée en sombre | D1 | Header OK (`8dc8976`) — reste D1. Le relecteur a établi que les 5 pilules de nav ne portent **aucun** accent (elles prennent `nav`/`line`/`ink`/`muted`, neutres), et que seule la pilule du logo porte le vert — identité, pas navigation. Aucun élément ne porte les deux. |
+| V2 | Aucun saut de niveau de surface | D1 | Done (`c313362`) — audité **en sombre**, seul thème où un saut est visible : le contrat donne `card` = `surface` = `#FFFFFF` en clair. Les 8 composants sont posés sur `bg` ; aucun saut. Un défaut réel corrigé au passage : la puce de statut `archivé` était en `bg-surface` sur une carte déjà `surface` — invisible en clair, corrigée en `bg-chip`. |
+| V3 | Grammaire des accents respectée en sombre | D1 | Done (`c313362`). Le relecteur a établi que les 5 pilules de nav ne portent **aucun** accent (elles prennent `nav`/`line`/`ink`/`muted`, neutres), et que seule la pilule du logo porte le vert — identité, pas navigation. Aucun élément ne porte les deux. Côté composants, le relecteur a établi qu'aucun des quatre tokens porteurs de bleu (`badgeInk`, `badgeBg`, `panel`, `panelLine`) n'apparaît dans les 10 fichiers, et vérifié au rendu dans les deux thèmes. |
 | V4 | Thème clair sans bleu | A2 | Done (`6af9329`) |
-| V5 | Mono réservé à la donnée machine | B2, D2 | Done pour `.prose` (`8c3e1c4`) — reste D2 pour les pages |
-| V6 | Rayons ∈ {9, 10, 14, 20, 999}px | B1, B2, D1 | Done pour `global.css` (`8c3e1c4`) — reste D1/D2 pour les templates |
+| V5 | Mono réservé à la donnée machine | B2, D1, D2 | `.prose` (`8c3e1c4`) et `SearchDialog` (`c313362`) — reste D2 pour les pages. Le correctif de `SearchDialog` a traité la **cause systémique**, pas la ligne signalée : les 4 états dynamiques passent tous par `message()` dans `search.ts`, qui réécrit ce même `<p>` dès la première frappe — ne corriger que la ligne statique aurait donné un correctif qui s'annule au premier caractère tapé. |
+| V6 | Rayons ∈ {9, 10, 14, 20, 999}px | B1, B2, D1, D2 | `global.css` (`8c3e1c4`) et les composants (`c313362`) — reste le gate **repo-wide** en T-D2. Deux arbitrages sont assumés et consignés plutôt que maquillés : les boutons du `Hero` en `rounded-pill` et les lignes de résultat de recherche en `rounded-thumb` — le §3.2 nomme 10px pour « vignette, petite image », pas pour une ligne de texte. |
 | V7 | Space Grotesk et Inter retirés | A1 | Done (`30c9ed0`) |
 | V8 | Contrastes AA | A2 | Done (`8b977f6`) |
 
@@ -137,6 +137,18 @@ aucun n'exige un arbitrage, chacun a une tâche d'accueil déjà prévue au plan
 - **Constat pour T-D1/T-D2 — la hiérarchie des surfaces (§2.1) n'est auditable qu'en sombre.** En
   clair, le contrat donne `card` = `surface` = `#FFFFFF` : un saut de niveau y est littéralement
   invisible. V2 se vérifie donc en thème sombre, pas en clair.
+- **Piste pour la spec de P7 — envelopper les 4 patrons dans `@layer components`.** Proposée par le
+  relecteur de T-D1 comme la correction de fond du piège de la contrainte n°13 : les patrons étant
+  hors layer, ils battent tout utilitaire, en silence. Les mettre dans `@layer components` rendrait
+  aux utilitaires leur comportement normal et supprimerait le piège pour de bon. **Non faite ici, et
+  ce n'est pas une déviation puisqu'elle n'est pas faite** : l'exécuter serait *ajouter une tâche*
+  au plan, ce que le protocole classe explicitement comme déviation. P7 est le plan qui construira
+  massivement avec ces patrons — c'est là que la question doit être tranchée, dans sa spec.
+- **Constat pour P8 — `backdrop:bg-black/60` reste tel quel, faute de token adapté.** Examiné en
+  T-D1 : le contrat §2 n'a aucun rôle de voile ou de calque ; les deux candidats les plus proches
+  (`bg`, `code`) sont **plus clairs que la page elle-même** en thème clair, ce qui supprimerait la
+  seule fonction du voile. Dire « aucun token ne convient » est la bonne réponse ; en forcer un ne
+  l'aurait pas été.
 - **Accessibilité de la palette Shiki — constat mesuré, hors périmètre du contrat.** Poser
   `--color-code` sur les blocs de code déplace le contraste de **toutes** les couleurs de syntaxe.
   Mesuré site-wide sur `dist/` : en **clair** (`#fff` → `#EFF3F7`), trois couleurs passent juste
