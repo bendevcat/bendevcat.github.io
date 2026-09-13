@@ -17,10 +17,18 @@ const LABELS: ListLabels = {
   ],
 };
 
+// Fix 6 (revue finale) : `a` porte un rang MILIEU sur `date` ET `minutes` —
+// pas l'extrême des deux comme avant. Avec l'ancien montage (a: date 300 max,
+// minutes 9 max), `a` sortait toujours en tête (none/recent/longest) ou en
+// queue (oldest/shortest) du tableau trié, jamais au milieu : retirer `a` par
+// id revenait alors à retirer le premier ou le dernier élément, et un bug de
+// type « on retire l'extrémité plutôt que l'entrée featured » serait passé
+// inaperçu sur 3 des 5 tris. Voir describe('computeListState — tri (R7)')
+// pour le recalcul détaillé de chaque ordre.
 const ENTRIES: ListEntry[] = [
-  { id: 'a', facets: { stack: ['Astro'], status: ['wip'] }, featured: true, date: 300, minutes: 9 },
-  { id: 'b', facets: { stack: ['Bash'], status: ['actif'] }, featured: false, date: 200, minutes: 3 },
-  { id: 'c', facets: { stack: ['Astro'], status: ['actif'] }, featured: false, date: 100, minutes: 5 },
+  { id: 'a', facets: { stack: ['Astro'], status: ['wip'] }, featured: true, date: 200, minutes: 5 },
+  { id: 'b', facets: { stack: ['Bash'], status: ['actif'] }, featured: false, date: 300, minutes: 3 },
+  { id: 'c', facets: { stack: ['Astro'], status: ['actif'] }, featured: false, date: 100, minutes: 9 },
 ];
 const NONE = { stack: ALL, status: ALL };
 
@@ -97,6 +105,15 @@ describe('computeListState — ligne de méta (R4)', () => {
   it('accorde au pluriel et n’annonce aucune facette quand aucune n’est active', () => {
     expect(computeListState(ENTRIES, NONE, 'none', LABELS).meta).toBe('3 projets');
   });
+  // Fix 1 (revue finale) : le français accorde le singulier après zéro aussi
+  // bien qu'après un — « 0 prompt », jamais « 0 prompts ». `count === 1`
+  // laissait passer `count === 0` au pluriel ; c'est la même faute que P-13
+  // avait corrigée pour « 1 projet », côté symétrique.
+  it('accorde AUSSI le singulier à zéro (Fix 1 — symétrique de P-13)', () => {
+    const state = computeListState(ENTRIES, { stack: 'Bash', status: 'wip' }, 'none', LABELS);
+    expect(state.count).toBe(0);
+    expect(state.meta).toBe('0 projet · techno Bash · statut wip');
+  });
 });
 
 describe('computeListState — état vide (R6)', () => {
@@ -109,6 +126,32 @@ describe('computeListState — état vide (R6)', () => {
     expect(state.empty).toBe('Aucun projet pour techno Bash et statut wip.');
     expect(state.featuredId).toBeNull();
   });
+
+  // Fix 4 (revue finale) : au-delà de deux facettes, ' et ' partout chaîne
+  // « outil Claude et format guide et tag prompt-engineering » — l'énumération
+  // correcte réserve « et » au dernier terme et sépare les autres par des
+  // virgules. Les tests existants ne dépassaient jamais deux facettes actives.
+  it('énumère trois facettes actives avec des virgules et « et » avant la dernière (Fix 4)', () => {
+    const labelsTroisFacettes: ListLabels = {
+      singular: 'prompt',
+      plural: 'prompts',
+      facets: [
+        { key: 'tool', label: 'outil' },
+        { key: 'format', label: 'format' },
+        { key: 'tag', label: 'tag' },
+      ],
+    };
+    const state = computeListState(
+      [],
+      { tool: 'Claude', format: 'guide', tag: 'prompt-engineering' },
+      'none',
+      labelsTroisFacettes,
+    );
+    expect(state.count).toBe(0);
+    expect(state.empty).toBe(
+      'Aucun prompt pour outil Claude, format guide et tag prompt-engineering.',
+    );
+  });
 });
 
 describe('computeListState — tri (R7)', () => {
@@ -116,6 +159,19 @@ describe('computeListState — tri (R7)', () => {
   // reste « a » quel que soit le tri : elle se dérive de l’ordre CANONIQUE
   // (spec §6.1), pas de l’ordre courant. C’est ce qui garde le client d’accord
   // avec le slot que le serveur a rendu.
+  //
+  // Fix 6 (revue finale) — recalcul à la main avec la fixture ENTRIES à jour
+  // (a: date 200/minutes 5, b: date 300/minutes 3, c: date 100/minutes 9),
+  // sur `filtered = [a, b, c]` (ordre canonique, aucune facette active) :
+  //   none     → pas de tri            → [a,b,c] → retire a → [b,c]
+  //   recent   → date desc (b,a,c)     → [b,a,c] → retire a → [b,c]  (a AU MILIEU)
+  //   oldest   → date asc  (c,a,b)     → [c,a,b] → retire a → [c,b]  (a AU MILIEU)
+  //   shortest → minutes asc (b,a,c)   → [b,a,c] → retire a → [b,c]  (a AU MILIEU)
+  //   longest  → minutes desc (c,a,b)  → [c,a,b] → retire a → [c,b]  (a AU MILIEU)
+  // Sous les 4 tris (tous sauf `none`), `a` est désormais retiré du MILIEU du
+  // tableau trié plutôt que d'une extrémité — c'est ce qui exerce vraiment la
+  // garde (avant Fix 6, seuls 2 des 5 tris y parvenaient, `a` occupant
+  // toujours l'extrémité du tableau).
   const ORDERS: Array<[Parameters<typeof computeListState>[2], string[]]> = [
     ['none', ['b', 'c']],
     ['recent', ['b', 'c']],

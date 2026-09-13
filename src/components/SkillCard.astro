@@ -8,15 +8,27 @@ interface Props {
   featured?: boolean;
   /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
   hidden?: boolean;
+  /**
+   * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
+   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
+   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
+   */
+  isFeaturedEntry?: boolean;
 }
 
-const { skill, featured = false, hidden = false } = Astro.props;
+const { skill, featured = false, hidden = false, isFeaturedEntry = false } = Astro.props;
 const { title, description, type, version, tags } = skill.data;
 
 // Même contrat que PromptCard.astro, lu par src/scripts/list-pattern.ts.
 const facets = JSON.stringify({ type: [type], tag: tags });
 ---
 
+{/*
+  `data-featured` reflète le choix RÉEL du serveur (`isFeaturedEntry`) : le
+  schéma `skills` n'a pas de champ `featured` (état mesuré du plan), donc sans
+  cet attribut explicite le client ne pouvait retrouver l'entrée à la une que
+  par coïncidence d'ordre — fix 3, revue finale de Plan 7.
+*/}
 <a
   href={`/skills/${skill.id}/`}
   class:list={[
@@ -27,6 +39,7 @@ const facets = JSON.stringify({ type: [type], tag: tags });
   data-facet={facets}
   data-date={0}
   data-minutes={0}
+  data-featured={isFeaturedEntry ? '' : undefined}
   hidden={hidden}
 >
   <Thumbnail title={title} derivedFrom={type} size={featured ? 'featured' : 'card'} />

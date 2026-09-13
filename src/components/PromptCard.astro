@@ -8,9 +8,15 @@ interface Props {
   featured?: boolean;
   /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
   hidden?: boolean;
+  /**
+   * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
+   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
+   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
+   */
+  isFeaturedEntry?: boolean;
 }
 
-const { prompt, featured = false, hidden = false } = Astro.props;
+const { prompt, featured = false, hidden = false, isFeaturedEntry = false } = Astro.props;
 const { title, description, format, tool, tags } = prompt.data;
 
 // Contrat de carte commun aux quatre listes (Plan 7 / I4), lu par
@@ -21,6 +27,12 @@ const { title, description, format, tool, tags } = prompt.data;
 const facets = JSON.stringify({ format: [format], tool: [tool], tag: tags });
 ---
 
+{/*
+  `data-featured` reflète le choix RÉEL du serveur (`isFeaturedEntry`) : le
+  schéma `prompts` n'a pas de champ `featured` (état mesuré du plan), donc
+  sans cet attribut explicite le client ne pouvait retrouver l'entrée à la une
+  que par coïncidence d'ordre — fix 3, revue finale de Plan 7.
+*/}
 <a
   href={`/prompts/${prompt.id}/`}
   class:list={[
@@ -31,6 +43,7 @@ const facets = JSON.stringify({ format: [format], tool: [tool], tag: tags });
   data-facet={facets}
   data-date={0}
   data-minutes={0}
+  data-featured={isFeaturedEntry ? '' : undefined}
   hidden={hidden}
 >
   <Thumbnail title={title} derivedFrom={format} size={featured ? 'featured' : 'card'} />

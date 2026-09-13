@@ -53,6 +53,17 @@ function activeFacets(selected: FacetSelection, labels: ListLabels): string[] {
 }
 
 /**
+ * Énumération française : `a`, `a et b`, `a, b et c` (Fix 4, revue finale).
+ * Joindre TOUT avec ' et ' donnait « outil Claude et format guide et tag
+ * prompt-engineering » dès trois facettes actives — « et » ne doit relier que
+ * le dernier terme, les autres se séparent par une virgule.
+ */
+function joinWithEt(items: string[]): string {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
+}
+
+/**
  * Règle de dérivation de l'entrée à la une (spec §6.1) : `featured: true` là où
  * le champ existe, à défaut la PREMIÈRE entrée de l'ordre canonique. Exportée
  * pour que les pages l'appellent CÔTÉ SERVEUR et désignent exactement la même
@@ -121,7 +132,10 @@ export function computeListState(
   const count = visibleIds.length + (featured ? 1 : 0);
 
   const active = activeFacets(selected, labels);
-  const noun = count === 1 ? labels.singular : labels.plural;
+  // Fix 1 (revue finale de Plan 7) : le français accorde le singulier après
+  // zéro comme après un — « 0 prompt », jamais « 0 prompts ». P-13 avait déjà
+  // corrigé « 1 projets » ; `count === 1` laissait passer le cas symétrique.
+  const noun = count <= 1 ? labels.singular : labels.plural;
   const meta = [`${count} ${noun}`, ...active].join(' · ');
 
   // R6 : contextualisé — le message nomme les facettes actives. Prose, donc
@@ -130,7 +144,7 @@ export function computeListState(
     count > 0
       ? null
       : active.length > 0
-        ? `Aucun ${labels.singular} pour ${active.join(' et ')}.`
+        ? `Aucun ${labels.singular} pour ${joinWithEt(active)}.`
         : `Aucun ${labels.singular} à afficher.`;
 
   return { visibleIds, count, featuredId: featured?.id ?? null, meta, empty };

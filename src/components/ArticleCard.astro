@@ -19,9 +19,21 @@ interface Props {
   featured?: boolean;
   /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
   hidden?: boolean;
+  /**
+   * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
+   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
+   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
+   */
+  isFeaturedEntry?: boolean;
 }
 
-const { post, filterable = false, featured = false, hidden = false } = Astro.props;
+const {
+  post,
+  filterable = false,
+  featured = false,
+  hidden = false,
+  isFeaturedEntry = false,
+} = Astro.props;
 const { title, description, pubDate, category, tags, cover, coverAlt, aiUsage } = post.data;
 
 const dateFr = pubDate.toLocaleDateString('fr-FR', {
@@ -40,7 +52,11 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
   est du JSON : aucune valeur de facette ne peut casser le parsing, quel que
   soit son libellé. `data-date` = pubDate en millisecondes, `data-minutes` =
   temps de lecture estimé : ce sont les deux clés que lisent les tris
-  shortest/longest et recent/oldest (R7).
+  shortest/longest et recent/oldest (R7). `data-featured` reflète le choix
+  RÉEL du serveur (`isFeaturedEntry`), pas la seule présence de
+  `post.data.featured` : sur /blog aucune entrée ne porte ce champ à ce jour,
+  et les deux côtés ne s'accordaient que par coïncidence d'ordre — fix 3,
+  revue finale de Plan 7.
 */}
 <article
   class:list={[
@@ -51,7 +67,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
   data-facet={JSON.stringify({ category: [category], tag: tags.map(tagSlug) })}
   data-date={pubDate.getTime()}
   data-minutes={readingMinutes}
-  data-featured={post.data.featured ? '' : undefined}
+  data-featured={isFeaturedEntry ? '' : undefined}
   hidden={hidden}
 >
   <Thumbnail

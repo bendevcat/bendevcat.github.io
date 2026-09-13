@@ -84,11 +84,11 @@ const NOUNS = ['skill', 'skills'] as const;
 			</div>
 
 			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
-			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{skills.length} {skills.length === 1 ? NOUNS[0] : NOUNS[1]}</p>
+			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{skills.length} {skills.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
 
 			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
 			<div class="mb-6" data-list-featured>
-				{featured && <SkillCard skill={featured} featured />}
+				{featured && <SkillCard skill={featured} featured isFeaturedEntry />}
 			</div>
 
 			{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
@@ -97,7 +97,11 @@ const NOUNS = ['skill', 'skills'] as const;
 			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
 				{
 					skills.map((skill) => (
-						<SkillCard skill={skill} hidden={skill.id === featured?.id} />
+						<SkillCard
+							skill={skill}
+							hidden={skill.id === featured?.id}
+							isFeaturedEntry={skill.id === featured?.id}
+						/>
 					))
 				}
 			</div>

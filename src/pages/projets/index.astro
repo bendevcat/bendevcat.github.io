@@ -81,11 +81,11 @@ const NOUNS = ['projet', 'projets'] as const;
 			</div>
 
 			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
-			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} {projects.length === 1 ? NOUNS[0] : NOUNS[1]}</p>
+			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} {projects.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
 
 			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
 			<div class="mb-6" data-list-featured>
-				{featured && <ProjectCard project={featured} featured />}
+				{featured && <ProjectCard project={featured} featured isFeaturedEntry />}
 			</div>
 
 			{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
@@ -94,7 +94,11 @@ const NOUNS = ['projet', 'projets'] as const;
 			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
 				{
 					projects.map((project) => (
-						<ProjectCard project={project} hidden={project.id === featured?.id} />
+						<ProjectCard
+							project={project}
+							hidden={project.id === featured?.id}
+							isFeaturedEntry={project.id === featured?.id}
+						/>
 					))
 				}
 			</div>
@@ -111,9 +115,9 @@ const NOUNS = ['projet', 'projets'] as const;
 				</button>
 			</div>
 		</section>
-	</main>
 
-	<script>
-		import '../../scripts/list-pattern.ts';
-	</script>
+		<script>
+			import '../../scripts/list-pattern.ts';
+		</script>
+	</main>
 </BaseLayout>

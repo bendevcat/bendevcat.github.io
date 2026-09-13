@@ -1,11 +1,12 @@
 /**
  * Relais des puces de carte vers la barre de facettes (R4).
  *
- * `src/scripts/facet-filters.ts` (Plan 4) n'écoute que les boutons situés DANS
- * `[data-facet-filters]`. Plutôt que d'élargir sa requête — ce qui toucherait
- * /prompts et /skills, livrés et vérifiés —, on redirige le clic d'une puce
- * de carte vers le bouton équivalent de la barre : un seul état, celui du
- * moteur, et zéro duplication de logique de filtrage.
+ * `src/scripts/list-pattern.ts` (Plan 7) n'écoute que les boutons situés DANS
+ * `[data-list-filters]` — c'est LE script de glue des quatre listes. Plutôt
+ * que d'élargir sa requête aux puces de carte — ce qui le changerait aussi
+ * pour /projets, /prompts et /skills, qui n'en ont pas —, on redirige le clic
+ * d'une puce de carte vers le bouton équivalent de la barre : un seul état,
+ * celui du moteur, et zéro duplication de logique de filtrage.
  */
 // Nommé `facetToolbar` (et non `toolbar`) : ce fichier n'a aucun import et
 // reste donc un script global pour TypeScript — `toolbar` collisionnerait

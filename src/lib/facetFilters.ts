@@ -3,7 +3,7 @@
  * l'adaptateur `projectFilters.ts`, par /projets.
  *
  * AUCUN import ici — surtout pas `astro:content`. Ce module est chargé par le
- * navigateur (src/scripts/facet-filters.ts) ET par les tests unitaires ; le
+ * navigateur (src/scripts/list-pattern.ts) ET par les tests unitaires ; le
  * garder sans dépendance est ce qui rend les deux possibles.
  *
  * Toutes les valeurs d'entrée sont des tableaux, même les facettes
@@ -33,7 +33,7 @@ export function matchesFacets(entry: FacetValues, selected: FacetSelection): boo
     if (value === ALL) return true;
     const values = entry[key];
     // Garde de type : `entry` vient d'un `JSON.parse` non garanti côté
-    // navigateur (cf. src/scripts/facet-filters.ts). Une valeur qui n'est pas
+    // navigateur (cf. src/scripts/list-pattern.ts). Une valeur qui n'est pas
     // un tableau — ex. `{ format: 'fiche' }` au lieu de `['fiche']` — ne doit
     // jamais matcher : sans cette garde, `.includes` sur une chaîne devient un
     // matching de sous-chaîne (`'fiche'.includes('fic')` → true), ce qui
