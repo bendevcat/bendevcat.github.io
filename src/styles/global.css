@@ -130,35 +130,37 @@
    deux niveaux distincts, pas une variante de taille du même niveau.
    ========================================================================== */
 
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-}
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
 
-.card-inner {
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-inner);
-  /* JAMAIS via l'utilitaire `.shadow` : Tailwind v4 fige la valeur claire au
-     build dans `.shadow`, l'override sombre de `--shadow` ne l'atteint donc
-     jamais (constat mesuré sur le bundle en Phase A). `var(--shadow)` posé
-     ici, en CSS écrit à la main, bascule correctement entre les thèmes. */
-  box-shadow: var(--shadow);
-}
+  .card-inner {
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-inner);
+    /* JAMAIS via l'utilitaire `.shadow` : Tailwind v4 fige la valeur claire au
+       build dans `.shadow`, l'override sombre de `--shadow` ne l'atteint donc
+       jamais (constat mesuré sur le bundle en Phase A). `var(--shadow)` posé
+       ici, en CSS écrit à la main, bascule correctement entre les thèmes. */
+    box-shadow: var(--shadow);
+  }
 
-.panel {
-  background: var(--color-panel);
-  border: 1px solid var(--color-panelLine);
-  border-radius: var(--radius-card);
-}
+  .panel {
+    background: var(--color-panel);
+    border: 1px solid var(--color-panelLine);
+    border-radius: var(--radius-card);
+  }
 
-.pill {
-  border-radius: var(--radius-pill);
-  padding: 0.25em 0.75em;
-  background: var(--color-accentSoft);
-  color: var(--color-accent);
-  font-family: var(--font-mono);
+  .pill {
+    border-radius: var(--radius-pill);
+    padding: 0.25em 0.75em;
+    background: var(--color-accentSoft);
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+  }
 }
 
 html { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-body); }
