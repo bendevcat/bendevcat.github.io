@@ -1,23 +1,36 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import Thumbnail from './Thumbnail.astro';
 
 interface Props {
   skill: CollectionEntry<'skills'>;
+  /** Variante « à la une » : carte large, vignette en 16/7. */
+  featured?: boolean;
+  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
+  hidden?: boolean;
 }
 
-const { skill } = Astro.props;
+const { skill, featured = false, hidden = false } = Astro.props;
 const { title, description, type, version, tags } = skill.data;
 
-// Même contrat que PromptCard (T-B1), lu par src/scripts/facet-filters.ts.
+// Même contrat que PromptCard.astro, lu par src/scripts/list-pattern.ts.
 const facets = JSON.stringify({ type: [type], tag: tags });
 ---
 
 <a
   href={`/skills/${skill.id}/`}
-  class="group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
-  data-facet-card
+  class:list={[
+    'group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50',
+    featured && 'sm:col-span-2 lg:col-span-3',
+  ]}
+  data-entry-id={skill.id}
   data-facet={facets}
+  data-date={0}
+  data-minutes={0}
+  hidden={hidden}
 >
+  <Thumbnail title={title} derivedFrom={type} size={featured ? 'featured' : 'card'} />
+
   <div class="flex flex-wrap items-center gap-2">
     <span class="w-fit rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
       {type}

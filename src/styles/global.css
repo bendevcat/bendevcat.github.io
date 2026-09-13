@@ -355,13 +355,12 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 /* ==========================================================================
-   Patron « liste filtrable » (Plan 7 / T-B3, /projets) et moteur à facettes
-   /prompts, /skills (Plan 4 / T-B2). Repris tel quel par /blog, /prompts et
-   /skills en Phase C (I4).
-   Le masquage passe par l'attribut `hidden` (piloté par
-   src/scripts/list-pattern.ts et src/scripts/facet-filters.ts), qui garde
-   la sémantique : un élément `hidden` sort de l'arbre d'accessibilité ET de
-   l'ordre de tabulation.
+   Patron « liste filtrable » (Plan 7) : moteur unique pour les quatre listes
+   /projets, /blog, /prompts et /skills (I4), piloté par
+   src/scripts/list-pattern.ts.
+   Le masquage passe par l'attribut `hidden`, qui garde la sémantique : un
+   élément `hidden` sort de l'arbre d'accessibilité ET de l'ordre de
+   tabulation.
    La règle est explicite parce que le `[hidden] { display: none }` du
    preflight Tailwind a la MÊME spécificité que l'utilitaire `flex` porté par
    la carte : sans `!important`, l'ordre de génération déciderait du résultat.
@@ -373,9 +372,6 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 [data-list-featured][hidden],
 [data-list-empty][hidden],
 [data-entry-id][hidden],
-[data-facet-card][hidden],
-[data-facet-filters][hidden],
-[data-facet-empty][hidden],
 [data-search-open][hidden] {
   display: none !important;
 }
