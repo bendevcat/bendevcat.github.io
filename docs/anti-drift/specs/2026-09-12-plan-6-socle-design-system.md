@@ -25,7 +25,7 @@
 
 **Aucune page ne change de structure.** Le header est la seule exception, et elle est explicite :
 c'est un composant partagé, il porte le nouveau design dès ce plan. Les structures de page
-(accueil, listes, fiches) restent celles de la v1 et sont reprises en P7 à P10.
+(accueil, listes, fiches) restent celles de la v1 et sont reprises en P7, puis en P8.
 
 ## 2. Pain themes addressed
 
@@ -33,7 +33,7 @@ c'est un composant partagé, il porte le nouveau design dès ce plan. Les struct
    produit des valeurs codées en dur, qu'il faut ensuite déterrer une par une. P6 ferme cette porte
    avant que P7 l'ouvre.
 2. **Diagnostic d'une régression** — changer la peau et la structure dans la même passe rend toute
-   régression ambiguë. En séparant, chaque défaut de P7 à P10 n'a qu'une origine possible.
+   régression ambiguë. En séparant, chaque défaut de P7 et P8 n'a qu'une origine possible.
 3. **Thème clair de seconde zone** — la v1 a un thème clair dérivé. Le prototype en fait un thème à
    part entière avec sa propre grammaire ; ce plan l'établit une fois pour toutes.
 
@@ -84,14 +84,15 @@ Parcourir les 10 routes dans les deux thèmes et sur 375/768/1180. Corriger les 
 - **T** `/anti-drift-planning:verify 6` — audit canonique. Non contournable. Seul chemin vers ship +
   tag `milestone-plan-6` = `v1.1.0`.
 
-## 5. Out of scope (reporté aux plans 7 à 10)
+## 5. Out of scope (reporté aux plans 7 et 8)
 
-- **Toute restructuration de page** — accueil, listes, fiches gardent leur structure v1. → P7 à P10.
-- **Les écarts fonctionnels E3 à E11** de la spec de design §6 — « à la une », panneaux de section,
-  tri, filtres, onglets, arbre de fichiers, variables de prompt. → P7 à P10.
+- **Toute restructuration de page** — accueil, listes, fiches gardent leur structure v1. → P7, puis P8.
+- **Les écarts fonctionnels E3 à E9** de la spec de design §6 — « à la une », panneaux de section,
+  tri, filtres, onglets, arbre de fichiers, variables de prompt. → P7. **E10 et E11** (tons de tags,
+  bloc identité de `/a-propos`) → P8.
 - **Vignettes d'articles** (`§8.2`) — travail de contenu, tranché à l'ouverture de P7.
 - **Tons de tags** (`§8.3`) — les 5 teintes sont dans le contrat visuel mais ne sont consommées
-  qu'en P10 avec `/tags`.
+  qu'en P8 avec `/tags`.
 - **Domaine custom** — différé depuis le Plan 1, orthogonal à cette vague.
 
 ## 6. Out-of-band considerations

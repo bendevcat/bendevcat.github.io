@@ -103,7 +103,7 @@ Système **distinct** des deux accents, réservé aux tags. Chaque ton est un tr
 | rose | `#F7DEE4` / `#93334C` / `rgba(147,51,76,.14)` | `rgba(244,114,182,.14)` / `#F9A8D4` / `rgba(244,114,182,.22)` |
 
 **Attribution du ton à un tag** : non spécifiée par le prototype (il code en dur 5 tags de démo).
-Décision à prendre en P10 avec `/tags` — voir §8.3.
+Décision à prendre en P8 avec `/tags` — voir §8.3.
 
 ---
 
@@ -203,12 +203,12 @@ Inventaire de ce que le prototype ajoute et que le code n'a pas. Chaque ligne es
 | E3 | Accueil : carte « à la une » + liste compacte à vignettes + 3 panneaux + bandeau transparence IA | P7 |
 | E4 | `/blog` : tri (récent, ancien, court, long) en dropdown | P7 |
 | E5 | Vignette d'image sur chaque entrée de liste | P7 (voir §8.2) |
-| E6 | `/projets` : filtres tech + statut, entrée à la une conditionnelle, état vide | P8 |
-| E7 | `/projets/[slug]` : onglets Aperçu/Stack/Articles, bloc de code numéroté, rôles de stack | P8 |
-| E8 | `/prompts/[slug]` : variables interactives, bouton Copier avec retour visuel | P9 |
-| E9 | `/skills/[slug]` : arbre de fichiers cliquable, aperçu de fichier coloré | P9 |
-| E10 | `/tags` : tons de couleur par tag | P10 |
-| E11 | `/a-propos` : bloc identité `clé: valeur` en mono, liens, grille de stack à logos | P10 |
+| E6 | `/projets` : filtres tech + statut, entrée à la une conditionnelle, état vide | P7 |
+| E7 | `/projets/[slug]` : onglets Aperçu/Stack/Articles, bloc de code numéroté, rôles de stack | P7 |
+| E8 | `/prompts/[slug]` : variables interactives, bouton Copier avec retour visuel | P7 |
+| E9 | `/skills/[slug]` : arbre de fichiers cliquable, aperçu de fichier coloré | P7 |
+| E10 | `/tags` : tons de couleur par tag | P8 |
+| E11 | `/a-propos` : bloc identité `clé: valeur` en mono, liens, grille de stack à logos | P8 |
 
 ---
 
@@ -217,14 +217,22 @@ Inventaire de ce que le prototype ajoute et que le code n'a pas. Chaque ligne es
 | Plan | Sujet | But binaire |
 |---|---|---|
 | **P6** | `socle-design-system` | Tout le site a la nouvelle peau — tokens, polices, nav en pilules, clair et sombre — et **aucune page n'a changé de structure** |
-| **P7** | `accueil-et-blog-v2` | L'accueil et `/blog` ont la structure de la maquette |
-| **P8** | `vitrine-projets-v2` | Une fiche projet se parcourt par onglets, la liste se filtre par tech et statut |
-| **P9** | `prompts-et-skills-v2` | Prompts et Skills reprennent les patrons établis en P8 |
-| **P10** | `pages-restantes-et-finition` | `/transparence-ia`, `/tags`, `/404`, recherche au nouveau design ; 375px ; contrastes AA |
+| **P7** | `structures-v2` | L'accueil et les **quatre familles** (blog, projets, prompts, skills) ont la structure de la maquette : à la une, panneaux, filtres, tri, onglets |
+| **P8** | `pages-restantes-et-finition` | `/transparence-ia`, `/tags`, `/404`, recherche au nouveau design ; 375px ; contrastes AA |
 
 **Ordre strictement séquentiel.** P6 précède tout : implémenter une structure avant que les tokens
-existent produit des valeurs codées en dur qu'il faut ensuite déterrer. P8 précède P9 : les trois
-listes partagent le patron §5.1, on le résout une fois.
+existent produit des valeurs codées en dur qu'il faut ensuite déterrer.
+
+**Ordre interne de P7** — il porte sept écarts (E3 à E9) et c'est le plan lourd de la vague. Ses
+phases suivent le patron, pas les pages : **le patron « liste filtrable » (§5.1) est résolu une fois
+sur `/projets`**, puis répliqué sur blog, prompts et skills ; **le patron « détail à onglets » (§5.2)
+est résolu une fois sur `/projets/[slug]`**, puis répliqué sur prompts et skills. Résoudre quatre
+listes en parallèle les ferait diverger.
+
+> **Risque assumé de la fusion.** P7 remplace trois plans : son ledger est long et sa Phase Z lourde
+> à tenir en une session. Le budget de décisions (3 `pending-user` maximum) saute plus vite. Si la
+> session s'arrête en cours, c'est un cas nominal : `/anti-drift-planning:resume 7` reprend au
+> premier `R` non `Done`. Ce n'est pas un échec du plan, c'est le mode d'emploi.
 
 ---
 
@@ -243,7 +251,7 @@ catégorie. **À trancher avant la Phase de `/blog` du plan 7.**
 
 ### 8.3 Attribution des tons de tags
 Le prototype code en dur 5 tags de démo avec 5 tons. Il faut une règle pour N tags réels : hash
-stable du nom sur 5 tons, ou table d'association explicite en contenu. **À trancher en P10.**
+stable du nom sur 5 tons, ou table d'association explicite en contenu. **À trancher en P8.**
 
 ### 8.4 Incohérence mineure du prototype
 `--muted` vaut `#9AA6B4` dans le style de base sombre, mais une constante JS locale utilise

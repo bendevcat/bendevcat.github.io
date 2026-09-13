@@ -3,7 +3,7 @@
 **Date:** 2026-07-19
 **Author:** Benoît Catillon (bendevcat)
 **Predecessor:** ancien site Hugo + Decap CMS (`bencat-website`) ; spec de design [`2026-07-19-site-perso-design.md`](./2026-07-19-site-perso-design.md)
-**Target:** methodology shared across plans 1–10 (vague 1 : plans 1–5 ; vague 2 — refonte visuelle : plans 6–10, voir §4bis)
+**Target:** methodology shared across plans 1–8 (vague 1 : plans 1–5 ; vague 2 — refonte visuelle : plans 6–8, voir §4.2)
 
 ---
 
@@ -55,7 +55,7 @@ Generate it with `/anti-drift-planning:start-session N` and paste it as the firs
 
 **Session chaining:** after the first plan you rarely run `start-session` by hand. When a plan's Phase Z passes, `/anti-drift-planning:verify N` automatically emits the next actionable step — the next plan's bootstrap if its spec exists, otherwise `/anti-drift-planning:new-plan N+1`, and when N is the last plan, the cross-plan audit `/anti-drift-planning:status`, which announces project completion. A plan interrupted mid-execution is resumed with `/anti-drift-planning:resume N`. Emission happens only on a PASS verdict — a failed or pending plan never hands off forward.
 
-## 4. Decomposition into 10 plans (vertical slicing)
+## 4. Decomposition into 8 plans (vertical slicing)
 
 | Plan | Topic | User-facing goal (binary) | Spec path |
 |---|---|---|---|
@@ -74,20 +74,20 @@ Generate it with `/anti-drift-planning:start-session N` and paste it as the firs
 
 Greenfield → site complet. Livrée : `v1.0.0`, tag `milestone-plan-5`.
 
-### 4.2 Vague 2 — refonte visuelle (P6–P10)
+### 4.2 Vague 2 — refonte visuelle (P6–P8)
 
 **Ajoutée le 2026-09-12.** Les verrous de la §2 s'appliquent à l'identique : ils ne sont pas redits ici.
 
 **Gap :** le site `v1.0.0` est en ligne avec le thème « dark editorial-dev » du design initial. Un nouveau design complet a été produit dans Claude Design et fait désormais foi — voir [`2026-09-12-refonte-visuelle-design.md`](./2026-09-12-refonte-visuelle-design.md), qui remplace la couche visuelle de la spec de design d'origine sans toucher à sa vision ni à son modèle de contenu.
 
-**Séquence de la vague** (les rosters P7–P10 sont ajoutés à la table ci-dessus au moment où leur spec est écrite, pas avant) :
+**Séquence de la vague** (les rosters P7 et P8 sont ajoutés à la table ci-dessus au moment où leur spec est écrite, pas avant) :
 
-- **P7** `accueil-et-blog-v2` — « L'accueil et /blog ont la structure de la maquette : à la une, panneaux, filtres, tri, vignettes »
-- **P8** `vitrine-projets-v2` — « Une fiche projet se parcourt par onglets, et la liste se filtre par tech et par statut »
-- **P9** `prompts-et-skills-v2` — « Prompts et Skills reprennent le patron liste + détail établi en P8 »
-- **P10** `pages-restantes-et-finition` — « /transparence-ia, /tags, /404 et la recherche sont au nouveau design, en 375px, contrastes AA »
+- **P7** `structures-v2` — « L'accueil et les quatre familles (blog, projets, prompts, skills) ont la structure de la maquette : à la une, panneaux, filtres, tri, onglets »
+- **P8** `pages-restantes-et-finition` — « /transparence-ia, /tags, /404 et la recherche sont au nouveau design, en 375px, contrastes AA »
 
-**Ordre interne :** P6 conditionne tout le reste — implémenter une structure de page avant que les tokens existent produit des valeurs codées en dur qu'il faut ensuite déterrer. P8 précède P9 : les trois listes filtrables partagent un patron unique, résolu une seule fois.
+**Ordre interne :** P6 conditionne tout le reste — implémenter une structure de page avant que les tokens existent produit des valeurs codées en dur qu'il faut ensuite déterrer.
+
+**Pourquoi trois plans et non cinq.** Un premier découpage en cinq a été resserré avant toute exécution : le surcoût de la méthodologie est **par plan** — un bootstrap, un ledger, un journal, une Phase Z chacun — et cinq plans le payaient cinq fois pour une vague dont trois tranches partageaient le même patron. Contrepartie assumée : P7 est lourd, son ledger est long, et son budget de décisions sature plus vite. `/anti-drift-planning:resume 7` est le filet prévu pour ça.
 
 **Spécificité de cette vague :** le résultat est majoritairement **visuel**, donc non couvert par des tests unitaires. La Phase Z de chaque plan ajoute une vérification de rendu sur **375 / 768 / 1180 px** dans les deux thèmes, et le contrat visuel fournit 8 critères auditables (`V1`–`V8`, §10 de la spec de design). La logique nouvelle — filtres, tri, onglets — reste testée en vitest dans `src/lib/`, comme l'existant.
 
