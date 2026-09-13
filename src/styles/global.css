@@ -214,7 +214,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 .prose :where(ul) { list-style: disc; }
 .prose :where(ol) { list-style: decimal; }
 .prose :where(li) { margin-top: 0.4em; margin-bottom: 0.4em; }
-.prose :where(li)::marker { color: var(--color-muted); }
+.prose :where(li)::marker { color: var(--color-dim); }
 
 .prose :where(blockquote) {
   margin: 1.5em 0;
@@ -233,14 +233,15 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   color: var(--color-accent);
   background: var(--color-accentSoft);
   padding: 0.15em 0.4em;
-  border-radius: 0.3em;
+  border-radius: var(--radius-badge);
 }
 
 /* Blocs de code (Shiki, cf. astro.config.mjs → markdown.shikiConfig) */
 .prose :where(pre) {
   margin: 1.5em 0;
   padding: 1em;
-  border-radius: 0.6em;
+  background: var(--color-code);
+  border-radius: var(--radius-thumb);
   border: 1px solid var(--color-line);
   overflow-x: auto; /* R9 : jamais de débordement horizontal (375px) */
   font-size: 0.875em;
@@ -259,7 +260,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 .prose :where(img) {
   max-width: 100%; /* R9 : jamais de débordement horizontal (375px) */
   height: auto;
-  border-radius: 0.5em;
+  border-radius: var(--radius-thumb);
   border: 1px solid var(--color-line);
 }
 
@@ -314,7 +315,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   font-size: 0.7rem;
   line-height: 1;
   padding: 0.35em 0.6em;
-  border-radius: 0.4em;
+  border-radius: var(--radius-thumb);
   border: 1px solid var(--color-line);
   background: var(--color-surface);
   color: var(--color-muted);
