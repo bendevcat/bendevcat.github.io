@@ -352,7 +352,9 @@ bascule Shiki. Ces règles sont le filet 375 px hérité du Plan 1 ; les perdre 
 
 - [ ] **Step 2 — Normaliser les rayons de `.prose` (V6)**
 
-Les 5 `border-radius` en `em` (`0.3em`, `0.6em`, `0.5em`, `0.4em`) deviennent des `var(--radius-*)`.
+Les 4 `border-radius` en `em` (`0.3em`, `0.6em`, `0.5em`, `0.4em`) deviennent des `var(--radius-*)`.
+Le `border-radius: 0` de `.prose pre code` n'en est pas un : c'est une **remise à zéro** du style de
+code inline à l'intérieur d'un `<pre>`, pas un rayon décoratif. V6 ne le gouverne pas.
 Correspondance : code inline → `--radius-badge` (9) ; bloc de code, image, `.copy-btn` →
 `--radius-thumb` (10).
 
@@ -387,12 +389,20 @@ Contrôle 375 px : `document.documentElement.scrollWidth <= window.innerWidth` �
 
 - [ ] **Step 1 — Extraire les 8 glyphes**
 
-```bash
-cd "$SCRATCH" && npm pack lucide-static@1.45.0 && tar -xzf lucide-static-1.45.0.tgz
-# icons/ : newspaper.svg folder-git-2.svg terminal.svg sparkles.svg user.svg search.svg github.svg
-```
-Le glyphe du **logo** (3 barres, R5) n'est pas un Lucide : le dessiner en trois `<rect>` de largeurs
-décroissantes, en `currentColor`.
+Déjà fait par le contrôleur : les 8 tracés sont extraits et commentés dans
+`.superpowers/sdd/2026-09-12-plan-6-socle-design-system/phase-C-glyphs.md`.
+
+Deux sources, parce que **Lucide a sorti les marques de son set** — `github.svg` n'y existe plus :
+- 6 glyphes (nav + loupe) : `lucide-static@1.45.0`, licence **ISC**, en **trait**
+  (`newspaper`, `folder-git-2`, `terminal`, `sparkles`, `user`, `search`) ;
+- marque GitHub : `simple-icons@16.31.0`, licence **CC0-1.0**, en **aplat**.
+
+**Conséquence sur l'interface de `Icon.astro`** : les deux modes de rendu coexistent. Un `<svg>`
+unique portant `stroke="currentColor" fill="none"` ne rendrait **rien** pour GitHub. Le mode se
+porte par glyphe, pas globalement.
+
+Le glyphe du **logo** (3 barres, R5) n'existe dans aucun set : le dessiner en trois `<rect>` de
+largeurs décroissantes, en `currentColor`.
 
 - [ ] **Step 2 — Écrire `Icon.astro`**
 

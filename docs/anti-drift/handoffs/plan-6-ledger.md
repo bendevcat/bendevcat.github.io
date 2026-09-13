@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (Phase B en cours)
+Last updated: 2026-09-13 (Phase B Done)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -10,12 +10,12 @@ Last updated by: main (contrôleur SDD)
 | R1 | Les 23 tokens existent dans les deux thèmes — `global.css` définit les 23 noms de `§2` du contrat visuel sous `@theme` **ET** les 23 sous `:root[data-theme="dark"]`, aux valeurs exactes du tableau | Done | Couvert par T-A2. Nommage arrêté au pré-flight : les 23 noms sont repris **verbatim** (22 en `--color-<nom>`, 1 en `--shadow` nu). Fait mesuré sur Tailwind v4.3.3 : une variable `@theme` en camelCase produit bien son utilitaire (`--color-accentSoft` → `.bg-accentSoft`) — aucune transliteration nécessaire. **Établie en `8b977f6`, durcie en `6af9329`.** Les **46** valeurs (23 × 2 thèmes) ont été vérifiées **chiffre par chiffre** contre le tableau §2 — par l'implémenteur, puis indépendamment par le relecteur avec son propre parseur : **46/46 exactes**, alphas compris (`.11`/`.07`/`.10`/`.12`/`.08`/`.06`/`.05`/`.03`/`.16`/`.18`/`.20`). Le correctif `6af9329` ajoute `static` au `@theme` : sans lui Tailwind élaguait six tokens clairs du bundle (`card`, `rail`, `chip`, `panel`, `nav`, `hatch`) — mesuré avant/après sur `dist/` par l'implémenteur, par le relecteur et par le contrôleur : **17 → 23** tokens clairs émis, sombre **22/22** inchangé, aucune valeur modifiée. |
 | R2 | Nebula Sans (ou sa substitution actée) est servie — le texte courant de `/` est rendu dans la police retenue **ET** la décision `§8.1` est tranchée et consignée dans la spec de design | Done | Couvert par T-A1. **Bloqueur tranché par l'utilisateur au gate de pré-flight du 2026-09-13 : « Embarquer Nebula Sans (OFL-1.1) ».** Le fait qui l'a établi : le `LICENSE` de `@fontsource/nebula-sans@5.3.0` porte « Copyright (c) 2024, Nebula Entertainment & Broadcasting LLC (nebula.tv) », dérivée de Source Sans (Adobe), sous SIL OFL-1.1 — licence libre autorisant l'embarquement. La prémisse « police de marque d'Anthropic » du §8.1 est fausse et est corrigée en T-A1. **Établie en `30c9ed0`.** Les deux moitiés sont mesurées séparément. Rendu, sur le site **buildé** servi en preview : `getComputedStyle(document.body).fontFamily` → `"Nebula Sans", ui-sans-serif, system-ui, sans-serif` · titre `h1` → même famille, `font-weight: 700` · `document.fonts` charge effectivement `Nebula Sans 400/600/700` (300 et 500 déclarées mais non rendues sur cette page, donc non téléchargées — comportement attendu d'un `@font-face` non utilisé). Consignation : §8.1 de la spec de design, marqué « TRANCHÉ (gate de pré-flight, 2026-09-13) », prémisse fausse corrigée, fait de licence cité, décision transcrite mot pour mot. |
 | R3 | Space Grotesk et Inter sont retirés — `grep` ne renvoie aucune occurrence **ET** `npm run build` passe | Done | **Établie en `30c9ed0`.** Le grep littéral de la spec (`grep -ri "space-grotesk\|inter"`) renvoie 55 lignes, **toutes** classées une par une et **toutes** de faux positifs de mots français (`interne`, `interactif`, `intermédiaire`, `interface`, `interface Props` en TS, `pointer-events`) — zéro occurrence portant un nom de dépendance ou une `font-family`. La mesure qui fait foi vise donc la **dépendance et la famille CSS** : `grep -rniE '@fontsource[^"]*\b(inter\|space-grotesk)\b\|Inter Variable\|Space Grotesk' src/ package.json` → aucune ligne. Vérifié indépendamment par le relecteur. Build vert, 52 pages. |
-| R4 | Les 4 classes de patrons existent — `global.css` définit `.card`, `.card-inner`, `.panel`, `.pill` **ET** aucune ne contient `display`, `gap`, `grid` ou `flex` | Pending | Couvert par T-B1. |
+| R4 | Les 4 classes de patrons existent — `global.css` définit `.card`, `.card-inner`, `.panel`, `.pill` **ET** aucune ne contient `display`, `gap`, `grid` ou `flex` | Done | **Établie en `9397719`.** Le `grep` de la spec ne renvoie aucune ligne. Le relecteur ne s'en est pas contenté — la plage `awk` est un instrument grossier : il a **lu les quatre corps de classe** et cherché en plus `align-items`, `justify-content`, `place-items`, `inline-flex`, `width`, `position`. Rien. Correspondance au contrat §4 token par token : `.card` → `surface`/`line`/20px · `.card-inner` → `card`/`line`/14px/`var(--shadow)` · `.panel` → `panel`/`panelLine`/20px · `.pill` → 999px/`accentSoft`/`accent`/mono. L'ombre est consommée en CSS et **non** par l'utilitaire `.shadow` (contrainte n°12). |
 | R5 | Header : logo en pilule — `bencat_` dans une pilule à bordure avec son glyphe à 3 barres, menant à `/` | Pending | Couvert par T-C1. |
 | R6 | Header : nav en pilules à icônes — les 5 items portent leur icône **ET** l'item de la route courante est distinct (fond + graisse), y compris sur une route fille | Pending | Couvert par T-C1. Mesure retenue : **exactement un** `aria-current="page"` par route, vérifié sur route mère **et** fille. |
 | R7 | Header : barre d'actions ronde — 3 boutons ronds (recherche, GitHub, thème) dans un conteneur en pilule ; la recherche ouvre le `SearchDialog` existant, le thème bascule | Pending | Couvert par T-C2. Contrats à préserver : `data-search-open`, `id="theme-toggle"`. |
 | R8 | Thème clair complet et sans bleu — les 23 valeurs claires s'appliquent **ET** aucun `#7DD3FC` (ni `rgba(125,211,252…`) sous `[data-theme="light"]` | Done | **Établie en `8b977f6`, re-prouvée sur le bundle en `6af9329`.** Vérifiée à deux niveaux : dans la source (`awk` sur le bloc `@theme` → aucune occurrence de `7DD3FC` ni de `125,211,252`) **et** dans le CSS émis, où toutes les occurrences de `7dd3fc` tombent à l'intérieur du seul bloc `:root[data-theme=dark]`, bornes vérifiées programmatiquement. En clair, `badgeInk` vaut bien le vert `#0B6B4C` et `panel` le gris neutre `#E9EEF3` — aucun bleu « harmonisé » n'a été réintroduit. |
-| R9 | `.prose` accordé — titres, liens, code inline, blocs, citations, listes et tableaux aux nouveaux tokens, dans les **deux** thèmes, sans débordement horizontal | Pending | Couvert par T-B2. Le filet 375 px hérité du Plan 1 (`overflow-wrap`, `overflow-x:auto` sur `pre`/`table`) est à **conserver**, pas à réécrire. |
+| R9 | `.prose` accordé — titres, liens, code inline, blocs, citations, listes et tableaux aux nouveaux tokens, dans les **deux** thèmes, sans débordement horizontal | Done | **Établie en `8c3e1c4`, complétée en `ea31341`.** La première passe satisfaisait R9 **à la lettre mais pas en substance** : `.prose :where(pre) { background: var(--color-code) }` est écrit correctement et ne peignait **aucun** bloc réel — `:where()` a une spécificité nulle, Shiki pose un `style=` inline en clair et un `!important` en sombre. Mesuré avant : clair `rgb(255,255,255)`, sombre `rgb(36,41,46)`. Après `ea31341`, mesuré par trois agents indépendamment : clair `rgb(239,243,247)` = `#EFF3F7`, sombre `rgb(10,12,15)` = `#0A0C0F` — les valeurs du contrat. Le piège identifié à l'avance est fermé : **0 span sur 447** peint un fond. La bascule syntaxique dual-thème du Plan 1 survit — **393 spans sur 447** changent de couleur, les 54 identiques étant le gris de commentaire `#6A737D` que `github-light` et `github-dark` partagent réellement. Le filet 375 px du Plan 1 est intact, ses **7** règles vérifiées une par une. |
 | R10 | Aucune page n'a changé de structure — mêmes blocs, même ordre, mêmes emplacements qu'en `v1.0.0`. **Header exclu.** | Pending | Couvert par T-D1 et T-D2. Preuve mécanique prévue : `git diff v1.0.0` filtré sur les lignes ajoutées hors attribut `class`. |
 | R11 | 375 px sans débordement — sur les 10 routes, `document.documentElement.scrollWidth <= innerWidth` | Pending | Couvert par T-C2 et T-D2. Les **10 routes** = celles du prototype (contrat §1). Les 4 autres routes du site (`/transparence-ia`, `/tags`, `/tags/[tag]`, `/404`) sont contrôlées en non-régression mais leur audit 375 px / AA est le but explicite de P8 (contrat §7). |
 | R12 | Contrastes AA — `body` sur `bg`, `muted` sur `surface`, `accent` sur `accentSoft` ≥ 4.5:1 dans les deux thèmes | Done | **Établie en `8b977f6`** (le contrôle au rendu reste prévu en T-D2). Luminance relative WCAG, `accentSoft` composé *source-over* sur `surface` avant calcul (clair → `rgb(231,240,237)`, sombre → `rgb(25,46,39)`). **6/6 ≥ 4.5:1** — clair : `body`/`bg` **11.79**, `muted`/`surface` **6.33**, `accent`/`accentSoft` **5.61** ; sombre : **12.75**, **7.34**, **8.25**. Recalculés indépendamment par le relecteur, qui retrouve les mêmes chiffres à la décimale. Le relecteur a aussi vérifié le fond alternatif réel (pilule d'accent posée sur `bg`) : **5.10** en clair, **9.21** en sombre — AA également. **Aucune valeur du contrat n'a été ajustée** ; le test de sincérité est que sauter la composition aurait affiché 6.52 au lieu de 5.61, donc un chiffre plus flatteur. |
@@ -33,8 +33,8 @@ Last updated by: main (contrôleur SDD)
 |---|---|---|---|
 | A1 | A | R2, R3 (+ V7) — polices : Nebula Sans entre, Space Grotesk et Inter sortent | Done (`30c9ed0`) |
 | A2 | A | R1, R8, R12 (+ V1, V4, V8) — les 23 tokens dans les 2 thèmes + re-câblage mécanique des 283 classes | Done (`8b977f6`, correctif `6af9329`) |
-| B1 | B | R4 (+ V6) — `.card`, `.card-inner`, `.panel`, `.pill` | In progress |
-| B2 | B | R9 (+ V5, V6) — `.prose` accordé | In progress |
+| B1 | B | R4 (+ V6) — `.card`, `.card-inner`, `.panel`, `.pill` | Done (`9397719`) |
+| B2 | B | R9 (+ V5, V6) — `.prose` accordé | Done (`8c3e1c4`, correctif `ea31341`) |
 | C1 | C | R5, R6 (+ E1) — logo en pilule, nav en pilules à icônes, actif par famille de routes | Pending |
 | C2 | C | R7, R11 header (+ E2) — barre d'actions ronde, responsive 375 px | Pending |
 | D1 | D | R10 composants (+ V2, V3, V6) — les 8 composants sur les tokens v2 | Pending |
@@ -52,8 +52,8 @@ dans la spec §3 : les rattacher explicitement évite qu'ils surgissent en Phase
 | V2 | Aucun saut de niveau de surface | D1 | Pending |
 | V3 | Grammaire des accents respectée en sombre | D1 | Pending |
 | V4 | Thème clair sans bleu | A2 | Done (`6af9329`) |
-| V5 | Mono réservé à la donnée machine | B2, D2 | Pending |
-| V6 | Rayons ∈ {9, 10, 14, 20, 999}px | B1, B2, D1 | Pending |
+| V5 | Mono réservé à la donnée machine | B2, D2 | Done pour `.prose` (`8c3e1c4`) — reste D2 pour les pages |
+| V6 | Rayons ∈ {9, 10, 14, 20, 999}px | B1, B2, D1 | Done pour `global.css` (`8c3e1c4`) — reste D1/D2 pour les templates |
 | V7 | Space Grotesk et Inter retirés | A1 | Done (`30c9ed0`) |
 | V8 | Contrastes AA | A2 | Done (`8b977f6`) |
 
@@ -137,6 +137,25 @@ aucun n'exige un arbitrage, chacun a une tâche d'accueil déjà prévue au plan
 - **Constat pour T-D1/T-D2 — la hiérarchie des surfaces (§2.1) n'est auditable qu'en sombre.** En
   clair, le contrat donne `card` = `surface` = `#FFFFFF` : un saut de niveau y est littéralement
   invisible. V2 se vérifie donc en thème sombre, pas en clair.
+- **Accessibilité de la palette Shiki — constat mesuré, hors périmètre du contrat.** Poser
+  `--color-code` sur les blocs de code déplace le contraste de **toutes** les couleurs de syntaxe.
+  Mesuré site-wide sur `dist/` : en **clair** (`#fff` → `#EFF3F7`), trois couleurs passent juste
+  sous AA — `#D73A49` 4.57→**4.10**, `#22863A` 4.63→**4.15**, `#6A737D` 4.82→**4.32** — et une
+  quatrième, `#E36209`, échouait **déjà avant ce plan** (3.49→3.13). En **sombre**
+  (`#24292e` → `#0A0C0F`), toutes s'améliorent : la pire, `#6A737D`, passe de **3.05 à 4.07** —
+  autrement dit le thème sombre livrait une couleur de syntaxe sous AA avant ce plan, et ne le fait
+  plus. **Channel adjudiqué en (b), constat et non déviation**, par un agent à qui la question a été
+  posée en lui demandant explicitement de dire si le contrôleur rationalisait. Son raisonnement :
+  R12 et V8 sont écrits comme des listes **fermées** de trois paires nommées, dont aucune n'est une
+  couleur de syntaxe ; les palettes `github-light`/`github-dark` ne sont pas parmi les 23 tokens du
+  contrat et vivent dans `astro.config.mjs`, que ce plan ne touche pas ; et lire « change ce que
+  l'utilisateur observe » isolément ferait de chaque commit de ce plan une déviation, puisque le
+  changement visuel **est** le livrable. **À reprendre quand un plan touchera `astro.config.mjs`** —
+  la spec de P8 porte déjà « contrastes AA ».
+- **Constat pour T-C1/T-C2 — le `padding` de `.pill` (`0.25em 0.75em`) est une valeur d'auteur.** Le
+  contrat §4 autorise `.pill` à porter son padding mais ne donne aucun nombre. Rien ne consomme
+  `.pill` à ce stade ; le header en est le premier consommateur, donc c'est là que la proportion se
+  compare à la maquette.
 - **V5 — un paragraphe de prose en mono dans `SearchDialog`.** Mesuré sur `/` au rendu buildé après
   T-A1 : sur les 15 `<p>` de la page, 14 sont conformes (`~/ whoami`, dates, compteurs de lecture —
   de la donnée machine). Le 15ᵉ, « Tapez au moins 2 caractères. », est une consigne en prose rendue
