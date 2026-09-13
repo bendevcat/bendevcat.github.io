@@ -3,12 +3,14 @@ title: Bienvenue dans mon foutoir ! 🚀
 description: Je te présente ce blog, son objectif et la manière dont j'indique la part d'IA utilisée dans chaque article.
 pubDate: 2025-10-20T13:37:00.000+02:00
 category: Actus
-tags: [claude-code]
+tags:
+  - claude-code
 cover: ./theitcrown.png
 coverAlt: Bureau bordélique façon The IT Crowd, rempli de posters et de gadgets geek
 aiUsage: none
-draft: false
-relatedProjects: [site-bencat]
+draft: true
+relatedProjects:
+  - site-bencat
 ---
 
 ## TL;DR - L'essentiel en 30 secondes ⚡
