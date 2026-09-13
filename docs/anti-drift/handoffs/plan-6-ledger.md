@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (3 décisions tranchées, corrections appliquées — prêt pour Phase Z)
+Last updated: 2026-09-13 (Phase Z — VERDICT PASS)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -39,7 +39,7 @@ Last updated by: main (contrôleur SDD)
 | C2 | C | R7, R11 header (+ E2) — barre d'actions ronde, responsive 375 px | Done (`8dc8976`) — voir D01 |
 | D1 | D | R10 composants (+ V2, V3, V6) — les 8 composants sur les tokens v2 | Done (`c313362`) — voir D02 |
 | D2 | D | R10, R11, R12 (+ V5) — parcours 10 routes × 2 thèmes × 3 largeurs · + le gate V6 repo-wide | Done (`a508ee5`) |
-| Z1 | Z | Audit `/anti-drift-planning:verify 6` (couverture R1–R12 + V1–V8) | Pending |
+| Z1 | Z | Audit `/anti-drift-planning:verify 6` (couverture R1–R12 + V1–V8) | Done — **verdict PASS** |
 
 ## Critères du contrat visuel (V1–V8, §10) — rattachement
 
@@ -234,3 +234,28 @@ aucun n'exige un arbitrage, chacun a une tâche d'accueil déjà prévue au plan
   de la donnée machine). Le 15ᵉ, « Tapez au moins 2 caractères. », est une consigne en prose rendue
   en `font-mono`. **Reporté à T-D1** (`SearchDialog.astro` est dans sa liste de fichiers), critère
   V5. Antérieur à ce plan : la classe vient du Plan 5.
+
+## Phase Z — audit de vérification du 2026-09-13 · **VERDICT : PASS**
+
+| Étape | Résultat |
+|---|---|
+| 3 · Lint mécanique (verrou 5) | **0 violation** sur 13 invariants |
+| 4 · Couverture de la spec §3 | **12 critères sur 12** en `Done`. Aucun `Pending`, aucun `In progress`, aucun `Deferred`, aucun `Cut` — donc aucune ligne n'a besoin d'adosser une déviation approuvée |
+| 5 · Revue des déviations | **3 entrées, 3 `approved`, 0 `pending-user`.** Garde anti-blanchiment appliquée : aucun statut inventé à ré-auditer |
+| 6 · Suite de tests, lancée à neuf | vitest **12 suites / 118 tests** verts · `astro check` **0 erreur, 0 warning** (66 hints) · `npm run build` 52 pages, Pagefind 13 pages / 3757 mots |
+| 7 · Parcours de la user story | **Les 5 étapes de la spec §1 passent**, confirmé par l'utilisateur |
+| 8 · Contrôle visuel | **Validé par l'utilisateur** sur l'accueil (sombre), `/blog` (clair, 1180), un article (sombre), `/transparence-ia` (les 3 bandeaux), `/blog` (375). Mesuré à 375 px : `scrollWidth` 375 = `innerWidth` 375, item de nav actif conforme, police `Nebula Sans` |
+
+**Les 8 critères V1–V8 du contrat visuel** sont couverts par la table de rattachement ci-dessus et
+tous en `Done` — rattachement fait au pré-flight, précisément pour qu'ils ne surgissent pas ici.
+
+### Ce que cet audit a réellement coûté, pour la mémoire du projet
+
+Cinq défauts n'ont été attrapés **que par une mesure sur le rendu**, jamais par une lecture de code
+ni par un test : une règle CSS correcte qui ne peignait rien (spécificité nulle de `:where()` face
+au style inline de Shiki) · six tokens clairs absents du bundle (élagage `@theme` de Tailwind) ·
+un aplat de bandeau devenu invisible (distance colorimétrique 2.24) · des puces de liste sous AA
+· et un piège de cascade où un utilitaire Tailwind perd en silence contre une classe hors layer.
+
+Aucun des cinq n'aurait fait échouer un test. C'est l'argument de fond pour que la Phase Z d'une
+vague visuelle exige des mesures au rendu, et non une relecture.
