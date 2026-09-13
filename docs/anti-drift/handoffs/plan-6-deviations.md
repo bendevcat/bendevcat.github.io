@@ -37,7 +37,36 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
-_Aucune entrée à ce jour._
+## D01 — le raccourci `⌘K` sort du bouton rond et se pose à côté, dans la même pilule
+
+- **Date:** 2026-09-13
+- **Task affected:** T-C2 (`src/components/Header.astro`)
+- **Original plan:** le plan d'impl, T-C2 Step 1, prescrit « Recherche : `<button data-search-open
+  hidden>` — **garder l'attribut et le `hidden`** […] Icône loupe ; `⌘K` reste affiché ≥ `sm` ». Le
+  critère R7 de la spec exige « Trois boutons **ronds** — recherche, GitHub, thème — dans un
+  conteneur en pilule ». Le header v1 rendait le `<kbd>⌘K</kbd>` **à l'intérieur** du bouton de
+  recherche (`src/components/Header.astro:64` en `v1.0.0`).
+- **Deviation taken:** les trois boutons restent strictement ronds (32 px) et le `<kbd>⌘K</kbd>` est
+  rendu **à côté** du bouton de recherche, dans le même conteneur en pilule. Il porte lui aussi
+  `data-search-open`, donc `src/scripts/search.ts` — déjà écrit pour plusieurs déclencheurs — le
+  révèle et le rend cliquable sans une ligne de logique nouvelle, et il reste masqué sans JS.
+- **Reason:** fait établi **sur le rendu, pas sur une doctrine** : `⌘K` ne tient pas dans un bouton
+  rond de 32 px. Les deux clauses sont en tension mécanique — « boutons ronds » (R7) et « `⌘K`
+  affiché ≥ `sm` » (plan T-C2) ne peuvent pas être vraies ensemble si le `kbd` est dans le bouton :
+  soit le bouton cesse d'être rond et devient une pilule d'environ 64 px, soit le `kbd` sort. Le
+  sous-agent a choisi de préserver R7, qui est un critère de la spec, contre une formulation du plan
+  d'impl qui ne dit pas *où* le `⌘K` s'affiche.
+- **Reversibility:** `cheap` — un seul composant, aucune logique à écrire, le script de recherche
+  gère déjà les deux formes. Revenir à la lecture v1 (kbd dans le bouton, qui devient alors une
+  pilule d'environ 64 px dès `sm`) est un déplacement de balise.
+- **Caught late:** `yes` — exécutée avant ratification. À dire franchement : le sous-agent l'a
+  **signalée spontanément dans son rapport** au lieu de la passer sous silence, et ne l'a pas
+  maquillée en choix d'implémentation. Elle n'a pas été découverte en revue.
+- **Status:** pending-user
+- **User decision:** _(vide jusqu'à une décision explicite de l'utilisateur)_
+- **Follow-up:** si rejetée, remettre le `<kbd>` à l'intérieur du bouton de recherche et accepter que
+  ce bouton-là ne soit plus rond mais une pilule dès `sm` — ce qui rend R7 (« trois boutons ronds »)
+  faux à la lettre et demandera soit un arbitrage sur R7, soit de masquer `⌘K` entièrement.
 
 ---
 
