@@ -1270,10 +1270,19 @@ bouton de la barre et n'est **pas** modifié (il cible `[data-facet-filters]`) �
 
 - [ ] **Step 2: Réécrire la section de liste de `/blog`**
 
-Six éléments, même ordre, mêmes attributs qu'en B3 — **y compris le rendu de l'entrée à la une** :
-`pickFeaturedEntry()` appelée dans le frontmatter, **une seule** carte dans `data-list-featured`, et
-la même entrée rendue `hidden` par le serveur dans la grille (décision I3). Facette primaire :
-`category` (I1). Dropdowns, dans l'ordre : **tri** (celui de R7), puis `tag` (conservé, I2).
+Six éléments, même ordre, mêmes attributs qu'en B3 — **y compris** :
+- `pickFeaturedEntry()` appelée dans le frontmatter, **une seule** carte dans `data-list-featured`,
+  et la même entrée rendue `hidden` par le serveur dans la grille (décision I3) ;
+- une constante `const NOUNS = ['article', 'articles'] as const;` **source unique** de
+  `data-list-nouns` et du repli SSR accordé de la ligne de méta (P-13) — jamais deux littéraux.
+
+Facette primaire : `category` (I1). Dropdowns, dans l'ordre : **tri** (celui de R7), puis `tag`
+(conservé, I2).
+
+> **`/blog` est la seule page où le tri s'exerce, donc la seule qui teste le correctif P-12.**
+> L'entrée à la une doit rester **la même carte** quel que soit l'ordre choisi — elle se dérive de
+> l'ordre canonique, pas du tri. Changer de tri réordonne la grille et **rien d'autre**. Mesurer ce
+> point explicitement : c'est le scénario qui faisait disparaître un article avant `26757a9`.
 
 ```astro
 <label class="flex items-center gap-2 font-mono text-xs text-muted">
@@ -1339,9 +1348,10 @@ champ, et R10 interdit de l'ajouter.
 
 - [ ] **Step 2: Les deux pages**
 
-Six éléments, même ordre, **y compris le rendu de l'entrée à la une** : `pickFeaturedEntry()` dans
-le frontmatter, une seule carte dans `data-list-featured`, la même entrée `hidden` par le serveur
-dans la grille (décision I3). Facettes (I1, I2) :
+Six éléments, même ordre, **y compris** `pickFeaturedEntry()` dans le frontmatter, une seule carte
+dans `data-list-featured`, la même entrée `hidden` par le serveur dans la grille (décision I3), et
+une constante `NOUNS` par page — `['prompt', 'prompts']` et `['skill', 'skills']` — source unique de
+`data-list-nouns` et du repli SSR accordé (P-13). Facettes (I1, I2) :
 
 | Page | Pilules | Dropdown 1 (R7) | Dropdown 2 |
 |---|---|---|---|
