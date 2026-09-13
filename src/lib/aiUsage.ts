@@ -19,10 +19,27 @@ interface AiUsageMeta {
   description: string;
   /**
    * Classes Tailwind de la bannière colorée (page article). Échelle couleur
-   * design §6 (« à confirmer ») : none→ardoise (slate), partial→ambre (amber),
+   * design §6 (« à confirmer ») : none→neutre, partial→ambre (amber),
    * full→bleu (blue) — pour ne pas se confondre avec le vert des tags/accent.
-   * Palette par défaut Tailwind (pas de token `--color-*` dédié), variante
-   * `dark:` pilotée par le même `@custom-variant dark` que le reste du site.
+   *
+   * `none` consomme les tokens du contrat §2 (`border-line bg-chip text-ink`) :
+   * un seul jeu de classes pour les deux thèmes, sans variante `dark:`, car
+   * `--color-line`/`--color-chip`/`--color-ink` sont déjà redéfinis sous
+   * `:root[data-theme="dark"]` (src/styles/global.css). `chip` est le rôle
+   * « fond de puce neutre » du contrat — c'est l'aplat le plus proche du
+   * `bg-slate-100` d'origine, mesuré à une distance de 15.43 du nouveau
+   * `--color-bg` clair (`slate-100` n'était plus qu'à 2.24, invisible depuis
+   * que `bg` est passé à `#F1F4F7` — cf. handoffs/plan-6-deviations.md D02).
+   * `ink` (texte fort) reprend le poids visuel de l'ancien `slate-800`/
+   * `slate-200` et reste au même niveau de contraste que `partial`/`full`
+   * (amber-900/blue-900, eux aussi très sombres) — 15.03:1 sur `chip` en
+   * clair, largement AA. `line` est la bordure structurante par défaut du
+   * site (déjà utilisée avec `bg-surface`/`bg-chip` ailleurs, ex.
+   * `Header.astro`).
+   *
+   * `partial` et `full` restent en dehors des 23 tokens (palette Tailwind
+   * `amber`/`blue` par défaut) : reportés à P8 par la même entrée D02, avec
+   * `SearchDialog`'s `backdrop:bg-black/60`.
    */
   bannerClass: string;
 }
@@ -32,8 +49,7 @@ export const AI_USAGE_META: Record<AiUsage, AiUsageMeta> = {
     emoji: '✍️',
     label: '100% humain',
     description: "Cet article est rédigé intégralement par un humain, sans assistance d'IA.",
-    bannerClass:
-      'border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200',
+    bannerClass: 'border-line bg-chip text-ink',
   },
   partial: {
     emoji: '🤝',
