@@ -147,8 +147,9 @@ Ce sont des scripts de glue, pas des suites de tests : `src/lib/facetFilters.ts`
 ```bash
 git stash list >/dev/null 2>&1
 npm run build >/tmp/p7-build-before.log 2>&1 && tail -3 /tmp/p7-build-before.log
-# squelette DOM de référence : les 14 routes de milestone-plan-6
-mkdir -p /tmp/p7-dom-before && cp -R dist /tmp/p7-dist-before
+# squelette DOM de référence. Mesuré le 2026-09-13 : `milestone-plan-6` construit
+# 53 fichiers HTML, la branche courante 52 — voir le Step 4 pour la raison.
+cp -R dist /tmp/p7-dist-before
 ```
 
 - [ ] **Step 2: Envelopper les quatre patrons — et eux seuls**
@@ -208,7 +209,29 @@ done
 git worktree remove --force /tmp/p7-m6
 ```
 
-Attendu : **aucune ligne `DIFF:`** ni `ABSENT` — mêmes balises, même ordre, sur les 14 routes.
+**Attendu — et c'est un attendu en deux temps, parce que la référence a bougé.** La comparaison
+contre `milestone-plan-6` renvoie **4 lignes `DIFF:`** qui ne viennent pas de cette tâche :
+`milestone-plan-6` construit encore l'article `draft: true` `bienvenue-dans-mon-foutoir`
+(53 fichiers HTML contre 52), retiré depuis par un commit postérieur au tag. Ce qui doit être
+prouvé est donc que **la Phase A n'en ajoute aucune** :
+
+```bash
+# contre-épreuve : la MÊME boucle, sur le dist capturé AVANT l'édition de global.css
+for f in $(cd /tmp/p7-dist-before && find . -name '*.html' | sort); do
+  [ -f "/tmp/p7-m6/dist/$f" ] || { echo "ABSENT dans m6: $f"; continue; }
+  diff <(sed -e 's/<[^>]*>/&\n/g' "/tmp/p7-m6/dist/$f"     | grep -o '^<[a-z][a-z0-9]*' | tr -d '<') \
+       <(sed -e 's/<[^>]*>/&\n/g' "/tmp/p7-dist-before/$f" | grep -o '^<[a-z][a-z0-9]*' | tr -d '<') \
+    >/dev/null || echo "DIFF: $f"
+done
+```
+
+Attendu : les deux boucles renvoient **exactement la même liste**, ligne pour ligne. Toute ligne
+présente dans la première et absente de la seconde est une régression **introduite par cette
+tâche** — c'est elle, et elle seule, que R2 interdit.
+
+> Cette mesure différentielle est une lecture plus étroite que la lettre de R2, et elle est
+> consignée comme la déviation **D01** dans `docs/anti-drift/handoffs/plan-7-deviations.md`. Elle
+> est `pending-user` : on procède, on ne ship pas.
 
 - [ ] **Step 5: Recalculer les 3 paires de contraste (la mesure de R2, volet contraste)**
 
@@ -216,13 +239,26 @@ Les trois paires de R12 du Plan 6 / V8 du contrat : `body` sur `bg`, `muted` sur
 `accent` sur `accentSoft`. Dans la page buildée, dans **chaque** thème (poser `localStorage.theme`
 puis **recharger** — contrainte globale n°4) :
 
+**`accentSoft` est semi-transparent** (`rgba(11,107,76,.10)` en clair, `rgba(74,222,128,.12)` en
+sombre) et partage son triplet RVB avec `accent`. Une formule qui ignore l'alpha renverrait donc un
+ratio de **1.0** pour cette paire, jamais ≥ 4.5 : il faut **compositer** `accentSoft` sur le fond
+opaque où il est réellement peint avant de calculer.
+
 ```js
-// ratio WCAG entre deux couleurs calculées, à exécuter en console
+// ratio WCAG, avec compositing alpha — à exécuter en console sur la page buildée
 const lum = ([r,g,b]) => { const f = c => (c/=255) <= .03928 ? c/12.92 : ((c+.055)/1.055)**2.4;
   return .2126*f(r)+.7152*f(g)+.0722*f(b); };
-const rgb = s => s.match(/\d+(\.\d+)?/g).slice(0,3).map(Number);
-const ratio = (a,b) => { const [x,y] = [lum(rgb(a)), lum(rgb(b))].sort((p,q)=>q-p); return (x+.05)/(y+.05); };
+const parse = s => { const n = s.match(/[\d.]+/g).map(Number); return [n[0],n[1],n[2],n[3] ?? 1]; };
+// compose `fg` (éventuellement translucide) par-dessus `bg` (opaque)
+const over = (fg, bg) => { const [r,g,b,a] = parse(fg), [R,G,B] = parse(bg);
+  return [r*a+R*(1-a), g*a+G*(1-a), b*a+B*(1-a)]; };
+const ratio = (a,b) => { const [x,y] = [lum(a), lum(b)].sort((p,q)=>q-p); return (x+.05)/(y+.05); };
+// exemple : accent sur accentSoft, ce dernier peint sur la surface d'une carte
+// ratio(parse(accent).slice(0,3), over(accentSoft, surface))
 ```
+
+Le fond opaque à passer en second argument d'`over()` est celui sur lequel la pilule est **vraiment**
+posée : le remonter dans le DOM jusqu'au premier ancêtre à fond opaque, ne pas le supposer.
 
 Attendu : les 3 ratios ≥ **4.5:1** dans les 2 thèmes — soit exactement les valeurs du Plan 6, ce
 bloc ne touchant aucune couleur.
