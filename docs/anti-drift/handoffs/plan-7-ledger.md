@@ -1,6 +1,6 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (revue finale passée, vague de correctifs appliquée — Phase Z ouverte)
+Last updated: 2026-09-13 (**Phase Z — VERDICT PASS**)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -38,7 +38,7 @@ Last updated by: main (contrôleur SDD)
 | C1 | C | R9, R7 (tri), R8 — `/blog` | Done (`f33b4e0`, correctif `fe56fe5`) — voir D02 |
 | C2 | C | R9, R8 — `/prompts` et `/skills` | Done (`6a53050`) — voir D03 |
 | D1 | D | R12 (+ V2, V6) — 4 listes × 2 thèmes × 375/768/1180 px | Done (aucun commit) — **V2 en échec, voir D04** |
-| Z1 | Z | Audit `/anti-drift-planning:verify 7` (couverture R1–R12 + V1–V8) | In progress |
+| Z1 | Z | Audit `/anti-drift-planning:verify 7` (couverture R1–R12 + V1–V8) | Done — **verdict PASS** |
 
 ## Critères du contrat visuel (V1–V8, §10) — rattachement
 
@@ -117,6 +117,43 @@ d'impl et ferment les décisions I1–I6 ci-dessus.
 | P-11 | T-B2 prescrivait `alt={coverAlt ?? ''}` dans `Thumbnail.astro`. **Or `ProjectCard` et `ArticleCard` faisaient déjà `alt={coverAlt ?? title}` AVANT ce plan**, et `coverAlt` est `optional()` dans les deux schémas : en déménageant l'image vers le composant partagé, le plan supprimait silencieusement ce repli. Sans effet aujourd'hui (tous les articles pourvus d'un `cover` ont un `coverAlt`, vérifié fichier par fichier), mais `Thumbnail` est destiné aux 4 cartes : le premier contenu publié sans `coverAlt` aurait perdu son texte alternatif. **Relevé par le relecteur, manqué par l'auto-revue de l'implémenteur.** | **Ruling du contrôleur : défaut de plan, pas déviation** — corriger *restaure* le comportement déjà livré, il ne change pas ce qui était convenu. `Thumbnail` reçoit une prop **`title` requise** et fait `alt={coverAlt ?? title}`. Requise et non optionnelle, pour que l'oubli soit **impossible** et non seulement improbable. Corrigé aux 5 emplacements du plan (interface, B2, B3, C1, C2) ; fix round 1 dispatché sur T-B2. |
 | P-10 | T-B2/Step 3 mesurait les vignettes par `grep -c 'rounded-thumb' dist/projets/index.html`, attendu « ≥ 2 ». **`grep -c` compte les lignes qui matchent, pas les occurrences** — et un HTML buildé est compacté sur une seule ligne : la commande renvoie `1` quel que soit le nombre réel de vignettes, donc elle ne peut **jamais** prouver l'attendu. Relevé par l'implémenteur, qui a mesuré autrement plutôt que de conclure à l'échec. | Commande remplacée par `grep -o … | wc -l`, avec la raison écrite à côté pour qu'elle ne soit pas « simplifiée » plus tard. Contrôle des deux monogrammes attendus (`AC`, `WI`) ajouté : c'est le chemin dérivé qui est exercé, aucun projet n'ayant de `cover`. |
 | P-09 | T-B1 promettait la signature `pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[])` — **qui ne compile pas contre le test que le même plan spécifie**. `{ featured?: boolean }` est un *weak type* TypeScript : n'ayant que des propriétés optionnelles, il rejette tout argument qui n'en partage aucune, donc `pickFeaturedEntry([{ id: 'first' }])` — exactement le cas des prompts et des skills, qui n'ont pas le champ. Relevé par l'implémenteur, reproduit à `tsc --strict`, puis **reproduit indépendamment en revue**. | Contrainte déplacée : `<T extends object>(entries: (T & { featured?: boolean })[])`. Nom, arité, type de retour et comportement à l'exécution **identiques** ; le test n'a pas été touché. Corrigée aux 2 emplacements du plan, avec la raison, pour qu'aucun implémenteur ultérieur ne la relise fausse. Le relecteur a établi en plus que le **vrai** appel de T-B3 type-check sous les deux signatures : le défaut n'atteignait que le test littéral. Consigné en défaut de plan et non en déviation — verdict rendu par le relecteur avec son propre raisonnement, après qu'il lui a été demandé de ne pas se contenter d'acquiescer. |
+
+## Phase Z — audit de vérification du 2026-09-13 · **VERDICT : PASS**
+
+| Étape | Résultat |
+|---|---|
+| **2 · Artefacts requis** | spec, ledger et journal de déviations présents |
+| **3 · Lint mécanique (lock 5)** | **13 checks, 0 violation**, 0 note |
+| **4 · Couverture spec §3** | **12 / 12** `R` en `Done`, audités **depuis la spec** et non depuis le ledger. Aucun `Pending`, aucun `In progress`, aucune ligne manquante |
+| **5 · Revue des déviations** | **4 approved, 0 rejected, 0 pending-user.** Garde anti-blanchiment appliquée : aucun statut inventé à ré-auditer |
+| **6 · Suite de tests, à neuf** | vitest **13 suites / 144 tests** verts · `astro check` **0 erreur, 0 warning** · build **52 pages** · R10 : `git diff milestone-plan-6 -- src/content.config.ts` **vide** · V6 : gate repo-wide **sortie vide** |
+| **7 · Parcours de la user story** | **5 / 5 validées par l'utilisateur**, sur valeurs mesurées au rendu : « 2 projets » → « 1 projet · techno Astro » → « 0 projet · techno Astro · statut archivé » → « Aucun projet pour techno Astro et statut archivé. » → reset → « 2 projets » |
+| **8 · Smoke visuel** | **Conforme, validé par l'utilisateur** — `/projets` sombre, état vide, `/blog` 375 px clair, `/skills` sombre |
+
+**Critères du contrat visuel :** V3, V5, V6, V8 `Done` sur ce plan · V1, V4, V7 acquis au Plan 6 ·
+**V2 `Deferred`** en référence à **D04 approuvée** (option 1 — report), obligation inscrite à la
+méthodologie §4.2 pour la spec de P9.
+
+### Ce que cette exécution a réellement coûté, pour la mémoire du projet
+
+**16 défauts de plan** (P-01 à P-16), **4 déviations** toutes approuvées, **3 rondes de correction**
+sur 5 tâches revues, **1 vague de correction finale** de 6 items, et **1 arrêt réglementaire** au
+budget de décisions.
+
+Trois faits méritent d'être retenus, parce qu'ils se reproduiront :
+
+1. **Un test peut verrouiller un bug.** Le défaut P-12 — une entrée qui disparaissait de la page
+   tout en restant comptée — était **encodé comme voulu** dans la suite de T-B1. Sa revue avait
+   recalculé les attentes contre l'implémentation, et elles concordaient : les deux étaient fausses
+   *ensemble*. Seule une exécution dans un contexte que le test n'anticipait pas l'a révélé.
+2. **Corriger le plan là où le défaut est trouvé ne suffit pas.** P-14 puis P-16 sont le même mode
+   de défaillance : une correction écrite dans une section que plus aucune tâche ne lira. La
+   seconde fois, le ledger la présentait même comme faite — un registre qui surestime ses
+   garanties éteint la vigilance exactement là où elle servirait.
+3. **La mesure au rendu a tout attrapé.** Sur les 4 déviations, **3 sont nées d'une mesure dans la
+   page** et la 4ᵉ d'une comparaison de deux builds. Aucune n'aurait fait échouer un test, aucune
+   n'était visible dans un diff. C'est la confirmation de ce que la spec §7 annonçait en citant le
+   Plan 6.
 
 ## Revue finale de branche (2026-09-13) — ce que les revues par tâche ne pouvaient pas voir
 
