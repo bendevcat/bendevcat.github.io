@@ -1141,10 +1141,15 @@ Le frontmatter de la page appelle la **même** règle de dérivation que le scri
 ```ts
 import { pickFeaturedEntry } from '../../lib/listPattern';
 
-// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR.
-const NOUNS = ['projet', 'projets'] as const;
-
+// décision I3 : l'entrée à la une est désignée CÔTÉ SERVEUR, pour que la carte
+// « à la une » et sa copie masquée dans la grille pointent exactement vers la
+// même entrée que computeListState() désignerait sans filtre.
 const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data.featured })));
+
+// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
+// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
+// jamais.
+const NOUNS = ['projet', 'projets'] as const;
 ```
 
 Chaque page de la Phase C déclare sa propre constante `NOUNS` sur le même modèle
