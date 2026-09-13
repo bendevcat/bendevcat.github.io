@@ -1,6 +1,6 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (T-B1 Done, revue passée — T-B2 démarrée)
+Last updated: 2026-09-13 (T-B2 Done après 1 ronde de correction — T-B3 démarrée)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -14,7 +14,7 @@ Last updated by: main (contrôleur SDD)
 | R5 | L'entrée « à la une » est **conditionnelle** : 1 sans filtre, 0 dès qu'une facette est active | In progress | Logique **`e0348e7`** : l'entrée à la une n'existe que si `!isAnyFacetActive`, dérivée par `pickFeaturedEntry` (`featured: true`, à défaut la première de l'ordre canonique). **Mesure au rendu encore à faire en T-B3.** Mesuré au pré-flight : aucun article n'a `featured: true` — c'est donc la dérivation qui s'applique sur `/blog`. |
 | R6 | L'état vide est contextualisé et réversible — message nommant les facettes actives **ET** bouton ramenant au total | In progress | Logique **`e0348e7`** : message `Aucun <nom> pour <facettes jointes par « et »>.`, recalculé caractère par caractère en revue ; redevient `null` dès qu'un résultat existe. **Mesure au rendu du bouton de réinitialisation encore à faire en T-B3.** |
 | R7 | Le dropdown porte une facette secondaire par famille : statut · tri · format · type | In progress | Couvert par T-B3 (statut), T-C1 (tri), T-C2 (format, type). **Limite mesurée au pré-flight :** sur `/skills`, `type` n'a qu'une valeur dans le contenu (`claude-code` sur les 2 skills) — la sélectionner ne change ni l'ordre ni le sous-ensemble. Arbitrage porté au gate de validation du plan. |
-| R8 | Chaque entrée des 4 listes porte une vignette — image du contenu sinon visuel **dérivé**, en CSS/SVG, sans fichier image ni champ de schéma | Pending | Couvert par T-B2 (composant + projets), T-C1 (blog), T-C2 (prompts, skills). |
+| R8 | Chaque entrée des 4 listes porte une vignette — image du contenu sinon visuel **dérivé**, en CSS/SVG, sans fichier image ni champ de schéma | In progress | **Composant livré : `6479e94`, corrigé en `35164e8`.** `src/components/Thumbnail.astro` — image du contenu quand elle existe, sinon bloc `bg-rail` au rayon 10 px, trame `hatch` en CSS et monogramme de 2 lettres en mono (forme choisie par l\'utilisateur au gate, G-03). **Zéro fichier image, zéro champ de schéma** : les deux guards (`git status --porcelain src/content/` et `git diff --stat milestone-plan-6 -- src/content.config.ts`) sont vides, vérifiés par l\'implémenteur **puis indépendamment par le relecteur**. Câblé sur `ProjectCard` ; les 3 autres cartes suivent en T-C1 et T-C2. Mesuré au rendu : les 2 projets, qui n\'ont aucun `cover`, affichent bien le visuel dérivé — `AC` et `WI`. |
 | R9 | Le patron est répliqué **à l'identique** sur les 4 familles | Pending | Couvert par T-C1 et T-C2. |
 | R10 | Le modèle de contenu est **inchangé** — `git diff milestone-plan-6 -- src/content.config.ts` vide | Pending | Vérifié en T-B2 et T-B3, re-vérifié en Phase Z. |
 | R11 | La logique nouvelle est testée — fonctions pures dans `src/lib/`, couvertes par vitest ; les 12 suites existantes restent vertes | Done | **`e0348e7`.** `src/lib/listPattern.ts` : `computeListState`, `isAnyFacetActive`, `pickFeaturedEntry`, toutes pures (`filter`/`map`/`sort` sur copies — la non-mutation est elle-même testée). **22 tests** dans la 13ᵉ suite ; **13 suites / 142 tests** verts ; `astro check` 0 erreur. Le module n'importe que `./facetFilters`, lequel n'a aucun import : **zéro `astro:content`**, direct ou transitif — vérifié par le contrôleur puis par le relecteur sur le graphe d'imports, pas sur le rapport. Les 2 suites préexistantes modifiées (`posts.test.ts`, `projectFilters.test.ts`) le sont **par ajout seul** : aucune assertion existante affaiblie, renommée ou supprimée. Le relecteur a **recalculé à la main** les valeurs attendues de chaque `describe` — les 5 ordres de tri, l'arithmétique du compte, la chaîne de méta caractère par caractère, le message d'état vide : toutes découlent de l'implémentation, aucune n'a été ajustée après coup, et aucun test tautologique. À re-vérifier en Phase Z. |
@@ -33,8 +33,8 @@ Last updated by: main (contrôleur SDD)
 |---|---|---|---|
 | A1 | A | R1, R2 — les 4 patrons entrent dans `@layer components` | Done (`53441e6`) — voir D01 |
 | B1 | B | R4, R5, R6, R7, R11 — `src/lib/listPattern.ts` : toute la logique du patron, pure et testée | Done (`e0348e7`) |
-| B2 | B | R8, R10 — `Thumbnail.astro` : vignette dérivée, sans fichier ni champ | In progress |
-| B3 | B | R3, R4, R5, R6, R7, R10 — `/projets` rend les 6 éléments + le script de glue unique | Pending |
+| B2 | B | R8, R10 — `Thumbnail.astro` : vignette dérivée, sans fichier ni champ | Done (`6479e94`, correctif `35164e8`) |
+| B3 | B | R3, R4, R5, R6, R7, R10 — `/projets` rend les 6 éléments + le script de glue unique | In progress |
 | C1 | C | R9, R7 (tri), R8 — `/blog` | Pending |
 | C2 | C | R9, R8 — `/prompts` et `/skills` | Pending |
 | D1 | D | R12 (+ V2, V6) — 4 listes × 2 thèmes × 375/768/1180 px | Pending |

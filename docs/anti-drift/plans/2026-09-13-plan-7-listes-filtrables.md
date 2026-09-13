@@ -750,7 +750,7 @@ interface Props {
   size?: 'card' | 'featured';
 }
 
-const { cover, coverAlt, derivedFrom, title, size = 'card' } = Astro.props;
+const { cover, coverAlt, title, derivedFrom, size = 'card' } = Astro.props;
 
 // R8 / spec §6.1 : sans `cover`, le visuel est DÉRIVÉ — aucun fichier image,
 // aucun champ de schéma. Le monogramme est purement fonction de la chaîne, donc
