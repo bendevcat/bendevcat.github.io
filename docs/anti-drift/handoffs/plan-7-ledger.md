@@ -1,14 +1,14 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (gate de validation du plan franchi — T-A1 démarrée)
+Last updated: 2026-09-13 (T-A1 Done, revue de tâche passée — T-B1 démarrée)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
 
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
-| R1 | Les 4 patrons sont dans `@layer components` et redeviennent surchargeables — mesuré **au rendu** : un élément `class="pill bg-nav"` calcule `--color-nav` et non `--color-accentSoft` | In progress | Couvert par T-A1. |
-| R2 | Le changement de cascade ne régresse rien — squelette DOM identique à `milestone-plan-6` **ET** les 3 paires de contraste du Plan 6 restent ≥ 4.5:1 dans les 2 thèmes | In progress | Couvert par T-A1. Mesuré **à la fin de la Phase A**, avant toute construction : les phases B et C changent délibérément la structure des 4 listes. |
+| R1 | Les 4 patrons sont dans `@layer components` et redeviennent surchargeables — mesuré **au rendu** : un élément `class="pill bg-nav"` calcule `--color-nav` et non `--color-accentSoft` | Done | **`53441e6`.** Les 4 patrons sont dans un unique `@layer components` (`global.css:133-164`), aucune déclaration modifiée à l'intérieur des blocs (diff = ré-indentation + 2 accolades). Sonde au rendu mesurée **deux fois indépendamment** — par l'implémenteur puis par le relecteur, qui a posé sa propre sonde : `class="pill bg-nav"` calcule `rgb(255,255,255)` en clair et `rgba(255,255,255,0.05)` en sombre, soit `--color-nav` dans les deux thèmes. Le piège que le Plan 6 avait laissé armé est désarmé. |
+| R2 | Le changement de cascade ne régresse rien — squelette DOM identique à `milestone-plan-6` **ET** les 3 paires de contraste du Plan 6 restent ≥ 4.5:1 dans les 2 thèmes | Done | **`53441e6` — volet contraste tenu à la lettre, volet squelette tenu SOUS RÉSERVE DE D01.** Contraste : les 6 ratios (3 paires × 2 thèmes) sont ≥ 4.5 — clair 11.79 / 6.33 / 5.62, sombre 12.75 / 7.34 / 8.25 — recalculés indépendamment par le relecteur (5.61 / 8.25 sur la paire composée, écart d'arrondi). Squelette : la comparaison contre `milestone-plan-6` renvoie **4 divergences sur 52 routes**, qui **préexistent au plan** (l'article `draft` `bienvenue-dans-mon-foutoir` est encore construit au tag, 53 fichiers contre 52). Contre-épreuve sur le `dist` pré-édition : **mêmes 4 lignes à l'identique** — la Phase A n'en ajoute aucune. Le relecteur a validé que la contre-épreuve isole bien la responsabilité de la tâche, **et** qu'elle ne comble pas l'écart entre « cette tâche ne casse rien » et « R2 est tenu à la lettre ». Cet écart est **D01**, `pending-user` : il bloque le ship, pas l'exécution. |
 | R3 | `/projets` rend les **6** éléments du patron §5.1, dans l'ordre | Pending | Couvert par T-B3. |
 | R4 | La ligne de méta annonce le compte **exact** — par comptage du DOM, sans filtre, avec un filtre, avec deux facettes | Pending | Couvert par T-B1 (logique) et T-B3 (mesure). |
 | R5 | L'entrée « à la une » est **conditionnelle** : 1 sans filtre, 0 dès qu'une facette est active | Pending | Couvert par T-B1 et T-B3. Règle de dérivation (spec §6.1) : `featured: true` là où le champ existe, à défaut la première entrée de l'ordre canonique. Mesuré au pré-flight : **aucun** article n'a `featured: true` — c'est donc la dérivation qui s'applique sur `/blog`. |
@@ -31,8 +31,8 @@ Last updated by: main (contrôleur SDD)
 
 | Task | Phase | Covers | Status |
 |---|---|---|---|
-| A1 | A | R1, R2 — les 4 patrons entrent dans `@layer components` | In progress |
-| B1 | B | R4, R5, R6, R7, R11 — `src/lib/listPattern.ts` : toute la logique du patron, pure et testée | Pending |
+| A1 | A | R1, R2 — les 4 patrons entrent dans `@layer components` | Done (`53441e6`) — voir D01 |
+| B1 | B | R4, R5, R6, R7, R11 — `src/lib/listPattern.ts` : toute la logique du patron, pure et testée | In progress |
 | B2 | B | R8, R10 — `Thumbnail.astro` : vignette dérivée, sans fichier ni champ | Pending |
 | B3 | B | R3, R4, R5, R6, R7, R10 — `/projets` rend les 6 éléments + le script de glue unique | Pending |
 | C1 | C | R9, R7 (tri), R8 — `/blog` | Pending |
@@ -54,7 +54,7 @@ La méthodologie §4.2 les rend applicables en Phase Z de chaque plan de la vagu
 | V5 | Mono réservé à la donnée machine | B3, C1, C2 | Pending — la **ligne de méta** est de la donnée (compteur, mono) ; le **message d'état vide** est de la prose (jamais mono). Contrainte globale n°7. |
 | V6 | Rayons ∈ {9, 10, 14, 20, 999}px | D1 | Pending — gate repo-wide en T-D1/Step 4. |
 | V7 | Space Grotesk et Inter retirés | — | Acquis au Plan 6 (`30c9ed0`). |
-| V8 | Contrastes AA | A1 | Pending — les 3 paires sont recalculées en T-A1 au titre de R2. |
+| V8 | Contrastes AA | A1 | **Done (`53441e6`).** 6 ratios sur 6 ≥ 4.5, mesurés deux fois indépendamment. La formule du plan ignorait l'alpha et garantissait 1.0 sur `accent`/`accentSoft` : corrigée (P-06), la mesure passe par un compositing sur le fond opaque réel. |
 
 ## Décisions d'implémentation tranchées par le plan (spec muette — ratification au gate)
 
