@@ -94,7 +94,43 @@ d'impl et ferment les décisions I1–I6 ci-dessus.
 | P-06 | T-A1/Step 5 fournissait une formule de contraste qui **ignore l'alpha** (`slice(0,3)`). Or `accentSoft` est semi-transparent et partage son triplet RVB avec `accent` : appliquée à la lettre, la formule renvoie **1.0** pour cette paire, jamais ≥ 4.5. Relevé par l'implémenteur de T-A1, qui a dû compositer pour mesurer. | Formule remplacée dans le plan par une version avec **compositing alpha** (`over(fg, bg)`), et consigne ajoutée : remonter le DOM jusqu'au premier ancêtre à fond opaque plutôt que de le supposer. |
 | P-07 | T-A1/Step 1 parlait des « **14** routes de `milestone-plan-6` ». Mesuré : `milestone-plan-6` construit **53** fichiers HTML et la branche courante **52**. | Chiffres corrigés, et la raison de l'écart (l'article `draft` encore construit au tag) documentée à l'endroit où elle compte, le Step 4. |
 | P-08 | T-B1/Step 4 annonçait « PASS, 18 tests » — un chiffre écrit à la main et jamais mesuré. Le fichier de tests en définit davantage, et sa dernière `describe` en **génère** dans une boucle sur `ORDERS` : tout compte en dur y est faux au premier cas ajouté. | L'attendu devient « tous les tests passent », avec consigne explicite de **reporter le compte observé**. Relevé avant le dispatch de T-B1, donc aucun implémenteur n'a été induit en erreur. |
+| P-11 | T-B2 prescrivait `alt={coverAlt ?? ''}` dans `Thumbnail.astro`. **Or `ProjectCard` et `ArticleCard` faisaient déjà `alt={coverAlt ?? title}` AVANT ce plan**, et `coverAlt` est `optional()` dans les deux schémas : en déménageant l'image vers le composant partagé, le plan supprimait silencieusement ce repli. Sans effet aujourd'hui (tous les articles pourvus d'un `cover` ont un `coverAlt`, vérifié fichier par fichier), mais `Thumbnail` est destiné aux 4 cartes : le premier contenu publié sans `coverAlt` aurait perdu son texte alternatif. **Relevé par le relecteur, manqué par l'auto-revue de l'implémenteur.** | **Ruling du contrôleur : défaut de plan, pas déviation** — corriger *restaure* le comportement déjà livré, il ne change pas ce qui était convenu. `Thumbnail` reçoit une prop **`title` requise** et fait `alt={coverAlt ?? title}`. Requise et non optionnelle, pour que l'oubli soit **impossible** et non seulement improbable. Corrigé aux 5 emplacements du plan (interface, B2, B3, C1, C2) ; fix round 1 dispatché sur T-B2. |
+| P-10 | T-B2/Step 3 mesurait les vignettes par `grep -c 'rounded-thumb' dist/projets/index.html`, attendu « ≥ 2 ». **`grep -c` compte les lignes qui matchent, pas les occurrences** — et un HTML buildé est compacté sur une seule ligne : la commande renvoie `1` quel que soit le nombre réel de vignettes, donc elle ne peut **jamais** prouver l'attendu. Relevé par l'implémenteur, qui a mesuré autrement plutôt que de conclure à l'échec. | Commande remplacée par `grep -o … | wc -l`, avec la raison écrite à côté pour qu'elle ne soit pas « simplifiée » plus tard. Contrôle des deux monogrammes attendus (`AC`, `WI`) ajouté : c'est le chemin dérivé qui est exercé, aucun projet n'ayant de `cover`. |
 | P-09 | T-B1 promettait la signature `pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[])` — **qui ne compile pas contre le test que le même plan spécifie**. `{ featured?: boolean }` est un *weak type* TypeScript : n'ayant que des propriétés optionnelles, il rejette tout argument qui n'en partage aucune, donc `pickFeaturedEntry([{ id: 'first' }])` — exactement le cas des prompts et des skills, qui n'ont pas le champ. Relevé par l'implémenteur, reproduit à `tsc --strict`, puis **reproduit indépendamment en revue**. | Contrainte déplacée : `<T extends object>(entries: (T & { featured?: boolean })[])`. Nom, arité, type de retour et comportement à l'exécution **identiques** ; le test n'a pas été touché. Corrigée aux 2 emplacements du plan, avec la raison, pour qu'aucun implémenteur ultérieur ne la relise fausse. Le relecteur a établi en plus que le **vrai** appel de T-B3 type-check sous les deux signatures : le défaut n'atteignait que le test littéral. Consigné en défaut de plan et non en déviation — verdict rendu par le relecteur avec son propre raisonnement, après qu'il lui a été demandé de ne pas se contenter d'acquiescer. |
+
+## Constats reportés à une tâche ultérieure
+
+Relevés en passant, hors du périmètre de la tâche qui les a trouvés. Aucun n'est une déviation :
+aucun n'exige un arbitrage, chacun a une tâche d'accueil déjà prévue au plan.
+
+- **Pour T-D1 — le saut de niveau de surface de la vignette.** Le contrat §2.1 ordonne quatre
+  niveaux (`bg → surface → card → rail`) et qualifie un saut de « défaut, pas un choix ». La carte
+  de liste est en `bg-surface` (niveau 2) et la vignette dérivée en `bg-rail` (niveau 4) : le niveau
+  3 (`card`) manque au milieu. **Implémenté tel quel à dessein**, sur consigne explicite du
+  contrôleur : le plan prévoit de trancher en T-D1, *avec une mesure derrière*, et corriger à la
+  volée en T-B2 aurait décidé à l'aveugle sur le critère même que ce plan doit rendre auditable.
+  Deux résolutions à peser en D1 : promouvoir la carte de liste en `.card-inner` (niveau 3), ou
+  rabaisser la vignette en `chip`. C'est **le premier vrai cas de test de V2** depuis que le contrat
+  existe — jusqu'ici il n'y avait aucune surface de niveau 3 ou 4 vers laquelle sauter.
+
+- **Pour T-D1 — le contraste du monogramme, mesuré et conforme, mais à l'étroit en clair.**
+  `dim` sur `rail` vaut **3.93:1 en clair** et **5.14:1 en sombre** — chiffres de l'implémenteur,
+  **recalculés indépendamment par le contrôleur, identiques au centième**. Conforme pour deux
+  raisons cumulatives, et non pas une : le monogramme vit dans un conteneur `aria-hidden="true"`,
+  donc décoratif au sens de WCAG 1.4.3 ; **et** même traité comme du texte réel, il est rendu à
+  `text-2xl` = `1.5rem` = **24 px**, soit du « large scale text » (≥ 18 pt) dont le seuil AA est
+  **3:1**, pas 4.5:1 — vérifié sur `--text-2xl` dans le bundle buildé, non supposé. Aucun critère
+  n'est donc en défaut, et V8 ne nomme pas cette paire. **Reporté quand même à D1** : si l'audit
+  visuel juge le monogramme trop pâle en clair, `text-muted` donnerait 5.38 / 7.60 — un changement
+  qui serait alors une **déviation** (le plan prescrit `text-dim`) et devrait être consigné comme
+  telle, avec la mesure à l'appui.
+  **Nuance mesurée par le relecteur, à emporter en D1 :** la trame `hatch` n'est pas un voile
+  uniforme mais un motif diagonal fin (période 9 px, ~11 % de couverture). Sur les liserés
+  eux-mêmes, le contraste **clair** tombe à ≈ **2.95:1** (fond composé `rgb(188,211,209)`), soit
+  juste sous le seuil de 3:1 ; en sombre la trame éclaircit le fond et le pire cas local reste à
+  ≈ 3.74:1. Cela ne renverse pas le verdict — le bloc est `aria-hidden`, et 11 % de liserés de 1 px
+  n'emportent pas la lisibilité du glyphe — mais **la valeur plate de `rail` sous-estime le pire cas
+  local en clair**. À reprendre si `--color-hatch` clair est un jour relevé.
 
 ## État du contenu mesuré au pré-flight (2026-09-13)
 

@@ -720,9 +720,10 @@ git commit -m "feat(p7): logique pure du patron liste filtrable (R4, R5, R6, R7,
 
 **Interfaces:**
 - Consumes: rien de B1.
-- Produces: `<Thumbnail cover={…} coverAlt={…} derivedFrom="DevOps" size="card" | "featured" />`.
+- Produces: `<Thumbnail cover={…} coverAlt={…} title={…} derivedFrom="DevOps" size="card" | "featured" />`.
   `cover` accepte le type d'`image()` d'Astro ou `undefined`. `derivedFrom` est la chaîne dont le
-  monogramme est tiré (catégorie, statut ou type).
+  monogramme est tiré (catégorie, statut ou type). **`title` est requise** : c'est le repli du texte
+  alternatif, `coverAlt` étant optionnel aux schémas — voir le commentaire de la prop.
 
 - [ ] **Step 1: Écrire le composant**
 
@@ -735,13 +736,21 @@ interface Props {
   /** Image du contenu, quand la collection en a une (blog, projects). */
   cover?: ImageMetadata;
   coverAlt?: string;
+  /**
+   * Repli du texte alternatif quand `coverAlt` est absent — `coverAlt` est
+   * `optional()` dans les deux schémas. `ProjectCard` et `ArticleCard`
+   * faisaient déjà `alt={coverAlt ?? title}` AVANT ce plan : cette prop est ce
+   * qui empêche de perdre ce repli en déménageant l'image ici. Requise, pour
+   * que l'oubli soit impossible et non simplement improbable.
+   */
+  title: string;
   /** Chaîne dont le visuel dérivé est tiré : catégorie, statut ou type. */
   derivedFrom: string;
   /** `featured` = format large de l'entrée à la une ; `card` = vignette de grille. */
   size?: 'card' | 'featured';
 }
 
-const { cover, coverAlt, derivedFrom, size = 'card' } = Astro.props;
+const { cover, coverAlt, derivedFrom, title, size = 'card' } = Astro.props;
 
 // R8 / spec §6.1 : sans `cover`, le visuel est DÉRIVÉ — aucun fichier image,
 // aucun champ de schéma. Le monogramme est purement fonction de la chaîne, donc
@@ -752,7 +761,7 @@ const ratio = size === 'featured' ? 'aspect-[16/7]' : 'aspect-video';
 
 {
   cover ? (
-    <Image src={cover} alt={coverAlt ?? ''} class={`${ratio} w-full rounded-thumb object-cover`} />
+    <Image src={cover} alt={coverAlt ?? title} class={`${ratio} w-full rounded-thumb object-cover`} />
   ) : (
     /*
       Niveau 4 de la hiérarchie des surfaces (§2.1) : `rail` est le creux — il
@@ -779,7 +788,7 @@ donne déjà. Un `alt` qui répéterait la catégorie serait du bruit pour un le
 Remplacer le bloc `{ cover && (<Image … />) }` (lignes 27-35) par :
 
 ```astro
-<Thumbnail cover={cover} coverAlt={coverAlt} derivedFrom={status} />
+<Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={status} />
 ```
 
 et ajouter l'import. Les deux projets n'ayant **aucun** `cover` (état mesuré ci-dessus), c'est le
@@ -789,10 +798,15 @@ chemin dérivé qui est exercé — `AC` pour `actif`, `WI` pour `wip`.
 
 ```bash
 npm run build
-grep -c 'rounded-thumb' dist/projets/index.html
+# `grep -c` compte les LIGNES qui matchent, pas les occurrences — et un HTML
+# buildé est compacté sur une seule ligne, donc `-c` y renvoie 1 quel que soit
+# le nombre de vignettes. Compter les occurrences, jamais les lignes :
+grep -o 'rounded-thumb' dist/projets/index.html | wc -l
 ```
 
-Attendu : **≥ 2** (une vignette par projet). Et :
+Attendu : **≥ 2** (une vignette par projet). Vérifier aussi les deux monogrammes attendus, `AC`
+(projet `actif`) et `WI` (projet `wip`), puisque c'est le chemin dérivé qui est exercé — aucun des
+deux projets n'a de `cover`. Et :
 
 ```bash
 git status --porcelain src/content/ && git diff --stat milestone-plan-6 -- src/content.config.ts
@@ -1030,7 +1044,7 @@ const facets = JSON.stringify(projectFacets({ status, stack }));
   data-featured={project.data.featured ? '' : undefined}
   hidden={hidden}
 >
-  <Thumbnail cover={cover} coverAlt={coverAlt} derivedFrom={status} size={featured ? 'featured' : 'card'} />
+  <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={status} size={featured ? 'featured' : 'card'} />
   …
 ```
 
@@ -1212,7 +1226,7 @@ git commit -m "feat(p7): /projets rend les 6 elements du patron (R3-R7, R10)"
 - [ ] **Step 1: Donner à `ArticleCard` le contrat de carte et la vignette**
 
 Remplacer `data-facet-card` par `data-entry-id` / `data-date` / `data-minutes` / `data-featured`,
-et le bloc `{cover && <Image …>}` par `<Thumbnail cover={cover} coverAlt={coverAlt}
+et le bloc `{cover && <Image …>}` par `<Thumbnail cover={cover} coverAlt={coverAlt} title={title}
 derivedFrom={category} size={featured ? 'featured' : 'card'} />`. Ajouter la prop
 `featured?: boolean` (même forme qu'en B3). `data-date={pubDate.getTime()}` et
 `data-minutes={readingMinutes}` alimentent le tri.
@@ -1286,8 +1300,8 @@ git commit -m "feat(p7): /blog rend le patron et son tri (R9, R7)"
 - [ ] **Step 1: Les deux cartes**
 
 Même transformation qu'en C1 : `data-entry-id`, `data-facet`, `data-date={0}`, `data-minutes={0}`,
-prop `featured?: boolean`, et `<Thumbnail derivedFrom={format} />` (prompts) /
-`<Thumbnail derivedFrom={type} />` (skills) — jamais de `cover` : ces deux collections n'ont pas le
+prop `featured?: boolean`, et `<Thumbnail derivedFrom={format} title={title} />` (prompts) /
+`<Thumbnail derivedFrom={type} title={title} />` (skills) — jamais de `cover` : ces deux collections n'ont pas le
 champ, et R10 interdit de l'ajouter.
 
 - [ ] **Step 2: Les deux pages**
