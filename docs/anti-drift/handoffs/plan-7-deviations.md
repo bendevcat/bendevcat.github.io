@@ -39,6 +39,44 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D03 — sur `/skills`, R6 n'est pas déclenchable avec le contenu réel
+
+- **Date:** 2026-09-13
+- **Task affected:** T-C2 (`src/pages/skills/index.astro`) — et le verdict R9 en Phase Z.
+- **Original plan:** R9 exige que le patron soit répliqué à l'identique sur les 4 familles et que
+  « **R4, R5, R6, R7 s'y vérifient un par un** ». R6 exige qu'« une combinaison sans résultat
+  affiche un message nommant les facettes actives **ET** un bouton qui […] ramène le compte au total
+  de la collection ».
+- **Deviation taken:** sur `/skills`, R6 est tenu **par construction et non par mesure au rendu**.
+  Ce qui est vérifié : le conteneur d'état vide est rendu, le même script et la même fonction pure
+  le pilotent que sur les trois autres familles, et son déclenchement est mesuré au rendu sur
+  `/projets`, `/blog` et `/prompts`. Ce qui **n'est pas** vérifié : le message affiché sur `/skills`
+  même, faute de pouvoir y produire un résultat vide.
+- **Reason:** fait de **contenu**, pas de code, mesuré sur les fichiers réels. `/skills` publie
+  2 entrées, `superpowers` (`tags: [claude-code]`) et `anti-drift-planning`
+  (`tags: [anti-drift, planification, claude-code, méthodologie]`), toutes deux en
+  `type: claude-code`. Les options de facette ne listent que les valeurs **présentes** — c'est le
+  comportement établi au Plan 5, pour ne jamais proposer un filtre qui ne filtre rien. Il n'existe
+  donc **aucune combinaison atteignable** qui vide la liste : `type` ne retire jamais rien, et tout
+  `tag` proposé garde au moins une entrée. Le meilleur cas mesuré est `tag = anti-drift` → 1 sur 2.
+- **Précédent, mais pas identique :** l'utilisateur a déjà arbitré au gate (**G-02**) le cas jumeau
+  de **R7** sur cette même page — « mesurer sur `tag`, rapporter `type` tel quel ». R6 est le même
+  genre d'impasse, sur un critère que ce gate n'a pas nommé. Étendre G-02 à R6 de ma propre autorité
+  serait précisément l'arbitrage silencieux que ce journal existe pour empêcher : c'est à
+  l'utilisateur de dire si sa décision couvrait aussi ce cas.
+- **Reversibility:** `cheap` — aucun code n'en dépend. Un rejet demande soit de publier un skill
+  d'un `type` différent (ce qui rouvre aussi R7), soit d'ajouter une facette qui puisse vider la
+  liste, soit d'acter la mesure par construction en le disant dans la spec.
+- **Caught late:** `no` — consignée avant que R9 soit porté au ledger et avant tout ship.
+- **Status:** pending-user
+- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Follow-up:** si rejetée, la voie la plus économique est de publier une entrée `skills` portant un
+  `type` distinct : elle rend **R6 et R7** mesurables d'un coup sur `/skills`, sans toucher au
+  schéma (R10 reste tenu, `type` est déjà une chaîne libre). Cela ajoute en revanche du contenu que
+  ce plan n'avait pas prévu de produire.
+
+---
+
 ## D02 — l'accueil change d'apparence, alors que la spec le place hors périmètre
 
 - **Date:** 2026-09-13

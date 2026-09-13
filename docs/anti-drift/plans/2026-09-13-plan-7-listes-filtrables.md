@@ -1387,8 +1387,16 @@ pas avant — qu'il se supprime : le retirer en T-B3 aurait cassé le build de `
 
 ```bash
 git rm src/scripts/facet-filters.ts
-grep -rn 'facet-filters' src/     # doit être VIDE
+# Chercher les IMPORTS, pas le nom : plusieurs commentaires de prose citent
+# légitimement l'ancien script (son remplacement, son historique).
+grep -rn "from '.*facet-filters'\|import '.*facet-filters'" src/   # doit être VIDE
 ```
+
+Les mentions du nom qui subsistent dans des **commentaires** ne sont pas des références mortes au
+sens du build, mais celles qui décrivent le fichier comme s'il existait encore sont fausses une fois
+qu'il a disparu : mettre à jour celles de `src/scripts/blog-filters.ts` et de
+`src/lib/facetFilters.ts`. Celle de `src/scripts/list-pattern.ts` (« remplace `facet-filters.ts` »)
+est une mention historique correcte — la garder.
 
 `src/lib/facetFilters.ts` **reste** : c'est le prédicat, consommé par `listPattern.ts`, et sa suite
 est l'une des 12 que R11 exige de garder vertes. Seul le script de glue disparaît.
