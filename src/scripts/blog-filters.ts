@@ -11,7 +11,7 @@
 // reste donc un script global pour TypeScript — `toolbar` collisionnerait
 // avec `Window.toolbar` (`BarProp`) du lib DOM et ferait échouer `astro check`
 // (`Cannot redeclare block-scoped variable 'toolbar'`).
-const facetToolbar = document.querySelector<HTMLElement>('[data-facet-filters]');
+const facetToolbar = document.querySelector<HTMLElement>('[data-list-filters]');
 
 if (facetToolbar) {
   // La puce est rendue inerte côté serveur (cf. ArticleCard.astro) : sans JS,

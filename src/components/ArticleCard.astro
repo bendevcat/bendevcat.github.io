@@ -1,9 +1,9 @@
 ---
-import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { AI_USAGE_META } from '../lib/aiUsage';
 import { estimateReadingMinutes } from '../lib/posts';
 import { tagSlug } from '../lib/tags';
+import Thumbnail from './Thumbnail.astro';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -15,9 +15,13 @@ interface Props {
    * promettrait un filtre inexistant.
    */
   filterable?: boolean;
+  /** Variante « à la une » : carte large, vignette au format 16/7. */
+  featured?: boolean;
+  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
+  hidden?: boolean;
 }
 
-const { post, filterable = false } = Astro.props;
+const { post, filterable = false, featured = false, hidden = false } = Astro.props;
 const { title, description, pubDate, category, tags, cover, coverAlt, aiUsage } = post.data;
 
 const dateFr = pubDate.toLocaleDateString('fr-FR', {
@@ -30,20 +34,33 @@ const readingMinutes = estimateReadingMinutes(post.body ?? '');
 const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 ---
 
+{/*
+  Contrat de carte commun aux quatre listes (Plan 7 / I4), lu par
+  src/scripts/list-pattern.ts — même forme que ProjectCard.astro. `data-facet`
+  est du JSON : aucune valeur de facette ne peut casser le parsing, quel que
+  soit son libellé. `data-date` = pubDate en millisecondes, `data-minutes` =
+  temps de lecture estimé : ce sont les deux clés que lisent les tris
+  shortest/longest et recent/oldest (R7).
+*/}
 <article
-  class="group relative flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
-  data-facet-card
+  class:list={[
+    'group relative flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50',
+    featured && 'sm:col-span-2 lg:col-span-3',
+  ]}
+  data-entry-id={post.id}
   data-facet={JSON.stringify({ category: [category], tag: tags.map(tagSlug) })}
+  data-date={pubDate.getTime()}
+  data-minutes={readingMinutes}
+  data-featured={post.data.featured ? '' : undefined}
+  hidden={hidden}
 >
-  {
-    cover && (
-      <Image
-        src={cover}
-        alt={coverAlt ?? title}
-        class="aspect-video w-full rounded-inner object-cover"
-      />
-    )
-  }
+  <Thumbnail
+    cover={cover}
+    coverAlt={coverAlt}
+    title={title}
+    derivedFrom={category}
+    size={featured ? 'featured' : 'card'}
+  />
 
   {
     filterable ? (
