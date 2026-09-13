@@ -58,6 +58,13 @@ Ces contraintes s'appliquent à **toutes** les tâches. Elles ne sont pas redite
     chemin de consommation valide est `box-shadow: var(--shadow)` en CSS dans `global.css` —
     ce que le contrat §4 prescrit de toute façon. Les utilitaires de rayon, eux, lisent bien leur
     variable : pas de piège équivalent.
+13. **Un utilitaire Tailwind ne peut pas surcharger une propriété portée par `.card`, `.card-inner`,
+    `.panel` ou `.pill`** — et l'échec est **silencieux**. Les utilitaires vivent dans
+    `@layer utilities` ; les quatre classes de patrons sont **hors layer**, et un style hors layer
+    bat n'importe quel layer *indépendamment de la spécificité*. Vérifié en direct dans la page en
+    T-C1 : un élément `class="pill bg-nav"` calcule `accentSoft`, pas `nav`. Conséquence pratique :
+    pour changer un fond, un rayon ou une bordure portés par un patron, il faut **ne pas utiliser
+    le patron** (et composer en utilitaires), pas le nuancer.
 
 ### Conventions de nommage arrêtées par ce plan (spec muette)
 
