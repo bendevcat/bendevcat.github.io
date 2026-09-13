@@ -43,8 +43,8 @@ const relatedPrompts = skill.data.relatedPrompts?.length
     <h1 class="mt-4 font-sans text-4xl font-bold text-ink">{title}</h1>
 
     <div class="mt-4 flex flex-wrap items-center gap-3 font-mono text-xs text-muted">
-      <span class="rounded-full border border-line px-2 py-0.5">{type}</span>
-      {version && <span class="rounded-full border border-line px-2 py-0.5">v{version}</span>}
+      <span class="rounded-pill border border-line px-2 py-0.5">{type}</span>
+      {version && <span class="rounded-pill border border-line px-2 py-0.5">v{version}</span>}
       {name && <span>{name}</span>}
     </div>
 
@@ -57,7 +57,7 @@ const relatedPrompts = skill.data.relatedPrompts?.length
             href={repoUrl}
             rel="noopener noreferrer"
             target="_blank"
-            class="rounded-lg border border-line px-3 py-1.5 font-mono text-xs text-ink transition-colors hover:border-accent hover:text-accent"
+            class="rounded-pill border border-line px-3 py-1.5 font-mono text-xs text-ink transition-colors hover:border-accent hover:text-accent"
           >
             code source ↗
           </a>
@@ -69,7 +69,7 @@ const relatedPrompts = skill.data.relatedPrompts?.length
       tags.length > 0 && (
         <ul class="mt-6 flex flex-wrap gap-2" aria-label="Tags">
           {tags.map((tag) => (
-            <li class="rounded border border-line px-2 py-0.5 font-mono text-xs text-muted">
+            <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
               {tag}
             </li>
           ))}

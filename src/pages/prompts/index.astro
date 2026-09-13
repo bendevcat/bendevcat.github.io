@@ -39,7 +39,7 @@ const tags = collectPromptTags(prompts);
             data-facet-key="format"
             data-facet-value={ALL}
             aria-pressed="true"
-            class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+            class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
           >
             tous
           </button>
@@ -50,7 +50,7 @@ const tags = collectPromptTags(prompts);
                 data-facet-key="format"
                 data-facet-value={format}
                 aria-pressed="false"
-                class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+                class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
               >
                 {format}
               </button>
@@ -65,7 +65,7 @@ const tags = collectPromptTags(prompts);
                 outil
                 <select
                   data-facet-key="tool"
-                  class="rounded-lg border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
+                  class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
                 >
                   <option value={ALL}>tous</option>
                   {tools.map((tool) => (
@@ -81,7 +81,7 @@ const tags = collectPromptTags(prompts);
                 tag
                 <select
                   data-facet-key="tag"
-                  class="rounded-lg border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
+                  class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
                 >
                   <option value={ALL}>tous</option>
                   {tags.map((tag) => (
@@ -98,7 +98,7 @@ const tags = collectPromptTags(prompts);
         {prompts.map((prompt) => <PromptCard prompt={prompt} />)}
       </div>
 
-      <p class="mt-8 font-mono text-sm text-muted" data-facet-empty hidden>
+      <p class="mt-8 text-sm text-muted" data-facet-empty hidden>
         Aucun prompt ne correspond à ce filtre.
       </p>
     </section>

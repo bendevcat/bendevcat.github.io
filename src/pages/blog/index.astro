@@ -45,7 +45,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 						data-facet-key="category"
 						data-facet-value={ALL}
 						aria-pressed="true"
-						class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
 					>
 						toutes
 					</button>
@@ -56,7 +56,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 								data-facet-key="category"
 								data-facet-value={cat}
 								aria-pressed="false"
-								class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
 							>
 								{cat}
 							</button>
@@ -72,7 +72,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 								data-facet-key="tag"
 								data-facet-value={ALL}
 								aria-pressed="true"
-								class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
 							>
 								tous
 							</button>
@@ -83,7 +83,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 										data-facet-key="tag"
 										data-facet-value={tag.slug}
 										aria-pressed="false"
-										class="rounded-full border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+										class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
 									>
 										{tag.label} <span class="text-accent">{tag.count}</span>
 									</button>
@@ -98,7 +98,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 				{posts.map((post) => <ArticleCard post={post} filterable />)}
 			</div>
 
-			<p class="mt-8 font-mono text-sm text-muted" data-facet-empty hidden>
+			<p class="mt-8 text-sm text-muted" data-facet-empty hidden>
 				Aucun article ne correspond à ce filtre.
 			</p>
 
