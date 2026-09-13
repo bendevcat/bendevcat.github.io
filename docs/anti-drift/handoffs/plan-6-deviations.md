@@ -89,6 +89,29 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   site et l'objet entier de `/transparence-ia`. Le foyer naturel de ces teintes est le système des
   **5 tons de tags du contrat §2.3**, que la spec §5 place explicitement en **P8** (« les 5 teintes
   sont dans le contrat visuel mais ne sont consommées qu'en P8 avec `/tags` »).
+- **AMENDEMENT du 2026-09-13, après la revue finale de branche — l'argument central de cette
+  entrée est partiellement faux, et cela change ce qui est décidé.** La raison ci-dessus dit que
+  neutraliser ces palettes « ferait perdre son code couleur à la signalétique de transparence IA ».
+  **Or un des trois niveaux l'a déjà perdu, en thème clair, à cause de ce plan.** Mesuré sur le site
+  buildé : `bg-slate-100` du niveau `none` vaut `rgb(241,245,249)` et le nouveau `--color-bg` clair
+  vaut `rgb(241,244,247)` — une distance de **2.24**, soit un contraste d'environ **1.02:1** entre
+  le bandeau et la page. Le bandeau « 100 % humain » n'a donc **aucun aplat visible** en clair ; il
+  ne se lit plus que par sa bordure. Pour comparaison, `partial` est à 50.71 de distance et `full` à
+  25.16 — eux restent parfaitement lisibles. Avant ce plan, le `bg` clair valait `#FCFCFD`, à ~13.9
+  de `slate-100` : la teinte était faible mais visible. C'est donc **une régression causée par le
+  changement de token**, pas une dette cosmétique préexistante. Le thème sombre n'est pas affecté.
+- **TROISIÈME OPTION, ouverte par cet amendement :** remplacer **le seul `slate`** par le token de
+  contrat `--color-chip` (`#E6EBF1` en clair, à ~10 de distance du `bg`), et laisser l'ambre et le
+  bleu tels quels. Cela rend son aplat au niveau `none` **tout de suite**, avec un token du contrat,
+  **sans** avancer les 5 tons de tags du §2.3 que la spec §5 place explicitement en P8.
+- **RATTACHEMENT de `backdrop:bg-black/60`** (`src/components/SearchDialog.astro:8`) **à cette
+  entrée**, sur remarque de la revue finale : c'est le même problème — une couleur hors des 23
+  tokens, dans un fichier que ce plan a édité, reportée à P8. Elle était classée « constat » pendant
+  que les deux palettes étaient classées « déviation ». Les deux appartiennent au même panier,
+  sinon l'utilisateur ne tranche que la moitié du sujet. Nuance à connaître pour décider : ici,
+  **aucun token ne convient** — le contrat §2 n'a pas de rôle de voile, et les deux candidats les
+  plus proches (`bg`, `code`) sont **plus clairs que la page elle-même** en thème clair, ce qui
+  supprimerait la seule fonction du voile.
 - **Reversibility:** `cheap` — deux fichiers de `src/lib/`, aucune structure touchée, aucune donnée.
   Le rattachement aux tons de §2.3 est un remplacement de chaînes de classes.
 - **Caught late:** `no` — signalée **avant** exécution, et rien n'a été modifié dans ces deux
@@ -99,6 +122,31 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   ce qui oblige à faire entrer ces 5 triplets dans `global.css` maintenant au lieu de P8, et donc à
   livrer en P6 une partie de ce que la spec §5 a explicitement reporté. Si approuvée, la spec de P8
   doit porter la reprise des deux palettes comme un item nommé, pas comme un sous-entendu.
+
+## D03 — la puce de liste de `.prose` passe de `dim` à `muted` : `dim` tombe sous AA en thème clair
+
+- **Date:** 2026-09-13
+- **Task affected:** T-B2 (`src/styles/global.css`, règle `.prose :where(li)::marker`) — constat
+  survenu à la **revue finale de branche**, après la clôture de la tâche.
+- **Original plan:** le plan d'impl, T-B2 Step 1, prescrit explicitement « puces de liste :
+  `--color-dim` ».
+- **Deviation taken:** la règle consomme `var(--color-muted)` au lieu de `var(--color-dim)`.
+  **Aucune valeur de token n'est modifiée** — seul change le token que cette règle consomme.
+- **Reason:** fait **mesuré au rendu**, pas déduit. En clair, `dim` (`#6A7684`) sur `bg`
+  (`#F1F4F7`) donne **4.19:1**, sous le plancher AA de 4.5. Les puces d'une liste **ordonnée** sont
+  des chiffres, donc du texte au sens de WCAG 1.4.3, et c'est du contenu publié. `muted` donne
+  **5.74:1** en clair et **7.91:1** en sombre. Le sombre n'était pas en cause (`dim` y vaut 5.35:1).
+  **La faute est au plan, pas à l'implémenteur** : le plan a prescrit un token sans connaître son
+  contraste sur le fond de page, alors que sa propre §7 s'engage sur des contrôles de contraste.
+  R12 et V8 étant des listes **fermées** de trois paires nommées, aucun critère ne pouvait l'attraper.
+- **Reversibility:** `cheap` — un nom de token dans une règle CSS.
+- **Caught late:** `yes` — trouvé à la revue finale, après la clôture de T-B2. Personne ne l'avait
+  mesuré : c'est précisément l'angle mort d'un critère écrit comme une liste fermée.
+- **Status:** pending-user
+- **User decision:** _(vide jusqu'à une décision explicite de l'utilisateur)_
+- **Follow-up:** si rejetée, remettre `--color-dim` et consigner en clair que le site publie des
+  puces de liste ordonnée à 4.19:1 en thème clair — ce qui devra alors figurer dans la spec de P8,
+  qui porte déjà « contrastes AA ».
 
 ---
 

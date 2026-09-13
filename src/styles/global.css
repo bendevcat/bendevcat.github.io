@@ -214,7 +214,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 .prose :where(ul) { list-style: disc; }
 .prose :where(ol) { list-style: decimal; }
 .prose :where(li) { margin-top: 0.4em; margin-bottom: 0.4em; }
-.prose :where(li)::marker { color: var(--color-dim); }
+.prose :where(li)::marker { color: var(--color-muted); }
 
 .prose :where(blockquote) {
   margin: 1.5em 0;
