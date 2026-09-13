@@ -19,7 +19,7 @@ const statusMeta = PROJECT_STATUS_META[status];
 */}
 <a
   href={`/projets/${project.id}/`}
-  class="group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-accent/50"
+  class="group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
   data-project-card
   data-status={status}
   data-stack={JSON.stringify(stack)}
@@ -29,13 +29,13 @@ const statusMeta = PROJECT_STATUS_META[status];
       <Image
         src={cover}
         alt={coverAlt ?? title}
-        class="aspect-video w-full rounded-lg object-cover"
+        class="aspect-video w-full rounded-inner object-cover"
       />
     )
   }
 
   <span
-    class={`w-fit rounded-full border px-2 py-0.5 font-mono text-xs ${statusMeta.chipClass}`}
+    class={`w-fit rounded-pill border px-2 py-0.5 font-mono text-xs ${statusMeta.chipClass}`}
   >
     {statusMeta.label}
   </span>
@@ -50,7 +50,7 @@ const statusMeta = PROJECT_STATUS_META[status];
     stack.length > 0 && (
       <ul class="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Technologies">
         {stack.map((tech) => (
-          <li class="rounded border border-line px-2 py-0.5 font-mono text-xs text-muted">
+          <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
             {tech}
           </li>
         ))}

@@ -17,15 +17,15 @@ const facets = JSON.stringify({ format: [format], tool: [tool], tag: tags });
 
 <a
   href={`/prompts/${prompt.id}/`}
-  class="group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-accent/50"
+  class="group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
   data-facet-card
   data-facet={facets}
 >
   <div class="flex flex-wrap items-center gap-2">
-    <span class="w-fit rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted">
+    <span class="w-fit rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
       {format}
     </span>
-    <span class="w-fit rounded-full border border-line px-2 py-0.5 font-mono text-xs text-muted">
+    <span class="w-fit rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
       {tool}
     </span>
   </div>
@@ -40,7 +40,7 @@ const facets = JSON.stringify({ format: [format], tool: [tool], tag: tags });
     tags.length > 0 && (
       <ul class="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Tags">
         {tags.map((tag) => (
-          <li class="rounded border border-line px-2 py-0.5 font-mono text-xs text-muted">
+          <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
             {tag}
           </li>
         ))}

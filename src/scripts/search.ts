@@ -33,7 +33,10 @@ if (dialog && input && output) {
   const message = (text: string) => {
     output.replaceChildren();
     const p = document.createElement('p');
-    p.className = 'font-mono text-xs text-muted';
+    // Prose, pas donnée machine (contrat §3.1 / critère V5) : ces messages sont
+    // des phrases adressées au visiteur (« Tapez au moins 2 caractères. »,
+    // « Aucun résultat pour … »), pas une date ni un chemin — donc pas de mono.
+    p.className = 'text-xs text-muted';
     p.textContent = text;
     output.append(p);
   };
@@ -72,12 +75,14 @@ if (dialog && input && output) {
         const item = document.createElement('li');
         const link = document.createElement('a');
         link.href = result.url;
-        link.className = 'block rounded-lg px-2 py-2 hover:bg-accentSoft focus-visible:bg-accentSoft';
+        link.className = 'block rounded-thumb px-2 py-2 hover:bg-accentSoft focus-visible:bg-accentSoft';
         const title = document.createElement('span');
         title.className = 'block text-sm text-ink';
         title.textContent = result.title; // texte, jamais innerHTML
         const excerpt = document.createElement('span');
-        excerpt.className = 'mt-0.5 block font-mono text-xs text-muted';
+        // Même raison que `message()` : un extrait Pagefind est une phrase tirée
+        // du corps de l'article — de la prose, jamais de la donnée machine (V5).
+        excerpt.className = 'mt-0.5 block text-xs text-muted';
         // Pagefind n'échappe rien : ni à l'indexation, ni dans `build_excerpt`.
         // Du contenu réel de ce site contient déjà des jetons comme `<!--`,
         // `<N>` ou `<command>` : injectés tels quels, le navigateur les lit
