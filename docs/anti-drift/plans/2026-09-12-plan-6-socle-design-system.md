@@ -104,7 +104,7 @@ document.documentElement.scrollWidth <= window.innerWidth
 
 ## Phase A — Tokens & typographie
 
-### Task A1 : Polices — Nebula Sans entre, Space Grotesk et Inter sortent
+### Task 1 (T-A1) : Polices — Nebula Sans entre, Space Grotesk et Inter sortent
 
 **Couvre :** R2, R3, V7.
 
@@ -190,7 +190,7 @@ git add -A && git commit -m "feat(p6): Nebula Sans remplace Space Grotesk et Int
 
 ---
 
-### Task A2 : Les 23 tokens dans les deux thèmes, et le re-câblage mécanique du site
+### Task 2 (T-A2) : Les 23 tokens dans les deux thèmes, et le re-câblage mécanique du site
 
 **Couvre :** R1, R8, R12, V1, V4, V8. Rend aussi le site de nouveau cohérent après le renommage.
 
@@ -289,7 +289,7 @@ git add -A && git commit -m "feat(p6): les 23 tokens du contrat visuel dans les 
 
 ## Phase B — Patrons de composants
 
-### Task B1 : Les 4 classes de patrons
+### Task 3 (T-B1) : Les 4 classes de patrons
 
 **Couvre :** R4, V6.
 
@@ -318,7 +318,7 @@ Tout `border-radius` des 4 classes ∈ {9, 10, 14, 20, 999}px, exprimé via `var
 
 ---
 
-### Task B2 : `.prose` accordé aux nouveaux tokens
+### Task 4 (T-B2) : `.prose` accordé aux nouveaux tokens
 
 **Couvre :** R9, V5, V6.
 
@@ -358,7 +358,7 @@ Contrôle 375 px : `document.documentElement.scrollWidth <= window.innerWidth` �
 
 ## Phase C — Header
 
-### Task C1 : Logo en pilule + navigation en pilules à icônes
+### Task 5 (T-C1) : Logo en pilule + navigation en pilules à icônes
 
 **Couvre :** R5, R6, E1.
 
@@ -424,7 +424,7 @@ l'accueil).
 
 ---
 
-### Task C2 : Barre d'actions ronde + responsive 375 px
+### Task 6 (T-C2) : Barre d'actions ronde + responsive 375 px
 
 **Couvre :** R7, R11 (header), E2.
 
@@ -473,7 +473,7 @@ Sur le site buildé, à 375 px :
 
 ## Phase D — Passe de non-régression visuelle
 
-### Task D1 : Les 8 composants sur les nouveaux tokens
+### Task 7 (T-D1) : Les 8 composants sur les nouveaux tokens
 
 **Couvre :** R10 (composants), V2, V3, V6.
 
@@ -517,7 +517,7 @@ et `Icon.astro`, exclus de R10 par la spec.
 
 ---
 
-### Task D2 : Parcours des 10 routes × 2 thèmes × 3 largeurs
+### Task 8 (T-D2) : Parcours des 10 routes × 2 thèmes × 3 largeurs
 
 **Couvre :** R10, R11, R12, V5.
 
@@ -565,7 +565,7 @@ tokens. Leur audit 375 px / AA appartient à P8 : consigner les constats, ne pas
 
 ## Phase Z — Vérification
 
-### Task Z1 : Audit canonique
+### Task 9 (T-Z1) : Audit canonique
 
 - [ ] **Step 1** — `/anti-drift-planning:verify 6`
 - [ ] **Step 2** — Le verdict conditionne tout : PASS → script de release + tag `milestone-plan-6`

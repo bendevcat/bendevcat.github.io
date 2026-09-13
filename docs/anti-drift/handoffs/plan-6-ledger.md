@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (pré-flight)
+Last updated: 2026-09-13 (T-A1 en cours)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -8,8 +8,8 @@ Last updated by: main (contrôleur SDD)
 | ID | Requirement | Status | Notes |
 |---|---|---|---|
 | R1 | Les 23 tokens existent dans les deux thèmes — `global.css` définit les 23 noms de `§2` du contrat visuel sous `@theme` **ET** les 23 sous `:root[data-theme="dark"]`, aux valeurs exactes du tableau | Pending | Couvert par T-A2. Nommage arrêté au pré-flight : les 23 noms sont repris **verbatim** (22 en `--color-<nom>`, 1 en `--shadow` nu). Fait mesuré sur Tailwind v4.3.3 : une variable `@theme` en camelCase produit bien son utilitaire (`--color-accentSoft` → `.bg-accentSoft`) — aucune transliteration nécessaire. |
-| R2 | Nebula Sans (ou sa substitution actée) est servie — le texte courant de `/` est rendu dans la police retenue **ET** la décision `§8.1` est tranchée et consignée dans la spec de design | Pending | Couvert par T-A1. **Bloqueur soumis à l'utilisateur au gate de pré-flight.** |
-| R3 | Space Grotesk et Inter sont retirés — `grep` ne renvoie aucune occurrence **ET** `npm run build` passe | Pending | Couvert par T-A1. Le grep littéral de la spec (`grep -ri "space-grotesk\|inter"`) produit des faux positifs sur les mots français (`interne`, `interactif`) : la mesure appliquée vise la **dépendance et la famille CSS**, pas la sous-chaîne. |
+| R2 | Nebula Sans (ou sa substitution actée) est servie — le texte courant de `/` est rendu dans la police retenue **ET** la décision `§8.1` est tranchée et consignée dans la spec de design | In progress | Couvert par T-A1. **Bloqueur tranché par l'utilisateur au gate de pré-flight du 2026-09-13 : « Embarquer Nebula Sans (OFL-1.1) ».** Le fait qui l'a établi : le `LICENSE` de `@fontsource/nebula-sans@5.3.0` porte « Copyright (c) 2024, Nebula Entertainment & Broadcasting LLC (nebula.tv) », dérivée de Source Sans (Adobe), sous SIL OFL-1.1 — licence libre autorisant l'embarquement. La prémisse « police de marque d'Anthropic » du §8.1 est fausse et est corrigée en T-A1. |
+| R3 | Space Grotesk et Inter sont retirés — `grep` ne renvoie aucune occurrence **ET** `npm run build` passe | In progress | Couvert par T-A1. Le grep littéral de la spec (`grep -ri "space-grotesk\|inter"`) produit des faux positifs sur les mots français (`interne`, `interactif`) : la mesure appliquée vise la **dépendance et la famille CSS**, pas la sous-chaîne. |
 | R4 | Les 4 classes de patrons existent — `global.css` définit `.card`, `.card-inner`, `.panel`, `.pill` **ET** aucune ne contient `display`, `gap`, `grid` ou `flex` | Pending | Couvert par T-B1. |
 | R5 | Header : logo en pilule — `bencat_` dans une pilule à bordure avec son glyphe à 3 barres, menant à `/` | Pending | Couvert par T-C1. |
 | R6 | Header : nav en pilules à icônes — les 5 items portent leur icône **ET** l'item de la route courante est distinct (fond + graisse), y compris sur une route fille | Pending | Couvert par T-C1. Mesure retenue : **exactement un** `aria-current="page"` par route, vérifié sur route mère **et** fille. |
@@ -31,7 +31,7 @@ Last updated by: main (contrôleur SDD)
 
 | Task | Phase | Covers | Status |
 |---|---|---|---|
-| A1 | A | R2, R3 (+ V7) — polices : Nebula Sans entre, Space Grotesk et Inter sortent | Pending |
+| A1 | A | R2, R3 (+ V7) — polices : Nebula Sans entre, Space Grotesk et Inter sortent | In progress |
 | A2 | A | R1, R8, R12 (+ V1, V4, V8) — les 23 tokens dans les 2 thèmes + re-câblage mécanique des 283 classes | Pending |
 | B1 | B | R4 (+ V6) — `.card`, `.card-inner`, `.panel`, `.pill` | Pending |
 | B2 | B | R9 (+ V5, V6) — `.prose` accordé | Pending |
@@ -54,8 +54,27 @@ dans la spec §3 : les rattacher explicitement évite qu'ils surgissent en Phase
 | V4 | Thème clair sans bleu | A2 | Pending |
 | V5 | Mono réservé à la donnée machine | B2, D2 | Pending |
 | V6 | Rayons ∈ {9, 10, 14, 20, 999}px | B1, B2, D1 | Pending |
-| V7 | Space Grotesk et Inter retirés | A1 | Pending |
+| V7 | Space Grotesk et Inter retirés | A1 | In progress |
 | V8 | Contrastes AA | A2 | Pending |
+
+## Décisions de l'utilisateur au gate de pré-flight (2026-09-13)
+
+1. **§8.1 — Nebula Sans est embarquée** (`@fontsource/nebula-sans@5.3.0`, SIL OFL-1.1). Option
+   choisie : « Embarquer Nebula Sans (OFL-1.1) ». Consignation dans la spec de design en T-A1.
+2. **Plan d'implémentation validé** tel quel, option « Je valide, lance T-A1 » — y compris ses trois
+   choix non triviaux : noms de tokens verbatim, T-A2 fusionnant tokens et re-câblage, et le
+   périmètre « 10 routes » de R11.
+
+## Rulings du contrôleur au scan de pré-flight (défauts de plan, pas des déviations)
+
+Détail et coût-si-faux dans `.superpowers/sdd/2026-09-12-plan-6-socle-design-system/progress.md`.
+
+- **R-01** — T-A2 préserve les tokens de police posés par T-A1 et ne réintroduit pas
+  `--font-display`.
+- **R-02** — T-A2 remappe aussi les `var(--color-*)` **internes à `global.css`** (`.prose`,
+  `.copy-btn`), sinon des variables pendouillent entre T-A2 et T-B2. T-B2 garde la sémantique.
+- **R-03** — le grep V6 **repo-wide** est le critère de T-D2, pas de T-D1 ; T-D1 le passe scopé à
+  `src/components/`.
 
 ## Décisions d'implémentation tranchées par le plan (spec muette — ratification au gate)
 
