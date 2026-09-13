@@ -5,17 +5,17 @@
 
 <dialog
   id="search-dialog"
-  class="relative m-auto w-[min(40rem,92vw)] rounded-xl border border-line bg-surface p-0 text-text backdrop:bg-black/60"
+  class="relative m-auto w-[min(40rem,92vw)] rounded-xl border border-line bg-surface p-0 text-body backdrop:bg-black/60"
   aria-label="Recherche sur le site"
 >
   <div class="flex items-center gap-2 border-b border-line px-4 py-3 pr-14">
-    <span class="font-mono text-sm text-acc" aria-hidden="true">/</span>
+    <span class="font-mono text-sm text-accent" aria-hidden="true">/</span>
     <input
       id="search-input"
       type="search"
       autocomplete="off"
       placeholder="Rechercher un article, un projet, un prompt…"
-      class="w-full bg-transparent py-1 text-text outline-none placeholder:text-muted"
+      class="w-full bg-transparent py-1 text-body outline-none placeholder:text-muted"
       aria-controls="search-results"
     />
   </div>
@@ -39,7 +39,7 @@
   <button
     type="button"
     data-search-close
-    class="absolute right-4 top-3 rounded-md border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc"
+    class="absolute right-4 top-3 rounded-md border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
     aria-label="Fermer la recherche"
   >esc</button>
 </dialog>

@@ -58,8 +58,8 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
 >
   <main>
     <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <p class="font-mono text-sm text-acc">~/ tags / {tag.label}</p>
-      <h1 class="mt-4 font-sans text-4xl font-bold text-text sm:text-5xl">{tag.label}</h1>
+      <p class="font-mono text-sm text-accent">~/ tags / {tag.label}</p>
+      <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">{tag.label}</h1>
     </section>
 
     <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
@@ -67,7 +67,7 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
         {
           groups.map((group) => (
             <section>
-              <h2 class="font-mono text-sm text-acc">
+              <h2 class="font-mono text-sm text-accent">
                 {group.label} ({group.entries.length})
               </h2>
               <ul class="mt-4 flex flex-col gap-4">
@@ -75,9 +75,9 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
                   <li>
                     <a
                       href={`${group.href}/${entry.id}/`}
-                      class="block rounded-lg border border-line p-4 transition-colors hover:border-acc"
+                      class="block rounded-lg border border-line p-4 transition-colors hover:border-accent"
                     >
-                      <p class="font-sans text-lg font-bold text-text">{entry.data.title}</p>
+                      <p class="font-sans text-lg font-bold text-ink">{entry.data.title}</p>
                       <p class="mt-1 text-sm text-muted">{entry.data.description}</p>
                     </a>
                   </li>
@@ -89,7 +89,7 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
       </div>
 
       <p class="mt-16">
-        <a href="/tags/" class="font-mono text-sm text-muted transition-colors hover:text-acc">
+        <a href="/tags/" class="font-mono text-sm text-muted transition-colors hover:text-accent">
           ← retour aux tags
         </a>
       </p>

@@ -16,7 +16,7 @@ const { headings } = Astro.props;
       <ul class="mt-2 space-y-1.5 text-sm">
         {headings.map((heading) => (
           <li class={heading.depth === 3 ? 'pl-4' : ''}>
-            <a href={`#${heading.slug}`} class="text-muted transition-colors hover:text-acc">
+            <a href={`#${heading.slug}`} class="text-muted transition-colors hover:text-accent">
               {heading.text}
             </a>
           </li>

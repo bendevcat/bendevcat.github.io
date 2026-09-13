@@ -64,7 +64,7 @@ if (dialog && input && output) {
       const section = document.createElement('section');
       section.className = 'mb-4';
       const heading = document.createElement('h2');
-      heading.className = 'font-mono text-xs uppercase tracking-wide text-acc';
+      heading.className = 'font-mono text-xs uppercase tracking-wide text-accent';
       heading.textContent = `${group.label} (${group.results.length})`;
       const list = document.createElement('ul');
       list.className = 'mt-2 flex flex-col gap-1';
@@ -72,9 +72,9 @@ if (dialog && input && output) {
         const item = document.createElement('li');
         const link = document.createElement('a');
         link.href = result.url;
-        link.className = 'block rounded-lg px-2 py-2 hover:bg-acc-dim focus-visible:bg-acc-dim';
+        link.className = 'block rounded-lg px-2 py-2 hover:bg-accentSoft focus-visible:bg-accentSoft';
         const title = document.createElement('span');
-        title.className = 'block text-sm text-text';
+        title.className = 'block text-sm text-ink';
         title.textContent = result.title; // texte, jamais innerHTML
         const excerpt = document.createElement('span');
         excerpt.className = 'mt-0.5 block font-mono text-xs text-muted';

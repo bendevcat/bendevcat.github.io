@@ -7,7 +7,7 @@
  * garder les libellés et les couleurs à UN endroit évite que la carte et la
  * fiche divergent.
  *
- * Palette : `actif` réutilise l'accent du site (tokens `--color-acc*`) ;
+ * Palette : `actif` réutilise l'accent du site (tokens `--color-accent*`) ;
  * `wip` prend l'ambre par défaut de Tailwind — comme la bannière `partial`
  * de aiUsage.ts — pour ne pas se confondre avec le vert ; `archivé` reste
  * neutre (tokens `--color-line` / `--color-muted`).
@@ -23,7 +23,7 @@ interface ProjectStatusMeta {
 export const PROJECT_STATUS_META: Record<ProjectStatus, ProjectStatusMeta> = {
   actif: {
     label: 'actif',
-    chipClass: 'border-acc/40 bg-acc-dim text-acc',
+    chipClass: 'border-accent/40 bg-accentSoft text-accent',
   },
   wip: {
     label: 'wip',

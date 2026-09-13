@@ -22,32 +22,94 @@
   --font-sans: "Nebula Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* palette LIGHT (défaut) — surchargée en dark ci-dessous */
-  --color-bg: #FCFCFD;
-  --color-surface: #FFFFFF;
-  --color-line: rgb(15 23 42 / 0.10);
-  --color-text: #14181F;
-  --color-muted: #5A6572;
-  --color-acc: #047857;          /* vert texte AA sur clair */
-  --color-acc-solid: #34D399;    /* aplats/bouton */
-  --color-acc-contrast: #04231A;
-  --color-acc-dim: #ECFDF5;      /* fond puce catégorie (clair) */
+  /* ==========================================================================
+     Couleurs (Plan 6 / T-A2) — les 22 tokens couleur du contrat visuel v2
+     (docs/anti-drift/specs/2026-09-12-refonte-visuelle-design.md §2), repris
+     verbatim. Le CLAIR est le défaut (ici) ; le SOMBRE surcharge dans
+     `:root[data-theme="dark"]` plus bas. Les noms sont ceux du contrat, en
+     camelCase : Tailwind v4.3.3 en génère bien les utilitaires
+     (`--color-accentSoft` → `.bg-accentSoft`).
+     Rappel contrat §2.2 : EN CLAIR LE BLEU N'EXISTE PAS. `badgeInk` vaut
+     l'accent vert et `panel` est un gris neutre — ne pas « harmoniser ».
+     ========================================================================== */
+
+  /* — surfaces (hiérarchie §2.1 : bg → surface → card → rail) — */
+  --color-bg: #F1F4F7;                  /* fond de page */
+  --color-surface: #FFFFFF;             /* grande carte */
+  --color-card: #FFFFFF;                /* carte imbriquée dans une surface */
+  --color-rail: #E8EDF2;                /* creux : vignette, arbre de fichiers */
+
+  /* — traits — */
+  --color-line: rgba(16,24,34,.11);     /* bordure structurante */
+  --color-line2: rgba(16,24,34,.07);    /* séparateur interne */
+
+  /* — texte — */
+  --color-ink: #101720;                 /* titres, texte fort */
+  --color-body: #28323D;                /* texte courant */
+  --color-muted: #54616F;               /* texte secondaire */
+  --color-dim: #6A7684;                 /* texte tertiaire (méta de méta) */
+
+  /* — accent contenu/action — */
+  --color-accent: #0B6B4C;              /* accent contenu/action */
+  --color-accentInk: #F4FBF7;           /* texte sur aplat d'accent */
+  --color-accentSoft: rgba(11,107,76,.10); /* fond de pilule d'accent */
+
+  /* — méta et navigation — */
+  --color-chip: #E6EBF1;                /* fond de puce neutre */
+  --color-panel: #E9EEF3;               /* fond de panneau de section */
+  --color-panelLine: rgba(16,24,34,.10); /* bordure de panneau */
+  --color-badgeBg: #DCE6E9;             /* fond d'icône de section */
+  --color-badgeInk: #0B6B4C;            /* icône de section */
+  --color-nav: #FFFFFF;                 /* fond des pilules de navigation */
+  --color-cardHover: #F9FBFC;           /* survol de carte */
+  --color-code: #EFF3F7;                /* fond de bloc de code */
+  --color-hatch: rgba(11,107,76,.20);   /* trames décoratives */
+
+  /* — 23e token : élévation de carte (nom nu `shadow`, cf. contrat §2) — */
+  --shadow: 0 10px 18px -12px rgba(16,24,34,.26), 0 2px 4px -2px rgba(16,24,34,.08);
+
+  /* — rayons (contrat §3.2 : cinq valeurs, nommées par usage) — */
+  --radius-card: 20px;    /* grande carte (surface), panneau de section */
+  --radius-inner: 14px;   /* carte imbriquée (card), image d'en-tête */
+  --radius-thumb: 10px;   /* vignette, petite image */
+  --radius-badge: 9px;    /* badge d'icône de section (28×28) */
+  --radius-pill: 999px;   /* pilule : navigation, statut, catégorie, bouton rond */
 }
 
-/* DARK : surcharge des mêmes custom properties */
+/* DARK : surcharge des mêmes custom properties (contrat §2, colonne « Sombre »).
+   C'est ici — et seulement ici — que vit le bleu de méta `#7DD3FC` (§2.2). */
 :root[data-theme="dark"] {
-  --color-bg: #0B0E14;
-  --color-surface: #141B24;
-  --color-line: rgb(255 255 255 / 0.09);
-  --color-text: #E8EDF3;
-  --color-muted: #8B97A6;
-  --color-acc: #4ADE80;
-  --color-acc-solid: #4ADE80;
-  --color-acc-contrast: #06281A;
-  --color-acc-dim: rgb(74 222 128 / 0.12); /* vert translucide, fond puce catégorie sur surface sombre */
+  --color-bg: #0A0C0F;
+  --color-surface: #12161B;
+  --color-card: #181D24;
+  --color-rail: #0E1216;
+
+  --color-line: rgba(255,255,255,.08);
+  --color-line2: rgba(255,255,255,.06);
+
+  --color-ink: #E9EEF3;
+  --color-body: #C6D2DE;
+  --color-muted: #9AA6B4;
+  --color-dim: #7B8794;
+
+  --color-accent: #4ADE80;
+  --color-accentInk: #06210F;
+  --color-accentSoft: rgba(74,222,128,.12);
+
+  --color-chip: rgba(255,255,255,.06);
+  --color-panel: rgba(125,211,252,.07);
+  --color-panelLine: rgba(125,211,252,.18);
+  --color-badgeBg: rgba(125,211,252,.16);
+  --color-badgeInk: #7DD3FC;
+  --color-nav: rgba(255,255,255,.05);
+  --color-cardHover: rgba(255,255,255,.03);
+  --color-code: #0A0C0F;
+  --color-hatch: rgba(74,222,128,.16);
+
+  --shadow: 0 12px 22px -16px rgba(0,0,0,.85);
 }
 
-html { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); }
+html { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-body); }
 
 /* ==========================================================================
    Article (`.prose`) — Plan 1 / C3
@@ -58,7 +120,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 
 .prose {
   font-family: var(--font-sans);
-  color: var(--color-text);
+  color: var(--color-body);
   line-height: 1.75;
   /* R9 (375px) : un token sans espace trop long (ex. URL brute en texte de
      lien — cf. constat tâche C5 sur k9s-kubernetes-terminal-ui) déborderait
@@ -71,7 +133,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 .prose :where(h2, h3, h4) {
   font-family: var(--font-sans);
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--color-ink);
   scroll-margin-top: 5rem; /* ancre TOC lisible, pas cachée en haut de viewport */
 }
 .prose :where(h2) { margin-top: 2.5em; margin-bottom: 0.75em; font-size: 1.5rem; }
@@ -84,12 +146,12 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 
 .prose :where(p) { margin-top: 1.25em; margin-bottom: 1.25em; }
 
-.prose :where(strong) { color: var(--color-text); font-weight: 700; }
+.prose :where(strong) { color: var(--color-ink); font-weight: 700; }
 .prose :where(em) { font-style: italic; }
 
 /* Liens dans le corps (hors titres, cf. règle ci-dessus) : accent + soulignement au survol. */
 .prose :where(p, li, blockquote) a {
-  color: var(--color-acc);
+  color: var(--color-accent);
   text-underline-offset: 2px;
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -116,8 +178,8 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 .prose :where(code) {
   font-family: var(--font-mono);
   font-size: 0.875em;
-  color: var(--color-acc);
-  background: var(--color-acc-dim);
+  color: var(--color-accent);
+  background: var(--color-accentSoft);
   padding: 0.15em 0.4em;
   border-radius: 0.3em;
 }
@@ -209,8 +271,8 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 .copy-btn:hover,
 .copy-btn:focus-visible {
-  color: var(--color-acc);
-  border-color: var(--color-acc);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 /* ==========================================================================
