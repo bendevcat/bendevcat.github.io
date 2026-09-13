@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { AI_USAGE_META } from '../lib/aiUsage';
+import { estimateReadingMinutes } from '../lib/posts';
 import { tagSlug } from '../lib/tags';
 
 interface Props {
@@ -24,14 +25,6 @@ const dateFr = pubDate.toLocaleDateString('fr-FR', {
   month: 'long',
   year: 'numeric',
 });
-
-// Estimation grossière (~200 mots/min, arrondi au supérieur, minimum 1 min) —
-// volontairement simple : `post.body` est le Markdown brut, pas de nettoyage
-// de la syntaxe. Affiné plus tard si besoin (cf. rapport de tâche).
-function estimateReadingMinutes(body: string): number {
-  const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.ceil(wordCount / 200));
-}
 
 const readingMinutes = estimateReadingMinutes(post.body ?? '');
 const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;

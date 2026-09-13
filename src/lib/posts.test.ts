@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortAndFilter } from './posts';
+import { estimateReadingMinutes, sortAndFilter } from './posts';
 
 describe('sortAndFilter', () => {
   it('exclut les drafts et trie par pubDate desc', () => {
@@ -11,5 +11,12 @@ describe('sortAndFilter', () => {
     const out = sortAndFilter(input);
     expect(out).toHaveLength(2);
     expect(out[0].data.pubDate.getFullYear()).toBe(2026);
+  });
+});
+
+describe('estimateReadingMinutes', () => {
+  it('arrondit au supérieur et ne descend jamais sous 1 minute', () => {
+    expect(estimateReadingMinutes('')).toBe(1);
+    expect(estimateReadingMinutes('mot '.repeat(201))).toBe(2);
   });
 });

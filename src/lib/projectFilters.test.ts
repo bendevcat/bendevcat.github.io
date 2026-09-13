@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ALL, matchesFilters } from './projectFilters';
+import { ALL, matchesFilters, projectFacets } from './projectFilters';
 
 const astroProject = { status: 'actif', stack: ['Astro', 'TypeScript'] };
 const archivedPhp = { status: 'archivé', stack: ['PHP'] };
@@ -30,5 +30,14 @@ describe('matchesFilters', () => {
 
   it('exclut un projet sans stack dès qu’une techno est demandée', () => {
     expect(matchesFilters({ status: 'wip', stack: [] }, { status: ALL, stack: 'Astro' })).toBe(false);
+  });
+});
+
+describe('projectFacets', () => {
+  it('produit les mêmes clés que celles que matchesFilters consomme', () => {
+    expect(projectFacets({ status: 'wip', stack: ['Astro', 'Bash'] })).toEqual({
+      status: ['wip'],
+      stack: ['Astro', 'Bash'],
+    });
   });
 });
