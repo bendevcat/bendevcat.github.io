@@ -618,7 +618,9 @@ export function computeListState(
 npx vitest run src/lib/listPattern.test.ts
 ```
 
-Attendu : PASS, 18 tests.
+Attendu : **PASS, tous les tests de la suite**. Le nombre exact n'est pas écrit ici à dessein : la
+dernière `describe` génère ses cas dans une boucle sur `ORDERS`, et un compte écrit à la main serait
+faux au premier cas ajouté. **Reporter le compte observé** — un chiffre mesuré, jamais recopié.
 
 - [ ] **Step 5: Extraire `estimateReadingMinutes` vers `src/lib/posts.ts`**
 
