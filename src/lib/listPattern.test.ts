@@ -112,20 +112,26 @@ describe('computeListState — état vide (R6)', () => {
 });
 
 describe('computeListState — tri (R7)', () => {
+  // `visibleIds` attendu = l’ordre trié PRIVÉ de l’entrée à la une, laquelle
+  // reste « a » quel que soit le tri : elle se dérive de l’ordre CANONIQUE
+  // (spec §6.1), pas de l’ordre courant. C’est ce qui garde le client d’accord
+  // avec le slot que le serveur a rendu.
   const ORDERS: Array<[Parameters<typeof computeListState>[2], string[]]> = [
-    ['none', ['a', 'b', 'c']],
-    ['recent', ['a', 'b', 'c']],
-    ['oldest', ['c', 'b', 'a']],
-    ['shortest', ['b', 'c', 'a']],
-    ['longest', ['a', 'c', 'b']],
+    ['none', ['b', 'c']],
+    ['recent', ['b', 'c']],
+    ['oldest', ['c', 'b']],
+    ['shortest', ['b', 'c']],
+    ['longest', ['c', 'b']],
   ];
   for (const [order, expected] of ORDERS) {
-    it(`ordonne la grille selon « ${order} »`, () => {
+    it(`ordonne la grille selon « ${order} » sans déplacer l’entrée à la une`, () => {
       const plain = ENTRIES.map((e) => ({ ...e, featured: false }));
-      // aucune facette active : l’entrée à la une est donc sorted[0], et
-      // [featuredId, ...visibleIds] reconstitue l’ordre trié complet.
       const state = computeListState(plain, { stack: ALL, status: ALL }, order, LABELS);
-      expect([state.featuredId, ...state.visibleIds]).toEqual(expected);
+      expect(state.featuredId).toBe('a');
+      expect(state.visibleIds).toEqual(expected);
+      // R4 reste vrai sous tri : rien ne disparaît de la page.
+      expect(state.count).toBe(state.visibleIds.length + 1);
+      expect(state.count).toBe(plain.length);
     });
   }
 

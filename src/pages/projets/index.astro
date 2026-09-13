@@ -16,6 +16,11 @@ const stacks = collectStacks(projects);
 // carte « à la une » et sa copie masquée dans la grille pointent exactement
 // vers la même entrée que computeListState() désignerait sans filtre.
 const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data.featured })));
+
+// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
+// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
+// jamais.
+const NOUNS = ['projet', 'projets'] as const;
 ---
 
 <BaseLayout
@@ -28,7 +33,7 @@ const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data
 			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Projets</h1>
 		</section>
 
-		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns="projet|projets">
+		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
 			{/* 1 · pilules de filtre + 2 · dropdown — `hidden` côté serveur (contrainte n°5) */}
 			<div
 				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
@@ -76,7 +81,7 @@ const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data
 			</div>
 
 			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
-			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} projets</p>
+			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} {projects.length === 1 ? NOUNS[0] : NOUNS[1]}</p>
 
 			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
 			<div class="mb-6" data-list-featured>

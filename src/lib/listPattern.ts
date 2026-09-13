@@ -101,8 +101,18 @@ export function computeListState(
 
   // R5 : l'entrée à la une n'existe QUE sans filtre. Règle de dérivation de la
   // spec §6.1 : `featured: true` là où le champ existe, à défaut la première
-  // entrée de l'ordre canonique — ce qui, ici, est la première du tableau.
-  const featured = isAnyFacetActive(selected) ? null : pickFeaturedEntry(sorted);
+  // entrée de **l'ordre canonique de la collection**.
+  //
+  // `entries` et NON `sorted` : c'est l'ordre canonique que la spec nomme, et
+  // c'est aussi ce que le serveur calcule quand il choisit la carte à rendre
+  // dans le bloc « à la une ». Dériver du tableau trié les ferait diverger dès
+  // qu'un tri est actif (le cas de `/blog`) : le slot serveur porterait une
+  // entrée, le client en désignerait une autre, le slot n'afficherait donc
+  // rien — et l'entrée désignée serait AUSSI retirée de la grille par la ligne
+  // suivante. Une entrée disparaîtrait de la page tout en restant comptée.
+  // L'entrée à la une n'existant que sans facette active, `entries` et le
+  // tableau filtré sont alors identiques : aucune information n'est perdue.
+  const featured = isAnyFacetActive(selected) ? null : pickFeaturedEntry(entries);
 
   const visibleIds = sorted.filter((entry) => entry.id !== featured?.id).map((entry) => entry.id);
 
