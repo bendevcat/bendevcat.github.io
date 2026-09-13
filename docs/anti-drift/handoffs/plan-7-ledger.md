@@ -1,6 +1,6 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (les 4 déviations sont **approuvées** — revue finale puis Phase Z)
+Last updated: 2026-09-13 (revue finale passée, vague de correctifs appliquée — Phase Z ouverte)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -38,7 +38,7 @@ Last updated by: main (contrôleur SDD)
 | C1 | C | R9, R7 (tri), R8 — `/blog` | Done (`f33b4e0`, correctif `fe56fe5`) — voir D02 |
 | C2 | C | R9, R8 — `/prompts` et `/skills` | Done (`6a53050`) — voir D03 |
 | D1 | D | R12 (+ V2, V6) — 4 listes × 2 thèmes × 375/768/1180 px | Done (aucun commit) — **V2 en échec, voir D04** |
-| Z1 | Z | Audit `/anti-drift-planning:verify 7` (couverture R1–R12 + V1–V8) | Pending |
+| Z1 | Z | Audit `/anti-drift-planning:verify 7` (couverture R1–R12 + V1–V8) | In progress |
 
 ## Critères du contrat visuel (V1–V8, §10) — rattachement
 
@@ -117,6 +117,51 @@ d'impl et ferment les décisions I1–I6 ci-dessus.
 | P-11 | T-B2 prescrivait `alt={coverAlt ?? ''}` dans `Thumbnail.astro`. **Or `ProjectCard` et `ArticleCard` faisaient déjà `alt={coverAlt ?? title}` AVANT ce plan**, et `coverAlt` est `optional()` dans les deux schémas : en déménageant l'image vers le composant partagé, le plan supprimait silencieusement ce repli. Sans effet aujourd'hui (tous les articles pourvus d'un `cover` ont un `coverAlt`, vérifié fichier par fichier), mais `Thumbnail` est destiné aux 4 cartes : le premier contenu publié sans `coverAlt` aurait perdu son texte alternatif. **Relevé par le relecteur, manqué par l'auto-revue de l'implémenteur.** | **Ruling du contrôleur : défaut de plan, pas déviation** — corriger *restaure* le comportement déjà livré, il ne change pas ce qui était convenu. `Thumbnail` reçoit une prop **`title` requise** et fait `alt={coverAlt ?? title}`. Requise et non optionnelle, pour que l'oubli soit **impossible** et non seulement improbable. Corrigé aux 5 emplacements du plan (interface, B2, B3, C1, C2) ; fix round 1 dispatché sur T-B2. |
 | P-10 | T-B2/Step 3 mesurait les vignettes par `grep -c 'rounded-thumb' dist/projets/index.html`, attendu « ≥ 2 ». **`grep -c` compte les lignes qui matchent, pas les occurrences** — et un HTML buildé est compacté sur une seule ligne : la commande renvoie `1` quel que soit le nombre réel de vignettes, donc elle ne peut **jamais** prouver l'attendu. Relevé par l'implémenteur, qui a mesuré autrement plutôt que de conclure à l'échec. | Commande remplacée par `grep -o … | wc -l`, avec la raison écrite à côté pour qu'elle ne soit pas « simplifiée » plus tard. Contrôle des deux monogrammes attendus (`AC`, `WI`) ajouté : c'est le chemin dérivé qui est exercé, aucun projet n'ayant de `cover`. |
 | P-09 | T-B1 promettait la signature `pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[])` — **qui ne compile pas contre le test que le même plan spécifie**. `{ featured?: boolean }` est un *weak type* TypeScript : n'ayant que des propriétés optionnelles, il rejette tout argument qui n'en partage aucune, donc `pickFeaturedEntry([{ id: 'first' }])` — exactement le cas des prompts et des skills, qui n'ont pas le champ. Relevé par l'implémenteur, reproduit à `tsc --strict`, puis **reproduit indépendamment en revue**. | Contrainte déplacée : `<T extends object>(entries: (T & { featured?: boolean })[])`. Nom, arité, type de retour et comportement à l'exécution **identiques** ; le test n'a pas été touché. Corrigée aux 2 emplacements du plan, avec la raison, pour qu'aucun implémenteur ultérieur ne la relise fausse. Le relecteur a établi en plus que le **vrai** appel de T-B3 type-check sous les deux signatures : le défaut n'atteignait que le test littéral. Consigné en défaut de plan et non en déviation — verdict rendu par le relecteur avec son propre raisonnement, après qu'il lui a été demandé de ne pas se contenter d'acquiescer. |
+
+## Revue finale de branche (2026-09-13) — ce que les revues par tâche ne pouvaient pas voir
+
+Lancée sur les **28 commits d'un coup**, après l'approbation des 4 déviations. Verdict initial :
+`changes requested`, **6 correctifs**, tous petits, appliqués en **une seule vague** (`875932d`) puis
+re-revus (tous `ADDRESSED`, aucune casse, **prêt à merger**).
+
+Trois constats n'étaient visibles qu'à l'échelle de la branche :
+
+| # | Constat | Traitement |
+|---|---|---|
+| B1 | **L'accord de zéro vivait à 5 endroits**, pas un : le moteur **et** les 4 replis SSR. Le contrôleur n'en avait vu qu'un. Corriger l'un sans les autres rouvrait exactement la divergence que la constante `NOUNS` existe pour rendre impossible. Aucun test ne couvrait `count === 0`. | Corrigé aux 5 sites + test sur la chaîne complète, avec preuve RED |
+| B2 | **Une correction décidée puis jamais exécutée, et présentée comme faite par ce registre** — voir la cellule P-16, corrigée | Exécuté dans la vague |
+| B3 | **La cohérence serveur/client de l'entrée à la une reposait sur l'ordre du DOM**, pas sur un attribut : les deux côtés retombaient sur « le premier » et ne s'accordaient que parce que la grille se trouvait rendue dans l'ordre canonique. **C'est l'invariant dont la rupture a produit P-12**, et rien ne le gardait — ni test, ni commentaire, ni attribut | `data-featured` est désormais émis par le **serveur** sur l'entrée qu'il a choisie ; le relecteur a vérifié que le client la trouve par `.find()` et **n'emprunte plus le repli `?? entries[0]`**. Aucun slot n'a bougé, sur les 4 pages et sous les 5 tris |
+
+**Triage des 5 mineurs différés**, chacun argumenté plutôt que tranché en bloc :
+
+| Mineur | Verdict | Raison |
+|---|---|---|
+| Accord de zéro | **corrigé** | Même classe que P-13, visible sur les 4 listes, 5 sites |
+| Commentaires périmés | **corrigé** | Pas un mineur : une consigne du plan non exécutée (B2) |
+| JSDoc de `pickFeaturedEntry` | livré tel quel | Le « pourquoi » de la contrainte n'est pas devinable et a déjà coûté une ronde (P-09) ; l'amputer rendrait la signature inexplicable |
+| `derivedFrom.slice(0, 2)` | livré tel quel | Toutes les valeurs sont des identifiants ASCII issus du schéma, que R10 gèle |
+| Faiblesse du fixture de tri | **renforcé quand même** | Verdict « livrable tel quel » (c'est de la robustesse, pas une correction), mais le correctif n°1 rouvrait le même fichier : **4 tris sur 5** exercent désormais le garde-fou, contre 2 |
+
+**Constats livrés tels quels, à emporter par les plans suivants** (aucun n'est une déviation : la
+spec est muette sur chacun, et aucun ne réduit un requirement) :
+
+- **Pas d'`aria-live` sur la ligne de méta ni sur l'état vide** des 4 listes. Un clic de pilule
+  n'annonce rien à un lecteur d'écran. Surface **neuve** de ce plan, donc pas une régression — mais
+  le repo pose déjà un `aria-live` dans `SearchDialog.astro:27`. **Pour P9**, qui porte la finition
+  et les contrastes AA, donc l'accessibilité.
+- **Sous tri, la carte du haut de `/blog` ne bouge jamais** : l'entrée à la une se dérive de l'ordre
+  canonique (c'est R5 et le correctif P-12), donc le 1ᵉʳ titre de la *page* est invariant, même si
+  le 1ᵉʳ titre de la *grille* change. R7 est tenu. Conséquence croisée de I3 et de P-12 que personne
+  n'avait arbitrée — à connaître avant de toucher au tri.
+- **« par défaut » et « plus récents » donnent le même ordre** sur `/blog` : l'ordre canonique **est**
+  `pubDate desc`. R7 ne nomme que 4 valeurs et les 4 fonctionnent ; la 5ᵉ est un supplément du plan
+  d'impl, inoffensif mais redondant.
+- **`/blog` nomme ses facettes par leur *slug***, les 3 autres par leur libellé. Invisible : aucun
+  tag publié n'a un slug différent de son libellé.
+- **`matchesFilters` de `src/lib/projectFilters.ts` n'a plus d'appelant de production** depuis la
+  suppression de `project-filters.ts` ; seule `projectFacets()` l'est. C'est le choix explicite
+  **I5** — le module et sa suite sont conservés parce que R11 exige que les 12 suites restent
+  vertes — mais il fallait le **nommer** plutôt que le laisser implicite.
 
 ## Constats reportés à une tâche ultérieure
 

@@ -1,14 +1,12 @@
 # Plan 7 — Handoff · exécution arrêtée au budget de décisions
 
 **Date :** 2026-09-13
-**Branche :** `plan-7-listes-filtrables` (16 commits au-dessus de `main`)
-**Motif de l'arrêt :** **4 entrées `pending-user`** au journal de déviations. Le protocole impose
-de s'arrêter au-delà de trois — « le plan génère des décisions plus vite qu'un humain ne peut
-sincèrement en prendre ». Continuer produirait des approbations en bloc, qui enregistrent des
-décisions qui n'ont pas eu lieu : pire que pas de gate du tout.
-
-**Ce n'est pas un échec.** Les 12 critères de la spec §3 sont `Done`. Ce qui reste est une
-**décision**, pas du travail.
+**Branche :** `plan-7-listes-filtrables` (30 commits au-dessus de `main`)
+> **Ce handoff a servi et est refermé.** L'arrêt est intervenu le 2026-09-13 sur un budget de
+> décisions dépassé — 4 entrées `pending-user`, le protocole imposant de s'arrêter au-delà de trois.
+> Les 4 décisions ont été rendues le même jour (« D01 D02 D03 approuvées, D04 option 1 »), la revue
+> finale de branche a été passée, sa vague de correctifs appliquée et re-revue. **La Phase Z est
+> ouverte.** Le document est conservé tel quel, comme trace de l'arrêt et de ce qui l'a motivé.
 
 ---
 
@@ -20,7 +18,7 @@ décisions qui n'ont pas eu lieu : pire que pas de gate du tout.
 | B — résoudre le patron une fois | B1, B2, B3 | ✅ close |
 | C — répliquer sur 3 familles | C1, C2 | ✅ close |
 | D — 375 px et deux thèmes | D1 | ✅ close, **aucun commit** (rien n'était à corriger) |
-| **Z — vérification** | Z1 | ⛔ **non lancée** — échouerait par construction |
+| **Z — vérification** | Z1 | ▶️ **ouverte** — plus aucune entrée `pending-user` |
 
 **Les 12 critères de la spec §3 sont `Done`.** Trois portent une réserve nommée : R2 (D01),
 R7 et R9 (G-02 et D03).
