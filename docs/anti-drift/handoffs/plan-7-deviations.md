@@ -39,6 +39,49 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   retour, concrètement).
 -->
 
+## D02 — l'accueil change d'apparence, alors que la spec le place hors périmètre
+
+- **Date:** 2026-09-13
+- **Task affected:** T-C1 (`src/components/ArticleCard.astro`, répercuté sur `src/pages/index.astro`)
+- **Original plan:** la spec §1 est catégorique : « **Aucune autre surface ne change dans ce plan.**
+  Les fiches de détail gardent leur structure v1 (→ P8), l'accueil garde la sienne (→ P9). » Et §5
+  reporte explicitement l'accueil au Plan 9.
+- **Deviation taken:** `ArticleCard.astro` est utilisé par **deux** pages — `/blog` **et l'accueil**
+  (`src/pages/index.astro:26`). En lui faisant rendre sa vignette via `<Thumbnail>`, comme le plan
+  le prescrit pour R8, on change aussi ce que l'accueil affiche. Mesuré sur le rendu buildé :
+  - le **rayon** des 5 vignettes de l'accueil passe de `rounded-inner` (**14 px**) à
+    `rounded-thumb` (**10 px**) — c'est le changement visible ;
+  - l'accueil émet en plus 5 `data-entry-id`, `data-date` et `data-minutes`. Ceux-là sont
+    **inertes** : `list-pattern.ts` ne s'active que sur un `[data-list]`, et l'accueil n'en a aucun
+    (`grep -c 'data-list' dist/index.html` → **0**). Aucun comportement n'est ajouté.
+- **Reason:** ce n'est **pas une erreur de l'implémenteur** — il a exécuté le plan à la lettre, et il
+  a signalé l'effet de bord spontanément dans son rapport. C'est le **plan** qui entre en conflit
+  avec la spec : il prescrit de faire passer `ArticleCard` par `<Thumbnail>` sans avoir remarqué que
+  ce composant est partagé avec une page que la spec gèle. Le conflit ne pouvait se voir qu'à
+  l'exécution, sur le rendu.
+- **Argument POUR l'approbation, à peser honnêtement :** 10 px est la valeur que le contrat §3.2
+  attribue précisément à « vignette, petite image » ; 14 px y désigne « carte imbriquée, image
+  d'en-tête ». Le nouveau rayon est donc **plus conforme au contrat visuel** que l'ancien. Le Plan 9
+  devra de toute façon reprendre l'accueil, et il le trouverait alors déjà aligné.
+- **Argument CONTRE :** la spec de ce plan dit « aucune autre surface ne change », sans nuance, et
+  l'accueil est nommément reporté à P9. Un changement visuel non demandé sur une page hors périmètre
+  est exactement ce que cette clause existe pour empêcher — même quand il va dans le bon sens.
+- **Reversibility:** `cheap` — une prop de rayon sur `<Thumbnail>`, ou une variante passée par
+  l'accueil, et le rendu d'origine revient. Un seul composant, aucune logique. On procède donc
+  pendant que la décision est en attente.
+- **Caught late:** `no` pour la consignation — l'entrée est écrite avant tout ship et avant que R9
+  soit porté `Done`. À dire franchement, en revanche : l'implémenteur a **exécuté** avant que
+  l'effet soit consigné, parce que ni lui ni le plan n'avaient anticipé le partage du composant ; il
+  l'a relevé de lui-même dans son rapport plutôt que de le laisser passer.
+- **Status:** pending-user
+- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Follow-up:** si rejetée, ajouter à `<Thumbnail>` une prop de rayon (défaut `rounded-thumb`) et
+  faire passer l'accueil sur `rounded-inner`, de sorte que `/blog` garde le nouveau rendu et que
+  l'accueil retrouve exactement le sien. Les attributs `data-*` inertes peuvent rester ou être
+  conditionnés à une prop `filterable` déjà existante — le dire dans la décision.
+
+---
+
 ## D01 — R2 est mesuré en différentiel (« la Phase A n'ajoute aucune dérive »), pas en absolu
 
 - **Date:** 2026-09-13
