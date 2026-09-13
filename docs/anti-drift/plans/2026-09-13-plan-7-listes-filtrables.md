@@ -331,7 +331,7 @@ export interface ListState {
  * entrée que le script — c'est ce qui permet de rendre le bloc « à la une »
  * avec une seule carte, et donc de ne pas afficher de doublon sans JavaScript.
  */
-export function pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[]): T | null {
+export function pickFeaturedEntry<T extends object>(entries: (T & { featured?: boolean })[]): T | null {
   return entries.find((entry) => entry.featured) ?? entries[0] ?? null;
 }
 
@@ -348,8 +348,15 @@ export function isAnyFacetActive(selection: FacetSelection): boolean;
  * La règle de dérivation de la spec §6.1, isolée pour que le SERVEUR et le
  * CLIENT désignent la même entrée. Les pages l'appellent au rendu pour savoir
  * quelle carte va dans le bloc « à la une » et laquelle masquer dans la grille.
+ *
+ * La contrainte est `T extends object` et le champ optionnel vit sur les
+ * ÉLÉMENTS, pas sur la contrainte : `{ featured?: boolean }` est un *weak type*
+ * TypeScript — n'ayant que des propriétés optionnelles, il rejette tout argument
+ * qui n'en partage aucune, donc une entrée de collection sans champ `featured`
+ * (prompts, skills), qui est précisément le cas que cette fonction doit servir.
+ * Reproduit à `tsc --strict` en T-B1, puis indépendamment en revue (P-09).
  */
-export function pickFeaturedEntry<T extends { featured?: boolean }>(entries: T[]): T | null;
+export function pickFeaturedEntry<T extends object>(entries: (T & { featured?: boolean })[]): T | null;
 ```
 
 - [ ] **Step 1: Écrire les tests qui échouent**
