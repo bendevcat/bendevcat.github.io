@@ -478,20 +478,26 @@ describe('computeListState — état vide (R6)', () => {
 });
 
 describe('computeListState — tri (R7)', () => {
+  // `visibleIds` attendu = l’ordre trié PRIVÉ de l’entrée à la une, laquelle
+  // reste « a » quel que soit le tri : elle se dérive de l’ordre CANONIQUE
+  // (spec §6.1), pas de l’ordre courant. C’est ce qui garde le client d’accord
+  // avec le slot que le serveur a rendu.
   const ORDERS: Array<[Parameters<typeof computeListState>[2], string[]]> = [
-    ['none', ['a', 'b', 'c']],
-    ['recent', ['a', 'b', 'c']],
-    ['oldest', ['c', 'b', 'a']],
-    ['shortest', ['b', 'c', 'a']],
-    ['longest', ['a', 'c', 'b']],
+    ['none', ['b', 'c']],
+    ['recent', ['b', 'c']],
+    ['oldest', ['c', 'b']],
+    ['shortest', ['b', 'c']],
+    ['longest', ['c', 'b']],
   ];
   for (const [order, expected] of ORDERS) {
-    it(`ordonne la grille selon « ${order} »`, () => {
+    it(`ordonne la grille selon « ${order} » sans déplacer l’entrée à la une`, () => {
       const plain = ENTRIES.map((e) => ({ ...e, featured: false }));
-      // aucune facette active : l’entrée à la une est donc sorted[0], et
-      // [featuredId, ...visibleIds] reconstitue l’ordre trié complet.
       const state = computeListState(plain, { stack: ALL, status: ALL }, order, LABELS);
-      expect([state.featuredId, ...state.visibleIds]).toEqual(expected);
+      expect(state.featuredId).toBe('a');
+      expect(state.visibleIds).toEqual(expected);
+      // R4 reste vrai sous tri : rien ne disparaît de la page.
+      expect(state.count).toBe(state.visibleIds.length + 1);
+      expect(state.count).toBe(plain.length);
     });
   }
 
@@ -593,8 +599,18 @@ export function computeListState(
 
   // R5 : l'entrée à la une n'existe QUE sans filtre. Règle de dérivation de la
   // spec §6.1 : `featured: true` là où le champ existe, à défaut la première
-  // entrée de l'ordre canonique — ce qui, ici, est la première du tableau.
-  const featured = isAnyFacetActive(selected) ? null : pickFeaturedEntry(sorted);
+  // entrée de **l'ordre canonique de la collection**.
+  //
+  // `entries` et NON `sorted` : c'est l'ordre canonique que la spec nomme, et
+  // c'est aussi ce que le serveur calcule quand il choisit la carte à rendre
+  // dans le bloc « à la une ». Dériver du tableau trié les ferait diverger dès
+  // qu'un tri est actif (le cas de `/blog`) : le slot serveur porterait une
+  // entrée, le client en désignerait une autre, le slot n'afficherait donc
+  // rien — et l'entrée désignée serait AUSSI retirée de la grille par la ligne
+  // suivante. Une entrée disparaîtrait de la page tout en restant comptée.
+  // L'entrée à la une n'existant que sans facette active, `entries` et le
+  // tableau filtré sont alors identiques : aucune information n'est perdue.
+  const featured = isAnyFacetActive(selected) ? null : pickFeaturedEntry(entries);
 
   const visibleIds = sorted.filter((entry) => entry.id !== featured?.id).map((entry) => entry.id);
 
@@ -1054,7 +1070,7 @@ Les **six éléments dans l'ordre exact de R3**. `stack` en pilules, `status` en
 I1 ; c'est la permutation exacte de l'existant) :
 
 ```astro
-<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns="projet|projets">
+<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
   {/* 1 · pilules de filtre + 2 · dropdown — `hidden` côté serveur (contrainte n°5) */}
   <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
        data-list-filters hidden>
@@ -1083,8 +1099,13 @@ I1 ; c'est la permutation exacte de l'existant) :
     </label>
   </div>
 
-  {/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
-  <p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} projets</p>
+  {/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7).
+       Le repli rendu par le serveur s'accorde comme la logique l'accorde, et
+       tire son vocabulaire de la MÊME constante que `data-list-nouns` : deux
+       sources sépareraient un jour « 1 projets » du compte réel. */}
+  <p class="mb-6 font-mono text-xs text-dim" data-list-meta>
+    {projects.length} {projects.length === 1 ? NOUNS[0] : NOUNS[1]}
+  </p>
 
   {/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
   <div class="mb-6" data-list-featured>
@@ -1119,8 +1140,15 @@ Le frontmatter de la page appelle la **même** règle de dérivation que le scri
 
 ```ts
 import { pickFeaturedEntry } from '../../lib/listPattern';
+
+// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR.
+const NOUNS = ['projet', 'projets'] as const;
+
 const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data.featured })));
 ```
+
+Chaque page de la Phase C déclare sa propre constante `NOUNS` sur le même modèle
+(`['article', 'articles']`, `['prompt', 'prompts']`, `['skill', 'skills']`).
 
 Pourquoi une seule carte et un `hidden` serveur, et pas le rendu de toutes les cartes featured :
 l'entrée à la une ne dépend **pas** de la sélection — seulement de « une facette est-elle active ».
