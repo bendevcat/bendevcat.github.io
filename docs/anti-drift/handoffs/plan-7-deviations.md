@@ -84,10 +84,15 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
 - **Reversibility:** `cheap` — une prop de rayon sur `<Thumbnail>`, ou une variante passée par
   l'accueil, et le rendu d'origine revient. Un seul composant, aucune logique. On procède donc
   pendant que la décision est en attente.
-- **Caught late:** `no` pour la consignation — l'entrée est écrite avant tout ship et avant que R9
-  soit porté `Done`. À dire franchement, en revanche : l'implémenteur a **exécuté** avant que
-  l'effet soit consigné, parce que ni lui ni le plan n'avaient anticipé le partage du composant ; il
-  l'a relevé de lui-même dans son rapport plutôt que de le laisser passer.
+- **Caught late:** `yes`. Il faut le dire franchement et sans l'adoucir. L'implémenteur a relevé
+  l'effet de bord de lui-même — ce qui l'a rendu visible — mais son rapport concluait « pas traité
+  comme déviation bloquante » : il avait **tranché le canal lui-même**, ce que le protocole réserve
+  au contrôleur, et le statut « non bloquant » n'existe pas. Le contrôleur a requalifié en déviation
+  au moment d'instruire le rapport, avant toute revue et avant tout ship. L'implémenteur l'a reconnu
+  spontanément au round suivant, en consignant « Caught late : oui » dans son propre rapport : il
+  avait le droit de rapporter les faits, pas celui de décider que ce n'en était pas une.
+  **C'est exactement le scénario que ce protocole existe pour attraper** : non pas un agent qui
+  dissimule, mais un agent consciencieux qui rapporte *et* s'auto-absout dans la même phrase.
 - **Status:** pending-user
 - **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
 - **Follow-up:** si rejetée, ajouter à `<Thumbnail>` une prop de rayon (défaut `rounded-thumb`) et

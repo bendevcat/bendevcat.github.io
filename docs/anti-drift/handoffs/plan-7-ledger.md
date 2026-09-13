@@ -1,6 +1,6 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (Phase B close — T-B3 Done après 1 ronde — T-C1 démarrée)
+Last updated: 2026-09-13 (T-C1 Done après 1 ronde — T-C2 démarrée, dernière de la Phase C)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -15,7 +15,7 @@ Last updated by: main (contrôleur SDD)
 | R6 | L'état vide est contextualisé et réversible — message nommant les facettes actives **ET** bouton ramenant au total | Done | **`5622987`.** Message mesuré au rendu : « Aucun projet pour techno Astro et statut archivé. » — il nomme bien les deux facettes actives. Rendu en `text-sm text-muted`, **jamais en mono** : c'est de la prose (contrainte n°7). Le bouton ramène le compte à « 2 projets », total de la collection. Chemin d'accès : le statut `archivé`, que le contenu ne porte sur aucun projet. |
 | R7 | Le dropdown porte une facette secondaire par famille : statut · tri · format · type | In progress | Couvert par T-B3 (statut), T-C1 (tri), T-C2 (format, type). **Limite mesurée au pré-flight :** sur `/skills`, `type` n'a qu'une valeur dans le contenu (`claude-code` sur les 2 skills) — la sélectionner ne change ni l'ordre ni le sous-ensemble. Arbitrage porté au gate de validation du plan. |
 | R8 | Chaque entrée des 4 listes porte une vignette — image du contenu sinon visuel **dérivé**, en CSS/SVG, sans fichier image ni champ de schéma | In progress | **Composant livré : `6479e94`, corrigé en `35164e8`.** `src/components/Thumbnail.astro` — image du contenu quand elle existe, sinon bloc `bg-rail` au rayon 10 px, trame `hatch` en CSS et monogramme de 2 lettres en mono (forme choisie par l\'utilisateur au gate, G-03). **Zéro fichier image, zéro champ de schéma** : les deux guards (`git status --porcelain src/content/` et `git diff --stat milestone-plan-6 -- src/content.config.ts`) sont vides, vérifiés par l\'implémenteur **puis indépendamment par le relecteur**. Câblé sur `ProjectCard` ; les 3 autres cartes suivent en T-C1 et T-C2. Mesuré au rendu : les 2 projets, qui n\'ont aucun `cover`, affichent bien le visuel dérivé — `AC` et `WI`. |
-| R9 | Le patron est répliqué **à l'identique** sur les 4 familles | Pending | Couvert par T-C1 et T-C2. |
+| R9 | Le patron est répliqué **à l'identique** sur les 4 familles | In progress | **`/blog` répliqué : `f33b4e0`, correctif `fe56fe5`.** Les 6 éléments dans le même ordre que `/projets`, et R4, R5, R6, R7 re-vérifiés un par un **au rendu par le relecteur**, pas repris du rapport : 5 articles sans filtre (le `draft` reste exclu — jamais 6), 2 avec une facette, 0 avec deux ; 1 entrée à la une puis 0 ; message « Aucun article pour catégorie DevOps et tag kubernetes. » ; reset → 5. `/prompts` et `/skills` restent à faire en T-C2. |
 | R10 | Le modèle de contenu est **inchangé** — `git diff milestone-plan-6 -- src/content.config.ts` vide | Done | `git diff milestone-plan-6 -- src/content.config.ts` **vide**, vérifié en T-B2 et en T-B3 par l'implémenteur **puis indépendamment par les deux relecteurs**. Aucune tâche restante ne touche le schéma ; re-vérifié en Phase Z. |
 | R11 | La logique nouvelle est testée — fonctions pures dans `src/lib/`, couvertes par vitest ; les 12 suites existantes restent vertes | Done | **`e0348e7`.** `src/lib/listPattern.ts` : `computeListState`, `isAnyFacetActive`, `pickFeaturedEntry`, toutes pures (`filter`/`map`/`sort` sur copies — la non-mutation est elle-même testée). **22 tests** dans la 13ᵉ suite ; **13 suites / 142 tests** verts ; `astro check` 0 erreur. Le module n'importe que `./facetFilters`, lequel n'a aucun import : **zéro `astro:content`**, direct ou transitif — vérifié par le contrôleur puis par le relecteur sur le graphe d'imports, pas sur le rapport. Les 2 suites préexistantes modifiées (`posts.test.ts`, `projectFilters.test.ts`) le sont **par ajout seul** : aucune assertion existante affaiblie, renommée ou supprimée. Le relecteur a **recalculé à la main** les valeurs attendues de chaque `describe` — les 5 ordres de tri, l'arithmétique du compte, la chaîne de méta caractère par caractère, le message d'état vide : toutes découlent de l'implémentation, aucune n'a été ajustée après coup, et aucun test tautologique. À re-vérifier en Phase Z. |
 | R12 | 375 px et deux thèmes sur les 4 listes, sans contrôle inatteignable | Pending | Couvert par T-D1. |
@@ -35,8 +35,8 @@ Last updated by: main (contrôleur SDD)
 | B1 | B | R4, R5, R6, R7, R11 — `src/lib/listPattern.ts` : toute la logique du patron, pure et testée | Done (`e0348e7`) |
 | B2 | B | R8, R10 — `Thumbnail.astro` : vignette dérivée, sans fichier ni champ | Done (`6479e94`, correctif `35164e8`) |
 | B3 | B | R3, R4, R5, R6, R7, R10 — `/projets` rend les 6 éléments + le script de glue unique | Done (`5622987`, correctif `26757a9`) |
-| C1 | C | R9, R7 (tri), R8 — `/blog` | In progress |
-| C2 | C | R9, R8 — `/prompts` et `/skills` | Pending |
+| C1 | C | R9, R7 (tri), R8 — `/blog` | Done (`f33b4e0`, correctif `fe56fe5`) — voir D02 |
+| C2 | C | R9, R8 — `/prompts` et `/skills` | In progress |
 | D1 | D | R12 (+ V2, V6) — 4 listes × 2 thèmes × 375/768/1180 px | Pending |
 | Z1 | Z | Audit `/anti-drift-planning:verify 7` (couverture R1–R12 + V1–V8) | Pending |
 
