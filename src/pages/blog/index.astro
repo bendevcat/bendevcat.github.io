@@ -104,7 +104,7 @@ const NOUNS = ['article', 'articles'] as const;
 									class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
 								>
 									<option value={ALL}>tous</option>
-									{blogTags.map((tag) => <option value={tag.slug}>{tag.label}</option>)}
+									{blogTags.map((tag) => <option value={tag.slug}>{tag.label} ({tag.count})</option>)}
 								</select>
 							</label>
 						)
