@@ -122,7 +122,7 @@ Décision à prendre en P8 avec `/tags` — voir §8.3.
 > chemin de fichier, nom de techno, version, compteur, identité. Du texte de prose en mono est un
 > défaut.
 
-### 3.2 Rayons — quatre valeurs, pas cinq
+### 3.2 Rayons — cinq valeurs
 
 | Valeur | Usage |
 |---|---|
@@ -238,11 +238,17 @@ listes en parallèle les ferait diverger.
 
 ## 8. Points ouverts — `pending-user`
 
-### 8.1 Licence de Nebula Sans
-Nebula Sans est la police de marque d'Anthropic. Le prototype la sert depuis jsDelivr
-(`@fontsource/nebula-sans`). L'embarquer sur un site personnel est une question de **licence**, pas
-de technique. **À trancher avant la Phase A du plan 6.** Si non : choisir une substitution
-géométrique proche et la documenter ici.
+### 8.1 Licence de Nebula Sans — TRANCHÉ (gate de pré-flight, 2026-09-13)
+~~Nebula Sans est la police de marque d'Anthropic.~~ **Prémisse fausse**, corrigée ici avec le fait
+qui l'établit : le fichier `LICENSE` du paquet lit « Copyright (c) 2024, Nebula Entertainment &
+Broadcasting LLC (https://nebula.tv), with Reserved Font Name 'Nebula'. Based on Source Sans,
+copyright 2010-2024 Adobe », sous licence **SIL OFL-1.1**. Nebula Sans n'est donc ni une police de
+marque Anthropic, ni liée à Anthropic — c'est une police tierce librement redistribuable et
+embarquable (OFL-1.1 l'autorise explicitement, y compris commercialement).
+
+**Décision utilisateur (gate de pré-flight, 2026-09-13) :** « Embarquer Nebula Sans (OFL-1.1) »,
+retenue verbatim. Le paquet `@fontsource/nebula-sans@5.3.0` est installé en dépendance directe
+(voir plan 6 / T-A1) — plus de service depuis jsDelivr.
 
 ### 8.2 Vignettes d'articles
 Le design attend une image par entrée de liste. État actuel : 3 articles sur 6 ont un `cover`.

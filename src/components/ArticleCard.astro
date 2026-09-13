@@ -38,7 +38,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 ---
 
 <article
-  class="group relative flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-acc/50"
+  class="group relative flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
   data-facet-card
   data-facet={JSON.stringify({ category: [category], tag: tags.map(tagSlug) })}
 >
@@ -47,7 +47,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
       <Image
         src={cover}
         alt={coverAlt ?? title}
-        class="aspect-video w-full rounded-lg object-cover"
+        class="aspect-video w-full rounded-inner object-cover"
       />
     )
   }
@@ -69,18 +69,18 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
         data-facet-key="category"
         data-facet-value={category}
         tabindex={-1}
-        class="pointer-events-none relative z-10 w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc transition-colors hover:ring-1 hover:ring-acc"
+        class="pill pointer-events-none relative z-10 w-fit text-xs transition-colors hover:ring-1 hover:ring-accent"
       >
         {category}
       </button>
     ) : (
-      <span class="w-fit rounded-full bg-acc-dim px-2 py-0.5 font-mono text-xs text-acc">
+      <span class="pill w-fit text-xs">
         {category}
       </span>
     )
   }
 
-  <h3 class="font-display text-lg font-semibold text-text group-hover:text-acc">
+  <h3 class="font-sans text-lg font-semibold text-ink group-hover:text-accent">
     <a href={`/blog/${post.id}/`} class="after:absolute after:inset-0">{title}</a>
   </h3>
 

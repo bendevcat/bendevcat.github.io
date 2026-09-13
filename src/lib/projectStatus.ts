@@ -7,10 +7,13 @@
  * garder les libellés et les couleurs à UN endroit évite que la carte et la
  * fiche divergent.
  *
- * Palette : `actif` réutilise l'accent du site (tokens `--color-acc*`) ;
+ * Palette : `actif` réutilise l'accent du site (tokens `--color-accent*`) ;
  * `wip` prend l'ambre par défaut de Tailwind — comme la bannière `partial`
  * de aiUsage.ts — pour ne pas se confondre avec le vert ; `archivé` reste
- * neutre (tokens `--color-line` / `--color-muted`).
+ * neutre, sur `--color-chip` (« fond de puce neutre », contrat visuel v2 §2)
+ * et non sur `--color-surface` : en thème clair `surface` vaut `#FFFFFF`,
+ * exactement le fond de la carte qui porte la puce — la puce y était donc
+ * invisible (T-D1).
  */
 export type ProjectStatus = 'actif' | 'wip' | 'archivé';
 
@@ -23,7 +26,7 @@ interface ProjectStatusMeta {
 export const PROJECT_STATUS_META: Record<ProjectStatus, ProjectStatusMeta> = {
   actif: {
     label: 'actif',
-    chipClass: 'border-acc/40 bg-acc-dim text-acc',
+    chipClass: 'border-accent/40 bg-accentSoft text-accent',
   },
   wip: {
     label: 'wip',
@@ -32,6 +35,6 @@ export const PROJECT_STATUS_META: Record<ProjectStatus, ProjectStatusMeta> = {
   },
   'archivé': {
     label: 'archivé',
-    chipClass: 'border-line bg-surface text-muted',
+    chipClass: 'border-line bg-chip text-muted',
   },
 };

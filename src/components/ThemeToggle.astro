@@ -1,5 +1,23 @@
-<button id="theme-toggle" class="grid size-9 place-items-center rounded-lg border border-line text-muted"
-        aria-label="Basculer le thème">◐</button>
+---
+/*
+  Plan 6 / T-C2 — réduit à un bouton rond de la barre d'actions du header.
+  Le look (taille, rayon, couleurs, focus) est décidé par Header.astro et passé
+  en `class` : les trois boutons ronds doivent être strictement identiques, il
+  n'y a donc qu'une seule source pour cette chaîne, et elle est chez l'appelant.
+  CONTRAT À NE PAS CASSER : `id="theme-toggle"` est ce que `src/scripts/theme.ts`
+  écoute — le renommer casserait la bascule de thème.
+  Le glyphe `◐` est conservé : le contrat visuel ne prescrit pas d'icône de thème.
+*/
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<button id="theme-toggle" type="button" class={className} aria-label="Basculer le thème">
+  <span aria-hidden="true">◐</span>
+</button>
 <script>
   import '../scripts/theme.ts';
 </script>

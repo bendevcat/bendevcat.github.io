@@ -1,9 +1,12 @@
 ---
+import Icon from './Icon.astro';
 import ThemeToggle from './ThemeToggle.astro';
 
 interface NavLink {
   label: string;
   href?: string;
+  // Nom de glyphe (Icon.astro) — R6 : chacun des 5 items porte son icône.
+  icon: 'blog' | 'projets' | 'prompts' | 'skills' | 'a-propos';
 }
 
 // Nav complète du site (spec design §4). Blog (Plan 1), Projets (Plan 3),
@@ -11,40 +14,105 @@ interface NavLink {
 // Le rendu non cliquable reste possible pour un futur item sans page :
 // `href` absent → <span> inerte, pour éviter tout lien mort (spec Plan 1 §5).
 const navLinks: NavLink[] = [
-  { label: 'Blog', href: '/blog' },
-  { label: 'Projets', href: '/projets' },
-  { label: 'Prompts', href: '/prompts' },
-  { label: 'Skills', href: '/skills' },
-  { label: 'À propos', href: '/a-propos' },
+  { label: 'Blog', href: '/blog', icon: 'blog' },
+  { label: 'Projets', href: '/projets', icon: 'projets' },
+  { label: 'Prompts', href: '/prompts', icon: 'prompts' },
+  { label: 'Skills', href: '/skills', icon: 'skills' },
+  { label: 'À propos', href: '/a-propos', icon: 'a-propos' },
 ];
+
+// R6 — l'état actif se dérive par FAMILLE DE ROUTES, pas par égalité :
+// `/blog/<slug>` doit allumer « Blog ».
+// Piège mesuré : en build statique, `Astro.url.pathname` porte un `/` final
+// (`/blog/`, `/a-propos/`) — une comparaison `path === href` échouerait donc
+// sur TOUTES les pages, y compris les routes mères. `path.startsWith(href + '/')`
+// couvre à la fois la mère avec son slash final et les filles ; `path === href`
+// ne sert qu'au dev server, qui lui ne pose pas de slash final.
+// Sur `/` aucun item n'est actif : il n'y a pas d'item « Accueil », c'est le
+// logo qui porte la racine.
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === '/' ? path === '/' : path === href || path.startsWith(href + '/');
+
+// Look commun des pilules de nav. Rayon 999 via l'utilitaire `rounded-pill`
+// (généré par Tailwind depuis `--radius-pill`) — jamais `rounded-full`, dont
+// la valeur ne vient pas du contrat. Anneau de focus neutre `ink` : visible
+// dans les deux thèmes, et il ne réinjecte ni le vert (contenu/action) ni le
+// bleu (méta) dans un élément de navigation (contrat §2.2).
+const NAV_PILL =
+  'inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-sm transition-colors ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+
+// R7 — look unique des trois boutons ronds de la barre d'actions (32 px,
+// rayon 999 via `--radius-pill`). Une seule chaîne : les trois doivent être
+// indiscernables, y compris celui que rend `ThemeToggle.astro` (à qui elle est
+// passée en prop). Fond transparent : ils sont posés sur la pilule `nav`, ils
+// n'ajoutent pas de niveau de surface (hiérarchie §2.1). `chip` n'est pas un
+// niveau de surface mais le fond de puce neutre du contrat : c'est lui qui
+// porte le survol.
+const ROUND_BTN =
+  'grid size-8 place-items-center rounded-pill text-muted transition-colors ' +
+  'hover:bg-chip hover:text-ink ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 ---
 
 <header class="border-b border-line">
   <div
-    class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-4 sm:flex-nowrap sm:px-6"
+    class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-4 sm:flex-nowrap sm:px-6"
   >
-    <a href="/" class="font-mono text-lg text-text" aria-label="bencat_ — accueil">
-      bencat<span class="text-acc">_</span>
+    {/*
+      R5 — logo en pilule. `.pill` (contrat §4) pose rayon 999 + padding +
+      fond `accentSoft` + texte `accent` + mono ; la bordure `line` demandée
+      par R5 s'ajoute en utilitaire, et `inline-flex` aussi : `.pill` ne porte
+      volontairement aucun `display` (règle R4), c'est ce qui la rend
+      composable ici sans la modifier.
+    */}
+    <a
+      href="/"
+      aria-label="bencat_ — accueil"
+      class="pill inline-flex items-center gap-2 border border-line text-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+    >
+      <Icon name="logo" size={16} />
+      <span>bencat<span class="text-accent">_</span></span>
     </a>
 
     {/*
-      R9 (375px) : sur mobile, le bloc logo+toggle tient sur une ligne mais
-      logo+nav(5 items)+toggle ensemble débordent (constat brief C5). On fait
-      passer <nav> en 2e ligne pleine largeur (order-last + w-full) sous les
-      480px environ ; dès `sm` (640px) on revient à la ligne unique d'origine
-      (sm:order-none sm:w-auto), donc le layout desktop est inchangé. Pas de
-      JS, pas de scroll : tous les items restent visibles et cliquables.
+      R11 (375px) : sur mobile, le bloc logo+actions tient sur une ligne mais
+      logo+nav(5 pilules)+actions ensemble débordent. On fait passer <nav> en
+      2e ligne pleine largeur (order-last + w-full) sous `sm` (640px) ; dès
+      `sm` on revient à la ligne unique (sm:order-none sm:w-auto), donc le
+      layout desktop est inchangé. Les pilules elles-mêmes ont le droit de
+      passer à la ligne (flex-wrap). Pas de JS, pas de scroll, pas de burger
+      (ce serait une structure nouvelle, hors périmètre du Plan 6) : tous les
+      items restent visibles et cliquables.
     */}
     <nav aria-label="Navigation principale" class="order-last w-full sm:order-none sm:w-auto">
-      <ul class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+      <ul class="flex flex-wrap items-center gap-1.5">
         {navLinks.map((link) => (
           <li>
             {link.href ? (
-              <a href={link.href} class="text-muted transition-colors hover:text-text">
+              <a
+                href={link.href}
+                aria-current={isActive(link.href) ? 'page' : undefined}
+                class:list={[
+                  NAV_PILL,
+                  isActive(link.href)
+                    ? // actif : fond `nav` + bordure `line` + graisse (R6)
+                      'border-line bg-nav font-medium text-ink'
+                    : // inactif : transparent, texte secondaire
+                      'border-transparent text-muted hover:text-ink',
+                ]}
+              >
+                <Icon name={link.icon} />
                 {link.label}
               </a>
             ) : (
-              <span class="text-muted/40" aria-disabled="true" title="Bientôt disponible">
+              <span
+                class:list={[NAV_PILL, 'border-transparent text-muted/40']}
+                aria-disabled="true"
+                title="Bientôt disponible"
+              >
+                <Icon name={link.icon} />
                 {link.label}
               </span>
             )}
@@ -53,17 +121,60 @@ const navLinks: NavLink[] = [
       </ul>
     </nav>
 
-    <button
-      type="button"
-      data-search-open
-      hidden
-      class="flex items-center gap-2 rounded-lg border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-acc hover:text-acc"
-      aria-label="Rechercher sur le site"
-    >
-      <span aria-hidden="true">🔍</span>
-      <kbd class="hidden sm:inline">⌘K</kbd>
-    </button>
+    {/*
+      R7 — barre d'actions : un conteneur en pilule (rayon 999, fond `nav`,
+      bordure `line` — les propriétés de `.pill` sauf son fond d'accent, qui
+      n'a pas sa place ici : c'est de la navigation, pas de l'action de
+      contenu) portant trois boutons ronds de 32 px.
+      Il est posé sur `bg` et porte `nav` : un seul niveau d'écart (§2.1).
+    */}
+    <div class="flex items-center gap-1 rounded-pill border border-line bg-nav p-1">
+      {/*
+        CONTRAT À NE PAS CASSER : `data-search-open` est ce que
+        `src/scripts/search.ts` cherche pour (a) retirer le `hidden` et (b)
+        brancher l'ouverture du <dialog>. Le `hidden` posé par le serveur est
+        l'enhancement progressif du Plan 5 : sans JS, aucun contrôle mort n'est
+        affiché (la règle `[data-search-open][hidden]` de global.css le garde
+        invisible en `!important`, sinon l'utilitaire `grid` ci-dessous
+        gagnerait). Ne renommer ni l'un ni l'autre.
+      */}
+      <button
+        type="button"
+        data-search-open
+        hidden
+        class={ROUND_BTN}
+        aria-label="Rechercher sur le site"
+      >
+        <Icon name="search" size={16} />
+      </button>
 
-    <ThemeToggle />
+      {/*
+        Le rappel `⌘K` de la v1 est conservé (≥ sm). Il est SŒUR du bouton et
+        non dedans, pour que les trois boutons restent strictement ronds. Il
+        porte lui aussi `data-search-open` : `search.ts` itère sur TOUS les
+        éléments portant l'attribut — il est donc révélé et rendu cliquable par
+        le même code, sans une ligne de logique nouvelle, et il reste masqué
+        sans JS. `aria-hidden` : le bouton voisin porte déjà le nom accessible,
+        l'annoncer une seconde fois serait du bruit.
+      */}
+      <kbd
+        data-search-open
+        hidden
+        aria-hidden="true"
+        class="hidden h-8 cursor-pointer place-items-center rounded-pill px-2 font-mono text-[11px] text-dim transition-colors hover:text-muted sm:grid"
+      >⌘K</kbd>
+
+      <a
+        href="https://github.com/bendevcat"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub de benCat"
+        class={ROUND_BTN}
+      >
+        <Icon name="github" size={16} />
+      </a>
+
+      <ThemeToggle class={ROUND_BTN} />
+    </div>
   </div>
 </header>
