@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (T-A2 Done)
+Last updated: 2026-09-13 (Phase B en cours)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -33,8 +33,8 @@ Last updated by: main (contrôleur SDD)
 |---|---|---|---|
 | A1 | A | R2, R3 (+ V7) — polices : Nebula Sans entre, Space Grotesk et Inter sortent | Done (`30c9ed0`) |
 | A2 | A | R1, R8, R12 (+ V1, V4, V8) — les 23 tokens dans les 2 thèmes + re-câblage mécanique des 283 classes | Done (`8b977f6`, correctif `6af9329`) |
-| B1 | B | R4 (+ V6) — `.card`, `.card-inner`, `.panel`, `.pill` | Pending |
-| B2 | B | R9 (+ V5, V6) — `.prose` accordé | Pending |
+| B1 | B | R4 (+ V6) — `.card`, `.card-inner`, `.panel`, `.pill` | In progress |
+| B2 | B | R9 (+ V5, V6) — `.prose` accordé | In progress |
 | C1 | C | R5, R6 (+ E1) — logo en pilule, nav en pilules à icônes, actif par famille de routes | Pending |
 | C2 | C | R7, R11 header (+ E2) — barre d'actions ronde, responsive 375 px | Pending |
 | D1 | D | R10 composants (+ V2, V3, V6) — les 8 composants sur les tokens v2 | Pending |
