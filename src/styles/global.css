@@ -9,7 +9,15 @@
 /* bascule de thème pilotée par [data-theme] sur <html> */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-@theme {
+/* `static` (et pas `@theme` nu) : Tailwind v4 élague de `:root` toute variable
+   de `@theme` que rien ne référence. Le bloc sombre ci-dessous étant du CSS
+   écrit à la main, il émet ses 22 couleurs quoi qu'il arrive — sans `static`,
+   6 tokens clairs (`card`, `rail`, `chip`, `panel`, `nav`, `hatch`) ne
+   partaient donc PAS dans le bundle, et un token consommé hors utilitaire
+   (style scoped Astro, style inline) aurait marché en sombre et échoué en
+   clair. `static` désactive l'élagage et émet les 23 tokens + les 5 rayons.
+   Constat de revue T-A2, fix round 1. */
+@theme static {
   /* ==========================================================================
      Polices (Plan 6 / T-A1) — Nebula Sans (300/400/500/600/700, SIL OFL-1.1,
      @fontsource/nebula-sans@5.3.0) remplace les deux anciennes polices
@@ -114,7 +122,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 /* ==========================================================================
    Article (`.prose`) — Plan 1 / C3
    Pas de plugin `@tailwindcss/typography` : règles maison sur nos tokens
-   `--color-*` et nos 3 polices `--font-*`. `:where()` garde une spécificité
+   `--color-*` et nos 2 polices `--font-*`. `:where()` garde une spécificité
    basse (facile à surcharger localement si besoin).
    ========================================================================== */
 
