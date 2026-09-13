@@ -288,3 +288,22 @@ cet article** — la route fille utilisée pour R10/R11 est `/blog/docker-kubern
 
 **Ce que cela touche, en revanche, c'est le Plan 5 :** son critère R3 (agrégation cross-collection)
 ne se démontre plus que sur **3 collections**. Voir l'addendum daté du registre du Plan 5.
+
+## Vérification en production — `https://bendevcat.github.io`, 2026-09-13
+
+Livrer n'est pas pousser : mesuré **sur le site déployé**, après que l'action GitHub Pages soit
+passée en `success`. La feuille servie est passée de `BaseLayout.B-31HhHu.css` (baseline relevée
+avant le push) à `BaseLayout.NAZFE38K.css` — le déploiement a bien pris.
+
+| Contrôle | Mesuré en production |
+|---|---|
+| R2 — police servie | corps en `"Nebula Sans"` · faces réellement chargées : **Nebula Sans 400/500/600/700** + JetBrains Mono Variable |
+| R3 — anciennes polices | `grep` sur la feuille de prod : **aucune** occurrence de `Space Grotesk` ni de `Inter Variable` |
+| R5 — logo en pilule | glyphe SVG présent dans le lien d'accueil |
+| R6 — nav active | `/blog/` → **`Blog`**, exactement un `aria-current="page"` |
+| R7 — barre d'actions | les 4 éléments de la barre présents (recherche, `⌘K`, GitHub, thème) |
+| R11 — débordement | `scrollWidth <= innerWidth` vrai |
+| Décision contenu | `/blog/` rend **5** cartes · `/blog/bienvenue-dans-mon-foutoir/` renvoie **404** — la mise en brouillon voulue est effective |
+
+Thème sombre confirmé visuellement sur `/blog` : pilules de nav à icônes, item actif en relief,
+barre d'actions ronde, cartes aux nouveaux rayons et aux nouveaux tokens.
