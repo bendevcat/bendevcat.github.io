@@ -79,8 +79,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   exécuté : le protocole interdit de procéder sur une déviation `expensive` dont la décision est en
   attente.
 - **Caught late:** `no` — consignée avant toute Phase Z et avant tout ship. Rien n'a été exécuté.
-- **Status:** pending-user
-- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Status:** approved
+- **User decision:** **Approuvée — option 1 (report).** « **D01 D02 D03 approuvées, D04 option 1** » — décision de l'utilisateur du 2026-09-13, transcrite verbatim. L'option retenue est la première des trois proposées : **le saut de niveau est consigné en échec sur ce plan, et la hiérarchie des surfaces est reprise par le plan qui la possède**. Ni `.card-inner` ni `chip` n'est exécuté. **V2 est donc porté `Deferred` au ledger de ce plan, en référence à cette entrée approuvée**, et l'obligation est inscrite dans la méthodologie §4.2 pour que la spec de P9 la porte comme **item nommé** — pas comme un sous-entendu. C'est la forme qu'avait prise l'obligation héritée du Plan 6, et elle a tenu.
 - **Follow-up:** trois issues, à trancher par l'utilisateur :
   1. **Approuver le report** — V2 est consigné en échec sur ce plan et la hiérarchie des surfaces
      est reprise par le plan qui la possède (P9, qui porte déjà la finition et les contrastes). Coût :
@@ -121,8 +121,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   d'un `type` différent (ce qui rouvre aussi R7), soit d'ajouter une facette qui puisse vider la
   liste, soit d'acter la mesure par construction en le disant dans la spec.
 - **Caught late:** `no` — consignée avant que R9 soit porté au ledger et avant tout ship.
-- **Status:** pending-user
-- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Status:** approved
+- **User decision:** **Approuvée.** « **D01 D02 D03 approuvées, D04 option 1** » — décision de l'utilisateur du 2026-09-13, transcrite verbatim. R6 est donc tenu sur `/skills` **par construction** : même script, même fonction pure testée, déclenchement mesuré au rendu sur les trois autres familles. Le contenu ne permet pas de l'y produire, et cela est consigné plutôt que maquillé. Aucune action de suivi ; si un skill d'un `type` distinct est publié un jour, R6 **et** R7 y redeviendront mesurables d'un coup.
 - **Follow-up:** si rejetée, la voie la plus économique est de publier une entrée `skills` portant un
   `type` distinct : elle rend **R6 et R7** mesurables d'un coup sur `/skills`, sans toucher au
   schéma (R10 reste tenu, `type` est déjà une chaîne libre). Cela ajoute en revanche du contenu que
@@ -184,8 +184,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   avait le droit de rapporter les faits, pas celui de décider que ce n'en était pas une.
   **C'est exactement le scénario que ce protocole existe pour attraper** : non pas un agent qui
   dissimule, mais un agent consciencieux qui rapporte *et* s'auto-absout dans la même phrase.
-- **Status:** pending-user
-- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Status:** approved
+- **User decision:** **Approuvée.** « **D01 D02 D03 approuvées, D04 option 1** » — décision de l'utilisateur du 2026-09-13, transcrite verbatim. L'accueil garde donc le nouveau rendu : vignettes au rayon de 10 px — la valeur que le contrat §3.2 attribue précisément à « vignette, petite image » — et les 4 attributs `data-*` inertes. **Conséquence à porter au Plan 9** : il trouvera l'accueil déjà aligné sur ce point, et le changement de comportement du composant partagé (une vignette dérivée s'affiche désormais là où rien ne s'affichait sans couverture) fait partie de ce qu'il hérite. Aucune action de suivi sur cette branche.
 - **Follow-up:** si rejetée, ajouter à `<Thumbnail>` une prop de rayon (défaut `rounded-thumb`) et
   faire passer l'accueil sur `rounded-inner`, de sorte que `/blog` garde le nouveau rendu et que
   l'accueil retrouve exactement le sien. Les attributs `data-*` inertes peuvent rester ou être
@@ -227,8 +227,8 @@ Numérotation continue : D01, D02, … (jamais réutilisée, même après un rej
   attente.
 - **Caught late:** `no` — consigné avant que R2 soit porté `Done` au ledger, et avant toute
   décision de ship.
-- **Status:** pending-user
-- **User decision:** _(vide — seul l'utilisateur écrit `approved` / `rejected`)_
+- **Status:** approved
+- **User decision:** **Approuvée.** « **D01 D02 D03 approuvées, D04 option 1** » — décision de l'utilisateur du 2026-09-13, transcrite verbatim. R2 est donc tenu sur la mesure différentielle : ce que la Phase A devait garantir — ne rien régresser — est prouvé, et les 4 divergences résiduelles contre `milestone-plan-6` restent imputées au contenu, pas à la cascade. Aucune action de suivi : la branche est déjà dans cet état.
 - **Follow-up:** si rejetée, R2 ne peut pas être tenu tel qu'écrit sans toucher à du contenu hors
   périmètre de ce plan. Deux chemins : (a) reformuler la mesure de R2 dans la spec pour nommer une
   référence qui inclut la correction de contenu postérieure au tag, puis rejouer la comparaison ;

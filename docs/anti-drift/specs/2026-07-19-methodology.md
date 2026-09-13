@@ -89,6 +89,27 @@ Greenfield → site complet. Livrée : `v1.0.0`, tag `milestone-plan-5`.
 
 **Ordre interne :** P6 conditionne tout le reste — implémenter une structure de page avant que les tokens existent produit des valeurs codées en dur qu'il faut ensuite déterrer.
 
+**Obligation héritée du Plan 7, à porter dans la spec de P9.** La déviation **D04** du Plan 7 a été
+approuvée le 2026-09-13 dans son **option 1 — report** : le saut de niveau de surface introduit par
+la vignette de liste (`rail` posé dans une carte `surface`, sans le niveau `card` intermédiaire) est
+**consigné en échec** sur le Plan 7, et sa résolution revient au plan qui possède la hiérarchie des
+surfaces. **Le critère `V2` du contrat visuel est donc `Deferred` à P9, et doit y figurer comme item
+nommé** — pas comme un sous-entendu.
+
+Ce que P9 hérite exactement :
+- **V2 est en échec sur le site livré** : les 4 cartes de liste sont `bg-surface` et la vignette est
+  `bg-rail`. Deux réparations ont été évaluées au rendu et écartées, chacune pour une raison
+  documentée dans `plan-7-deviations.md` (D04) — les reprendre sans relire cette entrée referait le
+  même travail.
+- **Le contrat lui-même est en cause, pas seulement son application.** V2 n'avait jamais eu de jeu
+  de test : avant le Plan 7, aucune surface de niveau 3 ou 4 n'existait sur le site. Son **premier
+  cas réel le fait échouer**, sur une carte de grille compacte où le niveau intermédiaire n'a pas de
+  place évidente. P9 devra donc trancher si c'est l'implémentation qui doit plier, ou la règle des
+  quatre niveaux qui doit admettre ce cas.
+- **L'accueil a déjà changé** (déviation **D02** du Plan 7, approuvée) : le rayon de ses vignettes
+  est passé à 10 px, et le composant partagé affiche désormais un visuel dérivé là où il n'affichait
+  rien sans couverture. P9 reprend l'accueil : il le trouvera dans cet état.
+
 **Obligation héritée du Plan 6, à porter dans la spec de P9 :** la déviation D02 du Plan 6 a été
 approuvée à la condition explicite que la reprise des deux palettes hors contrat
 (`src/lib/aiUsage.ts` pour l'ambre et le bleu, `src/lib/projectStatus.ts` pour le `wip`) **et** du

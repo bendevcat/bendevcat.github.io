@@ -1,6 +1,6 @@
 # Plan 7 — Scope Ledger
 
-Last updated: 2026-09-13 (T-D1 Done — **exécution ARRÊTÉE : budget de décisions dépassé, 4 entrées `pending-user`**)
+Last updated: 2026-09-13 (les 4 déviations sont **approuvées** — revue finale puis Phase Z)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -48,7 +48,7 @@ La méthodologie §4.2 les rend applicables en Phase Z de chaque plan de la vagu
 | V | Critère | Tâche | Statut |
 |---|---|---|---|
 | V1 | Les 23 tokens dans les 2 thèmes | — | Acquis au Plan 6 (`6af9329`) ; aucune tâche de P7 ne touche `@theme`. Re-vérifié en Z1. |
-| V2 | Aucun saut de niveau de surface | D1 | **ÉCHEC — `pending-user` via D04.** Le critère se lit « aucune occurrence de `rail` sur `surface` » : les 4 cartes sont `bg-surface`, la vignette est `bg-rail`. Le saut est réel, mesuré en sombre, et **rien n'a été exécuté** — les deux réparations prescrites coûtent chacune plus que le défaut (voir D04). **C'est le premier vrai cas de test de V2 depuis que le contrat existe** : le ledger du Plan 6 annonçait que « P7 lui donnera de quoi échouer », et c'est fait. Le premier cas réel le fait échouer. |
+| V2 | Aucun saut de niveau de surface | D1 | **Deferred — déviation D04 approuvée (option 1 : report).** Le critère se lit « aucune occurrence de `rail` sur `surface` » : les 4 cartes sont `bg-surface`, la vignette est `bg-rail`. Le saut est réel, mesuré en sombre, et **rien n'a été exécuté** — les deux réparations prescrites coûtent chacune plus que le défaut (voir D04). **C'est le premier vrai cas de test de V2 depuis que le contrat existe** : le ledger du Plan 6 annonçait que « P7 lui donnera de quoi échouer », et c'est fait. Le premier cas réel le fait échouer. **Décision de l'utilisateur du 2026-09-13 : report.** Ni `.card-inner` ni `chip` n'est exécuté ; la hiérarchie des surfaces est reprise par le plan qui la possède, et l'obligation est inscrite dans la méthodologie §4.2 pour que la spec de P9 la porte comme **item nommé**. |
 | V3 | Grammaire des accents respectée en sombre | D1 | **Done.** Les contrôles nouveaux (pilules de filtre, dropdowns, bouton de réinitialisation, ligne de méta) prennent `line`/`muted`/`dim`/`accent` — aucun ne porte de bleu, donc aucun ne porte les deux accents. Vérifié au rendu en sombre sur les 4 listes. |
 | V4 | Thème clair sans bleu | — | Acquis au Plan 6. Contrainte globale n°8 du plan d'impl. |
 | V5 | Mono réservé à la donnée machine | B3, C1, C2 | **Done.** La ligne de méta est un compteur — donnée machine, `font-mono` justifié. Le message d'état vide est de la prose et rendu en `text-sm text-muted`, **jamais en mono** : vérifié au rendu sur les 4 listes par les relecteurs de T-B3, T-C1 et T-C2. |
@@ -70,6 +70,19 @@ validation du plan d'impl, avant T-A1.
 | I4 | **Un seul** script de glue, `src/scripts/list-pattern.ts`, remplace `facet-filters.ts` et `project-filters.ts`. Deux scripts = deux comportements qui divergent. |
 | I5 | `src/lib/projectFilters.ts` n'est **pas** supprimé : il gagne `projectFacets()` et garde `matchesFilters` + sa suite, que R11 exige de laisser verte. |
 | I6 | Visuel dérivé : bloc `rail`, rayon 10px, trame `hatch` en CSS, monogramme de 2 lettres en mono. Consomme deux tokens que le contrat §6.4 dit n'être peints par rien. |
+
+## Décisions de l'utilisateur sur les déviations (2026-09-13)
+
+Quatre entrées présentées **groupées**, au point d'arrêt imposé par le budget de décisions — jamais
+en interruptions successives. Réponse de l'utilisateur, transcrite verbatim :
+**« D01 D02 D03 approuvées, D04 option 1 »**.
+
+| # | Objet | Décision | Conséquence |
+|---|---|---|---|
+| D01 | R2 mesuré en différentiel, la référence ayant bougé pour une raison étrangère au plan | **approved** | R2 reste `Done` ; aucune action |
+| D02 | L'accueil change d'apparence (vignettes 14 → 10 px), page gelée pour P9 | **approved** | Le nouveau rendu reste ; P9 hérite de l'accueil déjà aligné et du changement de comportement du composant partagé |
+| D03 | Sur `/skills`, R6 n'est pas déclenchable faute de combinaison vidant la liste | **approved** | R9 reste `Done` avec la réserve consignée |
+| D04 | Le saut de niveau de surface n'est pas résolu → V2 échoue | **approved, option 1 (report)** | **V2 → `Deferred`** en référence à D04 ; obligation portée à la méthodologie §4.2 pour la spec de P9 |
 
 ## Décisions de l'utilisateur au gate de validation du plan (2026-09-13)
 
