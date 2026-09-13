@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (revue finale de branche faite — 3 décisions en attente avant Phase Z)
+Last updated: 2026-09-13 (3 décisions tranchées, corrections appliquées — prêt pour Phase Z)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -114,6 +114,46 @@ ni le périmètre. Elle aligne un texte sur une réalité déjà actée.
   `LICENSE` du paquet que le prototype sert (`@fontsource/nebula-sans@5.3.0`) porte « Copyright (c)
   2024, Nebula Entertainment & Broadcasting LLC (nebula.tv) », dérivée de Source Sans (Adobe), sous
   SIL OFL-1.1** — corrigé en `30c9ed0`, en même temps que la consignation de la décision §8.1.
+
+## Revue finale de branche (2026-09-13) — ce que les revues par tâche ne pouvaient pas voir
+
+24 commits, 34 fichiers, +1592/−217, relus d'un bloc. Verdict : **ship with fixes**. Trois constats
+`Important`, tous trois **invisibles depuis une revue par tâche** parce qu'ils vivent dans les
+coutures entre les phases.
+
+1. **Régression causée par ce plan, sur le dispositif distinctif du site.** Le passage du `bg` clair
+   de `#FCFCFD` à `#F1F4F7` a rendu le bandeau « 100 % humain » **sans aplat visible en thème
+   clair** : son `slate-100` s'est retrouvé à une distance colorimétrique de **2.24** du fond de
+   page. Les niveaux `partial` (50.71) et `full` (25.16) n'étaient pas touchés. **Corrigé en
+   `b3fa60f`** par la 3ᵉ option de D02 : `bannerClass` du niveau `none` passe à
+   `border-line bg-chip text-ink`, distance **15.43**, texte à **15.03:1**. Vérifié au rendu par
+   l'implémenteur puis par le contrôleur, mesure et capture à l'appui, dans les deux thèmes.
+   > **Piège de métrique à retenir.** Le ratio de contraste WCAG ne mesure que la **luminance** :
+   > il donne **1.009:1** pour `amber-100` sur le fond de page, alors que ce bandeau est
+   > parfaitement lisible — parce qu'il diffère en **teinte**. Juger « cet aplat se voit-il ? » au
+   > ratio WCAG aurait conclu que les trois niveaux étaient également invisibles, donc qu'il n'y
+   > avait rien à corriger. La bonne mesure ici est la distance colorimétrique.
+2. **La seule régression de contraste du plan, dans l'angle mort de son propre critère.** Les puces
+   de `.prose` à **4.19:1** en clair. **Corrigé** (voir D03). R12 et V8 étant des listes **fermées**
+   de trois paires nommées, aucun critère ne pouvait l'attraper : une liste fermée est binaire et
+   auditable, mais pas exhaustive — c'est le prix assumé de sa mesurabilité.
+3. **Une affirmation fausse dans ce registre même**, corrigée dans la note du constat Shiki
+   ci-dessous.
+
+**Erreur de processus du contrôleur, consignée plutôt que maquillée.** Le correctif de D03 a été
+happé dans le commit de documentation `8cd27b7` par un `git add -A` lancé pendant que le sous-agent
+éditait encore. Le changement est correct et vérifié (`--color-dim` → `--color-muted`, clair
+4.19→**5.74**, sombre 5.35→**7.92**, `::marker` mesuré au rendu dans les deux thèmes), mais le
+message de ce commit parle de documentation et transporte silencieusement une modification de code.
+L'historique **n'a pas été réécrit pour avoir l'air propre** : le fait est écrit ici. Leçon :
+stager par chemins explicites tant qu'un sous-agent travaille dans le même arbre.
+
+**Constats triés « à différer » par la revue finale, sans objection :** le padding de `.pill` ·
+les six arbitrages de rayon · le voile de la modale · la duplication de `IconName` (et sa correction
+apparente n'existe pas : un type déclaré dans le frontmatter d'un composant Astro **ne peut pas
+être importé**, il faudrait un module `src/lib/`) · le 5.11:1 de `accent` sur `bg` · la palette
+Shiki. Deux constats mineurs **préexistants** relevés au passage et laissés à P7 : la classe morte
+`.toc` de `TableOfContents.astro`, et le saut de titre `h1 → h3` sur les quatre pages de liste.
 
 ## Constats reportés à une tâche ultérieure
 
