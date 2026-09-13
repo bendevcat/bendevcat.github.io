@@ -1,6 +1,6 @@
 # Plan 6 — Scope Ledger
 
-Last updated: 2026-09-13 (Phase B Done)
+Last updated: 2026-09-13 (Phase C en cours)
 Last updated by: main (contrôleur SDD)
 
 ## Requirements (extracted from spec §3 Success criteria)
@@ -35,8 +35,8 @@ Last updated by: main (contrôleur SDD)
 | A2 | A | R1, R8, R12 (+ V1, V4, V8) — les 23 tokens dans les 2 thèmes + re-câblage mécanique des 283 classes | Done (`8b977f6`, correctif `6af9329`) |
 | B1 | B | R4 (+ V6) — `.card`, `.card-inner`, `.panel`, `.pill` | Done (`9397719`) |
 | B2 | B | R9 (+ V5, V6) — `.prose` accordé | Done (`8c3e1c4`, correctif `ea31341`) |
-| C1 | C | R5, R6 (+ E1) — logo en pilule, nav en pilules à icônes, actif par famille de routes | Pending |
-| C2 | C | R7, R11 header (+ E2) — barre d'actions ronde, responsive 375 px | Pending |
+| C1 | C | R5, R6 (+ E1) — logo en pilule, nav en pilules à icônes, actif par famille de routes | In progress |
+| C2 | C | R7, R11 header (+ E2) — barre d'actions ronde, responsive 375 px | In progress |
 | D1 | D | R10 composants (+ V2, V3, V6) — les 8 composants sur les tokens v2 | Pending |
 | D2 | D | R10, R11, R12 (+ V5) — parcours 10 routes × 2 thèmes × 3 largeurs | Pending |
 | Z1 | Z | Audit `/anti-drift-planning:verify 6` (couverture R1–R12 + V1–V8) | Pending |
