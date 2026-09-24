@@ -391,6 +391,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
    ========================================================================== */
 [data-list-filters][hidden],
 [data-list-featured][hidden],
+[data-list-grid][hidden],
 [data-list-empty][hidden],
 [data-entry-id][hidden],
 [data-search-open][hidden] {

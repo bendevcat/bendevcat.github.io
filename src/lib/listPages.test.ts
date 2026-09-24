@@ -82,6 +82,24 @@ describe('list pages (plan 11, T3)', () => {
     }
   });
 
+  // F2 (vérification 1) : une grille vide reste un élément flex du cadre et
+  // prend une place de `gap-6` — l'état vide n'est alors plus centré dans le
+  // cadre. Le script masque la grille quand aucune entrée n'y est visible ; le
+  // serveur ne la masque jamais (sans JS, rendu inchangé).
+  it('hides an empty grid from the frame, only from the script', () => {
+    const script = read('scripts/list-pattern.ts');
+    expect(script).toMatch(/\bgrid\.hidden\s*=\s*state\.visibleIds\.length\s*===\s*0\b/);
+
+    const css = read('styles/global.css');
+    expect(css).toMatch(/\[data-list-grid\]\[hidden\]\s*[,{]/);
+
+    for (const list of LISTS) {
+      const [grid] = openingTags(listPage(list), 'data-list-grid');
+      expect(grid, `${list}: grille`).toBeTruthy();
+      expect(grid, `${list}: grille jamais masquée par le serveur`).not.toMatch(/\shidden(?=[\s=>/])/);
+    }
+  });
+
   it('draws every list entry card as a .card-inner, not on surface', () => {
     for (const card of CARDS) {
       const [root] = openingTags(read(`components/${card}.astro`), 'data-entry-id');

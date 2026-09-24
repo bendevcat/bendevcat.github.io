@@ -113,7 +113,10 @@ const NOUNS = ['prompt', 'prompts'] as const;
 			     dans UN `.card` (niveau `surface`), chaque carte d'entrée un
 			     `.card-inner` (niveau `card`) — un seul niveau d'écart, comme
 			     /tags/<tag> et la recherche. L'écart entre blocs est un `gap` : un
-			     bloc `hidden` (à la une filtrée, état vide) n'en laisse aucun. */}
+			     bloc `hidden` (à la une filtrée, état vide) n'en laisse aucun. Une
+			     grille vide, elle, reste un élément flex et prendrait une place de
+			     `gap` (l'état vide ne serait plus centré) : le script la rend `hidden`
+			     dès qu'aucune carte n'y est visible (F2) ; le serveur jamais. */}
 			<div class="card flex flex-col gap-6 p-4 sm:p-6" data-list-frame>
 				{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
 				<div data-list-featured>
