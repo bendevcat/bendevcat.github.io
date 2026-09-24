@@ -1,11 +1,19 @@
 ---
 // Modal de recherche (spec P5 §6.2 : JS vanilla). Monté par BaseLayout sur
 // toutes les pages ; piloté par src/scripts/search.ts.
+//
+// Couleurs du contrat seulement (plan 11, D53) :
+// - voile (`::backdrop`) = token `bg` à 85 % + flou — un voile pâle en clair,
+//   sombre en sombre. `::backdrop` hérite des propriétés de l'élément
+//   `<dialog>` (donc de `--color-bg` posé sur `<html>`) ;
+// - `<mark>` des extraits Pagefind = `accent` sur `accentSoft` (paire V8) ;
+// - le champ ne supprime plus son contour de focus : l'anneau
+//   `:focus-visible` global du site (plan 11, T4, dans global.css) s'y applique.
 ---
 
 <dialog
   id="search-dialog"
-  class="card relative m-auto w-[min(40rem,92vw)] p-0 text-body backdrop:bg-black/60"
+  class="card relative m-auto w-[min(40rem,92vw)] p-0 text-body backdrop:bg-bg/85 backdrop:backdrop-blur-sm"
   aria-label="Recherche sur le site"
 >
   <div class="flex items-center gap-2 border-b border-line px-4 py-3 pr-16">
@@ -15,14 +23,14 @@
       type="search"
       autocomplete="off"
       placeholder="Rechercher un article, un projet, un prompt…"
-      class="w-full bg-transparent py-1 text-body outline-none placeholder:text-muted"
+      class="w-full bg-transparent py-1 text-body placeholder:text-muted"
       aria-controls="search-results"
     />
   </div>
 
   <div
     id="search-results"
-    class="max-h-[60vh] overflow-y-auto px-4 py-3"
+    class="max-h-[60vh] overflow-y-auto px-4 py-3 [&_mark]:bg-accentSoft [&_mark]:text-accent"
     role="region"
     aria-live="polite"
     aria-label="Résultats de recherche"
