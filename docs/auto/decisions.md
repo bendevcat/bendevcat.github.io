@@ -67,3 +67,6 @@ Choice: Infos is a `<dl>` with lowercase mono labels (stacked on mobile, `8rem |
 
 ## D22 · Plan 8 · T4 — The no-JS panel override lives in `@layer base`
 Choice: `html:not([data-js]) [data-detail-tabs] [role="tabpanel"][hidden] { display: block !important }` moves into `@layer base`, next to Tailwind's preflight `[hidden] { display: none !important }`; `check-detail-tabs.mjs` now fails if that rule leaves the layer · Alternatives: stop server-rendering `hidden` and hide inactive panels through a `data-*` state switched by JS (conflicts with R8 and changes the JS path) · Reversibility: cheap · Why: for `!important` declarations a layered rule beats an unlayered one whatever the specificity, so the unlayered override could never win — measured at T4: without JS only the first panel showed on all 7 pages; after the fix every panel shows.
+
+## D23 · Plan 8 · E1 — Publish plan 8 as v1.3.0
+Choice: fast-forward `main` to the integration branch, annotated tag `v1.3.0`, push `main`, `v1.3.0`, `milestone-plan-8` · Alternatives: wait · Reversibility: expensive (a published tag and a production deploy) · Why: user's answer "A" to escalation E1.
