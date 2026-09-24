@@ -60,9 +60,11 @@
  *   `data-rail` (an explicit rail of the prototype — the /blog rail, a
  *   derived row thumbnail; D74, plan 12) may paint `rail` on `surface`: the
  *   rail-on-surface rule skips it, the card-on-bg rule still holds. A card
- *   whose nearest painted ancestor is such a rail, or sits inside one (the
- *   article's related-post and related-project cards; D88, plan 13), is
- *   allowed; a card on a derived thumbnail is not. Reports
+ *   whose nearest painted ancestor PAINTS THE `rail` COLOUR and is such a
+ *   rail, or sits inside one (the article's related-post and related-project
+ *   cards; D88, plan 13; narrowed by F1), is allowed; a card whose painted
+ *   parent paints `bg` — even inside a rail — or sits on a derived thumbnail
+ *   is not. Reports
  *   `{ sel, level, on, under }` (`under` = the painted ancestor's path).
  *
  * TOKENS — the contract colour set is 37 `--color-` values (D55: the plan's
@@ -460,7 +462,8 @@
    * V2: the surface a level must not sit on directly — `card` on `bg`, `rail`
    * on `surface` — or null when the pair is allowed. An explicit rail
    * (`data-rail`, D74) may sit on `surface`; a card whose painted host is an
-   * explicit rail (`onRail`, D88) is allowed whatever that rail sits on.
+   * explicit rail painting the `rail` colour (`onRail` = cardOnRail, D88, F1)
+   * is allowed whatever that rail sits on.
    */
   function v2Jump(level, explicitRail, onRail) {
     if (level === 'card') return onRail ? null : 'bg';
@@ -482,6 +485,17 @@
       if (cur.hasAttribute('data-rail') && !cur.hasAttribute('data-thumb-derived')) return true;
     }
     return false;
+  }
+
+  /**
+   * V2 card exemption (D88, F1): true only when `under` (the card's nearest
+   * painted ancestor, `{ el, color }`) paints the resolved `rail` token AND is,
+   * or sits inside, a non-thumbnail `[data-rail]`. A painted parent of any
+   * other colour — `bg` included — inside a rail does not exempt the card.
+   */
+  function cardOnRail(under, railToken) {
+    if (!under || !under.color || !railToken) return false;
+    return equalsToken(under.color, railToken) && onExplicitRail(under.el);
   }
 
   function audit(doc, opts) {
@@ -724,7 +738,7 @@
           var level = equalsToken(bg, tokens.card) ? 'card' : equalsToken(bg, tokens.rail) ? 'rail' : null;
           if (level) {
             var under = nearestPainted(el);
-            var jump = v2Jump(level, isExplicitRail(el), onExplicitRail(under && under.el));
+            var jump = v2Jump(level, isExplicitRail(el), cardOnRail(under, tokens.rail));
             if (jump && under && equalsToken(under.color, tokens[jump]) && v2.length < limit) {
               v2.push({ sel: shortPath(el), level: level, on: jump, under: shortPath(under.el) });
             }
@@ -780,7 +794,8 @@
     shortPath: shortPath,
     v2Jump: v2Jump,
     isExplicitRail: isExplicitRail,
-    onExplicitRail: onExplicitRail
+    onExplicitRail: onExplicitRail,
+    cardOnRail: cardOnRail
   };
   root.__audit = function (doc, opts) {
     return audit(doc || root.document, opts || {});

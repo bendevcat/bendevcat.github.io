@@ -33,6 +33,7 @@ interface AuditLib {
   v2Jump(level: 'card' | 'rail', explicitRail: boolean, onRail?: boolean): string | null;
   isExplicitRail(el: unknown): boolean;
   onExplicitRail(el: unknown): boolean;
+  cardOnRail(under: { el: unknown; color: Color } | null, railToken: Color | null | undefined): boolean;
 }
 
 const SCRIPT = resolve(__dirname, '../../scripts/audit-rendered.js');
@@ -215,7 +216,33 @@ describe('audit-rendered.js', () => {
     expect(lib.onExplicitRail(node([], node([])))).toBe(false);
     expect(lib.onExplicitRail(node(['data-thumb-derived']))).toBe(false);
     expect(lib.onExplicitRail(null)).toBe(false);
-    expect(source).toMatch(/v2Jump\(level, isExplicitRail\(el\), onExplicitRail\(under && under\.el\)\)/);
+    expect(source).toMatch(/v2Jump\(level, isExplicitRail\(el\), cardOnRail\(under, tokens\.rail\)\)/);
+  });
+
+  it('exempts a card only when its painted parent paints the rail colour inside a [data-rail] (V2, F1)', () => {
+    const { dark } = themes;
+    const node = (attrs: string[], parentElement: unknown = null) => ({
+      hasAttribute: (name: string) => attrs.includes(name),
+      parentElement,
+    });
+    const rail = node(['data-rail']);
+    // hôte peint = le rail lui-même, couleur `rail` → exempté
+    expect(lib.cardOnRail({ el: rail, color: dark.rail }, dark.rail)).toBe(true);
+    // hôte peint dans un [data-rail], couleur `rail` → exempté
+    expect(lib.cardOnRail({ el: node([], rail), color: dark.rail }, dark.rail)).toBe(true);
+    // hôte peint dans un [data-rail] mais peignant `bg` → PAS exempté : la carte reste signalée
+    const bgHost = { el: node([], rail), color: dark.bg };
+    expect(lib.cardOnRail(bgHost, dark.rail)).toBe(false);
+    expect(lib.v2Jump('card', false, lib.cardOnRail(bgHost, dark.rail))).toBe('bg');
+    expect(lib.equalsToken(bgHost.color, dark.bg)).toBe(true);
+    // idem pour un [data-rail] qui peindrait lui-même `bg`
+    expect(lib.cardOnRail({ el: rail, color: dark.bg }, dark.rail)).toBe(false);
+    // couleur `rail` hors de tout [data-rail], ou dans une vignette dérivée → PAS exempté
+    expect(lib.cardOnRail({ el: node([], node([])), color: dark.rail }, dark.rail)).toBe(false);
+    expect(lib.cardOnRail({ el: node(['data-rail', 'data-thumb-derived']), color: dark.rail }, dark.rail)).toBe(false);
+    // pas d'hôte peint, ou jeton rail introuvable → PAS exempté
+    expect(lib.cardOnRail(null, dark.rail)).toBe(false);
+    expect(lib.cardOnRail({ el: rail, color: dark.rail }, null)).toBe(false);
   });
 
   it('enumerates contract names from the theme-override rule, not from Tailwind\'s palette', () => {
