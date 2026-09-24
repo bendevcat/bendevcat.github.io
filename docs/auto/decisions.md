@@ -82,3 +82,24 @@ Choice: a block or field is shown only when existing content, the author's exist
 
 ## D27 · Plan 9 · cadrage — The home hero goes; whoami moves to /a-propos   ⚑ à relire
 Choice: the home page follows the prototype, which has no hero; the `~/ whoami` identity lives on `/a-propos`; the home AI banner links to `/transparence-ia/` · Alternatives: keep `Hero.astro` above the featured card · Reversibility: cheap · Why: the prototype is the single source of truth for structure (contract, header); stated in the validated brief.
+
+## D28 · Plan 9 · authoring — `Derniers articles` is a `.card`, not a `.panel`
+Choice: the latest-posts block is a `.card` (surface) on `bg` with a 28×28 badge right of its title · Alternatives: a tinted `.panel` like the section panels · Reversibility: cheap · Why: in the prototype only row 2 (Projets · Prompts · Skills) is tinted; row 1 is two surfaces side by side.
+
+## D29 · Plan 9 · authoring — Two entries per section panel, list-page order
+Choice: first 2 entries of each collection in the list pages' order (so `bootstrap-session-anti-drift` is not on the home) · Alternatives: every entry; 3 per panel · Reversibility: cheap · Why: the prototype shows 2 per panel; the title link leads to the full list.
+
+## D30 · Plan 9 · authoring — Badges reuse the header glyphs
+Choice: badges use `Icon.astro`'s existing `blog`, `projets`, `prompts`, `skills` glyphs · Alternatives: add the prototype's bubble and wrench icons · Reversibility: cheap · Why: one glyph per section across the site; the nav already teaches them.
+
+## D31 · Plan 9 · authoring — AI banner sentence from the site's own words
+Choice: « Chaque article déclare son niveau de contribution IA : » (already on `/transparence-ia`) followed by the three `emoji label` pairs read from `AI_USAGE_META` (« co-créé avec IA », not the prototype's « co-créé ») · Alternatives: the prototype's sentence « Chaque article affiche sa part d'IA… » · Reversibility: cheap · Why: D26 — author text or derivation only, never prototype copy.
+
+## D32 · Plan 9 · authoring — A visually hidden `<h1>` on the home
+Choice: `/` keeps exactly one `<h1>`, a visually hidden `bencat_` · Alternatives: the featured post's title as `<h1>` · Reversibility: cheap · Why: dropping the hero (D27) drops the page's only `<h1>`; the featured title changes with each post, the site name does not.
+
+## D33 · Plan 9 · authoring — `Hero.astro` kept unused until plan 10
+Choice: the component stays in place, unused, so plan 10 can reuse its author text on `/a-propos` · Alternatives: delete it now · Reversibility: cheap · Why: nothing is published before plan 10 ships (D25), so the hero's AI-transparency sentence is never missing from production.
+
+## D34 · Plan 9 · authoring — Home field formats and extra contract checks
+Choice: new additive `Thumbnail.astro` sizes (196 px header, 72 px square); project stack in mono joined by ` · `; skill meta `type · name` (or `type` alone); version chip `v<version>` only when set; `à la une` chip kept as a UI label; V2/V3/V4/V5/V6 and the type scale are checked on `/` in this plan, AA contrast left to plan 11 · Alternatives: stack as chips; home-only thumbnail markup; leave every contract check to plan 11 · Reversibility: cheap · Why: follows the prototype and plan 8's precedent of checking the contract on the pages a plan touches (D12).
