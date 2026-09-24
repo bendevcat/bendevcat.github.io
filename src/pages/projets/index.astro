@@ -80,39 +80,50 @@ const NOUNS = ['projet', 'projets'] as const;
 				</label>
 			</div>
 
-			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
-			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} {projects.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
+			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7). Région
+			     live polie et atomique (plan 11, R6) : list-pattern.ts réécrit le texte
+			     de CE nœud à chaque filtre, le lecteur d'écran annonce le nouveau
+			     compte en entier. `muted` et non `dim` : `dim` sur `bg` = 4,19:1 en
+			     clair (R8). */}
+			<p class="mb-6 font-mono text-xs text-muted" data-list-meta aria-live="polite" aria-atomic="true">{projects.length} {projects.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
 
-			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
-			<div class="mb-6" data-list-featured>
-				{featured && <ProjectCard project={featured} featured isFeaturedEntry />}
-			</div>
+			{/* Cadre des entrées (plan 11, D51 — V2) : à la une, grille et état vide
+			     dans UN `.card` (niveau `surface`), chaque carte d'entrée un
+			     `.card-inner` (niveau `card`) — un seul niveau d'écart, comme
+			     /tags/<tag> et la recherche. L'écart entre blocs est un `gap` : un
+			     bloc `hidden` (à la une filtrée, état vide) n'en laisse aucun. */}
+			<div class="card flex flex-col gap-6 p-4 sm:p-6" data-list-frame>
+				{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
+				<div data-list-featured>
+					{featured && <ProjectCard project={featured} featured isFeaturedEntry />}
+				</div>
 
-			{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
-			     rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
-			     chaque entrée exactement une fois (contrainte globale n°5). */}
-			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
-				{
-					projects.map((project) => (
-						<ProjectCard
-							project={project}
-							hidden={project.id === featured?.id}
-							isFeaturedEntry={project.id === featured?.id}
-						/>
-					))
-				}
-			</div>
+				{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
+				     rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
+				     chaque entrée exactement une fois (contrainte globale n°5). */}
+				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
+					{
+						projects.map((project) => (
+							<ProjectCard
+								project={project}
+								hidden={project.id === featured?.id}
+								isFeaturedEntry={project.id === featured?.id}
+							/>
+						))
+					}
+				</div>
 
-			{/* 6 · état vide */}
-			<div class="mt-8 flex flex-col items-start gap-3" data-list-empty hidden>
-				<p class="text-sm text-muted" data-list-empty-text></p>
-				<button
-					type="button"
-					data-list-reset
-					class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-				>
-					voir tous les projets
-				</button>
+				{/* 6 · état vide */}
+				<div class="flex flex-col items-start gap-3" data-list-empty hidden>
+					<p class="text-sm text-muted" data-list-empty-text></p>
+					<button
+						type="button"
+						data-list-reset
+						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+					>
+						voir tous les projets
+					</button>
+				</div>
 			</div>
 		</section>
 
