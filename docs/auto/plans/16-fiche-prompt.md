@@ -107,7 +107,7 @@ Exit 1 if a page lacks one of these blocks; if the `.md` / `Copier` / `réinitia
 ### T4 — Track variant of the tabs
 - Files: `src/components/DetailTabs.astro` (`variant="track"`, `data-tab-variant="track"`)
 - Covers: R8 (component), R20 (pill and underline unchanged)
-- Acceptance: `npm run build && node scripts/check-detail-tabs.mjs` → the 7 base rows, exit 0; `dist/projets/*`, `dist/prompts/*`, `dist/skills/*` `index.html` identical to a base build's after hash normalisation (scratch base build in the scratchpad)
+- Acceptance: `npm run build && node scripts/check-detail-tabs.mjs` → the 6 rows other than `prompts/macos-clone` identical to the T2 commit's output (macos-clone reports `(aucune rangée d'onglets)` and exits 1 until T5 teaches the script `(panneau unique)` — T2 emptied its body); `dist/projets/*`, `dist/prompts/*`, `dist/skills/*` `index.html` identical to a build of the T2 commit (`5661e5f`) after hash normalisation (scratch build in the scratchpad)
 - Depends on: —
 
 ### T5 — The prompt page
