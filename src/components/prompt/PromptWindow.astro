@@ -1,0 +1,113 @@
+---
+/**
+ * PromptWindow.astro (plan 16, T5 ; inventaire §6 et §9 ; prototype 582–736)
+ * — la fenêtre du prompt, colonne de gauche de la fiche.
+ *
+ * - TOUJOURS SOMBRE, mêmes couleurs dans les deux thèmes : uniquement les
+ *   tokens `--color-window*` (identiques dans `@theme` et dans
+ *   `:root[data-theme="dark"]`, D107 / D111).
+ * - `<figure>` rayon 18 (`--radius-aside`), bordure 1 px `windowLine`,
+ *   `overflow-hidden`. Ni pastilles ni gouttière (D111).
+ * - Barre `windowHead`, padding 10/14, hors index de recherche : `<id>.md`
+ *   mono 11 `windowInk` + ` · N l. · ~N tk` `windowDim` ; à droite `.md`
+ *   (mono 10 `windowDim` sur `windowLine`, rayon 7, survol `windowInk`) puis
+ *   `Copier` (mono 10 `windowAccent` sur `windowAccentInk`, rayon 7). Les deux
+ *   boutons sont rendus `hidden` — aucun utilitaire `display` dessus —,
+ *   révélés et câblés par src/scripts/prompt-window.ts : sans JS, pas de
+ *   contrôle mort.
+ * - Corps `windowBg` : `<pre>` mono 13 / 1.95, padding 20, les lignes
+ *   longues passent à la ligne (`pre-wrap` + `overflow-wrap:anywhere`,
+ *   jamais de défilement horizontal) ; `<code>` `windowInk` dont le texte est
+ *   exactement le texte de la fenêtre (measurePromptText, src/lib/listCards.ts).
+ *   Une ligne qui commence par 2 à 6 `#` puis une espace →
+ *   `<span data-prompt-heading>` `windowKey` 600 ; chaque occurrence d'une
+ *   variable déclarée → `<span data-var="<nom>">` `windowVar` sur
+ *   `windowVarBg`, rayon 7 — son texte est réécrit en direct par le script.
+ *
+ * Le contenu du `<pre>` est assemblé en chaîne échappée (`set:html`), comme
+ * CodeWindow : aucun blanc de gabarit ne s'y glisse. Garde-fou de rendu : le
+ * build échoue si la concaténation des segments ne redonne pas le texte
+ * mesuré. Le texte du prompt reste indexé (seule la barre est ignorée).
+ */
+import { promptWindowLines, rebuildWindowText, type PromptVariable } from '../../lib/promptWindow';
+
+interface Props {
+  id: string;
+  /** Le texte avant rendu des variables (promptWindowSource). */
+  template: string;
+  variables: PromptVariable[];
+  /** Le texte mesuré aux défauts (measurePromptText) : doit être celui du `<code>`. */
+  text: string;
+  /** `N l. · ~N tk` (promptMetaSlots). */
+  counts: string;
+}
+
+const { id, template, variables, text, counts } = Astro.props;
+const file = `${id}.md`;
+const lines = promptWindowLines(template, variables);
+
+if (rebuildWindowText(lines) !== text) {
+  throw new Error(`PromptWindow : les segments de « ${file} » ne redonnent pas le texte mesuré du prompt`);
+}
+
+const escape = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// Classes écrites en toutes lettres pour que Tailwind les génère (D41).
+const VAR_CLASS = 'rounded-small bg-windowVarBg px-[3px] text-windowVar';
+const HEADING_CLASS = 'font-semibold text-windowKey';
+
+const code = lines
+  .map((line) => {
+    const inner = line.segments
+      .map((segment) =>
+        segment.var === undefined
+          ? escape(segment.text)
+          : `<span class="${VAR_CLASS}" data-var="${escape(segment.var)}">${escape(segment.text)}</span>`,
+      )
+      .join('');
+    return line.heading ? `<span class="${HEADING_CLASS}" data-prompt-heading>${inner}</span>` : inner;
+  })
+  .join('\n');
+
+const preInner = `<code class="text-windowInk">${code}</code>`;
+const BUTTON =
+  'cursor-pointer rounded-small px-2 py-1 font-mono text-[10px] leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-windowInk';
+---
+
+<figure
+  class="m-0 min-w-0 overflow-hidden rounded-aside border border-windowLine bg-windowBg"
+  aria-label={`Prompt : ${file}`}
+  data-prompt-window
+  data-prompt-file={file}
+>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 bg-windowHead px-3.5 py-2.5" data-prompt-bar data-pagefind-ignore>
+    <p class="min-w-0 font-mono text-[11px] [overflow-wrap:anywhere] text-windowInk">
+      <span data-prompt-filename>{file}</span><span class="text-windowDim" data-prompt-counts> · {counts}</span>
+    </p>
+    <div class="ml-auto flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        hidden
+        aria-label={`Télécharger ${file}`}
+        class={`${BUTTON} bg-windowLine text-windowDim hover:text-windowInk focus-visible:text-windowInk`}
+        data-prompt-download>.md</button
+      >
+      <button
+        type="button"
+        hidden
+        aria-live="polite"
+        class={`${BUTTON} bg-windowAccentInk text-windowAccent`}
+        data-prompt-copy>Copier</button
+      >
+    </div>
+  </div>
+  <pre
+    class="m-0 bg-windowBg p-5 font-mono text-[13px] leading-[1.95] whitespace-pre-wrap [overflow-wrap:anywhere]"
+    set:html={preInner}
+  ></pre>
+</figure>
+
+<script>
+  import '../../scripts/prompt-window.ts';
+</script>

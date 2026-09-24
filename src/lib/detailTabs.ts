@@ -86,20 +86,6 @@ export function projectTabs(input: ProjectTabInput): Tab[] {
 }
 
 /**
- * Onglets de l'ANCIENNE page prompt (plan 8), gardés tant qu'elle se construit
- * avec — le plan 16 (T5) les remplace par `promptPageTabs` et retire celle-ci.
- * Infos est toujours là : `format` et `tool` ont des valeurs par défaut dans le
- * schéma, le panneau a donc toujours de quoi s'afficher. Le corps d'un prompt
- * « guide » va lui aussi sous Pourquoi (D3).
- */
-export function promptTabs(input: BodyTabInput): Tab[] {
-  const tabs: Tab[] = [];
-  if (!isBlank(input.body)) tabs.push({ id: 'pourquoi', label: 'Pourquoi' });
-  tabs.push({ id: 'infos', label: 'Infos' });
-  return tabs;
-}
-
-/**
  * Onglets de la fiche prompt (plan 16, piste de pastilles) — ordre figé :
  * `variables` quand des variables sont déclarées ; `décryptage` quand la
  * fenêtre montre le `prompt` et que le corps n'est pas blanc (sinon le corps

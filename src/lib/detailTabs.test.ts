@@ -5,7 +5,6 @@ import {
   nextTabIndex,
   projectTabs,
   promptPageTabs,
-  promptTabs,
   skillTabs,
   type Tab,
 } from './detailTabs';
@@ -69,26 +68,6 @@ describe('projectTabs', () => {
   it('gives every tab a distinct id', () => {
     const ids = projectTabs(FULL_PROJECT).map((tab) => tab.id);
     expect(new Set(ids).size).toBe(ids.length);
-  });
-});
-
-describe('promptTabs', () => {
-  it('lists Pourquoi then Infos when the body is not blank', () => {
-    expect(labels(promptTabs({ body: 'Pourquoi ce prompt.' }))).toEqual(['Pourquoi', 'Infos']);
-  });
-
-  it('omits Pourquoi when the body is blank', () => {
-    expect(labels(promptTabs({ body: '   ' }))).toEqual(['Infos']);
-    expect(labels(promptTabs({ body: undefined }))).toEqual(['Infos']);
-  });
-
-  it('always lists Infos', () => {
-    expect(labels(promptTabs({ body: 'x' }))).toContain('Infos');
-    expect(labels(promptTabs({ body: '' }))).toContain('Infos');
-  });
-
-  it('counts the literal "No content" body as content (D4)', () => {
-    expect(labels(promptTabs({ body: 'No content\n' }))).toEqual(['Pourquoi', 'Infos']);
   });
 });
 
@@ -156,7 +135,7 @@ describe('hasTabRow', () => {
   });
 
   it('is true from two tabs', () => {
-    expect(hasTabRow(promptTabs({ body: 'x' }))).toBe(true);
+    expect(hasTabRow(promptPageTabs({ variableCount: 1, windowShowsPrompt: true, body: '' }))).toBe(true);
   });
 });
 
