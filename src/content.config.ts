@@ -35,11 +35,24 @@ const projects = defineCollection({
     status: z.enum(PROJECT_STATUSES).default('actif'),
     startDate: z.coerce.date().optional(),
     stack: z.array(z.string()).default([]),
+    // Plan 15 (D104) : rôle d'une techno de `stack`, cité mot pour mot dans le
+    // titre, la description ou le corps du projet (src/lib/projectContent.test.ts).
+    stackRoles: z.array(z.object({
+      name: z.string(),
+      role: z.string(),
+    })).optional(),
     tags: z.array(z.string()).default([]),
     cover: image().optional(),
     coverAlt: z.string().optional(),
+    // Plan 15 (D102) : identifiant de licence tel qu'écrit dans le LICENSE du
+    // dépôt du projet — vide tant qu'aucune source n'existe.
+    license: z.string().optional(),
     repoUrl: z.string().url().optional(),
     demoUrl: z.string().url().optional(),
+    // Plan 15 (D103) : fenêtre de code de l'onglet Aperçu — un fichier réel du
+    // dépôt du projet, recopié tel quel ; `snippetFile` = son chemin dans ce dépôt.
+    snippetFile: z.string().optional(),
+    snippet: z.string().optional(),
     featured: z.boolean().default(false),
     relatedPosts: z.array(reference('blog')).optional(),
   }),

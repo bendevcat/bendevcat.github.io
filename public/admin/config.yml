@@ -106,9 +106,22 @@ collections:
         options: [actif, wip, archivé]
       - { name: startDate, label: Date de début, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ', required: false }
       - { name: stack, label: Stack technique, widget: list, required: false, default: [], hint: Une techno par entrée — alimente le filtre de /projets }
+      # Plan 15 (D104) : miroir de `stackRoles` dans src/content.config.ts. Les
+      # deux sous-champs sont requis ; `name` reprend une entrée de `stack`.
+      - name: stackRoles
+        label: Rôles des technos
+        label_singular: Rôle
+        widget: list
+        required: false
+        hint: 'Rôle affiché sous la techno dans l’onglet Stack — à citer mot pour mot depuis le titre, la description ou le contenu'
+        fields:
+          - { name: name, label: Techno (telle qu’écrite dans la stack), widget: string }
+          - { name: role, label: Rôle, widget: string }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: cover, label: Image de couverture, widget: image, required: false, choose_url: false }
       - { name: coverAlt, label: Texte alternatif de la couverture, widget: string, required: false }
+      # Plan 15 (D102) : seulement si le dépôt du projet a un fichier LICENSE.
+      - { name: license, label: Licence, widget: string, required: false, hint: 'Identifiant tel qu’écrit dans le LICENSE du dépôt (ex. MIT) ; ligne masquée si vide' }
       # Motif ancré des deux côtés (voir D03) : `^https?://` seul n'est pas ancré à
       # droite dans le validateur Sveltia 0.175.1 (RegExp.test non ancré = simple
       # préfixe), donc `https://` ou `http://exa mple.com` passaient le CMS et
@@ -137,6 +150,10 @@ collections:
       # cms-config.test.ts qui encode cet écart explicitement, comme pour `ftp://`.
       - { name: repoUrl, label: URL du dépôt, widget: string, required: false, pattern: ['^https?://[^\s\x00-\x1f\x7f/:@?#%|<>^\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://github.com/mon-projet)'] }
       - { name: demoUrl, label: URL de la démo, widget: string, required: false, pattern: ['^https?://[^\s\x00-\x1f\x7f/:@?#%|<>^\[\]]+(:(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(/[^\s]*)?$', 'Doit être une URL complète et valide, commençant par http:// ou https:// (ex. https://mon-projet.exemple.fr)'] }
+      # Plan 15 (D103) : fenêtre de code de l'onglet Aperçu, un fichier réel
+      # du dépôt du projet recopié tel quel.
+      - { name: snippetFile, label: Fichier du code, widget: string, required: false, hint: 'Chemin du fichier dans le dépôt du projet (ex. .github/workflows/deploy.yml) ; affiché en tête de la fenêtre' }
+      - { name: snippet, label: Code, widget: text, required: false, hint: 'Contenu du fichier, recopié tel quel ; fenêtre masquée si vide' }
       - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
       - name: relatedPosts
         label: Articles liés
