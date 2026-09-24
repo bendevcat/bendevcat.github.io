@@ -52,3 +52,12 @@ Choice: `detailTabs.test.ts` uses the English names cited verbatim in R1/R3/R7 �
 
 ## D17 · Plan 8 · T1 — Shape of the pure tab API
 Choice: tab ids `apercu`, `stack`, `articles-lies`, `pourquoi`, `infos`; tab functions take one object argument; an `undefined` body counts as blank; `computeTabState` falls back to the first tab on an out-of-range index; empty tab list → `[]` / `null`; ArrowUp/ArrowDown ignored (horizontal row) · Alternatives: label-derived ids, positional arguments, throwing on bad input, vertical arrows mirroring horizontal ones · Reversibility: cheap · Why: named fields stop T2/T3 from swapping two counts; a panel always shows; D10's horizontal keyboard model.
+
+## D18 · Plan 8 · T2 — Component mechanics of `DetailTabs.astro`
+Choice: panel content passed as named slots rendered with `Astro.slots.render`; the component imports `detail-tabs.ts` itself; tablist `aria-label` per page type ("Sections du projet"…); the cover moves inside Aperçu; panels are focusable (`tabindex="0"`, `outline-ink` ring); the check script keeps a `PENDING_FAMILIES` set that T3 must empty · Alternatives: `<slot name={id} />`, a per-page script import, a family counted as migrated once any page has tabs · Reversibility: cheap · Why: one import point for the three pages; an explicit pending list cannot let a whole family silently lose its tabs.
+
+## D19 · Plan 8 · T2 — No-JS-only section headings before each panel   ⚑ à relire
+Choice: an `h2` (`// aperçu`, `// stack`, `// articles liés`) precedes each panel and is hidden when JS runs; it sits outside the panel · Alternatives: no headings (the stacked no-JS panels are unlabelled, and the old `// articles liés` heading text disappears from the page) · Reversibility: cheap · Why: labels the no-JS reading order and keeps the page's existing words (R11) without putting text inside a panel that could hide an empty one.
+
+## D20 · Plan 8 · T4 — Rendered measurements are run by the orchestrator in the built-in browser
+Choice: T4's browser measures (R4–R7, R9–R12) are executed by the orchestrator; the implementer is dispatched only for fixes · Alternatives: add Playwright as a devDependency so the implementer can measure headlessly · Reversibility: cheap · Why: implementers have no browser; adding a test dependency for one pass widens the diff and `package.json` is a shared resource.

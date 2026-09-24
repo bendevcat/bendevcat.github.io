@@ -32,8 +32,8 @@ import { join } from 'node:path';
 
 const DIST = 'dist';
 const FAMILIES = ['projets', 'prompts', 'skills'];
-// Plan 8 / T2 : seules les pages projet portent le patron. T3 vide cet ensemble.
-const PENDING_FAMILIES = new Set(['prompts', 'skills']);
+// Plan 8 / T3 : les trois familles portent le patron — plus aucune en attente.
+const PENDING_FAMILIES = new Set();
 
 const VOID = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
