@@ -26,6 +26,24 @@
  * portant les classes `mx-auto` et `max-w-shell` (1180 px, `--container-shell`
  * de global.css).
  *
+ * R2 (nav) — sur chaque page, les items du `<nav aria-label="Navigation
+ * principale">` de l'en-tête, dans l'ordre du document, donnent le même texte
+ * que sur `/` (ligne imprimée) : Blog Projets Skills Prompts À propos.
+ *
+ * R2 (active) — sur chaque page, les items `aria-current="page"` sont
+ * exactement celui de la famille de route (`/blog/**` → Blog, `/projets/**` →
+ * Projets, `/skills/**` → Skills, `/prompts/**` → Prompts, `/a-propos/**` →
+ * À propos ; aucun ailleurs : `/`, `/tags/**`, `/transparence-ia/`, `/404`),
+ * et l'item actif porte `text-accent bg-accentSoft font-semibold` (accent sur
+ * accentSoft, 600) ; un item inactif ne porte ni `text-accent` ni
+ * `bg-accentSoft`. Le `<header>` ne porte aucune classe `border-b*`.
+ *
+ * R2 (actions) — sur chaque page, le groupe `[data-header-actions]` contient
+ * exactement 3 contrôles (`button` / `a`), chacun `rounded-pill` + `bg-chip`,
+ * et l'en-tête ne contient aucun `<kbd>` (le rappel ⌘K est retiré, D72 ; le
+ * raccourci reste). Le bouton de thème `#theme-toggle` et le déclencheur
+ * `[data-search-open]` en font partie.
+ *
  * R2 (footer) — sur chaque page, le `data-shell="footer"` est un `<footer>`,
  * ses paragraphes donnent le même texte que sur `/` (ligne imprimée : les
  * paragraphes joints par ` | `), et son texte ne contient jamais `prototype`
@@ -130,6 +148,16 @@ if (!existsSync(DIST)) {
   process.exit(1);
 }
 
+// Famille de route → libellé de l'item de nav actif (R2 active).
+const NAV_FAMILY = {
+  blog: 'Blog',
+  projets: 'Projets',
+  skills: 'Skills',
+  prompts: 'Prompts',
+  'a-propos': 'À propos',
+};
+const ACTIVE_CLASSES = ['text-accent', 'bg-accentSoft', 'font-semibold'];
+
 const pages = htmlFiles(DIST)
   .map((file) => ({ file, route: route(file) }))
   .filter((page) => !page.route.startsWith('/admin/'));
@@ -138,6 +166,10 @@ const pages = htmlFiles(DIST)
 let shellOk = 0;
 let homeFooter = null;
 const footers = new Map(); // route → texte du pied de page
+let homeNav = null;
+const navs = new Map(); // route → libellés de la nav
+let activeOk = 0;
+let actionsOk = 0;
 
 for (const page of pages) {
   const { elements } = collectElements(tokenize(readFileSync(page.file, 'utf8')));
@@ -167,17 +199,100 @@ for (const page of pages) {
     }
   }
   if (ok) shellOk += 1;
+
+  // — R2 : en-tête (nav, item actif, actions) —
+  const headers = elements.filter((el) => el.tag === 'header');
+  if (headers.length !== 1) {
+    errors.push(`${page.route} : ${headers.length} <header> (attendu : 1)`);
+    continue;
+  }
+  const header = headers[0];
+  const borderB = classes(header).filter((cls) => /^border-b/.test(cls));
+  if (borderB.length > 0) errors.push(`${page.route} : <header> porte ${borderB.join(', ')}`);
+
+  const inHeader = descendants(header);
+  const nav = inHeader.find((el) => el.tag === 'nav' && el.attrs['aria-label'] === 'Navigation principale');
+  if (!nav) {
+    errors.push(`${page.route} : pas de <nav aria-label="Navigation principale"> dans l'en-tête`);
+  } else {
+    const items = descendants(nav).filter((el) => el.tag === 'a' || el.tag === 'span' && el.attrs['aria-disabled']);
+    const labels = items.map((el) => squash(el.text));
+    navs.set(page.route, labels.join(' '));
+    if (page.route === '/') homeNav = labels.join(' ');
+
+    const expected = NAV_FAMILY[page.route.split('/')[1]] ?? null;
+    const current = items.filter((el) => el.attrs['aria-current'] === 'page');
+    let activeGood = true;
+    const currentLabels = current.map((el) => squash(el.text));
+    if (expected === null ? current.length !== 0 : currentLabels.join('|') !== expected) {
+      activeGood = false;
+      errors.push(
+        `${page.route} : item(s) actif(s) « ${currentLabels.join(', ') || '—'} » (attendu : « ${expected ?? '—'} »)`,
+      );
+    }
+    for (const el of items) {
+      const cls = classes(el);
+      const label = squash(el.text);
+      if (el.attrs['aria-current'] === 'page') {
+        const missing = ACTIVE_CLASSES.filter((c) => !cls.includes(c));
+        if (missing.length > 0) {
+          activeGood = false;
+          errors.push(`${page.route} : item actif « ${label} » sans ${missing.join(', ')}`);
+        }
+      } else if (cls.includes('text-accent') || cls.includes('bg-accentSoft')) {
+        activeGood = false;
+        errors.push(`${page.route} : item inactif « ${label} » peint en accent`);
+      }
+    }
+    if (activeGood) activeOk += 1;
+  }
+
+  const actions = inHeader.filter((el) => 'data-header-actions' in el.attrs);
+  let actionsGood = true;
+  if (actions.length !== 1) {
+    actionsGood = false;
+    errors.push(`${page.route} : ${actions.length} [data-header-actions] (attendu : 1)`);
+  } else {
+    const controls = descendants(actions[0]).filter((el) => el.tag === 'button' || el.tag === 'a');
+    const round = controls.filter((el) => classes(el).includes('bg-chip') && classes(el).includes('rounded-pill'));
+    if (controls.length !== 3 || round.length !== 3) {
+      actionsGood = false;
+      errors.push(`${page.route} : ${controls.length} contrôles d'actions dont ${round.length} ronds sur chip (attendu : 3 / 3)`);
+    }
+    if (!controls.some((el) => el.attrs.id === 'theme-toggle')) {
+      actionsGood = false;
+      errors.push(`${page.route} : pas de #theme-toggle dans les actions`);
+    }
+    if (!controls.some((el) => 'data-search-open' in el.attrs)) {
+      actionsGood = false;
+      errors.push(`${page.route} : pas de [data-search-open] dans les actions`);
+    }
+  }
+  if (inHeader.some((el) => el.tag === 'kbd')) {
+    actionsGood = false;
+    errors.push(`${page.route} : <kbd> dans l'en-tête`);
+  }
+  if (actionsGood) actionsOk += 1;
 }
 
 lines.push(`shell: ${shellOk}/${pages.length} pages · header, main, footer on max-w-shell`);
 
-// — Lignes des tâches suivantes du plan (T2 : en-tête ; T5 : /blog) —
-const PENDING = [
-  ['nav', 'T2'],
-  ['active', 'T2'],
-  ['actions', 'T2'],
-];
-for (const [name, task] of PENDING) errors.push(`${name}: pas encore mesuré (plan 12 ${task})`);
+// — R2 : en-tête —
+if (homeNav === null) {
+  errors.push('/ : pas de nav mesurable');
+  lines.push('nav: —');
+} else {
+  for (const [page, text] of navs) {
+    if (text !== homeNav) errors.push(`${page} : nav « ${text} » (attendu : « ${homeNav} », comme sur /)`);
+  }
+  lines.push(`nav: ${homeNav}`);
+}
+lines.push(`active: ${activeOk}/${pages.length} pages`);
+lines.push(
+  actionsOk === pages.length
+    ? 'actions: 3 round buttons on chip · no kbd'
+    : `actions: ${actionsOk}/${pages.length} pages with 3 round buttons on chip · no kbd`,
+);
 
 if (homeFooter === null) {
   errors.push('/ : pas de pied de page mesurable');

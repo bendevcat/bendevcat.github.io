@@ -6,8 +6,15 @@
   n'y a donc qu'une seule source pour cette chaîne, et elle est chez l'appelant.
   CONTRAT À NE PAS CASSER : `id="theme-toggle"` est ce que `src/scripts/theme.ts`
   écoute — le renommer casserait la bascule de thème.
-  Le glyphe `◐` est conservé : le contrat visuel ne prescrit pas d'icône de thème.
+
+  Plan 12 / T2 (prototype 29–55, D72) — le glyphe `◐` laisse place au soleil en
+  clair et à la lune en sombre. Les deux sont rendus ; le CSS choisit selon
+  `data-theme` sur <html> (variante `dark:` de global.css), sans JS : le bon
+  glyphe est là dès le premier rendu, posé par le script anti-flash de
+  BaseLayout, et suit chaque bascule de `theme.ts` sans ligne de plus.
 */
+import Icon from './Icon.astro';
+
 interface Props {
   class?: string;
 }
@@ -16,7 +23,8 @@ const { class: className } = Astro.props;
 ---
 
 <button id="theme-toggle" type="button" class={className} aria-label="Basculer le thème">
-  <span aria-hidden="true">◐</span>
+  <Icon name="sun" size={15} class="dark:hidden" />
+  <Icon name="moon" size={15} class="hidden dark:block" />
 </button>
 <script>
   import '../scripts/theme.ts';

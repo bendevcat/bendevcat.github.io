@@ -5,23 +5,23 @@ import ThemeToggle from './ThemeToggle.astro';
 interface NavLink {
   label: string;
   href?: string;
-  // Nom de glyphe (Icon.astro) — R6 : chacun des 5 items porte son icône.
+  // Nom de glyphe (Icon.astro) — chacun des 5 items porte son icône.
   icon: 'blog' | 'projets' | 'prompts' | 'skills' | 'a-propos';
 }
 
-// Nav complète du site (spec design §4). Blog (Plan 1), Projets (Plan 3),
-// Prompts et Skills (Plan 4), et « À propos » (Plan 5) ont tous une page.
+// Nav complète du site, dans l'ordre du prototype (plan 12, R3 ; inventaire
+// §0, markup 36–40) : Blog · Projets · Skills · Prompts · À propos.
 // Le rendu non cliquable reste possible pour un futur item sans page :
 // `href` absent → <span> inerte, pour éviter tout lien mort (spec Plan 1 §5).
 const navLinks: NavLink[] = [
   { label: 'Blog', href: '/blog', icon: 'blog' },
   { label: 'Projets', href: '/projets', icon: 'projets' },
-  { label: 'Prompts', href: '/prompts', icon: 'prompts' },
   { label: 'Skills', href: '/skills', icon: 'skills' },
+  { label: 'Prompts', href: '/prompts', icon: 'prompts' },
   { label: 'À propos', href: '/a-propos', icon: 'a-propos' },
 ];
 
-// R6 — l'état actif se dérive par FAMILLE DE ROUTES, pas par égalité :
+// L'état actif se dérive par FAMILLE DE ROUTES, pas par égalité :
 // `/blog/<slug>` doit allumer « Blog ».
 // Piège mesuré : en build statique, `Astro.url.pathname` porte un `/` final
 // (`/blog/`, `/a-propos/`) — une comparaison `path === href` échouerait donc
@@ -34,85 +34,88 @@ const path = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? path === '/' : path === href || path.startsWith(href + '/');
 
-// Look commun des pilules de nav. Rayon 999 via l'utilitaire `rounded-pill`
-// (généré par Tailwind depuis `--radius-pill`) — jamais `rounded-full`, dont
-// la valeur ne vient pas du contrat. Anneau de focus `accent`, comme tout
-// contrôle hors onglets (plan 11, R14 — D61 remplace l'anneau `ink` du plan 6).
-const NAV_PILL =
-  'inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-sm transition-colors ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
+// Anneau de focus `accent`, comme tout contrôle hors onglets (plan 11, D61).
+const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
-// R7 — look unique des trois boutons ronds de la barre d'actions (32 px,
-// rayon 999 via `--radius-pill`). Une seule chaîne : les trois doivent être
-// indiscernables, y compris celui que rend `ThemeToggle.astro` (à qui elle est
-// passée en prop). Fond transparent : ils sont posés sur la pilule `nav`, ils
-// n'ajoutent pas de niveau de surface (hiérarchie §2.1). `chip` n'est pas un
-// niveau de surface mais le fond de puce neutre du contrat : c'est lui qui
-// porte le survol.
+// Les trois pilules du header (prototype 29–55) : fond `nav`, 1 px `line`,
+// rayon 999 via `rounded-pill` (`--radius-pill`) — jamais `rounded-full`.
+const PILL = 'rounded-pill border border-line bg-nav';
+
+// Items de la pilule de nav : padding 8/14, rayon 999, 14 px, icône 15 px.
+const NAV_ITEM = `inline-flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-sm transition-colors ${FOCUS}`;
+// R3 — actif : `accent` sur `accentSoft`, graisse 600 (prototype) ;
+// inactif : `muted` sur transparent, survol `chip` / `ink`.
+const NAV_ACTIVE = 'bg-accentSoft font-semibold text-accent';
+const NAV_INACTIVE = 'text-muted hover:bg-chip hover:text-ink';
+
+// Les trois boutons ronds de la pilule d'actions : 34×34, rayon 999, fond
+// `chip`, `muted` ; survol `nav` / `ink` (prototype). Une seule chaîne : les
+// trois doivent être indiscernables, y compris celui que rend
+// `ThemeToggle.astro` (à qui elle est passée en prop).
 const ROUND_BTN =
-  'grid size-8 place-items-center rounded-pill text-muted transition-colors ' +
-  'hover:bg-chip hover:text-ink ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
+  `grid size-8.5 place-items-center rounded-pill bg-chip text-muted transition-colors ` +
+  `hover:bg-nav hover:text-ink ${FOCUS}`;
 ---
 
-<header class="border-b border-line">
+{/*
+  Plan 12 / T2 — trois pilules séparées, sans filet bas, `padding-top: 20px`,
+  `space-between` + `flex-wrap` (prototype 29–55, inventaire §0).
+*/}
+<header>
   <div
     data-shell="header"
-    class="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-4 sm:flex-nowrap sm:px-6"
+    class="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 pt-5 sm:px-6"
   >
     {/*
-      R5 — logo en pilule. `.pill` (contrat §4) pose rayon 999 + padding +
-      fond `accentSoft` + texte `accent` + mono ; la bordure `line` demandée
-      par R5 s'ajoute en utilitaire, et `inline-flex` aussi : `.pill` ne porte
-      volontairement aucun `display` (règle R4), c'est ce qui la rend
-      composable ici sans la modifier.
+      Pilule du logo : padding 8/18/8/12 ; tuile 28×28 rayon 9 (`rounded-badge`)
+      sur `accentSoft`, trois barres `accent` de largeurs 100/60/82 % et
+      d'opacités 1/.7/.45 ; `bencat` mono 15 `ink` + `_` `accent`.
     */}
     <a
       href="/"
       aria-label="bencat_ — accueil"
-      class="pill inline-flex items-center gap-2 border border-line text-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      class={`inline-flex items-center gap-2.5 py-2 pr-4.5 pl-3 ${PILL} ${FOCUS}`}
     >
-      <Icon name="logo" size={16} />
-      <span>bencat<span class="text-accent">_</span></span>
+      <span aria-hidden="true" class="flex size-7 flex-col justify-center gap-[3px] rounded-badge bg-accentSoft px-[7px]">
+        <span class="h-[3px] w-full rounded-pill bg-accent"></span>
+        <span class="h-[3px] w-[60%] rounded-pill bg-accent opacity-70"></span>
+        <span class="h-[3px] w-[82%] rounded-pill bg-accent opacity-45"></span>
+      </span>
+      <span class="font-mono text-[15px] text-ink">bencat<span class="text-accent">_</span></span>
     </a>
 
     {/*
-      R11 (375px) : sur mobile, le bloc logo+actions tient sur une ligne mais
-      logo+nav(5 pilules)+actions ensemble débordent. On fait passer <nav> en
-      2e ligne pleine largeur (order-last + w-full) sous `sm` (640px) ; dès
-      `sm` on revient à la ligne unique (sm:order-none sm:w-auto), donc le
-      layout desktop est inchangé. Les pilules elles-mêmes ont le droit de
-      passer à la ligne (flex-wrap). Pas de JS, pas de scroll, pas de burger
-      (ce serait une structure nouvelle, hors périmètre du Plan 6) : tous les
-      items restent visibles et cliquables.
+      Pilule de nav : padding 6, gap 4. Sous 640 px (D72) elle prend sa propre
+      rangée pleine largeur (order-last + w-full) : logo + nav + actions ne
+      tiennent pas sur une ligne à 375 px. Ses items y passent à la ligne,
+      centrés ; son rayon descend alors à 20 px (`rounded-card`), un rayon de
+      999 sur deux rangées rognerait visuellement les items des coins. Dès
+      640 px elle revient entre les deux autres pilules, sur une ligne.
+      Pas de JS, pas de scroll, pas de burger : tous les items restent visibles.
     */}
-    <nav aria-label="Navigation principale" class="order-last w-full sm:order-none sm:w-auto">
-      <ul class="flex flex-wrap items-center gap-1.5">
+    <nav
+      aria-label="Navigation principale"
+      class="order-last w-full rounded-card border border-line bg-nav p-1.5 sm:order-none sm:w-auto sm:rounded-pill"
+    >
+      <ul class="flex flex-wrap items-center justify-center gap-1">
         {navLinks.map((link) => (
           <li>
             {link.href ? (
               <a
                 href={link.href}
                 aria-current={isActive(link.href) ? 'page' : undefined}
-                class:list={[
-                  NAV_PILL,
-                  isActive(link.href)
-                    ? // actif : fond `nav` + bordure `line` + graisse (R6)
-                      'border-line bg-nav font-medium text-ink'
-                    : // inactif : transparent, texte secondaire
-                      'border-transparent text-muted hover:text-ink',
-                ]}
+                class:list={[NAV_ITEM, isActive(link.href) ? NAV_ACTIVE : NAV_INACTIVE]}
               >
-                <Icon name={link.icon} />
+                <Icon name={link.icon} size={15} />
                 {link.label}
               </a>
             ) : (
               <span
-                class:list={[NAV_PILL, 'border-transparent text-muted/40']}
+                class:list={[NAV_ITEM, 'text-muted/40']}
                 aria-disabled="true"
                 title="Bientôt disponible"
               >
-                <Icon name={link.icon} />
+                <Icon name={link.icon} size={15} />
                 {link.label}
               </span>
             )}
@@ -122,13 +125,12 @@ const ROUND_BTN =
     </nav>
 
     {/*
-      R7 — barre d'actions : un conteneur en pilule (rayon 999, fond `nav`,
-      bordure `line` — les propriétés de `.pill` sauf son fond d'accent, qui
-      n'a pas sa place ici : c'est de la navigation, pas de l'action de
-      contenu) portant trois boutons ronds de 32 px.
-      Il est posé sur `bg` et porte `nav` : un seul niveau d'écart (§2.1).
+      Pilule d'actions : padding 6, gap 6, trois boutons ronds sur `chip`
+      (recherche, GitHub, thème). `data-header-actions` est ce que mesure
+      scripts/check-shell-blog.mjs (R2 actions). Le rappel « ⌘K » de la v1
+      n'est plus affiché (D72) ; le raccourci clavier reste, dans search.ts.
     */}
-    <div class="flex items-center gap-1 rounded-pill border border-line bg-nav p-1">
+    <div data-header-actions class={`flex items-center gap-1.5 p-1.5 ${PILL}`}>
       {/*
         CONTRAT À NE PAS CASSER : `data-search-open` est ce que
         `src/scripts/search.ts` cherche pour (a) retirer le `hidden` et (b)
@@ -145,24 +147,8 @@ const ROUND_BTN =
         class={ROUND_BTN}
         aria-label="Rechercher sur le site"
       >
-        <Icon name="search" size={16} />
+        <Icon name="search" size={15} />
       </button>
-
-      {/*
-        Le rappel `⌘K` de la v1 est conservé (≥ sm). Il est SŒUR du bouton et
-        non dedans, pour que les trois boutons restent strictement ronds. Il
-        porte lui aussi `data-search-open` : `search.ts` itère sur TOUS les
-        éléments portant l'attribut — il est donc révélé et rendu cliquable par
-        le même code, sans une ligne de logique nouvelle, et il reste masqué
-        sans JS. `aria-hidden` : le bouton voisin porte déjà le nom accessible,
-        l'annoncer une seconde fois serait du bruit.
-      */}
-      <kbd
-        data-search-open
-        hidden
-        aria-hidden="true"
-        class="hidden h-8 cursor-pointer place-items-center rounded-pill px-2 font-mono text-[11px] text-dim transition-colors hover:text-muted sm:grid"
-      >⌘K</kbd>
 
       <a
         href="https://github.com/bendevcat"
@@ -171,7 +157,7 @@ const ROUND_BTN =
         aria-label="GitHub de benCat"
         class={ROUND_BTN}
       >
-        <Icon name="github" size={16} />
+        <Icon name="github" size={15} />
       </a>
 
       <ThemeToggle class={ROUND_BTN} />
