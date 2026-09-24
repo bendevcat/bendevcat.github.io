@@ -9,7 +9,7 @@
  * - `projectTabs` / `promptTabs` / `skillTabs` décident, côté serveur, QUELS
  *   onglets existent : un onglet n'apparaît que si le contenu existant le
  *   nourrit (D1). Les pages leur passent des faits bruts (corps, présence
- *   d'une couverture, tailles), jamais une entrée de collection.
+ *   d'un extrait de code, tailles), jamais une entrée de collection.
  * - `computeTabState` / `nextTabIndex` décident, côté client, de l'état
  *   sélectionné et du déplacement clavier. Le script de glue n'a aucune règle
  *   à lui : il lit le DOM, appelle ces fonctions, applique.
@@ -19,6 +19,12 @@ export interface Tab {
   /** Suffixe stable ; le composant le préfixe (`tab-` / `tabpanel-`). */
   id: string;
   label: string;
+  /**
+   * Effectif affiché après le libellé (plan 15, variante soulignée :
+   * `Stack 4`, `Articles liés 1`). Absent = pas de compteur — les onglets
+   * des prompts et des skills n'en ont jamais.
+   */
+  count?: number;
 }
 
 export interface TabState {
@@ -30,7 +36,11 @@ export interface TabState {
 
 export interface ProjectTabInput {
   body: string | undefined;
-  hasCover: boolean;
+  /**
+   * `snippet` renseigné (plan 15) : la fenêtre de code vit sous Aperçu. La
+   * couverture n'y compte plus — elle est devenue la bannière de la fiche (D105).
+   */
+  hasSnippet: boolean;
   stackCount: number;
   /** Articles liés APRÈS `sortAndFilter` : les brouillons sont déjà écartés. */
   relatedCount: number;
@@ -49,12 +59,18 @@ function isBlank(body: string | undefined): boolean {
   return (body ?? '').trim() === '';
 }
 
-/** Ordre d'affichage = ordre de la Tab map du plan 8 ; le premier est sélectionné au chargement. */
+/**
+ * Ordre d'affichage = ordre de la Tab map du plan 8 ; le premier est
+ * sélectionné au chargement. Stack et Articles liés portent leur effectif
+ * (inventaire §4) ; Aperçu n'en a pas.
+ */
 export function projectTabs(input: ProjectTabInput): Tab[] {
   const tabs: Tab[] = [];
-  if (!isBlank(input.body) || input.hasCover) tabs.push({ id: 'apercu', label: 'Aperçu' });
-  if (input.stackCount > 0) tabs.push({ id: 'stack', label: 'Stack' });
-  if (input.relatedCount > 0) tabs.push({ id: 'articles-lies', label: 'Articles liés' });
+  if (!isBlank(input.body) || input.hasSnippet) tabs.push({ id: 'apercu', label: 'Aperçu' });
+  if (input.stackCount > 0) tabs.push({ id: 'stack', label: 'Stack', count: input.stackCount });
+  if (input.relatedCount > 0) {
+    tabs.push({ id: 'articles-lies', label: 'Articles liés', count: input.relatedCount });
+  }
   return tabs;
 }
 

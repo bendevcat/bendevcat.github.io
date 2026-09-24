@@ -1,0 +1,117 @@
+---
+/**
+ * ProjectAside.astro (plan 15, T5 ; inventaire §4 ; prototype 433–522) — la
+ * barre latérale d'une fiche projet (280 px à partir de 1024 px, sous la
+ * carte principale en dessous).
+ *
+ * - `<aside aria-label="Le projet en bref">`, hors index de recherche, écart 16.
+ * - Carte méta `.card` rayon 18 (`--radius-aside`), ombre `var(--shadow)`
+ *   (en style, jamais l'utilitaire `.shadow`, figé en clair au build — cf.
+ *   `.card-inner`), padding 20 :
+ *   - `<dl>` (projectMetaRows, src/lib/projectDetail.ts) : libellé mono 11
+ *     `muted` à gauche, valeur à droite, lignes séparées d'un filet 1 px
+ *     `line2` — `statut` (puce `.pill` aux classes de PROJECT_STATUS_META),
+ *     `depuis` et `licence` (14 px `ink`, omises sans valeur, D102) ;
+ *   - `code source ↗` pleine largeur, `accent` / `accentInk`, rayon 12,
+ *     14 / 600, padding 11 (omis sans `repoUrl`) ;
+ *   - `démo ↗` pleine largeur, `chip` / `ink` (seulement avec `demoUrl` —
+ *     gardé de la fiche d'avant, D105).
+ * - Carte Articles liés (`.card` rayon 18, padding 20 ; omise sans article
+ *   publié) : libellé mono 10 capitales .12em `muted`, un lien par article —
+ *   titre 14 / 500 `ink` (survol `accent`), date mono 10 `muted`.
+ *
+ * Crochets lus par scripts/check-project.mjs : `data-project-meta`,
+ * `data-project-repo`, `data-project-demo`, `data-project-posts`.
+ */
+import type { CollectionEntry } from 'astro:content';
+import type { ProjectMetaRow } from '../../lib/projectDetail';
+
+interface Props {
+  rows: ProjectMetaRow[];
+  repoUrl?: string;
+  demoUrl?: string;
+  posts: CollectionEntry<'blog'>[];
+  /** Classes de placement ajoutées par la page. */
+  class?: string;
+}
+
+const { rows, repoUrl, demoUrl, posts, class: extra } = Astro.props;
+const BUTTON =
+  'block w-full rounded-nested p-[11px] text-center font-sans text-sm leading-[1.4] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+const dateFr = (date: Date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+
+<aside aria-label="Le projet en bref" data-pagefind-ignore class:list={['flex min-w-0 flex-col gap-4', extra]}>
+  <div class="card rounded-aside p-5" style="box-shadow: var(--shadow);" data-project-meta>
+    <dl class="flex flex-col">
+      {
+        rows.map((row) => (
+          <div class="flex items-center justify-between gap-3 border-t border-line2 py-2.5 first:border-t-0 first:pt-0 last:pb-0">
+            <dt class="font-mono text-[11px] text-muted">{row.label}</dt>
+            <dd class="text-right">
+              {row.chipClass ? (
+                <span class={`pill inline-block border px-[11px] py-[5px] text-[11px] leading-none ${row.chipClass}`}>
+                  {row.value}
+                </span>
+              ) : (
+                <span class="font-sans text-sm text-ink">{row.value}</span>
+              )}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+    {
+      (repoUrl || demoUrl) && (
+        <div class="mt-4 flex flex-col gap-2">
+          {repoUrl && (
+            <a
+              href={repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class={`${BUTTON} bg-accent text-accentInk`}
+              data-project-repo
+            >
+              code source ↗
+            </a>
+          )}
+          {demoUrl && (
+            <a
+              href={demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class={`${BUTTON} bg-chip text-ink`}
+              data-project-demo
+            >
+              démo ↗
+            </a>
+          )}
+        </div>
+      )
+    }
+  </div>
+
+  {
+    posts.length > 0 && (
+      <section class="card rounded-aside p-5" aria-labelledby="project-aside-posts" data-project-posts>
+        <h2 id="project-aside-posts" class="font-mono text-[10px] tracking-[.12em] text-muted uppercase">
+          Articles liés
+        </h2>
+        <ul class="mt-3 flex flex-col gap-3">
+          {posts.map((post) => (
+            <li>
+              <a href={`/blog/${post.id}/`} class="group flex flex-col gap-1">
+                <span class="font-sans text-sm leading-[1.35] font-medium text-pretty text-ink transition-colors group-hover:text-accent">
+                  {post.data.title}
+                </span>
+                <time datetime={post.data.pubDate.toISOString()} class="font-mono text-[10px] text-muted">
+                  {dateFr(post.data.pubDate)}
+                </time>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</aside>

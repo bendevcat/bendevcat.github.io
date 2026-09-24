@@ -4,8 +4,43 @@ description: "Une action composite qui calcule la prochaine version sémantique 
 status: actif
 startDate: 2025-05-05
 stack: [GitHub Actions, Bash, Go, SVU]
+stackRoles:
+  - { name: GitHub Actions, role: action composite }
+  - { name: SVU, role: prochain numéro de version }
 tags: [github-actions, devops, versioning]
 repoUrl: https://github.com/bencatlab/gha-svu
+snippetFile: .github/workflows/check-pr.yml
+snippet: |
+  name: Check PR
+  on:
+    pull_request:
+      types: [opened, synchronize, reopened]
+      branches:
+        - main
+
+  jobs:
+    check-pr:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Bump version
+          id: semver
+          uses: ./
+          with:
+            always: true
+            push-tag: false
+            verbose: true
+
+        - name: Outputs
+          run: |
+            echo "changed: ${{ steps.semver.outputs.changed }}"
+            echo "current: ${{ steps.semver.outputs.current }}"
+            echo "next: ${{ steps.semver.outputs.next }}"
+            release=$(echo "${{ steps.semver.outputs.next }}" | cut -d. -f1)
+            echo "release: $release"
 featured: false
 relatedPosts: [comment-jutilise-github-actions-au-quotidien]
 ---

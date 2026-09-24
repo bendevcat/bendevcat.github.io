@@ -1,13 +1,40 @@
 ---
-import { Image } from 'astro:assets';
+/**
+ * Fiche projet (plan 15, T5 ; inventaire §4 ; prototype 433–522 ; D105).
+ *
+ * `<main>` › `<article data-pagefind-body>` : une grille, 40 px sous le
+ * header du site ; à partir de 1024 px `minmax(0,1fr) | 280px`, écart 26 ;
+ * en dessous une colonne, carte principale puis barre latérale (ordre du DOM).
+ *
+ * - Carte principale `.card overflow-hidden` : bandeau 150 px (`Thumbnail`
+ *   `banner` : la couverture si elle existe, sinon la trame dérivée),
+ *   en-tête (ProjectHeader), onglets soulignés (DetailTabs
+ *   `variant="underline"`) Aperçu · Stack (n) · Articles liés (n) — un onglet
+ *   sans données est omis (projectTabs, src/lib/detailTabs.ts).
+ * - Aperçu : le corps en `.prose` (son premier paragraphe tient le rôle du
+ *   « pourquoi » du prototype), puis, 24 px dessous, la fenêtre de code
+ *   (CodeWindow) quand `snippet` est renseigné. La couverture ne nourrit plus
+ *   Aperçu : c'est le bandeau.
+ * - Barre latérale (ProjectAside) : statut, depuis, licence, `code source ↗`,
+ *   `démo ↗`, puis la carte Articles liés.
+ *
+ * Crochets lus par scripts/check-project.mjs : `data-project-main` et ceux
+ * des composants de src/components/project/.
+ */
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
+import Thumbnail from '../../components/Thumbnail.astro';
+import ProjectHeader from '../../components/project/ProjectHeader.astro';
+import CodeWindow from '../../components/project/CodeWindow.astro';
+import StackTiles from '../../components/project/StackTiles.astro';
+import RelatedPostTiles from '../../components/project/RelatedPostTiles.astro';
+import ProjectAside from '../../components/project/ProjectAside.astro';
 import { getSortedProjects } from '../../lib/projects';
 import { assertEntriesResolved } from '../../lib/references';
-import { PROJECT_STATUS_META } from '../../lib/projectStatus';
 import { sortAndFilter } from '../../lib/posts';
 import { projectTabs } from '../../lib/detailTabs';
+import { projectMetaRows, stackTiles } from '../../lib/projectDetail';
 
 export async function getStaticPaths() {
   const projects = await getSortedProjects();
@@ -16,10 +43,21 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
-const { title, description, status, startDate, stack, cover, coverAlt, repoUrl, demoUrl } =
-  project.data;
-
-const statusMeta = PROJECT_STATUS_META[status];
+const {
+  title,
+  description,
+  status,
+  startDate,
+  stack,
+  stackRoles,
+  cover,
+  coverAlt,
+  license,
+  repoUrl,
+  demoUrl,
+  snippet,
+  snippetFile,
+} = project.data;
 
 // R5 : les références sont résolues en entrées réelles — on affiche un titre,
 // jamais un id ni `undefined`. sortAndFilter (src/lib/posts.ts) écarte au
@@ -39,110 +77,67 @@ const relatedPosts = project.data.relatedPosts?.length
     )
   : [];
 
-const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+const code = snippet?.trim() ? snippet : undefined;
 
-// Plan 8 : QUELS onglets existent se décide dans src/lib/detailTabs.ts, à
-// partir de faits bruts — jamais ici. `relatedCount` est compté APRÈS
-// sortAndFilter : un article brouillon ne nourrit pas « Articles liés ».
+// QUELS onglets existent se décide dans src/lib/detailTabs.ts, à partir de
+// faits bruts — jamais ici. `relatedCount` est compté APRÈS sortAndFilter :
+// un article brouillon ne nourrit pas « Articles liés ».
 const tabs = projectTabs({
   body: project.body,
-  hasCover: Boolean(cover),
+  hasSnippet: Boolean(code),
   stackCount: stack.length,
   relatedCount: relatedPosts.length,
 });
 const shown = new Set(tabs.map((tab) => tab.id));
+const hasBody = (project.body ?? '').trim() !== '';
+
+const tiles = stackTiles(stack, stackRoles);
+const rows = projectMetaRows({ status, startDate, license });
 ---
 
 <BaseLayout title={`${title} — bencat_`} description={description}>
-  <article class="mx-auto max-w-3xl py-10" data-pagefind-body>
-    <p class="font-mono text-sm text-accent">~/ projets</p>
+  <main>
+    <article data-pagefind-body class="grid grid-cols-1 gap-[26px] pt-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+      <div class="card min-w-0 overflow-hidden" data-project-main>
+        <Thumbnail size="banner" cover={cover} coverAlt={coverAlt} title={title} derivedFrom={status} eager />
 
-    <h1 class="mt-4 font-sans text-4xl font-bold text-ink">{title}</h1>
+        <ProjectHeader title={title} description={description} />
 
-    <div class="mt-4 flex flex-wrap items-center gap-3">
-      <span class={`rounded-pill border px-2 py-0.5 font-mono text-xs ${statusMeta.chipClass}`}>
-        {statusMeta.label}
-      </span>
-      {startDateFr && <span class="font-mono text-xs text-muted">depuis {startDateFr}</span>}
-    </div>
+        <DetailTabs tabs={tabs} label="Sections du projet" variant="underline">
+          {
+            shown.has('apercu') && (
+              <div slot="apercu">
+                {hasBody && (
+                  <div class="prose">
+                    <Content />
+                  </div>
+                )}
+                {code && <CodeWindow snippet={code} file={snippetFile} />}
+              </div>
+            )
+          }
 
-    <p class="mt-4 text-muted">{description}</p>
+          {
+            shown.has('stack') && (
+              <div slot="stack">
+                <StackTiles tiles={tiles} />
+              </div>
+            )
+          }
 
-    {
-      (repoUrl || demoUrl) && (
-        <div class="mt-6 flex flex-wrap gap-3">
-          {repoUrl && (
-            <a
-              href={repoUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-              class="rounded-pill border border-line px-3 py-1.5 font-mono text-xs text-ink transition-colors hover:border-accent hover:text-accent"
-            >
-              code source ↗
-            </a>
-          )}
-          {demoUrl && (
-            <a
-              href={demoUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-              class="rounded-pill border border-line px-3 py-1.5 font-mono text-xs text-ink transition-colors hover:border-accent hover:text-accent"
-            >
-              démo ↗
-            </a>
-          )}
-        </div>
-      )
-    }
+          {
+            shown.has('articles-lies') && (
+              <div slot="articles-lies">
+                <RelatedPostTiles posts={relatedPosts} />
+              </div>
+            )
+          }
+        </DetailTabs>
+      </div>
 
-    <DetailTabs tabs={tabs} label="Sections du projet">
-      {
-        shown.has('apercu') && (
-          <div slot="apercu">
-            {cover && (
-              <Image
-                src={cover}
-                alt={coverAlt ?? ''}
-                class="aspect-video w-full rounded-inner object-cover"
-              />
-            )}
-            <div class="prose">
-              <Content />
-            </div>
-          </div>
-        )
-      }
-
-      {
-        shown.has('stack') && (
-          <ul slot="stack" class="flex flex-wrap gap-2" aria-label="Technologies">
-            {stack.map((tech) => (
-              <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
-                {tech}
-              </li>
-            ))}
-          </ul>
-        )
-      }
-
-      {
-        shown.has('articles-lies') && (
-          <ul slot="articles-lies" class="flex flex-col gap-2">
-            {relatedPosts.map((post) => (
-              <li>
-                <a
-                  href={`/blog/${post.id}/`}
-                  class="text-body underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                >
-                  {post.data.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </DetailTabs>
-  </article>
+      <ProjectAside rows={rows} repoUrl={repoUrl} demoUrl={demoUrl} posts={relatedPosts} />
+    </article>
+  </main>
 
   <script>
     import '../../scripts/copy-code.ts';

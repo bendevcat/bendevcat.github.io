@@ -16,6 +16,19 @@
  *   rangée est cachée et tous les panneaux s'affichent (règles
  *   `html:not([data-js])` de global.css), chacun précédé d'un titre de repli.
  * - Moins de deux onglets : pas de rangée, le panneau unique s'affiche nu (D13).
+ *
+ * Deux variantes (plan 15) :
+ * - `pill` (défaut) : prompts et skills — balisage inchangé à l'octet près
+ *   (R20) ; `Tab.count` n'y est jamais rendu.
+ * - `underline` : fiche projet (inventaire §4) — pas d'enveloppe `.card`
+ *   (la page la place dans sa carte principale), racine
+ *   `data-tab-variant="underline"`, rangée soulignée `line2`, onglet actif
+ *   `ink` 600 souligné 2 px `accent`, effectif en mono 11 `muted` (D71).
+ *   Pas de `-mb-px` sur les onglets : la rangée défile en x (`overflow-x-auto`,
+ *   donc `overflow-y` calculé `auto`) et un onglet débordant d'1 px sous sa
+ *   boîte de remplissage y créerait un défilement vertical d'1 px, le
+ *   soulignement étant de toute façon rogné à cette limite. Le soulignement
+ *   `accent` repose donc au-dessus du filet `line2`.
  */
 import { hasTabRow, type Tab } from '../lib/detailTabs';
 
@@ -23,10 +36,23 @@ interface Props {
   tabs: Tab[];
   /** Nom accessible de la rangée d'onglets (`aria-label` du tablist). */
   label: string;
+  /** `pill` (défaut, prompts et skills) ou `underline` (fiche projet, plan 15). */
+  variant?: 'pill' | 'underline';
 }
 
-const { tabs, label } = Astro.props;
+const { tabs, label, variant = 'pill' } = Astro.props;
 const withRow = hasTabRow(tabs);
+const underline = variant === 'underline';
+
+// Classes par variante. Celles de `pill` sont celles d'avant le plan 15, à
+// l'identique : le HTML des prompts et des skills ne doit pas bouger (R20).
+const rootClass = underline ? 'mt-6' : 'card mt-10 p-4 sm:p-6';
+const tablistClass = underline
+  ? 'flex overflow-x-auto border-b border-line2 px-5 sm:px-8'
+  : 'flex flex-wrap gap-2';
+const tabClass = underline
+  ? 'shrink-0 cursor-pointer whitespace-nowrap border-b-2 border-transparent bg-transparent px-4 py-3 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink aria-selected:border-accent aria-selected:font-semibold aria-selected:text-ink'
+  : 'cursor-pointer rounded-pill border border-transparent bg-transparent px-3 py-1.5 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:text-ink';
 
 // Rendu des slots côté serveur : un nom de slot dynamique ne passe pas par
 // `<slot name={…} />` de façon fiable, `Astro.slots.render` si.
@@ -35,11 +61,11 @@ const panels = await Promise.all(
 );
 ---
 
-<div class="card mt-10 p-4 sm:p-6" data-detail-tabs>
+<div class={rootClass} data-detail-tabs data-tab-variant={underline ? 'underline' : undefined}>
   {
     withRow ? (
       <>
-        <div role="tablist" aria-label={label} class="flex flex-wrap gap-2">
+        <div role="tablist" aria-label={label} class={tablistClass}>
           {tabs.map((tab, index) => (
             <button
               type="button"
@@ -48,35 +74,81 @@ const panels = await Promise.all(
               aria-controls={`tabpanel-${tab.id}`}
               aria-selected={index === 0 ? 'true' : 'false'}
               tabindex={index === 0 ? 0 : -1}
-              class="cursor-pointer rounded-pill border border-transparent bg-transparent px-3 py-1.5 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:text-ink"
+              class={tabClass}
             >
               {tab.label}
+              {/* Effectif (plan 15, inventaire §4) : variante soulignée seule,
+                  une espace puis le nombre en mono 11 `muted` (D71). */}
+              {underline && tab.count !== undefined && (
+                <>
+                  {' '}
+                  <span class="font-mono text-[11px] text-muted">{tab.count}</span>
+                </>
+              )}
             </button>
           ))}
         </div>
-        {panels.map(({ tab, html }, index) => (
-          <>
-            {/* Titre de repli : visible seulement sans JS, quand la rangée est
-                cachée et que les panneaux s'empilent. Hors du panneau, pour
-                que le contrôle « aucun panneau vide » (R2) reste honnête.
-                `data-pagefind-ignore` : un libellé d'onglet (« // infos ») n'a
-                rien à faire dans l'index de recherche (plan 11, R11). */}
-            <h2 class="mt-8 font-mono text-sm text-muted first-of-type:mt-0" data-tab-fallback-heading data-pagefind-ignore>
-              // {tab.label.toLowerCase()}
-            </h2>
-            <div
-              role="tabpanel"
-              id={`tabpanel-${tab.id}`}
-              aria-labelledby={`tab-${tab.id}`}
-              tabindex="0"
-              hidden={index !== 0}
-              class="mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-            >
-              <Fragment set:html={html} />
-            </div>
-          </>
-        ))}
+        {underline ? (
+          // Panneaux de la variante soulignée : padding 28/32/32 (20 sur les
+          // côtés sous 640 px) porté par une enveloppe, pour que les titres
+          // de repli sans JS s'alignent sur les panneaux. Avec JS, le titre
+          // est `display: none` : le panneau commence à 28 px de la rangée.
+          <div class="px-5 pt-7 pb-8 sm:px-8">
+            {panels.map(({ tab, html }, index) => (
+              <>
+                <h2
+                  class="mt-8 mb-4 font-mono text-sm text-muted first-of-type:mt-0"
+                  data-tab-fallback-heading
+                  data-pagefind-ignore
+                >
+                  // {tab.label.toLowerCase()}
+                </h2>
+                <div
+                  role="tabpanel"
+                  id={`tabpanel-${tab.id}`}
+                  aria-labelledby={`tab-${tab.id}`}
+                  tabindex="0"
+                  hidden={index !== 0}
+                  class="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+                >
+                  <Fragment set:html={html} />
+                </div>
+              </>
+            ))}
+          </div>
+        ) : (
+          panels.map(({ tab, html }, index) => (
+            <>
+              {/* Titre de repli : visible seulement sans JS, quand la rangée est
+                  cachée et que les panneaux s'empilent. Hors du panneau, pour
+                  que le contrôle « aucun panneau vide » (R2) reste honnête.
+                  `data-pagefind-ignore` : un libellé d'onglet (« // infos ») n'a
+                  rien à faire dans l'index de recherche (plan 11, R11). */}
+              <h2 class="mt-8 font-mono text-sm text-muted first-of-type:mt-0" data-tab-fallback-heading data-pagefind-ignore>
+                // {tab.label.toLowerCase()}
+              </h2>
+              <div
+                role="tabpanel"
+                id={`tabpanel-${tab.id}`}
+                aria-labelledby={`tab-${tab.id}`}
+                tabindex="0"
+                hidden={index !== 0}
+                class="mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+              >
+                <Fragment set:html={html} />
+              </div>
+            </>
+          ))
+        )}
       </>
+    ) : underline ? (
+      <div class="px-5 pt-7 pb-8 sm:px-8">
+        {panels.map(({ html }) => (
+          <div>
+            <Fragment set:html={html} />
+          </div>
+        ))}
+      </div>
     ) : (
       panels.map(({ html }) => (
         <div>

@@ -290,6 +290,45 @@ describe('config CMS — collection projects', () => {
     expect(byName.cover.widget).toBe('image');
     expect(byName.featured.widget).toBe('boolean');
     expect(byName.body.widget).toBe('markdown');
+    // Plan 15 (D102–D104) : champs de la fiche projet.
+    expect(byName.license.widget).toBe('string');
+    expect(byName.snippetFile.widget).toBe('string');
+    expect(byName.snippet.widget).toBe('text');
+    expect(byName.stackRoles.widget).toBe('list');
+  });
+
+  it('présente les champs dans l’ordre du formulaire', () => {
+    // Ordre d'affichage propre au CMS (le jeu de champs, lui, est vérifié
+    // contre le schéma ci-dessus).
+    expect(fieldNames()).toEqual([
+      'title',
+      'description',
+      'status',
+      'startDate',
+      'stack',
+      'stackRoles',
+      'tags',
+      'cover',
+      'coverAlt',
+      'license',
+      'repoUrl',
+      'demoUrl',
+      'snippetFile',
+      'snippet',
+      'featured',
+      'relatedPosts',
+      'body',
+    ]);
+  });
+
+  it('décrit chaque rôle de techno comme `{name, role}`, comme le schéma Zod (plan 15, D104)', () => {
+    const f = projects().fields.find((x: any) => x.name === 'stackRoles');
+    expect(f.required).toBe(false);
+    expect(f.fields.map((x: any) => x.name)).toEqual(['name', 'role']);
+    for (const sub of f.fields) {
+      expect(sub.widget).toBe('string');
+      expect(sub.required).not.toBe(false);
+    }
   });
 });
 

@@ -101,6 +101,23 @@
   --color-tagRoseInk: #93334C;
   --color-tagRoseLine: rgba(147,51,76,.14);
 
+  /* — fenêtres toujours sombres (plan 15, D105 ; inventaire §9) : fenêtre de
+     code de la fiche projet, puis fenêtres de prompt, d'installation de skill
+     et explorateur de fichiers (plans 16–17). MÊMES VALEURS dans le bloc
+     sombre ci-dessous — la fenêtre ne bascule pas avec le thème. Pastilles =
+     valeurs standard macOS. Contraste ≥ 4.5:1 de Ink/Dim/Key/Value sur Bg et
+     Head, gardé par src/lib/contrast.test.ts. — */
+  --color-windowBg: #0B1017;               /* corps de fenêtre */
+  --color-windowHead: #111823;             /* barre de titre */
+  --color-windowLine: rgba(255,255,255,.08); /* bordure, fond de puce de nom de fichier */
+  --color-windowInk: #C6D2DE;              /* texte courant */
+  --color-windowDim: #9AA6B4;              /* numéros de ligne, nom de fichier, « Copier » */
+  --color-windowKey: #93C5FD;              /* clé YAML */
+  --color-windowValue: #7EE7B0;            /* valeur YAML */
+  --color-windowDotRed: #FF5F57;           /* pastille fermer */
+  --color-windowDotAmber: #FEBC2E;         /* pastille réduire */
+  --color-windowDotGreen: #28C840;         /* pastille agrandir */
+
   /* — 23e token : élévation de carte (nom nu `shadow`, cf. contrat §2) — */
   --shadow: 0 10px 18px -12px rgba(16,24,34,.26), 0 2px 4px -2px rgba(16,24,34,.08);
 
@@ -119,6 +136,8 @@
   --radius-hero: 16px;    /* image de couverture, carte IA */
   /* rayon des listes (prototype 344–431, plan 14, D92) : */
   --radius-feature: 24px; /* héros « à la une » de /projets */
+  /* rayon de la fiche projet (prototype 433–522, plan 15, D105) : */
+  --radius-aside: 18px;   /* cartes de la barre latérale d'une fiche */
 
   /* — coque (plan 12, prototype `max-width:1180px`) : utilitaire `max-w-shell`,
      porté par la rangée d'en-tête, l'enveloppe du contenu et le pied de page,
@@ -172,6 +191,19 @@
   --color-tagRoseBg: rgba(244,114,182,.14);
   --color-tagRoseInk: #F9A8D4;
   --color-tagRoseLine: rgba(244,114,182,.22);
+
+  /* fenêtres toujours sombres : valeurs IDENTIQUES au bloc clair (D105).
+     Redéclarées ici exprès — l'audit rendu énumère les noms de ce bloc. */
+  --color-windowBg: #0B1017;
+  --color-windowHead: #111823;
+  --color-windowLine: rgba(255,255,255,.08);
+  --color-windowInk: #C6D2DE;
+  --color-windowDim: #9AA6B4;
+  --color-windowKey: #93C5FD;
+  --color-windowValue: #7EE7B0;
+  --color-windowDotRed: #FF5F57;
+  --color-windowDotAmber: #FEBC2E;
+  --color-windowDotGreen: #28C840;
 
   --shadow: 0 12px 22px -16px rgba(0,0,0,.85);
 }

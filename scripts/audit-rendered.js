@@ -67,15 +67,16 @@
  *   is not. Reports
  *   `{ sel, level, on, under }` (`under` = the painted ancestor's path).
  *
- * TOKENS — the contract colour set is 37 `--color-` values (D55: the plan's
- * "38" counted `--shadow`). Their NAMES are enumerated from the stylesheets:
+ * TOKENS — the contract colour set is 47 `--color-` values (D55: the plan's
+ * "38" counted `--shadow`; plan 15 / D105 added the 10 always-dark `window*`
+ * tokens, declared with the same value in both themes). Their NAMES are enumerated from the stylesheets:
  * the `--color-*` properties declared in the theme-override rule
  * (`:root[data-theme=…]`), which re-declares every contract colour and
  * nothing else. The `:root, :host` block of Tailwind's `@layer theme` is NOT
  * used for names: it also carries Tailwind's own palette (`--color-black`,
  * `--color-amber-500`… whenever a palette utility is used), which would make
  * a palette colour look "on token". If enumeration yields nothing (cross-
- * origin sheets, other markup), the 37 names of src/styles/global.css below
+ * origin sheets, other markup), the 47 names of src/styles/global.css below
  * are used (`tokens.source` says which). VALUES are always read by probing:
  * an element with `color: var(--color-<name>, <sentinel>)` is inserted in the audited
  * document, its computed colour read, and the probe removed — so the values
@@ -98,7 +99,7 @@
 (function (root) {
   'use strict';
 
-  /** The 37 contract colour names of src/styles/global.css (D55) — fallback only. */
+  /** The 47 contract colour names of src/styles/global.css (D55, D105) — fallback only. */
   var CONTRACT_COLOR_NAMES = [
     'bg', 'surface', 'card', 'rail',
     'line', 'line2',
@@ -109,7 +110,9 @@
     'tagBlueBg', 'tagBlueInk', 'tagBlueLine',
     'tagVioletBg', 'tagVioletInk', 'tagVioletLine',
     'tagAmberBg', 'tagAmberInk', 'tagAmberLine',
-    'tagRoseBg', 'tagRoseInk', 'tagRoseLine'
+    'tagRoseBg', 'tagRoseInk', 'tagRoseLine',
+    'windowBg', 'windowHead', 'windowLine', 'windowInk', 'windowDim',
+    'windowKey', 'windowValue', 'windowDotRed', 'windowDotAmber', 'windowDotGreen'
   ];
 
   var TOLERANCE = 2;
@@ -522,7 +525,7 @@
     if (names.length === 0) {
       names = CONTRACT_COLOR_NAMES.slice();
       source = 'fallback';
-      notes.push('token names: none enumerated from the stylesheets, using the 37 names of global.css');
+      notes.push('token names: none enumerated from the stylesheets, using the 47 names of global.css');
     } else {
       var missing = CONTRACT_COLOR_NAMES.filter(function (n) { return names.indexOf(n) === -1; });
       var extra = names.filter(function (n) { return CONTRACT_COLOR_NAMES.indexOf(n) === -1; });

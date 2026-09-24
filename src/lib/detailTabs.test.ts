@@ -14,7 +14,7 @@ import {
 
 const labels = (tabs: Tab[]) => tabs.map((tab) => tab.label);
 
-const FULL_PROJECT = { body: 'Du texte.', hasCover: true, stackCount: 3, relatedCount: 2 };
+const FULL_PROJECT = { body: 'Du texte.', hasSnippet: true, stackCount: 3, relatedCount: 2 };
 
 describe('projectTabs', () => {
   it('lists Aperçu, Stack and Articles liés in that order when everything is fed', () => {
@@ -32,23 +32,37 @@ describe('projectTabs', () => {
     expect(labels(projectTabs({ ...FULL_PROJECT, relatedCount: 0 }))).toEqual(['Aperçu', 'Stack']);
   });
 
-  it('omits Aperçu when the body is blank and there is no cover', () => {
-    expect(labels(projectTabs({ ...FULL_PROJECT, body: '  \n\t ', hasCover: false }))).toEqual([
-      'Stack',
-      'Articles liés',
-    ]);
-    expect(labels(projectTabs({ ...FULL_PROJECT, body: undefined, hasCover: false }))).toEqual([
+  // Plan 15 (D105) : la couverture devient la bannière de la fiche et ne
+  // nourrit plus Aperçu ; c'est l'extrait de code qui peut le faire.
+  it('omits Aperçu when the body is blank and there is no snippet, even with a cover', () => {
+    // Une entrée réelle porte `cover` à côté des faits : il doit rester sans effet.
+    const blank = { ...FULL_PROJECT, body: '  \n\t ', hasSnippet: false, cover: 'couverture.png' };
+    expect(labels(projectTabs(blank))).toEqual(['Stack', 'Articles liés']);
+    const missing = { ...FULL_PROJECT, body: undefined, hasSnippet: false, cover: 'couverture.png' };
+    expect(labels(projectTabs(missing))).toEqual(['Stack', 'Articles liés']);
+  });
+
+  it('keeps Aperçu when the body is blank but a snippet is set', () => {
+    expect(labels(projectTabs({ ...FULL_PROJECT, body: '', hasSnippet: true }))).toContain('Aperçu');
+    expect(labels(projectTabs({ ...FULL_PROJECT, body: undefined, hasSnippet: true }))).toEqual([
+      'Aperçu',
       'Stack',
       'Articles liés',
     ]);
   });
 
-  it('keeps Aperçu when the body is blank but a cover is set', () => {
-    expect(labels(projectTabs({ ...FULL_PROJECT, body: '', hasCover: true }))).toContain('Aperçu');
+  it('keeps Aperçu when there is a body but no snippet', () => {
+    expect(labels(projectTabs({ ...FULL_PROJECT, hasSnippet: false }))).toContain('Aperçu');
   });
 
-  it('keeps Aperçu when there is a body but no cover', () => {
-    expect(labels(projectTabs({ ...FULL_PROJECT, hasCover: false }))).toContain('Aperçu');
+  it('gives Stack and Articles liés their counts and Aperçu none', () => {
+    const tabs = projectTabs({ ...FULL_PROJECT, stackCount: 4, relatedCount: 1 });
+    expect(tabs.map((tab) => [tab.label, tab.count])).toEqual([
+      ['Aperçu', undefined],
+      ['Stack', 4],
+      ['Articles liés', 1],
+    ]);
+    expect(tabs[0]).not.toHaveProperty('count');
   });
 
   it('gives every tab a distinct id', () => {
