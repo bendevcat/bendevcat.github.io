@@ -87,3 +87,16 @@ Measurement rules (authoring choices, logged as decisions):
 - Hover and pressed-state contrast; native UI the page does not paint; the home's derived-thumbnail fallback on `surface` — not rendered today (every home post has a cover) and caught by R7's check the day it would be.
 - `scripts/check-detail-tabs.mjs` regex parsing of minified CSS; the `docs/anti-drift/` pointer to `docs/auto/` (frozen path).
 - Version bump, tag, merge, push, deploy (one publication at the end of the run, D25).
+
+## Fix tasks (verification attempt 1)
+### F1 — Header focus rings on the accent
+- Files: `src/components/Header.astro` (the three `focus-visible:outline-ink` → `focus-visible:outline-accent`, offset kept)
+- Covers: R14 (failed at attempt 1: the 9 header controls computed an `ink` ring; only tabs may keep `ink`)
+- Acceptance: `grep -c 'focus-visible:outline-ink' src/components/Header.astro` → `0`; rendered (orchestrator): Tab from the top of `/`, both themes → every header stop computes a solid ≥ 2 px `accent` outline, ≥ 3:1 on its composited background
+- Depends on: —
+
+### F2 — Empty state centred in the list frame
+- Files: the 4 list pages and/or `src/scripts/list-pattern.ts`
+- Covers: finding of attempt 1 — with no result, the zero-height grid still takes a `gap-6` slot, so the empty block sits 40 px below the frame top but 16 px above its bottom (`/projets/`, status `archivé`, 375)
+- Acceptance: on each list with a filter that empties it, the grid is not rendered as a flex item (`display: none` or `hidden`) and the empty block's distance to the frame's top and bottom inner edges are equal (±1 px); with results again, the grid is back; no-JS rendering unchanged; `check-finition.mjs` exit 0
+- Depends on: —
