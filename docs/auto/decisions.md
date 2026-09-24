@@ -70,3 +70,48 @@ Choice: `html:not([data-js]) [data-detail-tabs] [role="tabpanel"][hidden] { disp
 
 ## D23 · Plan 8 · E1 — Publish plan 8 as v1.3.0
 Choice: fast-forward `main` to the integration branch, annotated tag `v1.3.0`, push `main`, `v1.3.0`, `milestone-plan-8` · Alternatives: wait · Reversibility: expensive (a published tag and a production deploy) · Why: user's answer "A" to escalation E1.
+
+## D24 · Plan 10 · cadrage — Tag tones by a stable hash of the slug
+Choice: each tag's tone (one of the 5 of contract §2.3) is a stable hash of `tagSlug(tag)`; same tag, same tone on every page · Alternatives: explicit table in code with hash fallback; a single neutral tone (drop E10) · Reversibility: cheap · Why: user's answer A at cadrage (settles contract §8.3); zero maintenance when a tag is added from the CMS.
+
+## D25 · Run · cadrage — One publication at the end of the run
+Choice: plans 9–11 integrate on `claude/anti-drift-auto-start-532f11` without publishing; one `publication` escalation after plan 11 (`v1.4.0`) · Alternatives: one escalation per plan; pre-authorised publication · Reversibility: cheap · Why: user's answer A at cadrage.
+
+## D26 · Run · cadrage — No invented content on the home and about pages
+Choice: a block or field is shown only when existing content, the author's existing texts or a derivation can feed it; the prototype's demo values (email, LinkedIn, `github.com/bencat`, stack list, quotes) are never copied; stack logos are self-hosted inline SVG · Alternatives: copy the prototype's values; ask the user for new copy · Reversibility: cheap · Why: the user's "aucune phrase inventée" rule (gate 2026-09-04), contract §9, and plan 8's "pattern first" (D1).
+
+## D27 · Plan 9 · cadrage — The home hero goes; whoami moves to /a-propos   ⚑ à relire
+Choice: the home page follows the prototype, which has no hero; the `~/ whoami` identity lives on `/a-propos`; the home AI banner links to `/transparence-ia/` · Alternatives: keep `Hero.astro` above the featured card · Reversibility: cheap · Why: the prototype is the single source of truth for structure (contract, header); stated in the validated brief.
+
+## D28 · Plan 9 · authoring — `Derniers articles` is a `.card`, not a `.panel`
+Choice: the latest-posts block is a `.card` (surface) on `bg` with a 28×28 badge right of its title · Alternatives: a tinted `.panel` like the section panels · Reversibility: cheap · Why: in the prototype only row 2 (Projets · Prompts · Skills) is tinted; row 1 is two surfaces side by side.
+
+## D29 · Plan 9 · authoring — Two entries per section panel, list-page order
+Choice: first 2 entries of each collection in the list pages' order (so `bootstrap-session-anti-drift` is not on the home) · Alternatives: every entry; 3 per panel · Reversibility: cheap · Why: the prototype shows 2 per panel; the title link leads to the full list.
+
+## D30 · Plan 9 · authoring — Badges reuse the header glyphs
+Choice: badges use `Icon.astro`'s existing `blog`, `projets`, `prompts`, `skills` glyphs · Alternatives: add the prototype's bubble and wrench icons · Reversibility: cheap · Why: one glyph per section across the site; the nav already teaches them.
+
+## D31 · Plan 9 · authoring — AI banner sentence from the site's own words
+Choice: « Chaque article déclare son niveau de contribution IA : » (already on `/transparence-ia`) followed by the three `emoji label` pairs read from `AI_USAGE_META` (« co-créé avec IA », not the prototype's « co-créé ») · Alternatives: the prototype's sentence « Chaque article affiche sa part d'IA… » · Reversibility: cheap · Why: D26 — author text or derivation only, never prototype copy.
+
+## D32 · Plan 9 · authoring — A visually hidden `<h1>` on the home
+Choice: `/` keeps exactly one `<h1>`, a visually hidden `bencat_` · Alternatives: the featured post's title as `<h1>` · Reversibility: cheap · Why: dropping the hero (D27) drops the page's only `<h1>`; the featured title changes with each post, the site name does not.
+
+## D33 · Plan 9 · authoring — `Hero.astro` kept unused until plan 10
+Choice: the component stays in place, unused, so plan 10 can reuse its author text on `/a-propos` · Alternatives: delete it now · Reversibility: cheap · Why: nothing is published before plan 10 ships (D25), so the hero's AI-transparency sentence is never missing from production.
+
+## D34 · Plan 9 · authoring — Home field formats and extra contract checks
+Choice: new additive `Thumbnail.astro` sizes (196 px header, 72 px square); project stack in mono joined by ` · `; skill meta `type · name` (or `type` alone); version chip `v<version>` only when set; `à la une` chip kept as a UI label; V2/V3/V4/V5/V6 and the type scale are checked on `/` in this plan, AA contrast left to plan 11 · Alternatives: stack as chips; home-only thumbnail markup; leave every contract check to plan 11 · Reversibility: cheap · Why: follows the prototype and plan 8's precedent of checking the contract on the pages a plan touches (D12).
+
+## D35 · Plan 9 · T1 — Featured post excluded from `latest` by identity
+Choice: `pickHomePosts` compares the objects themselves, not an `id`; T2 must pass one array to it and use that array throughout · Alternatives: require an `id` field and compare ids · Reversibility: cheap · Why: keeps the helper generic over plain objects like `pickFeaturedEntry`, which returns an item of the array it received.
+
+## D36 · Plan 9 · T2 — Row 1 details
+Choice: derived placeholders carry `data-thumb-derived` (lists included; text and classes unchanged); the check matches `/blog`'s featured by distinct entry id (it has two `data-featured` elements); reading time from the existing `estimateReadingMinutes`, shown as `N min`; latest thumbnail right of the text; row 1 side by side from `lg` (1024 px), stacked below; the AI label stays in mono as on `ArticleCard`; featured cover keeps lazy loading · Alternatives: detect placeholders by class; `N min de lecture`; thumbnail on the left; side by side from `md`; AI label in Nebula Sans; `loading="eager"` · Reversibility: cheap · Why: prototype order and sizes, existing precedents, a 29 px title needs the width.
+
+## D37 · Plan 9 · T3 — Section panels and banner details
+Choice: badge right of the panel title (as `Derniers articles`); three columns from `lg`, stacked below; entry titles 17 px / 500, descriptions 13 px / 1.5 (§3.3 compact card and dense body); neutral format and version chips as on the list cards, status chip from `PROJECT_STATUS_META` unchanged; banner pairs joined by `Intl.ListFormat('fr', disjunction)` in `AI_USAGE_META` order with a non-breaking space before `:`; pill in mono; a section with no entry is not rendered · Alternatives: badge left; columns from `md`; accent `.pill` chips; hand-written join; an empty panel · Reversibility: cheap · Why: consistency with row 1 and the list cards; D26 (never show an empty block).
+
+## D38 · Plan 9 · T4 — Rendered measurements by the orchestrator; lazy images unmeasurable in a hidden pane
+Choice: T4's measures ran in the built-in browser (both themes, 375 / 768 / 1180); the only defect found (glued `·` in the featured meta) is fixed in `4552221` with a guard in `check-home.mjs`; image decoding could not be observed because the browser pane was hidden (`visibilityState: hidden` keeps lazy images unloaded — `/blog` behaves the same), so image presence is proven by the build check and a 200 `image/webp` on the `src` · Alternatives: force `loading="eager"` on the home · Reversibility: cheap · Why: D20 precedent; the environment, not the page, blocks decoding.

@@ -16,8 +16,15 @@ interface Props {
   title: string;
   /** Chaîne dont le visuel dérivé est tiré : catégorie, statut ou type. */
   derivedFrom: string;
-  /** `featured` = format large de l'entrée à la une ; `card` = vignette de grille. */
-  size?: 'card' | 'featured';
+  /**
+   * `featured` = format large de l'entrée à la une ; `card` = vignette de grille.
+   * Ajouts Plan 9 (accueil, D34) — les deux premières valeurs rendent
+   * exactement comme avant (R11) :
+   * - `header` = image d'en-tête de la carte « à la une » de l'accueil, 196 px
+   *   de haut, rayon 14 px (contrat §3.2 : « image d'en-tête ») ;
+   * - `square` = vignette carrée 72 px des « Derniers articles », rayon 10 px.
+   */
+  size?: 'card' | 'featured' | 'header' | 'square';
 }
 
 const { cover, coverAlt, title, derivedFrom, size = 'card' } = Astro.props;
@@ -26,12 +33,33 @@ const { cover, coverAlt, title, derivedFrom, size = 'card' } = Astro.props;
 // aucun champ de schéma. Le monogramme est purement fonction de la chaîne, donc
 // stable d'un build à l'autre.
 const monogram = derivedFrom.slice(0, 2).toUpperCase();
-const ratio = size === 'featured' ? 'aspect-[16/7]' : 'aspect-video';
+
+// Cadre par taille : format, largeur, rayon. Les classes sont recomposées
+// dans l'ORDRE d'origine pour `card` et `featured` — chaîne `class` identique
+// octet pour octet, les quatre listes ne bougent pas (R11 compare les valeurs
+// de `class`).
+const FRAME: Record<NonNullable<Props['size']>, { box: string; width: string; radius: string }> = {
+  card: { box: 'aspect-video', width: 'w-full', radius: 'rounded-thumb' },
+  featured: { box: 'aspect-[16/7]', width: 'w-full', radius: 'rounded-thumb' },
+  header: { box: 'h-[196px]', width: 'w-full', radius: 'rounded-inner' },
+  square: { box: 'size-[72px]', width: 'shrink-0', radius: 'rounded-thumb' },
+};
+const { box, width: frameWidth, radius } = FRAME[size];
+// La vignette carrée s'affiche en 72×72 (object-cover) : on ne livre pas
+// l'original pleine taille pour si peu. On fixe le PETIT côté à 144 px (2×
+// pour les écrans denses), l'autre suit le ratio — fixer la largeur d'une
+// image paysage ne laisserait que 72 px de haut, soit du 1×.
+const squareSide = 144;
+const landscape = cover ? cover.width >= cover.height : true;
+const width = size === 'square' && !landscape ? squareSide : undefined;
+const height = size === 'square' && landscape ? squareSide : undefined;
+// Monogramme à l'échelle du cadre : `text-2xl` déborderait presque du carré 72 px.
+const monogramSize = size === 'square' ? 'text-base' : 'text-2xl';
 ---
 
 {
   cover ? (
-    <Image src={cover} alt={coverAlt ?? title} class={`${ratio} w-full rounded-thumb object-cover`} />
+    <Image src={cover} alt={coverAlt ?? title} width={width} height={height} class={`${box} ${frameWidth} ${radius} object-cover`} />
   ) : (
     /*
       Niveau 4 de la hiérarchie des surfaces (§2.1) : `rail` est le creux — il
@@ -40,11 +68,12 @@ const ratio = size === 'featured' ? 'aspect-[16/7]' : 'aspect-video';
       plan (spec §6.4).
     */
     <div
-      class={`${ratio} flex w-full items-center justify-center rounded-thumb bg-rail`}
+      class={`${box} flex ${frameWidth} items-center justify-center ${radius} bg-rail`}
       style="background-image: repeating-linear-gradient(135deg, var(--color-hatch) 0 1px, transparent 1px 9px);"
       aria-hidden="true"
+      data-thumb-derived
     >
-      <span class="font-mono text-2xl font-medium tracking-[.06em] text-dim">{monogram}</span>
+      <span class={`font-mono ${monogramSize} font-medium tracking-[.06em] text-dim`}>{monogram}</span>
     </div>
   )
 }
