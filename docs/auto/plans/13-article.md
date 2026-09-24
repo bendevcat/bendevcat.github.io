@@ -142,3 +142,27 @@ Exit 1 if an article lacks one of these, if a rail lacks `data-rail` or `data-pa
 | R20 | proven | frozen diff empty; 282 tests; 0 errors; `matchesFilters` 1 |
 
 Findings → F1 (audit exemption too wide; stray blank line), F2 (rail label / cloud inset 16 vs prototype 24 / 22). Not taken: dev-log errors during file-watch reloads (no 5xx, not recurring); Copier focus keeps the global outline.
+
+### Verification 2 (2026-09-24, after F1–F2)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | real clicks both themes on `linux-…` and `comment-…` (breadcrumb, category, tag, related, `Plus d'articles`, AI link, prev, next, TOC, project card); crawl of every internal href on the 5 posts → 200; 0 JS errors; no 5xx |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | 9 lines exact; exit 1 on 8 injected defects |
+| R6 | proven | `DevOps 2` → `?categorie=DevOps`, 2 rows, meta, `aria-pressed`; unknown / wrong case ignored |
+| R7 | proven | 5 posts × 2 themes at 1280, 0 mismatches |
+| R8 | proven | prose and cover values; Copier count = `pre` count; `Copié !` + exact text |
+| R9 | proven | AI card, tile tones, description = `AI_USAGE_META`, hover lift, prev/next placement |
+| R10 | proven | rail values; F2 insets x 24 / 22, rows 16 |
+| R11 | proven | 375 / 768 stack order, no overflow; 1024 three columns |
+| R12 | proven | no-JS iframe: content visible, no dead control, navigation works |
+| R13 | proven | `ma règle sur l'IA` → 2 prompts + 1 skill, no `/blog/` result; `journalctl` → the linux post |
+| R14 | smoke | design MCP refused; static comparison with prototype 231–343: same blocks, order, columns, spacings; one 2 px gap off (below) |
+| R15 | proven | audit 5 posts × 3 widths × 2 themes: 0 / 0 / 0 / 0; F1 proven by repainting the rail to `bg` → 2 V2, restored → 0 |
+| R16 | proven | radii {7, 8, 9, 10, 12, 13, 14, 16, 20, 999}; fonts as specified |
+| R17 | proven | `check-shell-blog` identical; `/blog` HTML differs only by the F2 classes (D91); plan 12 walk holds |
+| R18 | proven | only the stated instrument lines change; pattern classes 4; `--color-` diff 0 |
+| R19 | proven | `AiBanner` only on `/transparence-ia` |
+| R20 | proven | frozen diff empty; 285 tests; 0 errors; `matchesFilters` 1 |
+
+Carried to plan 18: `Catégories` label → first row gap 8 px vs prototype 10 px (`BlogRail.astro`).
