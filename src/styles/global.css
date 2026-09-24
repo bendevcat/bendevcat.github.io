@@ -23,7 +23,7 @@
    6 tokens clairs (`card`, `rail`, `chip`, `panel`, `nav`, `hatch`) ne
    partaient donc PAS dans le bundle, et un token consommé hors utilitaire
    (style scoped Astro, style inline) aurait marché en sombre et échoué en
-   clair. `static` désactive l'élagage et émet les 23 tokens + les 5 rayons.
+   clair. `static` désactive l'élagage et émet les 23 tokens + les rayons.
    Constat de revue T-A2, fix round 1. */
 @theme static {
   /* ==========================================================================
@@ -104,13 +104,19 @@
   /* — 23e token : élévation de carte (nom nu `shadow`, cf. contrat §2) — */
   --shadow: 0 10px 18px -12px rgba(16,24,34,.26), 0 2px 4px -2px rgba(16,24,34,.08);
 
-  /* — rayons (contrat §3.2 : cinq valeurs, nommées par usage) — */
+  /* — rayons (contrat §3.2 : cinq valeurs, nommées par usage ; étendus aux
+     rayons du prototype, D67 — plan 12 : tag ; plan 13 : les quatre derniers) — */
   --radius-card: 20px;    /* grande carte (surface), panneau de section */
   --radius-inner: 14px;   /* carte imbriquée (card), image d'en-tête */
   --radius-thumb: 10px;   /* vignette, petite image */
   --radius-badge: 9px;    /* badge d'icône de section (28×28) */
   --radius-pill: 999px;   /* pilule : navigation, statut, catégorie, bouton rond */
   --radius-tag: 8px;      /* puce de tag du rail /blog (prototype 163–227, plan 12) */
+  /* rayons de l'article (prototype 230–342, plan 13, D67/D86) : */
+  --radius-small: 7px;    /* puce « Copier », badge 22×22 des rails */
+  --radius-nested: 12px;  /* bloc de code, carte liée d'un rail */
+  --radius-tile: 13px;    /* tuile 40×40 de la carte IA */
+  --radius-hero: 16px;    /* image de couverture, carte IA */
 
   /* — coque (plan 12, prototype `max-width:1180px`) : utilitaire `max-w-shell`,
      porté par la rangée d'en-tête, l'enveloppe du contenu et le pied de page,
@@ -241,7 +247,9 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   color: var(--color-ink);
   scroll-margin-top: 5rem; /* ancre TOC lisible, pas cachée en haut de viewport */
 }
-.prose :where(h2) { margin-top: 2.5em; margin-bottom: 0.75em; font-size: 1.5rem; }
+/* h2 / p / listes / blocs de code : valeurs du prototype (230–342, plan 13,
+   D86), appliquées à tout le site — articles, détails de projet, prompt, skill. */
+.prose :where(h2) { margin: 32px 0 12px; font-size: 23px; }
 .prose :where(h3) { margin-top: 2em; margin-bottom: 0.6em; font-size: 1.25rem; }
 .prose :where(h4) { margin-top: 1.5em; margin-bottom: 0.5em; font-size: 1.1rem; }
 
@@ -249,7 +257,8 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
    <a href="#slug"> — on neutralise le style "lien" par défaut dessus. */
 .prose :where(h2, h3, h4) a { color: inherit; text-decoration: none; }
 
-.prose :where(p) { margin-top: 1.25em; margin-bottom: 1.25em; }
+.prose :where(p) { margin: 0 0 14px; font-size: 16px; line-height: 1.75; color: var(--color-body); }
+
 
 .prose :where(strong) { color: var(--color-ink); font-weight: 700; }
 .prose :where(em) { font-style: italic; }
@@ -263,10 +272,12 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 .prose :where(p, li, blockquote) a:hover { text-decoration-thickness: 2px; }
 
-.prose :where(ul, ol) { margin-top: 1.25em; margin-bottom: 1.25em; padding-left: 1.4em; }
+.prose :where(ul, ol) { margin: 0 0 14px; padding-left: 20px; font-size: 16px; line-height: 1.85; }
+.prose :where(li ul, li ol) { margin-bottom: 0; }
 .prose :where(ul) { list-style: disc; }
 .prose :where(ol) { list-style: decimal; }
-.prose :where(li) { margin-top: 0.4em; margin-bottom: 0.4em; }
+.prose :where(li) { margin: 0; }
+.prose :where(li > p) { margin-bottom: 0; line-height: inherit; }
 .prose :where(li)::marker { color: var(--color-muted); }
 
 .prose :where(blockquote) {
@@ -291,14 +302,15 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 
 /* Blocs de code (Shiki, cf. astro.config.mjs → markdown.shikiConfig) */
 .prose :where(pre) {
-  margin: 1.5em 0;
-  padding: 1em;
+  margin: 18px 0;
+  padding: 16px;
   background: var(--color-code);
-  border-radius: var(--radius-thumb);
+  border-radius: var(--radius-nested);
   border: 1px solid var(--color-line);
   overflow-x: auto; /* R9 : jamais de débordement horizontal (375px) */
-  font-size: 0.875em;
-  line-height: 1.6;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
 }
 /* Le code inline ci-dessus stylise aussi <code> à l'intérieur d'un <pre> —
    on annule ce style pour laisser Shiki gérer sa propre coloration. */
@@ -323,6 +335,14 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 /* Tables larges : scroll horizontal dans leur propre conteneur plutôt que
    débordement de page (R9) — le wrapper est le <table> lui-même en `block`. */
 .prose :where(table) { display: block; overflow-x: auto; }
+
+/* Le dernier bloc ne pousse pas ce qui suit `.prose` (carte IA à 34 px du
+   dernier bloc, plan 13 R9) : l'espacement vient du conteneur. Placée après
+   les règles de bloc ci-dessus : à spécificité égale, elle l'emporte. Un
+   bloc de code final est enrobé à l'exécution (`.code-block-wrapper`, cf.
+   plus bas) : sa marge traverserait l'enveloppe, d'où la seconde ligne. */
+.prose > :where(:last-child),
+.prose > .code-block-wrapper:last-child > :where(pre) { margin-bottom: 0; }
 
 /* R8 : le code (bloc ET inline) est toujours en JetBrains Mono, indépendamment
    de `.prose` (garantie au niveau de la classe Shiki elle-même). */
@@ -361,24 +381,26 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
    lui-même, cf. gotcha ci-dessus), donc pas de classe scoped Astro possible :
    doit vivre en CSS global. */
 .copy-btn {
+  /* Puce « Copier » du prototype (230–342, plan 13, D86) : top/right 9,
+     padding 4/9, rayon 7, fond `chip`, sans bordure, mono 10 `muted` ;
+     line-height 1.7, celle du bloc de code dont le prototype l'hérite. */
   position: absolute;
-  top: 0.6em;
-  right: 0.6em;
+  top: 9px;
+  right: 9px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  line-height: 1;
-  padding: 0.35em 0.6em;
-  border-radius: var(--radius-thumb);
-  border: 1px solid var(--color-line);
-  background: var(--color-surface);
+  font-size: 10px;
+  line-height: 1.7;
+  padding: 4px 9px;
+  border-radius: var(--radius-small);
+  border: none;
+  background: var(--color-chip);
   color: var(--color-muted);
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease;
 }
 .copy-btn:hover,
 .copy-btn:focus-visible {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--color-ink);
 }
 
 /* ==========================================================================
