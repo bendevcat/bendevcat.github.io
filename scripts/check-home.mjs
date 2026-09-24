@@ -199,14 +199,20 @@ if (featured) {
     errors.push(`${BLOG} introuvable : impossible de comparer l'entrée à la une`);
   } else {
     const blog = collectElements(tokenize(readFileSync(BLOG, 'utf8'))).elements;
-    // /blog marque DEUX éléments `data-featured` — la carte à la une et sa
-    // copie masquée dans la grille — mais une seule entrée : on compare l'id.
+    // L'entrée à la une de l'accueil est celle que /blog marque `data-featured`
+    // (avant le plan 12 : la carte à la une et sa copie masquée, une seule
+    // entrée — d'où la comparaison par id) ; sans marque (plan 12 : /blog n'a
+    // plus de bloc à la une), c'est la première ligne de la liste, dans
+    // l'ordre canonique du rendu serveur.
     const ids = [
       ...new Set(blog.filter((el) => 'data-featured' in el.attrs).map((el) => el.attrs['data-entry-id'])),
     ];
-    if (ids.length !== 1) errors.push(`/blog : ${ids.length} entrée(s) data-featured distincte(s) (attendu : 1)`);
-    else if (href !== `/blog/${ids[0]}/`) {
-      errors.push(`à la une : ${href} ≠ entrée data-featured de /blog (${ids[0]})`);
+    const firstRow = blog.find((el) => 'data-entry-id' in el.attrs)?.attrs['data-entry-id'];
+    if (ids.length > 1) errors.push(`/blog : ${ids.length} entrées data-featured distinctes (attendu : 0 ou 1)`);
+    else if (ids.length === 0 && !firstRow) errors.push('/blog : ni entrée data-featured ni ligne [data-entry-id]');
+    else {
+      const [id, source] = ids.length === 1 ? [ids[0], 'entrée data-featured'] : [firstRow, 'première ligne'];
+      if (href !== `/blog/${id}/`) errors.push(`à la une : ${href} ≠ ${source} de /blog (${id})`);
     }
   }
 }
