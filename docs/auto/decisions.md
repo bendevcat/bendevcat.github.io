@@ -340,3 +340,6 @@ Choice: `bootstrap-session-anti-drift/index.md` — `{N}` ×13, `{topic}` ×4, `
 
 ## D113 · Plan 16 · T3–T5 — Prompt page details
 Choice: track tabs `px-2 py-1.5` `flex-1` so four fit in 340 px, panels `card rounded-aside` with inline `var(--shadow)`, no-JS headings outside the cards; décryptage 14 px (headings 16/600) with important utilities over the unlayered `.prose`; meta row and tab labels stay indexed; variables padded 3 px; `.md` named `Télécharger <id>.md`; Copier failure label `Échec — copie manuelle`; inputs focus by `accent` border; values re-applied on bfcache restore. Orchestrator render: typing `12` in `{N}` updates all 13 highlighted segments live · Alternatives: wrapping labels; focus-visible outline · Reversibility: cheap · Why: values the inventory leaves open.
+
+## D114 · Plan 16 · verification — Prompt window reuses plan 15's window colours
+Choice: the prompt window paints `windowBg` `#0B1017` / `windowHead` `#111823` rather than the prototype's `#0E1319` / `#131A22` · Alternatives: two more tokens for a near-identical shade · Reversibility: cheap · Why: one family of always-dark windows across the site; the difference is below visual threshold and keeps the token count down.

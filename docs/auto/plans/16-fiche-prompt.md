@@ -119,3 +119,31 @@ Exit 1 if a page lacks one of these blocks; if the `.md` / `Copier` / `réinitia
 ## Out of scope
 - `sortie` tab and `output` / `outNote`, `why`, `useWhen` / `avoidWhen` fields (no source); a version or date value; live counts; nested bullets in macos-clone; French translations of the hints; the verify prefix and `milestone-plan-3` as variables.
 - The skill page (plan 17, including superpowers' `No content`); moving skills to the track variant; any change to posts, projects, skills content, `.github/workflows/**`, `docs/anti-drift/**`; version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-25)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | `/` › Prompts › each card, dark then light; typing `7` in `{N}` rewrites 13 segments; header row, window, 340 px column, cards; no version / date / sortie; every column link 200; no "No content" |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | defaults re-inserted → bootstrap identical (10579 chars); placeholder counts 13 / 4 / 1 / 1 on template placeholders only; hints found in `start-session.md`; macos-clone collapse-equal, 48 lines, body emptied; red under 9 mutations |
+| R6 | proven | CMS tests 0 failed; greps `1` / `2` |
+| R7 | proven | `check-prompt` 13 lines exact; exit 1 on every injected defect class |
+| R8 | proven | 7 rows incl. `(panneau unique)`; exit 1 on missing root and empty single panel |
+| R9 | proven | tokens identical in both themes, contrast ≥ 4.5; red under 5 mutations |
+| R10 | proven | 1280 both themes: 818 + 22 + 340, header values |
+| R11 | proven | window colours both themes, macos-clone blank lines, `##` highlight, no horizontal scroll, Copier timing, clipboard = window text, `.md` blob = window text |
+| R12 | proven | live rewrite (`7`, `12`, backspace → `{N}`), Copier / `.md` carry typed values, reset restores defaults, counts fixed |
+| R13 | proven | track values; single-panel pages; related cards and links |
+| R14 | proven | roving keys; labelled inputs; no-JS iframe: panels with headings, inputs / buttons hidden, defaults shown |
+| R15 | proven | 375 / 768 one column, no overflow; 1024 two columns |
+| R16 | proven | `Finder Safari` → MacOS Clone; `Fiche technique` → no result |
+| R17 | smoke | design MCP refused; inventory §6 matches; accepted differences listed (window colours reuse plan 15 tokens — D114) |
+| R18 | proven | audit 40 runs, 51 tokens: 0 / 0 / 0 |
+| R19 | proven | radii {7, 10, 14, 18, 999}; mono / Nebula split |
+| R20 | proven | other instruments identical to base except the stated `prompts cards` and `fallback` lines; project / skill pages identical after hash normalisation |
+| R21 | proven | frozen diff empty; only the 2 prompt files in `src/content`; 348 tests; 0 errors |
+| R22 | proven | no `No content` in prompt sources or pages |
+
+Carried to plan 18: whitespace inside a macos-clone bullet is not guarded by a test; no-JS variables panel shows names and hints without values.
