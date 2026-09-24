@@ -205,3 +205,24 @@ Choice: contract §5.1 (four identical lists) and §8.2 (thumbnail + featured ev
 
 ## D68 · Run 3 · cadrage — One publication at the end of the run (v1.5.0)
 Choice: a single `publication` escalation after plan 18 · Alternatives: per plan; two stages · Reversibility: cheap · Why: user's answer A at cadrage — production never shows a half-migrated site.
+
+## D69 · Plan 12 · authoring — Shell in `BaseLayout`, 1180 px token, responsive padding
+Choice: one `data-shell` wrapper in `BaseLayout` capped by a new `--container-shell: 1180px` token; side padding 24 px from 640 px, 16 px below; detail pages keep their inner column until plans 13/15–17 · Alternatives: a container per page; 24 px everywhere · Reversibility: cheap · Why: one source of truth for the width every later plan inherits; 16 px keeps the 375 px budget.
+
+## D70 · Plan 12 · authoring — Footer copy from the site's own description   ⚑ à relire
+Choice: left `bencat_ — site perso de Benoît Catillon` (home description), right `Astro · GitHub Pages · Sveltia CMS`, plain text · Alternatives: year / ©, links · Reversibility: cheap · Why: the prototype's left text is demo copy; no invented phrase. UX text with no precedent.
+
+## D71 · Plan 12 · authoring — `muted` replaces the prototype's `dim` on small meta text
+Choice: footer, rail labels and counts, dropdown counts use `muted` · Alternatives: keep `dim` · Reversibility: cheap · Why: `dim` measures 4.19:1 on `bg` and 3.93:1 on `rail` in light — below AA (V8).
+
+## D72 · Plan 12 · authoring — Header details: no `⌘K` hint, CSS-switched sun/moon, nav on its own row below 640 px
+Choice: the `⌘K` kbd goes (the shortcut stays); the theme icon swaps by CSS on `data-theme`; below 640 px the nav pill takes a full-width row · Alternatives: keep the hint; JS icon swap; scrolling pill or burger · Reversibility: cheap · Why: the prototype has no hint; no-JS parity; the prototype has no breakpoints.
+
+## D73 · Plan 12 · authoring — Blog rail: tags link to their pages; tag select, `tous les tags →` and card-chip filter removed   ⚑ à relire
+Choice: tag chips link to `/tags/<slug>/` with published-post counts; the tag `<select>`, the `tous les tags →` link and the row's category-pill filter (`blog-filters.ts`) are removed; below 768 px the rail stacks above the list; without JS the category rows and sort trigger are hidden · Alternatives: inert chips as in the prototype; keep the tag filter as a second dropdown · Reversibility: cheap · Why: the prototype has no tag filter on /blog; linking keeps tag pages reachable. Visible feature removal on an existing page.
+
+## D74 · Plan 12 · authoring — Surface rule V2: an explicit rail may sit on `surface`   ⚑ à relire
+Choice: an element marked `data-rail` may paint `rail` directly on `surface`, as the prototype's blog and article rails do; the audit scripts allow it · Alternatives: paint the rail as `surface`; insert a `card` layer · Reversibility: cheap · Why: D67 — the prototype outranks the contract; narrowed reading of V2 inherited by plans 13, 14, 18.
+
+## D75 · Plan 12 · authoring — Dropdown and list-engine details
+Choice: dropdown = button + listbox with focus on options, Tab closes, label `tri :`, default `plus récents`; meta line `5 articles · catégorie : Tout` at rest; site AI labels kept (`co-créé avec IA`); engine skips the featured entry when a page has none; `ListHeader.astro` used on /blog only (plan 14 adopts it); first row image eager · Alternatives: `aria-activedescendant`; prototype's shorter labels · Reversibility: cheap · Why: plan-author choices within the inventory; labels already validated on the site.
