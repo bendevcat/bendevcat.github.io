@@ -50,7 +50,7 @@ Exit 1 if an article lacks one of these, if a rail lacks `data-rail` or `data-pa
 | R10 | Rails | preview, 1280, both themes: left rail rows padding 8/10, radius 10, 14 px `muted`, counts mono 11; 20 tag chips radius 8 mono 10 in `tagTone`; `<hr>` then `Articles liés` with a 22×22 radius-7 badge; related cards radius 12, padding 12, category mono 10 `accent`, title 13 px / 500, date line mono 10 `muted`; `Plus d'articles →` 13 px / 600 `accent`. Right rail: `Sommaire` entries 12 px `muted`, row gap 9, h3 left edge = h2 left edge + 14 (± 1); on `comment-…` `Projets liés` card with 6 px `accent` dot, title 13 px / 600, `actif` mono 10 `accent`, description 12 px `muted`; other articles show no `Projets liés` | no |
 | R11 | Stacking below 1024 | preview, both themes, 375 and 768: one column, blocks top to bottom = centre, right rail (Sommaire first), left rail (Catégories first); each rail as wide as the card (± 1); 0 horizontal overflow (`scrollWidth` = `clientWidth`); at 375 h1 32 px and prev/next one column; at 1024 three columns side by side | no |
 | R12 | Without JavaScript | each article loaded in a `sandbox` iframe without scripts: header, prose, rails and every link present and working; no `Copier` chip; no control of this plan visible and inert | no |
-| R13 | Search indexes the article, not the rails | `node scripts/check-article.mjs` → `search:` line as above; preview: the search dialog, query `ma règle sur l'IA` → 0 results; query `journalctl` → `Commandes Linux : du basique au one-liner surpuissant` among the results | no |
+| R13 | Search indexes the article, not the rails | `node scripts/check-article.mjs` → `search:` line as above; preview: the search dialog, query `ma règle sur l'IA` → no `/blog/<slug>/` result (prompts and skills may match scattered words); query `journalctl` → `Commandes Linux : du basique au one-liner surpuissant` among the results | no |
 | R14 | Fidelity with the prototype | verifier renders the prototype (`claude-design` `render_preview`, project `bb013596-0cd6-4e70-afad-e92b42d3f7f6`, file `bencat_ Prototype cliquable.dc.html`, article screen; the URL is never written down) and `/blog/linux-commandes-essentielles/` at 1280, light and dark: a side-by-side table lists the same blocks in the same order and the same three columns; differences allowed only where the Design rules say so (emoji AI markers, `muted` for `dim`, tag counts, real prose). **If the MCP is unavailable: smoke**, with the replay step written in the evidence | no |
 | R15 | Audit on every article | `scripts/audit-rendered.js` on the preview, the 5 articles, light and dark, at 375, 768 and 1280: 0 overflow, 0 contrast failure, 0 off-token colour, 0 V2 jump | no |
 | R16 | Radii and mono (V6 amended, V5) | preview, both themes, the 5 articles: every non-zero computed `border-radius` ∈ {7, 8, 9, 10, 12, 13, 14, 16, 20, 999} px; breadcrumb, meta row, counts, rail labels, dates, statuses, `Copier`, prev/next labels, `ma règle sur l'IA →` and code compute `"JetBrains Mono`; h1, lead, prose, titles, descriptions compute `"Nebula Sans"` | no |
@@ -97,7 +97,48 @@ Exit 1 if an article lacks one of these, if a rail lacks `data-rail` or `data-pa
 - Acceptance: after `npm run build`, the four scripts of R18 → the stated lines, exit 0; `node scripts/check-shell-blog.mjs` and `node scripts/check-article.mjs` → exit 0; `npx vitest run` → 0 failed
 - Depends on: T4
 
+### F1 — Audit exemption only for a card painted on a rail colour
+- Files: `scripts/audit-rendered.js`, `src/lib/auditRendered.test.ts`, `src/styles/global.css` (stray double blank line after `.prose :where(p)`)
+- Covers: R15 (instrument), verification 1 finding 1
+- Acceptance: the V2 "card on bg" exemption applies only when the card's nearest painted ancestor **paints the `rail` colour** and is (or sits inside) a non-thumbnail `[data-rail]`; a unit test proves a card whose painted parent paints `bg` inside a `[data-rail]` is still flagged; `npx vitest run` 0 failed; the six check scripts exit 0 with their current lines
+- Depends on: —
+
+### F2 — Rail labels and tag cloud inset like the prototype
+- Files: `src/components/blog/BlogRail.astro` (and its test)
+- Covers: R10, plan 12 R12 (fidelity), verification 1 finding 2
+- Acceptance: in the rail (both variants), the `Catégories` and `Tags` labels get the prototype's `padding:0 8px` (x = 24 inside the rail at 1280) and the tag cloud `padding:0 6px` (chips from x = 22); category rows unchanged (8/10 padding, x = 16 box); `check-shell-blog.mjs` and `check-article.mjs` exit 0 with their lines
+- Depends on: —
+
 ## Out of scope
 - Sticky rails, reading progress, share or comment blocks; updating the URL when a `/blog` rail row is clicked; a tag filter on `/blog`.
 - The inner layouts of the project, prompt and skill pages (plans 15–17) beyond the shared `.prose` / `.copy-btn` values; home and about gaps (18).
 - Any change to posts (`src/content/blog/**` frozen), schema, CMS, token colours; version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-24)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | full walk both themes on the 5 posts (breadcrumb, category row, tag chip, related card, `Plus d'articles →`, AI link, prev, next, project card) → all 200, no 404; fails only through R13's literal measure |
+| R1 | proven | named tests pass; red without self-exclusion, draft filter or category filter |
+| R2 | proven | named tests pass; red on swap and on wrap-around |
+| R3 | proven | red on `indented: false` and on h4 kept |
+| R4 | proven | named test passes, 0 deleted lines; red on accept-any and ignore-query |
+| R5 | proven | 9 lines exact, exit 0; exit 1 on 8 injected defects |
+| R6 | proven | real click `DevOps 2` → `/blog/?categorie=DevOps`, 2 rows, meta, `aria-pressed`; unknown / empty / wrong-case ignored |
+| R7 | proven | 1280 both themes: breadcrumb, h1 40/700, meta, gaps 56/14/26, grid 250 / 698 / 230 in 1180, rails `rail` + `line2` |
+| R8 | proven | lead 17 `muted`, cover 210 r16 eager, prose values, 42 `pre` / 42 Copier chips, `Copié !` + exact block text |
+| R9 | proven | AI card r16, 34 px below prose, tile 40 r13 toned, text = `AI_USAGE_META`, link `/transparence-ia/`, hover lift; prev/next placement without wrap |
+| R10 | proven | rail rows, 20 toned chips, `<hr>`, badge, related cards, `Plus d'articles →`, TOC indent 14, Projets liés on `comment-…` |
+| R11 | proven | 375/768: centre → right rail → left rail, 0 overflow, h1 32; 1024: three columns |
+| R12 | proven | no-JS iframe: all content and links visible, 0 Copier chips, navigation works |
+| R13 | failed → measure corrected | `search:` line ok, fragments free of rail strings, `journalctl` finds the post; `ma règle sur l'IA` → 3 results (2 prompts, 1 skill, scattered words), **no `/blog/` result** — the "0 results" measure was wrong for this site; text corrected to "no `/blog/<slug>/` result" (D90) |
+| R14 | smoke | design MCP refused; static comparison with prototype lines 231–343: same blocks, order, columns, px values; differences all under the design rules |
+| R15 | proven | `audit-rendered.js` 30 runs: 0 overflow / contrast / off-token / V2 |
+| R16 | proven | radii {7, 8, 9, 10, 12, 13, 14, 16, 20, 999}; mono / Nebula split as specified |
+| R17 | proven | `check-shell-blog` identical to base; `/blog` HTML identical after hash normalisation; plan 12 walk holds |
+| R18 | proven | earlier scripts identical except stated lines; pattern classes 4; `--color-` diff 0 |
+| R19 | proven | `AiBanner` only in `transparence-ia.astro`; `ai-banner` line ok |
+| R20 | proven | frozen diff empty; 282 tests; 0 errors; `matchesFilters` 1 |
+
+Findings → F1 (audit exemption too wide; stray blank line), F2 (rail label / cloud inset 16 vs prototype 24 / 22). Not taken: dev-log errors during file-watch reloads (no 5xx, not recurring); Copier focus keeps the global outline.

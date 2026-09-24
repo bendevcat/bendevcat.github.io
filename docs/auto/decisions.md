@@ -268,3 +268,6 @@ Choice: `check-finition` (T5) accepts a `.card-inner` on `rail` when inside a `[
 
 ## D89 · Plan 13 · T4 — Article page details
 Choice: tile titles turn `accent` on hover; below 640 px the AI card's link wraps under the text; the AI card keeps `role="note"` + label from `AiBanner`; prose starts 34 px under the cover; related-post dates in long fr-FR form; checker hooks `data-article-*` · Alternatives: no hover; one squeezed row · Reversibility: cheap · Why: implementer choices within the plan.
+
+## D90 · Plan 13 · verification 1 — R13 measured on article results only   ⚑ à relire
+Choice: R13's search check becomes "query `ma règle sur l'IA` → no `/blog/<slug>/` result" — the verifier found 3 results (2 prompts, 1 skill) matched on scattered words, none an article · Alternatives: keep "0 results" and strip those words from other pages (content change, out of scope) · Reversibility: cheap · Why: the criterion's intent is "rails not indexed"; its literal measure assumed the phrase existed nowhere else. Narrowed reading.
