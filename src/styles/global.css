@@ -318,41 +318,17 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 /* Fond du bloc de code = `--color-code` (contrat §2, rôle du token : « fond de
-   bloc de code »). Shiki pose lui-même `background-color` en style INLINE sur
-   le `<pre class="astro-code">` (`#fff` en clair, remplacé par
-   `--shiki-dark-bg` en sombre juste en dessous) — un style inline bat toute
-   règle de classe non `!important`, il en faut donc un ici. `var(--color-code)`
-   bascule déjà tout seul entre les deux thèmes (défini dans `@theme` ET dans
-   `:root[data-theme="dark"]`) : UNE seule règle, non conditionnée par
-   `[data-theme]`, suffit pour les deux thèmes — pas besoin de la dupliquer
-   sous `[data-theme='dark']` ci-dessous.
-   Portée à `.astro-code` (le bloc) SEULEMENT, jamais à `.astro-code span` :
-   Shiki ne pose pas de fond par span tant qu'aucune ligne n'est surlignée
-   (vérifié sur le HTML généré, dossier `dist` — aucun `background-color` en
-   style inline sur un `<span>` d'un bloc de code). Round 1 de revue Phase B :
-   la règle span ci-dessous forçait auparavant CE MÊME fond sur chaque span en
-   sombre ; invisible tant que bloc et span portaient la même valeur
-   (`--shiki-dark-bg`), mais dès que le bloc bascule sur `--color-code`
-   (différent de `--shiki-dark-bg`), forcer aussi le span aurait peint chaque
-   token d'un rectangle visible. Supprimé ci-dessous : le span ne gère plus
-   que la couleur syntaxique, jamais le fond. */
+   bloc de code »). Depuis le plan 11 (R5, D52), Shiki utilise un thème unique
+   tiré des tokens (src/lib/syntaxTheme.mjs) : le `style` inline du
+   `<pre class="astro-code">` vaut déjà `background-color:var(--color-code)`
+   et chaque span porte `color:var(--color-<token>)` — la cascade CSS bascule
+   clair/sombre, il n'y a plus de bascule `--shiki-dark` ici. Cette règle reste
+   en garde-fou : si le thème changeait de fond, un style inline battrait toute
+   règle de classe non `!important`. Portée à `.astro-code` (le bloc)
+   SEULEMENT, jamais à `.astro-code span` : un fond forcé par span peindrait
+   chaque token d'un rectangle visible. */
 .astro-code {
   background-color: var(--color-code) !important;
-}
-
-/* Bascule Shiki dual-thème (clair/sombre) — Astro expose les 2 thèmes en CSS
-   custom properties `--shiki-<nom>`/`--shiki-<nom>-bg`/... (le thème "light"
-   est appliqué par défaut via `color` inline sur chaque span ; on ne
-   surcharge que pour `[data-theme="dark"]`, piloté par le même attribut que
-   le reste du site — PAS de classe `.dark`). Le FOND est géré par la règle
-   `.astro-code` ci-dessus (`--color-code`, déjà bi-thème) : ici on ne bascule
-   QUE la couleur syntaxique par token, jamais de fond (cf. note ci-dessus). */
-[data-theme='dark'] .astro-code,
-[data-theme='dark'] .astro-code span {
-  color: var(--shiki-dark) !important;
-  font-style: var(--shiki-dark-font-style) !important;
-  font-weight: var(--shiki-dark-font-weight) !important;
-  text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
 /* Wrapper non scrollable autour de chaque <pre> (Fix review C3, Important #1)
