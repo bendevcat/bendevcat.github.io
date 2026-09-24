@@ -19,11 +19,18 @@
  * alors pas de `preventDefault`.
  */
 
-/** Une option telle que la reçoit `Dropdown.astro` (compte facultatif, aligné à droite). */
-export interface DropdownOption {
+/**
+ * Une option telle que la reçoit `Dropdown.astro` : compte facultatif, aligné
+ * à droite ; icône facultative en tête d'option (plan 12, F3 — les options de
+ * tri du prototype en portent une chacune). Le type du nom d'icône est un
+ * paramètre : ce module reste sans dépendance vers les composants ;
+ * `Dropdown.astro` le fixe au jeu d'`Icon.astro`.
+ */
+export interface DropdownOption<IconName extends string = string> {
   value: string;
   label: string;
   count?: number;
+  icon?: IconName;
 }
 
 export interface DropdownState {

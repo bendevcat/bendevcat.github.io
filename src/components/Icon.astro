@@ -9,10 +9,16 @@
     `newspaper`, `folder-git-2`, `terminal`, `sparkles`, `user`, `search`.
   - 2 glyphes en TRAIT ajoutés au plan 12 (bouton de thème) — Lucide, licence
     ISC : `sun`, `moon`.
-  - 3 glyphes en TRAIT ajoutés au plan 12 / T3 (menu déroulant) — Lucide,
-    licence ISC : `sort` (`arrow-up-down`), `filter` (`list-filter`),
-    `chevron-down` (le caret). Recopiés du jeu Lucide, pas extraits
-    d'un paquet : à recomparer à `lucide-static` si un pixel diffère.
+  - 2 glyphes en TRAIT ajoutés au plan 12 / T3 (menu déroulant) — Lucide,
+    licence ISC : `filter` (`list-filter`), `chevron-down` (le caret).
+    Recopiés du jeu Lucide, pas extraits d'un paquet : à recomparer à
+    `lucide-static` si un pixel diffère.
+  - 5 glyphes en TRAIT du menu de tri, plan 12 / F3 — dessins du PROTOTYPE
+    du site (`bencat_ Prototype cliquable`, lignes 197–203), œuvre du
+    propriétaire du site, recopiés tels quels : `sort` (déclencheur, remplace
+    l'`arrow-up-down` Lucide de T3), `sort-recent`, `sort-oldest`,
+    `sort-shortest`, `sort-longest` (une icône par option). Trait 1,8 comme
+    au prototype (`strokeWidth` du glyphe), au lieu du 1,75 de Lucide.
   - marque GitHub en APLAT — Simple Icons (`simple-icons@16.31.0`), licence
     CC0-1.0 (domaine public). Lucide a sorti les marques de son set :
     `github.svg` n'y existe plus, d'où cette seconde source.
@@ -32,7 +38,7 @@
   de texte du parent, jamais par une valeur codée en dur (règle globale n°1).
 */
 
-type IconName =
+export type IconName =
   | 'blog'
   | 'projets'
   | 'prompts'
@@ -43,6 +49,10 @@ type IconName =
   | 'sun'
   | 'moon'
   | 'sort'
+  | 'sort-recent'
+  | 'sort-oldest'
+  | 'sort-shortest'
+  | 'sort-longest'
   | 'filter'
   | 'chevron-down';
 
@@ -55,7 +65,8 @@ interface Props {
 
 const { name, size = 14, class: className } = Astro.props;
 
-type Glyph = { mode: 'stroke' | 'fill'; paths: string };
+/** `strokeWidth` : épaisseur propre au glyphe (trait seulement), 1,75 par défaut (Lucide). */
+type Glyph = { mode: 'stroke' | 'fill'; paths: string; strokeWidth?: number };
 
 const GLYPHS: Record<IconName, Glyph> = {
   // — Lucide `newspaper` (ISC) —
@@ -123,13 +134,44 @@ const GLYPHS: Record<IconName, Glyph> = {
     mode: 'stroke',
     paths: `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />`,
   },
-  // — Lucide `arrow-up-down` (ISC) — menu de tri —
+  // — Prototype (ligne 197) — déclencheur du menu de tri —
   sort: {
     mode: 'stroke',
-    paths: `<path d="m21 16-4 4-4-4" />
-<path d="M17 20V4" />
-<path d="m3 8 4-4 4 4" />
-<path d="M7 4v16" />`,
+    strokeWidth: 1.8,
+    paths: `<path d="M4 6h13M4 12h9M4 18h5" />
+<path d="M17 14l3 3 3-3" />
+<path d="M20 17V9" />`,
+  },
+  // — Prototype (ligne 200) — option « plus récents » —
+  'sort-recent': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M12 8v5l3 2" />
+<circle cx="12" cy="12" r="9" />`,
+  },
+  // — Prototype (ligne 201) — option « plus anciens » —
+  'sort-oldest': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M3 3v6h6" />
+<path d="M3.5 9a9 9 0 1 0 3-6.2L3 6" />
+<path d="M12 8v5l4 2" />`,
+  },
+  // — Prototype (ligne 202) — option « lecture la plus courte » —
+  'sort-shortest': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M4 7h9M4 12h6M4 17h3" />
+<path d="M17 8v8" />
+<path d="M14 13l3 3 3-3" />`,
+  },
+  // — Prototype (ligne 203) — option « lecture la plus longue » —
+  'sort-longest': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M4 7h3M4 12h6M4 17h9" />
+<path d="M17 16V8" />
+<path d="M14 11l3-3 3 3" />`,
   },
   // — Lucide `list-filter` (ISC) — menu de facette (plan 14) —
   filter: {
@@ -156,7 +198,7 @@ const isStroke = glyph.mode === 'stroke';
   viewBox="0 0 24 24"
   fill={isStroke ? 'none' : 'currentColor'}
   stroke={isStroke ? 'currentColor' : undefined}
-  stroke-width={isStroke ? 1.75 : undefined}
+  stroke-width={isStroke ? (glyph.strokeWidth ?? 1.75) : undefined}
   stroke-linecap={isStroke ? 'round' : undefined}
   stroke-linejoin={isStroke ? 'round' : undefined}
   aria-hidden="true"

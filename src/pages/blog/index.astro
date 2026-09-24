@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ListHeader from '../../components/ListHeader.astro';
 import Dropdown from '../../components/Dropdown.astro';
+import type { IconName } from '../../components/Icon.astro';
 import BlogRail from '../../components/blog/BlogRail.astro';
 import ArticleRow from '../../components/blog/ArticleRow.astro';
 import { getPublishedPosts, estimateReadingMinutes } from '../../lib/posts';
@@ -27,11 +28,12 @@ const tags = blogTagCloud(posts);
 // Source unique du vocabulaire : `data-list-nouns` ET la méta serveur.
 const NOUNS = ['article', 'articles'] as const;
 
-const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-	{ value: 'recent', label: 'plus récents' },
-	{ value: 'oldest', label: 'plus anciens' },
-	{ value: 'shortest', label: 'lecture la plus courte' },
-	{ value: 'longest', label: 'lecture la plus longue' },
+// Icônes et largeur du popover (250 px) : celles du prototype (plan 12, F3).
+const SORT_OPTIONS: { value: SortOrder; label: string; icon: IconName }[] = [
+	{ value: 'recent', label: 'plus récents', icon: 'sort-recent' },
+	{ value: 'oldest', label: 'plus anciens', icon: 'sort-oldest' },
+	{ value: 'shortest', label: 'lecture la plus courte', icon: 'sort-shortest' },
+	{ value: 'longest', label: 'lecture la plus longue', icon: 'sort-longest' },
 ];
 const INITIAL_SORT: SortOrder = 'recent';
 
@@ -79,7 +81,7 @@ const { meta } = computeListState(
 						{/* Ligne de méta — région live polie et atomique (plan 11, R6) que
 						     list-pattern.ts réécrit à chaque filtre ; `muted`, jamais `dim`. */}
 						<p class="font-mono text-xs text-muted" data-list-meta aria-live="polite" aria-atomic="true">{meta}</p>
-						<Dropdown label="tri" options={SORT_OPTIONS} selected={INITIAL_SORT} minWidth={236} data-sort />
+						<Dropdown label="tri" options={SORT_OPTIONS} selected={INITIAL_SORT} minWidth={250} data-sort />
 					</div>
 
 					{/* Lignes — toutes rendues par le serveur, dans l'ordre canonique. */}
