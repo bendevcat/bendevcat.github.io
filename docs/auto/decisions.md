@@ -274,3 +274,18 @@ Choice: R13's search check becomes "query `ma règle sur l'IA` → no `/blog/<sl
 
 ## D91 · Plan 13 · F1–F2 — Audit exemption narrowed; rail insets from the prototype
 Choice: the audit exempts a card only when its painted parent paints `rail` inside a non-thumbnail `[data-rail]` (fails closed without a rail token); rail labels `px-2` (8 px) and tag cloud `px-1.5` (6 px) as prototype lines 174/184/185 and 244/254/255 — measured x 24 / 22 on `/blog` and an article; `/blog` HTML now differs from plan 12 by these two classes · Alternatives: arbitrary px values; leave `/blog` untouched · Reversibility: cheap · Why: verification 1 findings 1–2.
+
+## D92 · Plan 14 · authoring — Lists without an outer frame; no "prochain projet" card
+Choice: on `/projets`, `/prompts`, `/skills` each entry is a `.card` on the page (D67 supersedes D51's frame + `.card-inner`); the prototype's dashed "prochain projet" card is not shipped (demo copy only); hero shows the cover or a hatched placeholder without badge; status pills keep the D53 colours; 24 px `--radius-feature` for the hero · Alternatives: keep the frame; ship the card with neutral copy · Reversibility: cheap · Why: prototype structure; no invented copy.
+
+## D93 · Plan 14 · authoring — Facets, counts, labels and empty states
+Choice: fixed counts over all published entries, zero-count segments kept (`Archivé 0` reaches the empty state); segments `Tous · Actif · WIP · Archivé`, `Tous · Fiche · Guide`, skill types as written; dropdown all-options `toutes` (techno) / `tous` (outil, tag); the prototype's empty-state sentences, with a slotted projects template; `[data-list-meta]` kept as a visually hidden live region; one shared `ListEmpty` component; grid 1 / 2 / 3 columns at < 640 / 640 / 1024, hero stacks below 768, segmented track wraps with radius 20 below 640; cards are `<article>` with a stretched h2 link; hero date `depuis <mois année>` · Alternatives: counts following the other facet; hiding zero segments; visible count line · Reversibility: cheap · Why: prototype behaviour; `aria-live` kept from plan 11.
+
+## D94 · Plan 14 · authoring — Prompt stats and early schema fields
+Choice: lines = newlines + 1 and tokens = chars / 4 rounded, measured on `prompt` (fiche) or the body (guide), trimmed; prompt `version` and `variables[{name, hint?, default?}]` added now, empty (no source), reused by plan 16; skill summary counts published related prompts only (commands / sub-skills → plan 17); superpowers content version left at 6.2.0 (→ plan 17) · Alternatives: count `{{placeholders}}`; defer fields to plan 16 · Reversibility: cheap · Why: derivable today, no invented values.
+
+## D95 · Plan 14 · authoring — Skill licence `MIT` from the plugins' own LICENSE files   ⚑ à relire
+Choice: new optional `license` field on skills (schema + Sveltia); `anti-drift-planning` → `MIT` (its LICENSE, © 2026 bendevcat, and `plugin.json`); `superpowers` → `MIT` (its LICENSE, © 2025 Jesse Vincent, and `plugin.json` in the 6.3.0 and 6.4.1 caches) · Alternatives: field left empty · Reversibility: cheap · Why: D65 sourced filling; legal content, so to re-read.
+
+## D96 · Plan 14 · authoring — Third V2 narrowing: count badges on `chip` in a segmented track   ⚑ à relire
+Choice: `check-finition` accepts a card-level count badge on `chip` inside `[data-segmented]` (the prototype's active-segment badge) · Alternatives: a class trick to dodge the static check · Reversibility: cheap · Why: D67; to re-read with D74 and D88.
