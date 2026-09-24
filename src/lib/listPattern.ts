@@ -305,3 +305,33 @@ export function facetsFromQuery(
   }
   return selection;
 }
+
+/** Contrôle de facette d'un groupe, tel que le voit resetFocusIndex(). */
+export interface FocusCandidate {
+  /** `button` : segment ou ligne de rail ; `select` ; `dropdown` : racine de menu. */
+  kind: 'button' | 'select' | 'dropdown';
+  key: string;
+  /** `data-facet-value` d'un bouton (`ALL` pour « Tous » / « Tout »). */
+  value?: string;
+}
+
+/**
+ * Cible du focus après la remise à zéro de l'état vide (plan 14, F2). Le
+ * bouton de remise à zéro disparaît avec l'état vide : sans cible, le focus
+ * tomberait sur `<body>` et l'utilisateur au clavier repartirait du haut de la
+ * page. `candidates` = les contrôles de facette du PREMIER groupe, dans
+ * l'ordre du DOM. Le premier contrôle fixe la facette : un bouton → le bouton
+ * « Tous » / « Tout » de cette facette (celui que la remise à zéro vient de
+ * presser), à défaut le premier bouton ; un menu ou un `<select>` → lui-même
+ * (le script en focalise le déclencheur). Renvoie l'indice dans `candidates`,
+ * ou `null` s'il n'y a aucun contrôle.
+ */
+export function resetFocusIndex(candidates: readonly FocusCandidate[]): number | null {
+  const first = candidates[0];
+  if (!first) return null;
+  if (first.kind !== 'button') return 0;
+  const all = candidates.findIndex(
+    (c) => c.kind === 'button' && c.key === first.key && (c.value ?? ALL) === ALL,
+  );
+  return all === -1 ? 0 : all;
+}

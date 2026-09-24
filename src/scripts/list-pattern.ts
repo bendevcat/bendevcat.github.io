@@ -35,13 +35,19 @@
  *   la page) donne le gabarit de la phrase d'état vide, et
  *   `data-facet-empty-prefix` sur un contrôle le préfixe de son emplacement
  *   (voir listPattern.ts).
+ *
+ * Plan 14, F2 — après la remise à zéro, le focus passe au contrôle « Tous » /
+ * « Tout » du premier groupe (ou au déclencheur de son menu) : le bouton de
+ * remise à zéro disparaît avec l'état vide, et le focus tombait sur `<body>`.
  */
 import { ALL, type FacetSelection } from '../lib/facetFilters';
 import {
   computeListState,
   domOrder,
   facetsFromQuery,
+  resetFocusIndex,
   type FacetLabel,
+  type FocusCandidate,
   type ListEntry,
   type ListLabels,
   type SortOrder,
@@ -263,7 +269,38 @@ if (root && groups.length > 0 && grid) {
     if (sortDropdown) setDropdownValue(sortDropdown, initialSort);
     apply();
     groups[0].scrollIntoView({ block: 'nearest' });
+    // F2 : le bouton vient d'être masqué avec l'état vide — sans cible, le
+    // focus tomberait sur `<body>`. Au clic souris, le focus programmatique ne
+    // dessine pas d'anneau (`:focus-visible` suit la modalité d'entrée).
+    resetFocusTarget()?.focus();
   });
+
+  // Contrôles du PREMIER groupe dans l'ordre du DOM ; resetFocusIndex() choisit
+  // (listPattern.ts, testé). Un menu est focalisé par son déclencheur.
+  function resetFocusTarget(): HTMLElement | null {
+    const firstControls = Array.from(
+      groups[0].querySelectorAll<HTMLElement>(
+        'button[data-facet-key], select[data-facet-key], [data-dropdown][data-facet-key]',
+      ),
+    );
+    const candidates = firstControls.map(
+      (el): FocusCandidate => ({
+        kind: el.hasAttribute('data-dropdown')
+          ? 'dropdown'
+          : el instanceof HTMLSelectElement
+            ? 'select'
+            : 'button',
+        key: el.dataset.facetKey ?? '',
+        value: el.dataset.facetValue,
+      }),
+    );
+    const index = resetFocusIndex(candidates);
+    if (index === null) return null;
+    const target = firstControls[index];
+    return target.hasAttribute('data-dropdown')
+      ? target.querySelector<HTMLElement>('[data-dropdown-trigger]')
+      : target;
+  }
 
   for (const group of groups) group.hidden = false;
   apply();

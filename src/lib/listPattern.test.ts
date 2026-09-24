@@ -7,6 +7,7 @@ import {
   facetsFromQuery,
   isAnyFacetActive,
   pickFeaturedEntry,
+  resetFocusIndex,
   type ListEntry,
   type ListLabels,
 } from './listPattern';
@@ -422,5 +423,62 @@ describe('computeListState — gabarit d’état vide (plan 14, R2)', () => {
     expect(computeListState([], { status: ALL, stack: ALL }, 'none', plain).empty).toBe(
       'Aucun projet à afficher.',
     );
+  });
+});
+
+describe('resetFocusIndex — cible du focus après remise à zéro (plan 14, F2)', () => {
+  it('vise le segment « Tous » de la première facette, pas le premier bouton', () => {
+    // /projets : segments de statut (Tous en tête), puis le menu techno.
+    expect(
+      resetFocusIndex([
+        { kind: 'button', key: 'status', value: ALL },
+        { kind: 'button', key: 'status', value: 'actif' },
+        { kind: 'button', key: 'status', value: 'wip' },
+        { kind: 'dropdown', key: 'stack' },
+      ]),
+    ).toBe(0);
+    // Le « Tous » n'est pas forcément le premier bouton du groupe.
+    expect(
+      resetFocusIndex([
+        { kind: 'button', key: 'format', value: 'fiche' },
+        { kind: 'button', key: 'format', value: ALL },
+        { kind: 'dropdown', key: 'tool' },
+      ]),
+    ).toBe(1);
+  });
+
+  it('ignore le « Tous » d’une autre facette', () => {
+    expect(
+      resetFocusIndex([
+        { kind: 'button', key: 'status', value: 'actif' },
+        { kind: 'button', key: 'stack', value: ALL },
+        { kind: 'button', key: 'status', value: ALL },
+      ]),
+    ).toBe(2);
+  });
+
+  it('vise la ligne « Tout » du rail de /blog', () => {
+    expect(
+      resetFocusIndex([
+        { kind: 'button', key: 'category', value: ALL },
+        { kind: 'button', key: 'category', value: 'DevOps' },
+        { kind: 'button', key: 'category', value: 'IA' },
+      ]),
+    ).toBe(0);
+  });
+
+  it('vise le menu ou le select quand il ouvre le groupe', () => {
+    expect(resetFocusIndex([{ kind: 'dropdown', key: 'stack' }, { kind: 'button', key: 'status', value: ALL }])).toBe(0);
+    expect(resetFocusIndex([{ kind: 'select', key: 'tag' }])).toBe(0);
+  });
+
+  it('se rabat sur le premier bouton sans « Tous », et renvoie null sans contrôle', () => {
+    expect(
+      resetFocusIndex([
+        { kind: 'button', key: 'status', value: 'actif' },
+        { kind: 'button', key: 'status', value: 'wip' },
+      ]),
+    ).toBe(0);
+    expect(resetFocusIndex([])).toBeNull();
   });
 });
