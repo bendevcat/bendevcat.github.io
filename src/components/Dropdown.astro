@@ -1,0 +1,124 @@
+---
+/**
+ * Dropdown.astro (plan 12, T3) — LE menu déroulant du site : tri de /blog
+ * (plan 12), facettes techno / outil / tag de /projets et /prompts (plan 14).
+ * Inventaire §0 « Dropdown », décision D75.
+ *
+ * - Déclencheur : bouton transparent, mono 11 `muted`, icône + `label :` +
+ *   valeur `ink`/500 + caret ; `aria-haspopup="listbox"`, `aria-expanded`.
+ * - Popover : `role="listbox"`, `top: calc(100% + 10px)`, aligné à droite,
+ *   largeur mini `minWidth` (216 par défaut, 236 pour le tri), 300 px de haut
+ *   au plus puis défilement, padding 6, rayon 14, `surface`, bordure `line`,
+ *   ombre `var(--shadow)` posée par global.css — jamais l'utilitaire
+ *   `.shadow`, figé en clair au build.
+ * - Options : padding 9/11, rayon 10 ; l'option choisie porte `✓`, `accent`,
+ *   fond `accent` à 8 %, graisse 600 et `aria-selected="true"` ; compte
+ *   facultatif à droite, mono 10 `muted` (le prototype dessine `dim`, qui
+ *   échoue AA : plan 12, « AA over the prototype »).
+ * - Comportement : src/scripts/dropdown.ts (glue) + src/lib/dropdown.ts
+ *   (clavier, testé). La racine garde `data-value` et émet `dropdown-change`.
+ * - Enhancement progressif : racine rendue `hidden`, révélée par le script —
+ *   sans JS, aucun contrôle mort.
+ *
+ * Tout attribut supplémentaire (`data-sort`, `data-facet-key`…) est posé sur
+ * la racine, pour que le moteur de liste la retrouve.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Icon from './Icon.astro';
+import { indexOfValue, type DropdownOption } from '../lib/dropdown';
+
+interface Props extends Omit<HTMLAttributes<'div'>, 'hidden' | 'id'> {
+  /** Libellé du menu, affiché `label :` sur le déclencheur (ex. `tri`, `techno`). */
+  label: string;
+  options: DropdownOption[];
+  /** Valeur choisie ; absente ou inconnue → première option. */
+  selected?: string;
+  /** Largeur minimale du popover, en px (216 ; 236 pour le tri). */
+  minWidth?: number;
+  icon?: 'sort' | 'filter';
+  /** Préfixe d'id, à fournir si deux menus de même libellé partagent une page. */
+  id?: string;
+}
+
+const {
+  label,
+  options,
+  selected,
+  minWidth = 216,
+  icon = 'sort',
+  id,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const slug = label
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '');
+const baseId = id ?? `dropdown-${slug || 'menu'}`;
+const listId = `${baseId}-listbox`;
+
+const current = options[indexOfValue(options.map((option) => option.value), selected)];
+---
+
+<div
+  data-dropdown
+  data-value={current?.value ?? ''}
+  hidden
+  class:list={['relative inline-block', className]}
+  {...rest}
+>
+  <button
+    type="button"
+    data-dropdown-trigger
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-controls={listId}
+    class="inline-flex cursor-pointer items-center gap-1.5 rounded-thumb bg-transparent px-1 py-1 font-mono text-[11px] whitespace-nowrap text-muted transition-colors hover:text-ink"
+  >
+    <Icon name={icon} size={13} />
+    <span>{label} :</span>
+    <span data-dropdown-value class="font-medium text-ink">{current?.label ?? ''}</span>
+    <Icon name="chevron-down" size={12} />
+  </button>
+  <ul
+    id={listId}
+    role="listbox"
+    aria-label={label}
+    tabindex="-1"
+    hidden
+    data-dropdown-listbox
+    class="absolute top-[calc(100%+10px)] right-0 z-20 max-h-[300px] max-w-[calc(100vw-2rem)] overflow-auto rounded-inner border border-line bg-surface p-1.5"
+    style={`min-width: ${minWidth}px`}
+  >
+    {
+      options.map((option) => {
+        const isSelected = option.value === current?.value;
+        return (
+          <li
+            role="option"
+            data-value={option.value}
+            data-label={option.label}
+            aria-selected={isSelected ? 'true' : 'false'}
+            tabindex="-1"
+            class="flex cursor-pointer items-center gap-2 rounded-thumb px-[11px] py-[9px] text-[13px] whitespace-nowrap text-body not-aria-selected:hover:bg-chip not-aria-selected:focus:bg-chip aria-selected:bg-accent/8 aria-selected:font-semibold aria-selected:text-accent"
+          >
+            <span data-dropdown-check aria-hidden="true" class="w-3 shrink-0 text-center">
+              {isSelected ? '✓' : ''}
+            </span>
+            <span>{option.label}</span>
+            {option.count !== undefined && (
+              <span class="ml-auto pl-3 font-mono text-[10px] font-normal text-muted">{option.count}</span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<script>
+  import '../scripts/dropdown.ts';
+</script>

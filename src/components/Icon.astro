@@ -9,6 +9,10 @@
     `newspaper`, `folder-git-2`, `terminal`, `sparkles`, `user`, `search`.
   - 2 glyphes en TRAIT ajoutés au plan 12 (bouton de thème) — Lucide, licence
     ISC : `sun`, `moon`.
+  - 3 glyphes en TRAIT ajoutés au plan 12 / T3 (menu déroulant) — Lucide,
+    licence ISC : `sort` (`arrow-up-down`), `filter` (`list-filter`),
+    `chevron-down` (le caret). Recopiés du jeu Lucide, pas extraits
+    d'un paquet : à recomparer à `lucide-static` si un pixel diffère.
   - marque GitHub en APLAT — Simple Icons (`simple-icons@16.31.0`), licence
     CC0-1.0 (domaine public). Lucide a sorti les marques de son set :
     `github.svg` n'y existe plus, d'où cette seconde source.
@@ -37,7 +41,10 @@ type IconName =
   | 'search'
   | 'github'
   | 'sun'
-  | 'moon';
+  | 'moon'
+  | 'sort'
+  | 'filter'
+  | 'chevron-down';
 
 interface Props {
   name: IconName;
@@ -115,6 +122,26 @@ const GLYPHS: Record<IconName, Glyph> = {
   moon: {
     mode: 'stroke',
     paths: `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />`,
+  },
+  // — Lucide `arrow-up-down` (ISC) — menu de tri —
+  sort: {
+    mode: 'stroke',
+    paths: `<path d="m21 16-4 4-4-4" />
+<path d="M17 20V4" />
+<path d="m3 8 4-4 4 4" />
+<path d="M7 4v16" />`,
+  },
+  // — Lucide `list-filter` (ISC) — menu de facette (plan 14) —
+  filter: {
+    mode: 'stroke',
+    paths: `<path d="M2 5h20" />
+<path d="M6 12h12" />
+<path d="M9 19h6" />`,
+  },
+  // — Lucide `chevron-down` (ISC) — caret du menu déroulant —
+  'chevron-down': {
+    mode: 'stroke',
+    paths: `<path d="m6 9 6 6 6-6" />`,
   },
 };
 

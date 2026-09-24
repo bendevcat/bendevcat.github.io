@@ -399,8 +399,21 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 [data-list-grid][hidden],
 [data-list-empty][hidden],
 [data-entry-id][hidden],
-[data-search-open][hidden] {
+[data-search-open][hidden],
+[data-dropdown][hidden],
+[data-dropdown-listbox][hidden] {
   display: none !important;
+}
+
+/* Menu déroulant (plan 12, T3 — src/components/Dropdown.astro) : la racine
+   porte `inline-block`, d'où sa place dans la liste `hidden` ci-dessus (rendue
+   `hidden` par le serveur, révélée par src/scripts/dropdown.ts : pas de
+   contrôle mort sans JS). L'ombre du popover est `var(--shadow)` posée ici, en
+   CSS écrit à la main — jamais l'utilitaire `.shadow`, figé en clair au build
+   (cf. `.card-inner`). Sélecteur d'attribut hors `@layer components` : la
+   couche garde ses quatre classes de patron. */
+[data-dropdown-listbox] {
+  box-shadow: var(--shadow);
 }
 
 /* ==========================================================================
