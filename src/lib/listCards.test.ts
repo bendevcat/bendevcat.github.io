@@ -28,6 +28,23 @@ describe('prompt card data (D94)', () => {
     expect(measurePromptText({ format: 'guide' }, undefined)).toBe('');
   });
 
+  it("measures a fiche's prompt with its variables at their defaults", () => {
+    const variables = [
+      { name: 'N', default: '4' },
+      { name: 'topic', default: 'librairies-prompts-skills' },
+      { name: 'vide' },
+    ];
+    const data = { format: 'fiche' as const, prompt: '\nplan-{N}-{topic}\n{vide} {autre}\n', variables };
+    // Défauts rendus, `{name}` sans défaut, accolades non déclarées littérales, rogné.
+    expect(measurePromptText(data, 'notes')).toBe('plan-4-librairies-prompts-skills\n{vide} {autre}');
+    // La carte compte ce même texte : 2 lignes, 47 caractères → ~12 tk.
+    const card = promptCardData({ ...data, tool: 'Claude Code' }, 'notes');
+    expect(card.lines).toBe('2 l.');
+    expect(card.tokens).toBe(`~${Math.round('plan-4-librairies-prompts-skills\n{vide} {autre}'.length / 4)} tk`);
+    // Un guide ne rend jamais de variables : son corps est mesuré tel quel.
+    expect(measurePromptText({ format: 'guide', prompt: '{N}', variables }, ' corps {N} ')).toBe('corps {N}');
+  });
+
   it('counts lines and rounds chars / 4 into tokens', () => {
     expect(promptStats('abcd')).toEqual({ lines: 1, tokens: 1 });
     expect(promptStats('a\nb\nc')).toEqual({ lines: 3, tokens: 1 }); // 5 / 4 = 1.25

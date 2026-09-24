@@ -7,7 +7,8 @@
  * composants de carte n'ont qu'à afficher les chaînes rendues ici ; `null`
  * veut dire « emplacement absent », jamais une chaîne vide à masquer en CSS.
  */
-import { shouldRenderPromptBlock, type PromptFormat } from './promptView';
+import type { PromptFormat } from './promptView';
+import { promptWindowSource, renderPromptText, type PromptVariable } from './promptWindow';
 
 export interface PromptStats {
   lines: number;
@@ -15,18 +16,19 @@ export interface PromptStats {
 }
 
 /**
- * Le texte mesuré par la carte (D94) : ce que la fiche présente comme sa
- * valeur. Même règle que la page de détail (shouldRenderPromptBlock) : le
- * champ `prompt` d'une fiche qui en a un, sinon le corps. Rogné, pour que les
+ * Le texte mesuré par la carte (D94) — et affiché par la fenêtre de la fiche
+ * prompt (plan 16) : ce que la fiche présente comme sa valeur. Le champ
+ * `prompt` d'une fiche qui en a un, ses variables déclarées rendues à leur
+ * défaut (`{name}` sans défaut), sinon le corps, tel quel. Rogné, pour que les
  * lignes vides de bord (fin de fichier, saut après le frontmatter) ne
- * comptent pas.
+ * comptent pas. Source unique : promptWindowSource (src/lib/promptWindow.ts).
  */
 export function measurePromptText(
-  data: { format: PromptFormat; prompt?: string },
+  data: { format: PromptFormat; prompt?: string; variables?: readonly PromptVariable[] },
   body: string | undefined,
 ): string {
-  const text = shouldRenderPromptBlock(data.format, data.prompt) ? data.prompt! : (body ?? '');
-  return text.trim();
+  const source = promptWindowSource(data, body);
+  return renderPromptText(source.template, source.variables);
 }
 
 /**
@@ -73,7 +75,7 @@ export function promptCardData(
     tool: string;
     prompt?: string;
     version?: string;
-    variables?: readonly unknown[];
+    variables?: readonly PromptVariable[];
   },
   body?: string,
 ): PromptCardData {

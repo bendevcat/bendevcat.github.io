@@ -6,7 +6,7 @@
  * unitaires — comme listPattern.ts pour le patron liste.
  *
  * Deux familles de fonctions :
- * - `projectTabs` / `promptTabs` / `skillTabs` décident, côté serveur, QUELS
+ * - `projectTabs` / `promptPageTabs` / `skillTabs` décident, côté serveur, QUELS
  *   onglets existent : un onglet n'apparaît que si le contenu existant le
  *   nourrit (D1). Les pages leur passent des faits bruts (corps, présence
  *   d'un extrait de code, tailles), jamais une entrée de collection.
@@ -50,6 +50,17 @@ export interface BodyTabInput {
   body: string | undefined;
 }
 
+export interface PromptPageTabInput {
+  /** Nombre de variables déclarées (`variables`), 0 sans le champ. */
+  variableCount: number;
+  /**
+   * `true` quand la fenêtre montre le champ `prompt` (fiche qui en a un,
+   * promptWindowSource) ; `false` quand elle montre déjà le corps.
+   */
+  windowShowsPrompt: boolean;
+  body: string | undefined;
+}
+
 /**
  * « Vide » = vide après trim. Le texte littéral `No content` n'est PAS vide
  * (D4) : c'est un placeholder conservé volontairement, il nourrit son onglet.
@@ -75,6 +86,8 @@ export function projectTabs(input: ProjectTabInput): Tab[] {
 }
 
 /**
+ * Onglets de l'ANCIENNE page prompt (plan 8), gardés tant qu'elle se construit
+ * avec — le plan 16 (T5) les remplace par `promptPageTabs` et retire celle-ci.
  * Infos est toujours là : `format` et `tool` ont des valeurs par défaut dans le
  * schéma, le panneau a donc toujours de quoi s'afficher. Le corps d'un prompt
  * « guide » va lui aussi sous Pourquoi (D3).
@@ -83,6 +96,21 @@ export function promptTabs(input: BodyTabInput): Tab[] {
   const tabs: Tab[] = [];
   if (!isBlank(input.body)) tabs.push({ id: 'pourquoi', label: 'Pourquoi' });
   tabs.push({ id: 'infos', label: 'Infos' });
+  return tabs;
+}
+
+/**
+ * Onglets de la fiche prompt (plan 16, piste de pastilles) — ordre figé :
+ * `variables` quand des variables sont déclarées ; `décryptage` quand la
+ * fenêtre montre le `prompt` et que le corps n'est pas blanc (sinon le corps
+ * est déjà dans la fenêtre) ; `infos` toujours (format et tool ont des valeurs
+ * par défaut). Pas de `sortie` : aucun champ ne la nourrit (D111).
+ */
+export function promptPageTabs(input: PromptPageTabInput): Tab[] {
+  const tabs: Tab[] = [];
+  if (input.variableCount > 0) tabs.push({ id: 'variables', label: 'variables' });
+  if (input.windowShowsPrompt && !isBlank(input.body)) tabs.push({ id: 'decryptage', label: 'décryptage' });
+  tabs.push({ id: 'infos', label: 'infos' });
   return tabs;
 }
 
