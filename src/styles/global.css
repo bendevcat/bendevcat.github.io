@@ -6,6 +6,14 @@
 @import "@fontsource/nebula-sans/700.css";
 @import "@fontsource-variable/jetbrains-mono";
 
+/* Tailwind v4 détecte les classes dans tous les fichiers du dépôt, docs
+   comprises : un utilitaire de palette cité dans un .md de docs/ générait
+   des règles mortes, et avec elles des couleurs hors contrat dans le bundle
+   (plan 11, D55). Même chose pour les tests, qui citent de tels utilitaires
+   comme contre-exemples (src/lib/palette.test.ts). */
+@source not "../../docs";
+@source not "../**/*.test.ts";
+
 /* bascule de thème pilotée par [data-theme] sur <html> */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -318,41 +326,17 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 /* Fond du bloc de code = `--color-code` (contrat §2, rôle du token : « fond de
-   bloc de code »). Shiki pose lui-même `background-color` en style INLINE sur
-   le `<pre class="astro-code">` (`#fff` en clair, remplacé par
-   `--shiki-dark-bg` en sombre juste en dessous) — un style inline bat toute
-   règle de classe non `!important`, il en faut donc un ici. `var(--color-code)`
-   bascule déjà tout seul entre les deux thèmes (défini dans `@theme` ET dans
-   `:root[data-theme="dark"]`) : UNE seule règle, non conditionnée par
-   `[data-theme]`, suffit pour les deux thèmes — pas besoin de la dupliquer
-   sous `[data-theme='dark']` ci-dessous.
-   Portée à `.astro-code` (le bloc) SEULEMENT, jamais à `.astro-code span` :
-   Shiki ne pose pas de fond par span tant qu'aucune ligne n'est surlignée
-   (vérifié sur le HTML généré, dossier `dist` — aucun `background-color` en
-   style inline sur un `<span>` d'un bloc de code). Round 1 de revue Phase B :
-   la règle span ci-dessous forçait auparavant CE MÊME fond sur chaque span en
-   sombre ; invisible tant que bloc et span portaient la même valeur
-   (`--shiki-dark-bg`), mais dès que le bloc bascule sur `--color-code`
-   (différent de `--shiki-dark-bg`), forcer aussi le span aurait peint chaque
-   token d'un rectangle visible. Supprimé ci-dessous : le span ne gère plus
-   que la couleur syntaxique, jamais le fond. */
+   bloc de code »). Depuis le plan 11 (R5, D52), Shiki utilise un thème unique
+   tiré des tokens (src/lib/syntaxTheme.mjs) : le `style` inline du
+   `<pre class="astro-code">` vaut déjà `background-color:var(--color-code)`
+   et chaque span porte `color:var(--color-<token>)` — la cascade CSS bascule
+   clair/sombre, il n'y a plus de bascule `--shiki-dark` ici. Cette règle reste
+   en garde-fou : si le thème changeait de fond, un style inline battrait toute
+   règle de classe non `!important`. Portée à `.astro-code` (le bloc)
+   SEULEMENT, jamais à `.astro-code span` : un fond forcé par span peindrait
+   chaque token d'un rectangle visible. */
 .astro-code {
   background-color: var(--color-code) !important;
-}
-
-/* Bascule Shiki dual-thème (clair/sombre) — Astro expose les 2 thèmes en CSS
-   custom properties `--shiki-<nom>`/`--shiki-<nom>-bg`/... (le thème "light"
-   est appliqué par défaut via `color` inline sur chaque span ; on ne
-   surcharge que pour `[data-theme="dark"]`, piloté par le même attribut que
-   le reste du site — PAS de classe `.dark`). Le FOND est géré par la règle
-   `.astro-code` ci-dessus (`--color-code`, déjà bi-thème) : ici on ne bascule
-   QUE la couleur syntaxique par token, jamais de fond (cf. note ci-dessus). */
-[data-theme='dark'] .astro-code,
-[data-theme='dark'] .astro-code span {
-  color: var(--shiki-dark) !important;
-  font-style: var(--shiki-dark-font-style) !important;
-  font-weight: var(--shiki-dark-font-weight) !important;
-  text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
 /* Wrapper non scrollable autour de chaque <pre> (Fix review C3, Important #1)
@@ -407,6 +391,7 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
    ========================================================================== */
 [data-list-filters][hidden],
 [data-list-featured][hidden],
+[data-list-grid][hidden],
 [data-list-empty][hidden],
 [data-entry-id][hidden],
 [data-search-open][hidden] {
@@ -414,13 +399,29 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 /* ==========================================================================
+   Anneau de focus (plan 11, R14, D53) — un seul, sur un token du contrat :
+   2 px `accent` décalé de 2 px, pour tout élément focalisé au clavier. Dans
+   `@layer base` : n'importe quel utilitaire `focus-visible:outline-*` (les
+   onglets de DetailTabs gardent `ink`) le surcharge sans lutte de
+   spécificité. Remplace l'anneau natif du navigateur, bleu hors contrat.
+   ========================================================================== */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ==========================================================================
    Patron « détail à onglets » (Plan 8) : composant src/components/DetailTabs.astro,
    glue src/scripts/detail-tabs.ts. Ces règles vivent HORS de
    `@layer components` : la couche garde ses quatre classes (D9, R13), et le
    style des onglets eux-mêmes est en utilitaires dans le composant.
-   - Un panneau non sélectionné porte `hidden` ; `!important` pour la même
-     raison que plus haut (le preflight `[hidden]` a la spécificité d'un
-     utilitaire de `display`).
+   - Un panneau non sélectionné porte `hidden` : le preflight
+     `[hidden] { display: none !important }` (`@layer base`) suffit à le
+     masquer — un `!important` rangé en couche bat tout CSS non rangé, et le
+     panneau ne porte aucun utilitaire de `display`. L'ancienne règle hors
+     couche qui le répétait est retirée (plan 11, R11).
    - Repli sans JS (D11) : le script inline de BaseLayout pose `data-js` sur
      <html>. Sans lui, la rangée d'onglets — un contrôle mort — est cachée et
      tous les panneaux s'affichent, chacun sous son titre de repli. Avec lui,
@@ -436,9 +437,6 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
      qu'en l'absence de `data-js` : avec JS, le masquage par `hidden` reste
      entier, sans flash (le script inline pose `data-js` avant le rendu).
    ========================================================================== */
-[data-detail-tabs] [role="tabpanel"][hidden] {
-  display: none !important;
-}
 html:not([data-js]) [data-detail-tabs] [role="tablist"] {
   display: none !important;
 }

@@ -58,8 +58,10 @@ const panels = await Promise.all(
           <>
             {/* Titre de repli : visible seulement sans JS, quand la rangée est
                 cachée et que les panneaux s'empilent. Hors du panneau, pour
-                que le contrôle « aucun panneau vide » (R2) reste honnête. */}
-            <h2 class="mt-8 font-mono text-sm text-muted first-of-type:mt-0" data-tab-fallback-heading>
+                que le contrôle « aucun panneau vide » (R2) reste honnête.
+                `data-pagefind-ignore` : un libellé d'onglet (« // infos ») n'a
+                rien à faire dans l'index de recherche (plan 11, R11). */}
+            <h2 class="mt-8 font-mono text-sm text-muted first-of-type:mt-0" data-tab-fallback-heading data-pagefind-ignore>
               // {tab.label.toLowerCase()}
             </h2>
             <div

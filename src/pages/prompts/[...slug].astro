@@ -64,8 +64,8 @@ const shown = new Set(tabs.map((tab) => tab.id));
           <h2 class="font-mono text-sm text-muted">// le prompt</h2>
           {/*
             Correctif D07 (pending-user, cheap) : le Step 6 d'origine rendait
-            ce <pre> hors de tout `.prose`, or `.prose :where(pre)`
-            (src/styles/global.css:115-122) — overflow-x:auto, padding,
+            ce <pre> hors de tout `.prose`, or la règle `.prose :where(pre)`
+            de src/styles/global.css — overflow-x:auto, padding,
             bordure, rayon — est SCOPÉE à `.prose`. Résultat mesuré au smoke
             navigateur : overflow-x:visible, padding/border/radius à 0,
             2461px de débordement horizontal à 375px (R9 cassée) et aucun
@@ -82,7 +82,7 @@ const shown = new Set(tabs.map((tab) => tab.id));
             Correctif addendum D07 (revue qualité, round 1) : ce <pre> ne
             porte PAS la classe `astro-code`. Une première version l'ajoutait
             en pensant que `.prose { font-family: var(--font-sans) }`
-            (ligne 48) écraserait sinon la police mono par héritage — c'est
+            (règle `.prose` de global.css) écraserait sinon la police mono par héritage — c'est
             faux : une valeur héritée ne concurrence JAMAIS une règle qui
             matche l'élément directement, et le preflight Tailwind v4 déclaré
             en tête de ce fichier (`@import "tailwindcss"`) fait déjà
@@ -90,10 +90,11 @@ const shown = new Set(tabs.map((tab) => tab.id));
             font-family, …) }`, qui se résout à `var(--font-mono)` via
             `--font-mono` (notre `@theme`) — donc ce <pre> est en JetBrains
             Mono sans rien ajouter. Pire : `astro-code` n'est pas neutre —
-            `global.css:160-167` lui attache 5 déclarations `!important` de
-            Shiki (thème dark), inoffensives ICI seulement par accident
-            (les variables `--shiki-*` référencées n'existent pas sur ce
-            bloc, donc `unset`). Vérifié sur le HTML buildé et en dev :
+            la règle `.astro-code` de global.css lui impose un fond
+            `background-color: var(--color-code) !important` (garde-fou du
+            thème Shiki tiré des tokens, plan 11), étranger à ce bloc. (Avant
+            le plan 11, c'étaient 5 déclarations `!important` de bascule
+            sombre de Shiki, retirées depuis.) Vérifié sur le HTML buildé et en dev :
             `getComputedStyle(pre).fontFamily` reste bien
             `"JetBrains Mono Variable", ui-monospace, …` sans la classe.
 

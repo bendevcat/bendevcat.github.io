@@ -134,7 +134,7 @@ const shown = new Set(tabs.map((tab) => tab.id));
                     déviation) — forme établie et vérifiée en T-B3, voir D07 :
                     le <pre> DOIT être enveloppé dans un conteneur `.prose`, sinon il
                     ne reçoit RIEN du style de code-block du Plan 1. La règle
-                    `.prose :where(pre)` (src/styles/global.css:115-122) porte
+                    `.prose :where(pre)` de src/styles/global.css porte
                     overflow-x:auto, padding, bordure et rayon, et elle est SCOPÉE à
                     `.prose`. Sans l'enveloppe, le bloc mesurait `overflow-x: visible`
                     et provoquait 2 461 px de débordement horizontal à 375px — R9
@@ -144,10 +144,11 @@ const shown = new Set(tabs.map((tab) => tab.id));
                     - le label (`<h2>`, `<dt>` depuis le Plan 8) reste HORS de
                       `.prose` (sinon `.prose :where(h2)` écrase son style de
                       label mono discret) ;
-                    - le <pre> ne porte AUCUNE classe : pas de `astro-code` (elle
-                      attache 5 déclarations `!important` de Shiki, global.css:160-167,
-                      et n'est pas nécessaire — le preflight Tailwind v4 met déjà
-                      `pre` en JetBrains Mono).
+                    - le <pre> ne porte AUCUNE classe : pas de `astro-code` (la
+                      règle `.astro-code` de global.css lui imposerait un fond
+                      `!important`, garde-fou du thème Shiki, et elle n'est pas
+                      nécessaire — le preflight Tailwind v4 met déjà `pre` en
+                      JetBrains Mono).
                   */}
                   {/*
                     Plan 8 (D8, R10) : ce <pre> vit dans un panneau masqué au

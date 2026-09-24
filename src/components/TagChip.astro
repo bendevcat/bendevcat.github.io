@@ -11,7 +11,9 @@
   Rendu : `<a>` quand `href` est donné (liens de /tags), `<li>` sinon — la
   puce se pose alors directement dans un `<ul aria-label="Tags">`.
   Le contenu du slot (ex. le compte sur /tags) suit le libellé, dans l'encre
-  du ton.
+  du ton. `label` (liens seulement) devient l'`aria-label` du lien : sur
+  /tags, « <tag> <compte> » avec une espace, sinon le nom accessible se lit
+  « claude-code5 » (plan 11, R15).
 */
 import { tagSlug, tagTone } from '../lib/tags';
 import { TONE_CLASSES } from '../lib/tones';
@@ -19,11 +21,13 @@ import { TONE_CLASSES } from '../lib/tones';
 interface Props {
   tag: string;
   href?: string;
+  /** Nom accessible du lien (`aria-label`), quand le texte visible ne suffit pas. */
+  label?: string;
   /** Classes de mise en page supplémentaires (padding, gap…). */
   class?: string;
 }
 
-const { tag, href, class: extra } = Astro.props;
+const { tag, href, label, class: extra } = Astro.props;
 const slug = tagSlug(tag);
 const tone = tagTone(tag);
 const classes = [
@@ -37,6 +41,7 @@ const classes = [
   href ? (
     <a
       href={href}
+      aria-label={label}
       data-tag={slug}
       data-tone={tone}
       class:list={[...classes, 'inline-flex items-center gap-2 transition-colors hover:border-current']}

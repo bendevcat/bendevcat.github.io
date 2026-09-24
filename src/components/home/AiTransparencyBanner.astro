@@ -5,13 +5,15 @@
   /transparence-ia ; les trois paires `emoji label` sont LUES dans
   AI_USAGE_META, dans son ordre de déclaration, jamais recopiées ici (R4) —
   un libellé changé là-bas change ici. La liste est jointe par
-  Intl.ListFormat (disjonction française : « a, b ou c »).
+  Intl.ListFormat (disjonction française : « a, b ou c ») ; `formatToParts`
+  garde chaque paire dans son propre élément insécable `data-ai-marker`
+  (plan 11, R13) sans changer un octet du texte visible.
   Balisage `data-home` : convention lue par scripts/check-home.mjs (R2, R4).
 */
 import { AI_USAGE_META } from '../../lib/aiUsage';
 
 const pairs = Object.values(AI_USAGE_META).map(({ emoji, label }) => `${emoji} ${label}`);
-const levels = new Intl.ListFormat('fr', { type: 'disjunction' }).format(pairs);
+const levels = new Intl.ListFormat('fr', { type: 'disjunction' }).formatToParts(pairs);
 ---
 
 <section
@@ -21,7 +23,7 @@ const levels = new Intl.ListFormat('fr', { type: 'disjunction' }).format(pairs);
 >
   {/* Prose → Nebula Sans (R8). */}
   <p class="text-[15px] leading-[1.6] text-body">
-    Chaque article déclare son niveau de contribution IA&nbsp;: {levels}.
+    Chaque article déclare son niveau de contribution IA&nbsp;: {levels.map((part) => (part.type === 'element' ? <span class="whitespace-nowrap" data-ai-marker>{part.value}</span> : part.value))}.
   </p>
   <a
     href="/transparence-ia/"

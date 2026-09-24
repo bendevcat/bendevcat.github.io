@@ -25,9 +25,15 @@ interface Props {
    * - `square` = vignette carrée 72 px des « Derniers articles », rayon 10 px.
    */
   size?: 'card' | 'featured' | 'header' | 'square';
+  /**
+   * Couverture au-dessus de la ligne de flottaison (les deux entrées « à la
+   * une » : accueil et /blog) : `loading="eager"`. Toutes les autres restent
+   * `lazy`, le défaut d'`<Image>` (plan 11, R12).
+   */
+  eager?: boolean;
 }
 
-const { cover, coverAlt, title, derivedFrom, size = 'card' } = Astro.props;
+const { cover, coverAlt, title, derivedFrom, size = 'card', eager = false } = Astro.props;
 
 // R8 / spec §6.1 : sans `cover`, le visuel est DÉRIVÉ — aucun fichier image,
 // aucun champ de schéma. Le monogramme est purement fonction de la chaîne, donc
@@ -59,7 +65,14 @@ const monogramSize = size === 'square' ? 'text-base' : 'text-2xl';
 
 {
   cover ? (
-    <Image src={cover} alt={coverAlt ?? title} width={width} height={height} class={`${box} ${frameWidth} ${radius} object-cover`} />
+    <Image
+      src={cover}
+      alt={coverAlt ?? title}
+      width={width}
+      height={height}
+      loading={eager ? 'eager' : 'lazy'}
+      class={`${box} ${frameWidth} ${radius} object-cover`}
+    />
   ) : (
     /*
       Niveau 4 de la hiérarchie des surfaces (§2.1) : `rail` est le creux — il
@@ -73,7 +86,7 @@ const monogramSize = size === 'square' ? 'text-base' : 'text-2xl';
       aria-hidden="true"
       data-thumb-derived
     >
-      <span class={`font-mono ${monogramSize} font-medium tracking-[.06em] text-dim`}>{monogram}</span>
+      <span class={`font-mono ${monogramSize} font-medium tracking-[.06em] text-muted`}>{monogram}</span>
     </div>
   )
 }

@@ -60,7 +60,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 */}
 <article
   class:list={[
-    'group relative flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50',
+    'group relative flex flex-col gap-3 card-inner p-4 transition-colors hover:border-accent/50',
     featured && 'sm:col-span-2 lg:col-span-3',
   ]}
   data-entry-id={post.id}
@@ -76,6 +76,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
     title={title}
     derivedFrom={category}
     size={featured ? 'featured' : 'card'}
+    eager={featured}
   />
 
   {

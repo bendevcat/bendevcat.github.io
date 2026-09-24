@@ -72,6 +72,10 @@ if (root && toolbar && grid) {
       // mais laisserait l'ordre de tabulation et de lecture d'écran inchangé.
       if (position.has(id)) card.style.order = String(position.get(id));
     }
+    // Une grille sans carte visible reste un élément flex du cadre
+    // (`flex flex-col gap-6`) et y prend une place de `gap` : l'état vide ne
+    // serait plus centré (F2, plan 11). On la masque tant qu'elle est vide.
+    grid.hidden = state.visibleIds.length === 0;
 
     if (featuredBox) {
       featuredBox.hidden = state.featuredId === null;
@@ -80,7 +84,10 @@ if (root && toolbar && grid) {
       }
     }
 
-    if (metaBox) metaBox.textContent = state.meta;
+    // Région live (`aria-live="polite"`, plan 11) : ne réécrire le texte que
+    // s'il change — au chargement il est déjà celui du serveur, et une
+    // réécriture identique peut quand même être annoncée (D57).
+    if (metaBox && metaBox.textContent !== state.meta) metaBox.textContent = state.meta;
     if (emptyBox) emptyBox.hidden = state.empty === null;
     if (emptyText && state.empty !== null) emptyText.textContent = state.empty;
 
