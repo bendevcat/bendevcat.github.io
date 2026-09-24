@@ -1,0 +1,112 @@
+---
+/**
+ * CodeWindow.astro (plan 15, T5 ; inventaire §4 et §9 ; prototype 433–522) —
+ * la fenêtre de code de l'onglet Aperçu d'une fiche projet.
+ *
+ * - TOUJOURS SOMBRE, mêmes couleurs dans les deux thèmes : uniquement les
+ *   tokens `--color-window*` (identiques dans `@theme` et dans
+ *   `:root[data-theme="dark"]`, D105 / D107).
+ * - `<figure>` rayon 14, bordure 1 px `windowLine`, `overflow-hidden`.
+ * - Barre de titre 38 px `windowHead` : trois pastilles 10 px (écart 6),
+ *   puce de nom de fichier `snippetFile` (mono 11 `windowDim` sur
+ *   `windowLine`, rayon 7 ; omise sans `snippetFile`), `Copier` à droite
+ *   (mono 10 `windowDim`, survol `windowInk`, rayon 7) — rendu `hidden`,
+ *   révélé et câblé par src/scripts/code-window.ts (sans JS : pas de
+ *   contrôle mort).
+ * - Corps `windowBg` : `<pre>` qui défile en x, mono 13 / 1.7, padding
+ *   16/16/16/0, grille `46px 1fr` — gouttière `aria-hidden`, non
+ *   sélectionnable, numéros alignés à droite en `windowDim`, puis `<code>`
+ *   dont le texte est exactement `codeWindowText(snippet)`.
+ * - Coloration (src/lib/codeWindow.ts) : en YAML, `clé:` `windowKey`, sa
+ *   valeur `windowValue`, tout le reste `windowInk`.
+ *
+ * Le contenu du `<pre>` est assemblé en chaîne échappée (`set:html`) : aucun
+ * blanc de gabarit ne peut s'y glisser, le texte du `<code>` reste celui de
+ * l'extrait à l'octet près (scripts/check-project.mjs le compare au
+ * frontmatter). Hors index de recherche (`data-pagefind-ignore`).
+ */
+import { codeWindowLines, codeWindowText, isYamlFile, type CodeSegmentKind } from '../../lib/codeWindow';
+
+interface Props {
+  snippet: string;
+  /** Chemin du fichier dans le dépôt du projet ; puce omise sans lui. */
+  file?: string;
+}
+
+const { snippet, file } = Astro.props;
+const lines = codeWindowLines(snippet, file);
+const yaml = isYamlFile(file);
+
+// Classes écrites en toutes lettres pour que Tailwind les génère (D41).
+const SEGMENT_CLASS: Record<CodeSegmentKind, string | null> = {
+  key: 'text-windowKey',
+  value: 'text-windowValue',
+  plain: null,
+};
+
+const escape = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const gutter = lines.map((line) => line.number).join('\n');
+const code = lines
+  .map((line) =>
+    line.segments
+      .map(({ kind, text }) => {
+        const cls = SEGMENT_CLASS[kind];
+        return cls ? `<span class="${cls}" data-code-${kind}>${escape(text)}</span>` : escape(text);
+      })
+      .join(''),
+  )
+  .join('\n');
+
+// Garde-fou de rendu : la concaténation des segments doit redonner le texte.
+const plainText = lines.map((line) => line.segments.map((segment) => segment.text).join('')).join('\n');
+if (plainText !== codeWindowText(snippet)) {
+  throw new Error(`CodeWindow : les segments de « ${file ?? 'extrait'} » ne redonnent pas l'extrait`);
+}
+
+const preInner =
+  `<span aria-hidden="true" class="select-none pr-3.5 text-right text-windowDim" data-code-gutter>${gutter}</span>` +
+  `<code class="text-windowInk">${code}</code>`;
+---
+
+<figure
+  class="mt-6 overflow-hidden rounded-inner border first:mt-0 border-windowLine bg-windowBg"
+  aria-label={file ? `Extrait : ${file}` : 'Extrait de code'}
+  data-code-window
+  data-code-lang={yaml ? 'yaml' : 'text'}
+  data-pagefind-ignore
+>
+  <div class="flex h-[38px] items-center gap-3 border-b border-windowLine bg-windowHead px-3.5">
+    <span class="flex shrink-0 gap-1.5" aria-hidden="true">
+      <span class="size-2.5 rounded-pill bg-windowDotRed"></span>
+      <span class="size-2.5 rounded-pill bg-windowDotAmber"></span>
+      <span class="size-2.5 rounded-pill bg-windowDotGreen"></span>
+    </span>
+    {
+      file && (
+        <span
+          class="min-w-0 truncate rounded-small bg-windowLine px-2 py-0.5 font-mono text-[11px] text-windowDim"
+          data-code-file
+        >
+          {file}
+        </span>
+      )
+    }
+    <button
+      type="button"
+      hidden
+      aria-live="polite"
+      class="ml-auto shrink-0 cursor-pointer rounded-small px-2 py-1 font-mono text-[10px] leading-none text-windowDim transition-colors hover:text-windowInk focus-visible:text-windowInk focus-visible:outline-2 focus-visible:outline-windowInk"
+      data-code-copy>Copier</button
+    >
+  </div>
+  <pre
+    class="grid grid-cols-[46px_1fr] overflow-x-auto bg-windowBg py-4 pr-4 font-mono text-[13px] leading-[1.7]"
+    set:html={preInner}
+  ></pre>
+</figure>
+
+<script>
+  import '../../scripts/code-window.ts';
+</script>

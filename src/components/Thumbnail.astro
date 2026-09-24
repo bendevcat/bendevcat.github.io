@@ -36,8 +36,12 @@ interface Props {
    *   Les deux reposent directement sur la carte (`surface`) : leur visuel
    *   dérivé porte `data-rail` (D74), sans monogramme, avec la trame du
    *   prototype (`0 2px / 2px 12px`, ligne 377).
+   * Ajout Plan 15 (T5, fiche projet — prototype 433–522) :
+   * - `banner` = bandeau du haut de la carte principale, 150 px de haut,
+   *   pleine largeur, sans rayon propre (la carte rogne ses coins) ; même
+   *   trame nue que `tile` / `hero`, avec `data-rail` (il repose sur `surface`).
    */
-  size: 'header' | 'square' | 'row' | 'tile' | 'hero';
+  size: 'header' | 'square' | 'row' | 'tile' | 'hero' | 'banner';
   /**
    * Couverture au-dessus de la ligne de flottaison (les deux entrées « à la
    * une » : accueil et /blog) : `loading="eager"`. Toutes les autres restent
@@ -60,6 +64,7 @@ const FRAME: Record<Props['size'], { box: string; width: string; radius: string 
   row: { box: 'h-16', width: 'w-[76px] shrink-0', radius: 'rounded-thumb' },
   tile: { box: 'h-[120px]', width: 'w-full', radius: 'rounded-inner' },
   hero: { box: 'h-full min-h-[180px] md:min-h-[300px]', width: 'w-full', radius: '' },
+  banner: { box: 'h-[150px]', width: 'w-full', radius: '' },
 };
 const { box, width: frameWidth, radius } = FRAME[size];
 // La vignette carrée s'affiche en 72×72 (object-cover) : on ne livre pas
@@ -80,8 +85,8 @@ const height =
 const monogramSize = size === 'square' || size === 'row' ? 'text-base' : 'text-2xl';
 // Plan 14 : les visuels de /projets (`tile`, `hero`) sont une trame nue, sans
 // monogramme, à la trame du prototype ; ils reposent sur la carte, d'où
-// `data-rail` (comme `row`).
-const bare = size === 'tile' || size === 'hero';
+// `data-rail` (comme `row`). Plan 15 : le bandeau de fiche (`banner`) aussi.
+const bare = size === 'tile' || size === 'hero' || size === 'banner';
 const hatch = bare
   ? 'repeating-linear-gradient(135deg, var(--color-hatch) 0 2px, transparent 2px 12px)'
   : 'repeating-linear-gradient(135deg, var(--color-hatch) 0 1px, transparent 1px 9px)';

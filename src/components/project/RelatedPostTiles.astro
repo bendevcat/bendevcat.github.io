@@ -1,0 +1,51 @@
+---
+/**
+ * RelatedPostTiles.astro (plan 15, T5 ; inventaire §4 ; prototype 433–522) —
+ * le panneau Articles liés d'une fiche projet.
+ *
+ * - Libellé `// écrit à propos de ce projet`, mono 12 `muted` (comme Stack),
+ *   hors index de recherche.
+ * - Une tuile `.card-inner` rayon 16, padding 18 par article publié (les
+ *   brouillons sont déjà écartés par la page, sortAndFilter), lien
+ *   `/blog/<id>/` : catégorie mono 10 `accent` · date longue fr-FR mono 10
+ *   `muted`, titre 17 / 500 `ink` (survol `accent`), `Lire →` 13 / 600
+ *   `accent`.
+ *
+ * Crochets lus par scripts/check-project.mjs : `data-panel-label`,
+ * `data-related-post`.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { posts } = Astro.props;
+const dateFr = (date: Date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+
+<p class="font-mono text-xs text-muted" data-panel-label data-pagefind-ignore>// écrit à propos de ce projet</p>
+<ul aria-label="Articles liés" class="mt-3.5 flex flex-col gap-3">
+  {
+    posts.map((post) => (
+      <li>
+        <a
+          href={`/blog/${post.id}/`}
+          class="group card-inner flex flex-col gap-2 rounded-hero p-[18px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          data-related-post
+        >
+          <span class="font-mono text-[10px]">
+            <span class="text-accent">{post.data.category}</span>{' '}
+            <span class="text-muted">
+              · <time datetime={post.data.pubDate.toISOString()}>{dateFr(post.data.pubDate)}</time>
+            </span>
+          </span>
+          <span class="font-sans text-[17px] leading-[1.35] font-medium text-pretty text-ink transition-colors group-hover:text-accent">
+            {post.data.title}
+          </span>
+          <span class="font-sans text-[13px] font-semibold text-accent">Lire →</span>
+        </a>
+      </li>
+    ))
+  }
+</ul>

@@ -7,6 +7,11 @@
 import { copyText } from '../lib/clipboard';
 
 document.querySelectorAll<HTMLPreElement>('article pre').forEach((pre) => {
+  // Plan 15 : la fenêtre de code de la fiche projet (`[data-code-window]`,
+  // CodeWindow.astro) a son propre « Copier » dans sa barre de titre, câblé
+  // par src/scripts/code-window.ts — pas de second bouton ni d'enveloppe ici.
+  if (pre.closest('[data-code-window]')) return;
+
   const codeText = pre.querySelector('code')?.innerText ?? pre.innerText;
 
   // Fix review C3 (Important #1) : <pre> porte lui-même l'overflow-x:auto

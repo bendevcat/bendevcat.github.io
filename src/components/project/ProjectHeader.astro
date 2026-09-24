@@ -1,0 +1,34 @@
+---
+/**
+ * ProjectHeader.astro (plan 15, T5 ; inventaire §4 ; prototype 433–522) —
+ * l'en-tête de la carte principale d'une fiche projet, sous le bandeau.
+ *
+ * - Padding 28/32/0 (20 px sur les côtés sous 640 px).
+ * - `← tous les projets` : lien `/projets/`, mono 11 `muted`, survol `ink`,
+ *   hors index de recherche.
+ * - h1 32 px / 700 `ink`, `text-pretty`.
+ * - Description 16 px `muted`, 600 px au plus.
+ *
+ * Une `div` et pas un `<header>` : la page n'a qu'un `<header>`, celui du
+ * site (scripts/check-shell-blog.mjs).
+ */
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<div class="px-5 pt-7 sm:px-8" data-project-header>
+  <a
+    href="/projets/"
+    class="inline-block font-mono text-[11px] text-muted transition-colors hover:text-ink"
+    data-project-back
+    data-pagefind-ignore>← tous les projets</a
+  >
+  <h1 class="mt-3 font-sans text-[32px] leading-[1.15] font-bold tracking-[-.03em] text-pretty text-ink">
+    {title}
+  </h1>
+  <p class="mt-2.5 max-w-[600px] font-sans text-base leading-[1.6] text-pretty text-muted">{description}</p>
+</div>
