@@ -148,3 +148,6 @@ Choice: stack items deduplicated by exact trimmed match (as the `/projets` filte
 
 ## D49 · Plan 10 · T5 — Rendered pass by the orchestrator, through same-origin iframes
 Choice: T5's measures ran on `astro preview` in the built-in browser; pages × themes × widths were measured in same-origin iframes sized 375 / 768 / 1180 (the instrument was checked against injected defects: overflow, V2 jump, 7 px radius); no defect found; one stale comment fixed (`459ee43`); the default yellow `<mark>` of search excerpts (unchanged since plan 5) is carried to plan 11's "no colour outside the contract" · Alternatives: resize the pane for each measure · Reversibility: cheap · Why: 60 page states in one pass; iframes get their own viewport and media queries.
+
+## D50 · Plan 10 · verification — GitHub Pages shows as text in the toolbox
+Choice: the `githubpages` Simple Icons path is removed from `src/lib/stackLogos.ts`; GitHub Pages is a text-only pill like Sveltia CMS and SVU (6 logos, not 7); the plan's expected `toolbox` line is updated · Alternatives: keep it; draw a larger pill for it · Reversibility: cheap · Why: the verifier measured it as an unreadable grey smudge at 14 px in both themes — that mark is a written wordmark.

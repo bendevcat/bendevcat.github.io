@@ -15,7 +15,7 @@ From `http://localhost:4321/`: header pill `À propos` › `/a-propos`; home ban
 | Row 1 right — terminal | `.card` | `➜ ~ whoami --long`, then one `clé: valeur` line per key below (keys `badgeInk`, values `body`, all mono) |
 | Row 2 | two `.card`s | `Qui je suis` and `Pourquoi ce site`: headings and paragraphs of the current `/a-propos` (the prototype's `On parle ?` slot has no real contact channel: no email, no LinkedIn) |
 | AI panel | `.panel`, 3 `.card-inner` | title « L'IA : une aide, pas un ghostwriter » + the current AI paragraph; per level (order `none`, `partial`, `full`): 28×28 tile in the level's tone with its emoji, `label`, `description` — all read from `AI_USAGE_META`; link « Comment je déclare l'usage de l'IA » → `/transparence-ia/` |
-| `Ma boîte à outils` | `.card` | union of the projects' `stack` in `getSortedProjects()` order, each a neutral pill (`chip` background, mono) with an inline SVG logo in `currentColor` when `src/lib/stackLogos.ts` has one (Simple Icons `16.31.0`, CC0: astro, tailwindcss, typescript, githubpages, githubactions, gnubash, go), text only otherwise (Sveltia CMS, SVU) |
+| `Ma boîte à outils` | `.card` | union of the projects' `stack` in `getSortedProjects()` order, each a neutral pill (`chip` background, mono) with an inline SVG logo in `currentColor` when `src/lib/stackLogos.ts` has one (Simple Icons `16.31.0`, CC0: astro, tailwindcss, typescript, githubactions, gnubash, go), text only otherwise (Sveltia CMS, SVU, and GitHub Pages — its mark is a wordmark, unreadable at 14 px, D50) |
 
 Terminal lines, derived at build by `src/lib/about.ts`: `nom` and `alias` from the Hero `<h1>`; `rôle` « ingénieur DevOps depuis 2019 » and `lieu` « France » from the current page; `terrain` = the 3 first labels of `collectTagIndex`; `écrit` = published counts; `stack` = the toolbox list; `règle` from the current AI heading. A line whose source is empty is dropped.
 
@@ -34,7 +34,7 @@ whoami terrain: claude-code · devops · anti-drift
 whoami écrit: 5 articles · 2 projets · 3 prompts · 2 skills
 whoami stack: Astro · Tailwind CSS · TypeScript · Sveltia CMS · GitHub Pages · GitHub Actions · Bash · Go · SVU
 whoami règle: une aide, pas un ghostwriter
-toolbox: Astro+ | Tailwind CSS+ | TypeScript+ | Sveltia CMS | GitHub Pages+ | GitHub Actions+ | Bash+ | Go+ | SVU
+toolbox: Astro+ | Tailwind CSS+ | TypeScript+ | Sveltia CMS | GitHub Pages | GitHub Actions+ | Bash+ | Go+ | SVU
 ai-rule: ✍️ 100% humain green | 🤝 co-créé avec IA amber | 🤖 IA relue blue
 ai-banner: none green | partial amber | full blue
 tags: 30 slugs · 88 chips on 37 pages · <n>/5 tones
@@ -105,3 +105,29 @@ tags: 30 slugs · 88 chips on 37 pages · <n>/5 tones
 - Tone on the compact AI marker of `ArticleCard` and the home (stays emoji + label text); tags on article or project pages; making Infos chips links; `<option>` tag lists.
 - Any change to `src/content/**`, `src/content.config.ts`, `public/admin/config.yml`, `docs/anti-drift/**`, `.github/workflows/**`; prototype demo values (email, LinkedIn, `github.com/bencat`, quotes, its stack list).
 - Version bump, tag, merge, push, deploy.
+
+## Evidence
+Verifier, attempt 1, tip `c590404`, base `6d4d8a7`. Every criterion proven; no smoke step. After verification, D50 dropped the unreadable GitHub Pages logo (`toolbox` line updated); `check-secondary.mjs` exit 0, 189 tests, 0 type errors re-run by the orchestrator on the fix.
+
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | preview walk at 1180 (light, dark) + 375 spot checks: `À propos` → `/a-propos`; home pill → `/transparence-ia/`; `/blog` › `tous les tags →` › `/tags/` › `/tags/claude-code/`; unknown URL → 404 page; ⌘K and loupe open the dialog, `devops` → 3 results; `/a-propos` blocks identity, terminal, row 2, AI panel, toolbox; `claude-code` chip bg `rgb(247,231,214)` light / `rgba(251,146,60,0.14)` dark on 5 pages; `/transparence-ia` banners green, amber, blue; 52 built routes → 200 |
+| R1 | proven | 4 named `tagTone` tests pass; mutations (raw tag hash, constant tone, `% 4`, `% 7`) each turn named tests red |
+| R2 | proven | 2 named tests pass; mutations (`partial` blue, an added `dark:bg-amber-900/30`, a Tailwind blue for `full`) turn them red |
+| R3 | proven | 2 named tests pass; the 30 `global.css` values equal §2.3; mutations (light violet ink, dark rose line removed, amber border → `border-line`) turn them red |
+| R4 | proven | `node scripts/check-secondary.mjs` → `tags: 30 slugs · 88 chips on 37 pages · 5/5 tones`, exit 0; script enforces `data-tag`/`data-tone`, 3 tone utilities, no `text-muted`, one tone per slug |
+| R5 | proven | the 11 `whoami`/`toolbox`/`ai-rule`/`ai-banner` lines exact; every R5 structural rule is enforced by the script |
+| R6 | proven | Hero paragraph + 3 base paragraphs verbatim in `<main>`; no `mailto:`, `linkedin`, `hello@`, `github.com/bencat`; `Hero.astro` gone, no import left; every other string is an author heading, `AI_USAGE_META` text or derived |
+| R7 | proven | no pattern error from the script; `grep -c card-inner src/scripts/search.ts` → 2 |
+| R8 | proven | both themes, real keystrokes: dialog bg = `surface`, 20px; 3 results `.card-inner` 14px bg = `card`; `esc` `.pill` 999px; Tab → first result; Escape closes |
+| R9 | proven | level-to-ancestor distance ≥ 24.2, level-to-level ≥ 19.1, text ≥ 5.59:1, both themes, on `/transparence-ia`, `/a-propos` (28×28 tiles) and 3 articles |
+| R10 | proven | chip ink ≥ 5.59:1 light, ≥ 7.91:1 dark; pressed pill `0 0 0 2px` ring vs `none`; `anti-drift` → `[anti-drift-planning]`, `tous` → 2 |
+| R11 | proven | 60 page states (10 pages × 3 widths × 2 themes) + 6 with the dialog open: `scrollWidth <= innerWidth`; `/a-propos` 1180: identity and terminal top 107, row 2 top 474; 375: stacked |
+| R12 | proven | 5 pages + dialog, both themes: `.card` on `bg`, no orphan `.card-inner`, radii ∈ {9,10,14,20,999}, no green+blue in dark, no `rgb(125,211,252)` in light; prose `Nebula Sans`, terminal / toolbox / chips `JetBrains Mono Variable` |
+| R13 | proven | palette grep → empty |
+| R14 | proven | `check-home.mjs` 7 lines exit 0; `check-detail-tabs.mjs` 7 rows exit 0 |
+| R15 | proven | `4` |
+| R16 | proven | frozen-path diff vs `6d4d8a7` → empty |
+| R17 | proven | 189 passed; 0 errors; `matchesFilters` 1; `package.json` unchanged |
+
+Outside the criteria, carried to plan 11: `/tags` link names read `claude-code5` for screen readers (count glued, pre-existing); `/skills` and `/prompts` list counters in `text-dim` measure 4.19:1 in light (pre-existing, AA pass); the search excerpt `<mark>` uses the UA yellow (pre-existing, colour outside the contract). The 404 link wording became `accueil →`, `blog →`, `tags →` (D47).
