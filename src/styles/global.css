@@ -375,3 +375,29 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 [data-search-open][hidden] {
   display: none !important;
 }
+
+/* ==========================================================================
+   Patron « détail à onglets » (Plan 8) : composant src/components/DetailTabs.astro,
+   glue src/scripts/detail-tabs.ts. Ces règles vivent HORS de
+   `@layer components` : la couche garde ses quatre classes (D9, R13), et le
+   style des onglets eux-mêmes est en utilitaires dans le composant.
+   - Un panneau non sélectionné porte `hidden` ; `!important` pour la même
+     raison que plus haut (le preflight `[hidden]` a la spécificité d'un
+     utilitaire de `display`).
+   - Repli sans JS (D11) : le script inline de BaseLayout pose `data-js` sur
+     <html>. Sans lui, la rangée d'onglets — un contrôle mort — est cachée et
+     tous les panneaux s'affichent, chacun sous son titre de repli. Avec lui,
+     les titres de repli disparaissent (les onglets en tiennent lieu).
+   ========================================================================== */
+[data-detail-tabs] [role="tabpanel"][hidden] {
+  display: none !important;
+}
+html:not([data-js]) [data-detail-tabs] [role="tablist"] {
+  display: none !important;
+}
+html:not([data-js]) [data-detail-tabs] [role="tabpanel"][hidden] {
+  display: block !important;
+}
+html[data-js] [data-detail-tabs] [data-tab-fallback-heading] {
+  display: none !important;
+}

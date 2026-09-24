@@ -2,10 +2,12 @@
 import { Image } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import DetailTabs from '../../components/DetailTabs.astro';
 import { getSortedProjects } from '../../lib/projects';
 import { assertEntriesResolved } from '../../lib/references';
 import { PROJECT_STATUS_META } from '../../lib/projectStatus';
 import { sortAndFilter } from '../../lib/posts';
+import { projectTabs } from '../../lib/detailTabs';
 
 export async function getStaticPaths() {
   const projects = await getSortedProjects();
@@ -38,6 +40,17 @@ const relatedPosts = project.data.relatedPosts?.length
   : [];
 
 const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+// Plan 8 : QUELS onglets existent se décide dans src/lib/detailTabs.ts, à
+// partir de faits bruts — jamais ici. `relatedCount` est compté APRÈS
+// sortAndFilter : un article brouillon ne nourrit pas « Articles liés ».
+const tabs = projectTabs({
+  body: project.body,
+  hasCover: Boolean(cover),
+  stackCount: stack.length,
+  relatedCount: relatedPosts.length,
+});
+const shown = new Set(tabs.map((tab) => tab.id));
 ---
 
 <BaseLayout title={`${title} — bencat_`} description={description}>
@@ -56,18 +69,8 @@ const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year
     <p class="mt-4 text-muted">{description}</p>
 
     {
-      cover && (
-        <Image
-          src={cover}
-          alt={coverAlt ?? ''}
-          class="mt-8 aspect-video w-full rounded-inner object-cover"
-        />
-      )
-    }
-
-    {
       (repoUrl || demoUrl) && (
-        <div class="mt-8 flex flex-wrap gap-3">
+        <div class="mt-6 flex flex-wrap gap-3">
           {repoUrl && (
             <a
               href={repoUrl}
@@ -92,27 +95,39 @@ const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year
       )
     }
 
-    {
-      stack.length > 0 && (
-        <ul class="mt-6 flex flex-wrap gap-2" aria-label="Technologies">
-          {stack.map((tech) => (
-            <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
-              {tech}
-            </li>
-          ))}
-        </ul>
-      )
-    }
+    <DetailTabs tabs={tabs} label="Sections du projet">
+      {
+        shown.has('apercu') && (
+          <div slot="apercu">
+            {cover && (
+              <Image
+                src={cover}
+                alt={coverAlt ?? ''}
+                class="aspect-video w-full rounded-inner object-cover"
+              />
+            )}
+            <div class="prose">
+              <Content />
+            </div>
+          </div>
+        )
+      }
 
-    <div class="prose mt-10">
-      <Content />
-    </div>
+      {
+        shown.has('stack') && (
+          <ul slot="stack" class="flex flex-wrap gap-2" aria-label="Technologies">
+            {stack.map((tech) => (
+              <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
+                {tech}
+              </li>
+            ))}
+          </ul>
+        )
+      }
 
-    {
-      relatedPosts.length > 0 && (
-        <section class="mt-12 border-t border-line pt-8">
-          <h2 class="font-mono text-sm text-muted">// articles liés</h2>
-          <ul class="mt-4 flex flex-col gap-2">
+      {
+        shown.has('articles-lies') && (
+          <ul slot="articles-lies" class="flex flex-col gap-2">
             {relatedPosts.map((post) => (
               <li>
                 <a
@@ -124,9 +139,9 @@ const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year
               </li>
             ))}
           </ul>
-        </section>
-      )
-    }
+        )
+      }
+    </DetailTabs>
   </article>
 
   <script>

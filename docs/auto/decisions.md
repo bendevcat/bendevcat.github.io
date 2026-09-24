@@ -49,3 +49,6 @@ Choice: the build-output check behind R2/R8 lives in the repo · Alternatives: o
 
 ## D16 · Plan 8 · authoring — New test names in English
 Choice: `detailTabs.test.ts` uses the English names cited verbatim in R1/R3/R7 · Alternatives: French names like the repo's existing tests · Reversibility: cheap · Why: the criteria measure by test name and run artifacts are in English (brief); renaming later is a mechanical edit.
+
+## D17 · Plan 8 · T1 — Shape of the pure tab API
+Choice: tab ids `apercu`, `stack`, `articles-lies`, `pourquoi`, `infos`; tab functions take one object argument; an `undefined` body counts as blank; `computeTabState` falls back to the first tab on an out-of-range index; empty tab list → `[]` / `null`; ArrowUp/ArrowDown ignored (horizontal row) · Alternatives: label-derived ids, positional arguments, throwing on bad input, vertical arrows mirroring horizontal ones · Reversibility: cheap · Why: named fields stop T2/T3 from swapping two counts; a panel always shows; D10's horizontal keyboard model.

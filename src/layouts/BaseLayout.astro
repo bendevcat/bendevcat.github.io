@@ -14,6 +14,7 @@ const { title, description } = Astro.props;
 <html lang="fr">
   <head>
     <script is:inline>
+      document.documentElement.dataset.js = ''; // D11 : repli sans JS des onglets (global.css)
       (() => {
         const stored = localStorage.getItem('theme');
         const theme = stored ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
