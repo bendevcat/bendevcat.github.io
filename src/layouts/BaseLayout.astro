@@ -32,9 +32,13 @@ const { title, description } = Astro.props;
     {/*
       Coque (plan 12, R1) : le contenu de chaque page est plafonné à 1180 px
       et porte le padding horizontal de la coque (16 px, 24 px dès 640 px).
+      `box-content` (F1) : le plafond vaut pour la boîte de contenu, le padding
+      s'y ajoute, comme le `max-width:1180px` du prototype — à 1280 px le
+      contenu fait 1180 px en x 50–1230. Sous 1228 px la largeur reste `auto`
+      (viewport − padding), donc pas de débordement à 375 px.
       Une `div` et pas un `<main>` : les pages rendent leur propre `<main>`.
     */}
-    <div data-shell="main" class="mx-auto max-w-shell px-4 sm:px-6">
+    <div data-shell="main" class="mx-auto box-content max-w-shell px-4 sm:px-6">
       <slot />
     </div>
     <Footer />

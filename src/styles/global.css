@@ -113,7 +113,8 @@
   --radius-tag: 8px;      /* puce de tag du rail /blog (prototype 163–227, plan 12) */
 
   /* — coque (plan 12, prototype `max-width:1180px`) : utilitaire `max-w-shell`,
-     porté par la rangée d'en-tête, l'enveloppe du contenu et le pied de page — */
+     porté par la rangée d'en-tête, l'enveloppe du contenu et le pied de page,
+     toujours avec `box-content` : 1180 px de contenu, padding en plus (F1) — */
   --container-shell: 1180px;
 }
 

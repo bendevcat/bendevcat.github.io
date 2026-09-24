@@ -6,7 +6,12 @@
 //   trois boîtes le portent avec `data-shell` : la rangée d'en-tête
 //   (Header.astro), l'enveloppe du contenu (BaseLayout.astro) et le pied de
 //   page (Footer.astro). Plus aucun `max-w-5xl` (l'ancien plafond de 1024 px)
-//   dans les pages, composants et layouts.
+//   dans les pages, composants et layouts. Le plafond porte sur la boîte de
+//   CONTENU (`box-content`), comme le `max-width:1180px` du prototype qui
+//   s'ajoute à son padding de 24 px : à 1280 px le contenu fait 1180 px en
+//   x 50–1230, pas 1132 en x 74–1206 (plan 12, F1).
+// - R5 : les trois pilules de l'en-tête partent toutes à 20 px du haut de la
+//   page (rangée alignée en haut, pilule de nav de 47 px comme le prototype).
 // - R4 : le pied de page ne reprend jamais le texte de démo du prototype.
 // - R3 : la nav suit l'ordre du prototype (Blog · Projets · Skills · Prompts ·
 //   À propos) et son item actif est `accent` sur `accentSoft`, graisse 600.
@@ -50,6 +55,9 @@ describe('coque du site (plan 12)', () => {
       const tags = shellTags(read(file), kind);
       expect(tags, `${file} : un seul data-shell="${kind}"`).toHaveLength(1);
       expect(classesOf(tags[0]), file).toEqual(expect.arrayContaining(['mx-auto', 'max-w-shell']));
+      // F1 : le plafond de 1180 px s'applique au contenu, padding en plus
+      expect(classesOf(tags[0]), file).toContain('box-content');
+      expect(classesOf(tags[0]), file).not.toContain('box-border');
     }
 
     // BaseLayout rend le pied de page sur chaque page, après le contenu.
@@ -63,6 +71,22 @@ describe('coque du site (plan 12)', () => {
       .flatMap((dir) => astroFiles(resolve(SRC, dir)))
       .filter((file) => readFileSync(file, 'utf8').includes('max-w-5xl'));
     expect(offenders).toEqual([]);
+  });
+
+  it('starts the three header pills 20 px from the page top', () => {
+    const header = read('components/Header.astro');
+    const row = classesOf(shellTags(header, 'header')[0]);
+    expect(row).toContain('pt-5'); // padding-top: 20px
+    // alignées en haut : une pilule plus courte n'est pas recentrée plus bas
+    expect(row).toContain('items-start');
+    expect(row).not.toContain('items-center');
+
+    // pilule de nav : 1 + 6 + (8 + 17 + 8) + 6 + 1 = 47 px (prototype), pas 50
+    const navItem = header.match(/const NAV_ITEM = `([^`]*)`/)?.[1].split(/\s+/) ?? [];
+    expect(navItem).toEqual(expect.arrayContaining(['py-2', 'leading-[17px]']));
+    // item en boîte bloc : sa hauteur n'est pas agrandie par la ligne du <li>
+    expect(navItem).toContain('flex');
+    expect(navItem).not.toContain('inline-flex');
   });
 
   it("keeps the prototype's demo copy out of the footer", () => {

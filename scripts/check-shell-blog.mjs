@@ -23,8 +23,9 @@
  * R2 (shell) — sur chaque page HTML de `dist/` hors `/admin/` (l'admin est
  * celui de Sveltia, pas notre coque) : exactement un élément de chaque sorte
  * `data-shell="header"`, `data-shell="main"`, `data-shell="footer"`, chacun
- * portant les classes `mx-auto` et `max-w-shell` (1180 px, `--container-shell`
- * de global.css).
+ * portant les classes `mx-auto`, `max-w-shell` (1180 px, `--container-shell`
+ * de global.css) et `box-content` (le plafond porte sur la boîte de contenu,
+ * padding en plus, comme le prototype — plan 12, F1).
  *
  * R2 (nav) — sur chaque page, les items du `<nav aria-label="Navigation
  * principale">` de l'en-tête, dans l'ordre du document, donnent le même texte
@@ -201,7 +202,7 @@ for (const page of pages) {
       errors.push(`${page.route} : ${boxes.length} [data-shell="${kind}"] (attendu : 1)`);
       continue;
     }
-    const missing = ['mx-auto', 'max-w-shell'].filter((cls) => !classes(boxes[0]).includes(cls));
+    const missing = ['mx-auto', 'max-w-shell', 'box-content'].filter((cls) => !classes(boxes[0]).includes(cls));
     if (missing.length > 0) {
       ok = false;
       errors.push(`${page.route} : [data-shell="${kind}"] sans ${missing.join(', ')}`);
