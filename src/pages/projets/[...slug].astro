@@ -46,7 +46,9 @@ const startDateFr = startDate?.toLocaleDateString('fr-FR', { month: 'long', year
 // sortAndFilter : un article brouillon ne nourrit pas « Articles liés ».
 const tabs = projectTabs({
   body: project.body,
-  hasCover: Boolean(cover),
+  // `snippet` entre au schéma avec le plan 15 (T2) ; la page le lit sans
+  // dépendre de son type d'ici là.
+  hasSnippet: Boolean((project.data as { snippet?: string }).snippet?.trim()),
   stackCount: stack.length,
   relatedCount: relatedPosts.length,
 });
