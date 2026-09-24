@@ -1,11 +1,20 @@
 ---
+import { getEntries } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListHeader from '../../components/ListHeader.astro';
+import SegmentedControl from '../../components/SegmentedControl.astro';
+import Dropdown from '../../components/Dropdown.astro';
 import SkillCard from '../../components/SkillCard.astro';
+import ListEmpty from '../../components/ListEmpty.astro';
 import { getSortedSkills, collectTypes, collectSkillTags } from '../../lib/skills';
+import { assertEntriesResolved } from '../../lib/references';
 import { ALL } from '../../lib/facetFilters';
-import { pickFeaturedEntry } from '../../lib/listPattern';
-import { tagSlug, tagTone } from '../../lib/tags';
-import { TONE_CLASSES } from '../../lib/tones';
+import { computeListState, facetCounts, type ListLabels } from '../../lib/listPattern';
+
+// Plan 14, T5 (inventaire §7, prototype 738–793 ; D92–D95) : en-tête de
+// liste, barre de filtres (type segmenté à gauche, menu tag à droite), puis
+// une grille de cartes compactes posées sur le fond de page — ni vignette, ni
+// entrée à la une, ni puces de tag.
 
 // getSortedSkills() applique déjà l'ordre du plan (titre A→Z) et écarte les
 // `draft` — cf. src/lib/skills.ts. Pas de re-tri ici.
@@ -13,19 +22,62 @@ const skills = await getSortedSkills();
 const types = collectTypes(skills);
 const tags = collectSkillTags(skills);
 
-// Même règle de dérivation que src/scripts/list-pattern.ts (spec §6.1,
-// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, pour que la
-// carte « à la une » et sa copie masquée dans la grille pointent exactement
-// vers la même entrée que computeListState() désignerait sans filtre. Ni
-// `prompts` ni `skills` n'ont de champ `featured` (état mesuré du plan) :
-// pickFeaturedEntry() retombe donc systématiquement sur la première entrée de
-// l'ordre canonique.
-const featured = pickFeaturedEntry(skills);
+// Résumé de contenu des cartes (D94) : les prompts liés, résolus comme sur la
+// page de détail — assertEntriesResolved (D06) fait échouer le build en
+// nommant la skill et l'id manquant ; skillCardData() n'en compte que les
+// publiés.
+const related = new Map(
+	await Promise.all(
+		skills.map(async (skill) => {
+			const refs = skill.data.relatedPrompts ?? [];
+			const resolved = refs.length ? assertEntriesResolved(skill.id, refs, await getEntries(refs)) : [];
+			return [skill.id, resolved] as const;
+		}),
+	),
+);
 
-// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
-// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
-// jamais.
+// Source unique du vocabulaire : `data-list-nouns` ET la méta serveur.
 const NOUNS = ['skill', 'skills'] as const;
+
+// Comptes statiques (D93) : chaque valeur comptée sur TOUTES les skills publiées.
+const entries = skills.map((skill) => ({
+	id: skill.id,
+	facets: { type: [skill.data.type], tag: skill.data.tags },
+	featured: false,
+	date: 0,
+	minutes: 0,
+}));
+// Types écrits tels quels (D93) : `claude-code`.
+const typeCounts = facetCounts(entries, 'type', [ALL, ...types]);
+const typeSegments = [
+	{ value: ALL, label: 'Tous', count: typeCounts[ALL] },
+	...types.map((type) => ({ value: type, label: type, count: typeCounts[type] })),
+];
+const tagCounts = facetCounts(entries, 'tag', [ALL, ...tags]);
+const tagOptions = [
+	{ value: ALL, label: 'tous', count: tagCounts[ALL] },
+	...tags.map((tag) => ({ value: tag, label: tag, count: tagCounts[tag] })),
+];
+
+// Phrase d'état vide du prototype (D93) : un gabarit sans emplacement, donc
+// la même quelles que soient les facettes actives.
+const EMPTY_TEMPLATE = 'Aucune skill ne correspond à ce filtre.';
+
+// Méta serveur = premier texte calculé par le script (D57), par la MÊME
+// fonction et les mêmes libellés que ceux que list-pattern.ts lit dans la
+// barre (segments d'abord, puis menu).
+const labels: ListLabels = {
+	singular: NOUNS[0],
+	plural: NOUNS[1],
+	facets: [
+		{ key: 'type', label: 'type' },
+		{ key: 'tag', label: 'tag' },
+	],
+	emptyTemplate: EMPTY_TEMPLATE,
+};
+const rest = { type: ALL, tag: ALL };
+const { meta } = computeListState(entries, rest, 'none', labels, { featured: false });
+const emptyText = computeListState([], rest, 'none', labels, { featured: false }).empty ?? '';
 ---
 
 <BaseLayout
@@ -33,110 +85,35 @@ const NOUNS = ['skill', 'skills'] as const;
 	description="Les skills Claude Code de bencat_ : instructions, installation et prompts liés."
 >
 	<main>
-		<section class="py-16">
-			<p class="font-mono text-sm text-accent">~/ skills</p>
-			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Skills</h1>
-		</section>
+		<ListHeader path="skills" title="Skills" />
 
-		<section class="pb-20" data-list data-list-nouns={NOUNS.join('|')}>
-			{/* 1 · pilules de filtre (tag) + 2 · dropdown (type) — `hidden` côté serveur (contrainte n°5) */}
-			<div
-				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-				data-list-filters
-				hidden
-			>
-				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par tag">
-					<button
-						type="button"
-						data-facet-key="tag"
-						data-facet-label="tag"
-						data-facet-value={ALL}
-						aria-pressed="true"
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent aria-pressed:ring-2 aria-pressed:ring-current"
-					>
-						tous
-					</button>
-					{
-						tags.map((tag) => (
-							<button
-								type="button"
-								data-facet-key="tag"
-								data-facet-label="tag"
-								data-facet-value={tag}
-								data-tag={tagSlug(tag)}
-								data-tone={tagTone(tag)}
-								aria-pressed="false"
-								class:list={[
-									'rounded-pill border px-3 py-1 font-mono text-xs transition-colors hover:border-current aria-pressed:ring-2 aria-pressed:ring-current',
-									TONE_CLASSES[tagTone(tag)],
-								]}
-							>
-								{tag}
-							</button>
-						))
-					}
-				</div>
-
-				<label class="flex items-center gap-2 font-mono text-xs text-muted">
-					type
-					<select
-						data-facet-key="type"
-						data-facet-label="type"
-						class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
-					>
-						<option value={ALL}>tous</option>
-						{types.map((type) => <option value={type}>{type}</option>)}
-					</select>
-				</label>
+		<section data-list data-list-nouns={NOUNS.join('|')} data-list-empty-template={EMPTY_TEMPLATE}>
+			{/* Barre de filtres, 22 px sous le h1 — `hidden` côté serveur, révélée par
+			     le script (pas de contrôle mort sans JS). */}
+			<div class="mt-[22px] flex flex-wrap items-center justify-between gap-5" data-list-filters hidden>
+				<SegmentedControl facetKey="type" facetLabel="type" label="Filtrer par type" segments={typeSegments} />
+				<Dropdown
+					label="tag"
+					icon="filter"
+					minWidth={230}
+					options={tagOptions}
+					selected={ALL}
+					data-facet-key="tag"
+					data-facet-label="tag"
+				/>
 			</div>
 
-			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7). Région
-			     live polie et atomique (plan 11, R6) : list-pattern.ts réécrit le texte
-			     de CE nœud à chaque filtre, le lecteur d'écran annonce le nouveau
-			     compte en entier. `muted` et non `dim` : `dim` sur `bg` = 4,19:1 en
-			     clair (R8). */}
-			<p class="mb-6 font-mono text-xs text-muted" data-list-meta aria-live="polite" aria-atomic="true">{skills.length} {skills.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
+			{/* Ligne de méta — région live polie et atomique (plan 11, R6),
+			     visuellement masquée : le prototype n'en dessine pas (D93). */}
+			<p class="sr-only text-muted" data-list-meta aria-live="polite" aria-atomic="true">{meta}</p>
 
-			{/* Cadre des entrées (plan 11, D51 — V2) : à la une, grille et état vide
-			     dans UN `.card` (niveau `surface`), chaque carte d'entrée un
-			     `.card-inner` (niveau `card`) — un seul niveau d'écart, comme
-			     /tags/<tag> et la recherche. L'écart entre blocs est un `gap` : un
-			     bloc `hidden` (à la une filtrée, état vide) n'en laisse aucun. Une
-			     grille vide, elle, reste un élément flex et prendrait une place de
-			     `gap` (l'état vide ne serait plus centré) : le script la rend `hidden`
-			     dès qu'aucune carte n'y est visible (F2) ; le serveur jamais. */}
-			<div class="card flex flex-col gap-6 p-4 sm:p-6" data-list-frame>
-				{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
-				<div data-list-featured>
-					{featured && <SkillCard skill={featured} featured isFeaturedEntry />}
-				</div>
-
-				{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
-				     rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
-				     chaque entrée exactement une fois (contrainte globale n°5). */}
+			{/* Contenu, 18 px sous la barre : grille puis état vide, sans cadre (D92). */}
+			<div class="mt-[18px] flex flex-col gap-[18px]">
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
-					{
-						skills.map((skill) => (
-							<SkillCard
-								skill={skill}
-								hidden={skill.id === featured?.id}
-								isFeaturedEntry={skill.id === featured?.id}
-							/>
-						))
-					}
+					{skills.map((skill) => <SkillCard skill={skill} relatedPrompts={related.get(skill.id) ?? []} />)}
 				</div>
 
-				{/* 6 · état vide */}
-				<div class="flex flex-col items-start gap-3" data-list-empty hidden>
-					<p class="text-sm text-muted" data-list-empty-text></p>
-					<button
-						type="button"
-						data-list-reset
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-					>
-						voir tous les skills
-					</button>
-				</div>
+				<ListEmpty icon="filter" text={emptyText} resetLabel="réinitialiser les filtres →" />
 			</div>
 		</section>
 

@@ -5,8 +5,9 @@
 // - R6 : la ligne de méta (`data-list-meta`, le nœud dont
 //   src/scripts/list-pattern.ts réécrit le texte) est une région live polie et
 //   atomique — un lecteur d'écran annonce le nombre de résultats à chaque filtre ;
-// - R7 : entrée à la une, grille et état vide dans UN `.card` ; chaque carte
-//   d'entrée est un `.card-inner` (V2 — pas de niveau `card` posé sur `bg`) ;
+// - R7 (plan 11) : entrée à la une, grille et état vide dans UN `.card`, chaque
+//   carte un `.card-inner` — remplacé sur /projets, /prompts et /skills par
+//   les listes en grille du plan 14 (D92), bloc « grid lists » ci-dessous ;
 // - R8 : ni la ligne de méta ni le monogramme dérivé ne sont en `dim`
 //   (4,19:1 sur `bg` en clair, mesuré à la base) — ils passent en `muted`.
 // La mesure rendue (contraste, V2 au calcul) reste celle de T6.
@@ -18,14 +19,18 @@ const SRC = resolve(__dirname, '..');
 const LISTS = ['blog', 'projets', 'prompts', 'skills'] as const;
 // /blog n'a plus d'entrée à la une ni de cartes (plan 12, T5 : rail + lignes
 // compactes) — ses gardes sont dans le bloc « blog list (plan 12, T5) ».
-// Plan 14 (D92) : /projets quitte le cadre du plan 11 — ses gardes sont dans
-// le bloc « grid lists (plan 14) » ; /prompts et /skills l'y rejoignent en T5.
-const FEATURED_LISTS = ['prompts', 'skills'] as const;
-const CARDS = ['PromptCard', 'SkillCard'] as const;
+// Plan 14 (D92) : /projets, /prompts et /skills quittent le cadre du plan 11
+// — leurs gardes sont dans le bloc « grid lists (plan 14) ».
 /** Listes en grille de `.card` posées sur le fond de page (plan 14, D92). */
-const GRID_LISTS = ['projets'] as const;
+const GRID_LISTS = ['projets', 'prompts', 'skills'] as const;
 /** Carte d'entrée de chaque liste en grille. */
-const GRID_CARDS: Record<(typeof GRID_LISTS)[number], string> = { projets: 'ProjectCard' };
+const GRID_CARDS: Record<(typeof GRID_LISTS)[number], string> = {
+  projets: 'ProjectCard',
+  prompts: 'PromptCard',
+  skills: 'SkillCard',
+};
+/** Listes « nues » : cartes compactes sans vignette, ni à la une, ni puces de tag (D92). */
+const BARE_LISTS = ['prompts', 'skills'] as const;
 
 const read = (path: string) => readFileSync(resolve(SRC, path), 'utf8');
 const listPage = (list: string) => read(`pages/${list}/index.astro`);
@@ -68,29 +73,6 @@ describe('list pages (plan 11, T3)', () => {
     }
   });
 
-  it('frames featured, grid and empty state in one .card on each list', () => {
-    for (const list of FEATURED_LISTS) {
-      const source = listPage(list);
-      const frames = openingTags(source, 'data-list-frame');
-      expect(frames, `${list}: un seul cadre`).toHaveLength(1);
-      expect(classesOf(frames[0]), list).toContain('card');
-
-      // Le cadre s'ouvre avant les trois blocs et se ferme après l'état vide :
-      // on vérifie l'ordre dans le source, puis que la balise fermante du
-      // cadre suit bien l'état vide (le cadre est le seul `.card` de la page).
-      const frameAt = indexOfAttr(source, 'data-list-frame');
-      const featuredAt = indexOfAttr(source, 'data-list-featured');
-      const gridAt = indexOfAttr(source, 'data-list-grid');
-      const emptyAt = indexOfAttr(source, 'data-list-empty');
-      expect(frameAt, list).toBeGreaterThan(-1);
-      expect(featuredAt, list).toBeGreaterThan(frameAt);
-      expect(gridAt, list).toBeGreaterThan(featuredAt);
-      expect(emptyAt, list).toBeGreaterThan(gridAt);
-      const cards = openingTags(source, 'class').filter((tag) => classesOf(tag).includes('card'));
-      expect(cards, `${list}: un seul .card`).toHaveLength(1);
-    }
-  });
-
   // F2 (vérification 1) : une grille vide reste un élément flex du cadre et
   // prend une place de `gap-6` — l'état vide n'est alors plus centré dans le
   // cadre. Le script masque la grille quand aucune entrée n'y est visible ; le
@@ -106,18 +88,6 @@ describe('list pages (plan 11, T3)', () => {
       const [grid] = openingTags(listPage(list), 'data-list-grid');
       expect(grid, `${list}: grille`).toBeTruthy();
       expect(grid, `${list}: grille jamais masquée par le serveur`).not.toMatch(/\shidden(?=[\s=>/])/);
-    }
-  });
-
-  it('draws every list entry card as a .card-inner, not on surface', () => {
-    for (const card of CARDS) {
-      const [root] = openingTags(read(`components/${card}.astro`), 'data-entry-id');
-      expect(root, `${card}: racine data-entry-id`).toBeTruthy();
-      const classes = classesOf(root);
-      expect(classes, card).toContain('card-inner');
-      for (const gone of ['bg-surface', 'rounded-card', 'border-line']) {
-        expect(classes, card).not.toContain(gone);
-      }
     }
   });
 
@@ -181,8 +151,8 @@ describe('blog list (plan 12, T5)', () => {
   });
 });
 
-// Plan 14 (D92, D93 ; inventaire §0, §3) : /projets — puis /prompts et
-// /skills en T5 — quitte le cadre du plan 11. Chaque entrée est un `.card`
+// Plan 14 (D92, D93 ; inventaire §0, §3, §5, §7) : /projets, /prompts et
+// /skills quittent le cadre du plan 11. Chaque entrée est un `.card`
 // posé sur le fond de page ; au-dessus, une barre de filtres `hidden` côté
 // serveur (contrôle segmenté à gauche, menu de facette à droite) ; l'état
 // vide est le composant partagé `ListEmpty`. Plus aucun `<select>`.
@@ -281,5 +251,48 @@ describe('grid lists (plan 14)', () => {
     }
     const [root] = openingTags(source, 'data-entry-id');
     expect(classesOf(root)).toEqual(expect.arrayContaining(['card', 'rounded-feature', 'overflow-hidden']));
+  });
+
+  it('declares the fixed empty sentences of /prompts and /skills as slot-less templates', () => {
+    const expected = {
+      prompts: ['Aucun prompt ne correspond à ce filtre.', 'file-text'],
+      skills: ['Aucune skill ne correspond à ce filtre.', 'filter'],
+    } as const;
+    for (const list of BARE_LISTS) {
+      const source = listPage(list);
+      const [sentence, icon] = expected[list];
+      expect(source, list).toContain(`const EMPTY_TEMPLATE = '${sentence}';`);
+      const [root] = openingTags(source, 'data-list');
+      expect(root, `${list}: gabarit posé sur [data-list]`).toMatch(/\sdata-list-empty-template=\{EMPTY_TEMPLATE\}/);
+      const empty = source.match(/<ListEmpty\b[\s\S]*?\/>/)?.[0] ?? '';
+      expect(empty, `${list}: icône`).toContain(`icon="${icon}"`);
+      expect(empty, `${list}: remise à zéro`).toContain('resetLabel="réinitialiser les filtres →"');
+    }
+  });
+
+  it('keeps prompt and skill cards bare: no thumbnail, no tag chip, no featured entry', () => {
+    for (const list of BARE_LISTS) {
+      const source = listPage(list);
+      expect(indexOfAttr(source, 'data-list-featured'), `${list}: aucun bloc à la une`).toBe(-1);
+      const card = read(`components/${GRID_CARDS[list]}.astro`);
+      expect(card, `${list}: pas de vignette`).not.toMatch(/<Thumbnail\b/);
+      expect(card, `${list}: pas de puce de tag`).not.toMatch(/<TagChip\b/);
+      expect(card, `${list}: pas de data-featured`).not.toMatch(/\sdata-featured(?=[\s=>/])/);
+      const [root] = openingTags(card, 'data-entry-id');
+      expect(classesOf(root), `${list}: survol cardHover`).toContain('hover:bg-cardHover');
+      expect(card, `${list}: champs lus par check-lists`).toMatch(/\sdata-card-field=/);
+    }
+  });
+
+  it('puts the primary facet in the segmented control and the secondary in the dropdown', () => {
+    const facets = { prompts: ['format', 'tool'], skills: ['type', 'tag'] } as const;
+    for (const list of BARE_LISTS) {
+      const source = listPage(list);
+      const [primary, secondary] = facets[list];
+      const segmented = source.match(/<SegmentedControl\b[\s\S]*?\/>/)?.[0] ?? '';
+      expect(segmented, list).toContain(`facetKey="${primary}"`);
+      const dropdown = source.match(/<Dropdown\b[\s\S]*?\/>/)?.[0] ?? '';
+      expect(dropdown, list).toContain(`data-facet-key="${secondary}"`);
+    }
   });
 });
