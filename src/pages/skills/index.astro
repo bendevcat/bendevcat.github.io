@@ -33,12 +33,12 @@ const NOUNS = ['skill', 'skills'] as const;
 	description="Les skills Claude Code de bencat_ : instructions, installation et prompts liés."
 >
 	<main>
-		<section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+		<section class="py-16">
 			<p class="font-mono text-sm text-accent">~/ skills</p>
 			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Skills</h1>
 		</section>
 
-		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
+		<section class="pb-20" data-list data-list-nouns={NOUNS.join('|')}>
 			{/* 1 · pilules de filtre (tag) + 2 · dropdown (type) — `hidden` côté serveur (contrainte n°5) */}
 			<div
 				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
