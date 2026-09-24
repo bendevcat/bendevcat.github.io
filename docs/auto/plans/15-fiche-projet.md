@@ -112,3 +112,30 @@ Exit 1 if a page lacks one of these blocks; if the tab root lacks `data-tab-vari
 ## Out of scope
 - The prompt and skill pages' own layouts and their pill tab track (plans 16–17); a licence value (no source); roles for TypeScript, Bash, Go; covers or demo images; project tags on the detail page; a sticky sidebar; a "prochain projet" link; selection kept in the URL (D14).
 - Any change to posts, prompts, skills content, `.github/workflows/**`, `docs/anti-drift/**`; version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-25)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | `/` › Projets › card / hero title → both pages, light then dark; every block present, no licence row; back link, related tiles, sidebar links resolve; no 5xx |
+| R1–R4 | proven | named tests green; each red under targeted mutations |
+| R5 | proven | both snippets `diff`-equal to their sources; no `license:`; roles verbatim; red under 4 content mutations |
+| R6 | proven | CMS tests 0 failed; greps `4` / `4` |
+| R7 | proven | `check-project` 9 lines exact; exit 1 on 10 planted defects |
+| R8 | proven | `check-detail-tabs` 7 rows, project rows counted, prompt / skill rows identical to base |
+| R9 | proven | window tokens identical in both themes, contrast ≥ 4.5; red under 4 mutations |
+| R10 | proven | layout 874 + 26 + 280, card r20 `surface`, banner 150, header and underline-tab values both themes |
+| R11 | proven | window colours identical light / dark, gutter 46 `aria-hidden`, key / value colours, one Copier, `Copié !`, `writeText` = code text |
+| R12 | proven | tiles = stack length, r16 `card`, logos / monograms, 6 sourced roles only |
+| R13 | proven | related tile and sidebar values; meta card r18 with shadow; `code source ↗` full width; `démo ↗` on site-bencat only |
+| R14 | proven | roving keys on both pages; no-JS iframe: tablist hidden, every panel visible |
+| R15 | proven | 375 / 768 one column, no overflow, `pre` scrolls inside; 1024 two columns |
+| R16 | proven | `SVU` finds the project; `tous les projets` finds no project page |
+| R17 | smoke | design MCP refused; page measured against inventory §4: blocks, order, columns, px match; allowed deviations only (D102–D107) |
+| R18 | proven | audit 30 runs, 47 tokens: 0 / 0 / 0 / 0 |
+| R19 | proven | radii ⊂ {7, 9, 12, 14, 16, 18, 20, 999}; mono / Nebula split |
+| R20 | proven | six instruments identical to base except `5 derived thumbnails`; prompt / skill pages identical after hash normalisation; pattern classes 4 |
+| R21 | proven | frozen diff empty; only the two project files in `src/content`; 332 tests; 0 errors; `matchesFilters` 1 |
+
+Carried to plan 18: pin `TZ` in the `projectMetaRows` / `featuredSince` tests; unused `class` prop on `ProjectAside.astro`.
