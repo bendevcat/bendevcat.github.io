@@ -163,3 +163,23 @@ Exit 1 if, inside a list's `[data-list]`: a `<select>` exists; an entry is not a
 | R24 | proven | frozen diff empty; 305 tests; 0 errors |
 
 Findings → F1 (R6), F2 (focus lost after reset). Not taken: `/skills` empty state unreachable with today's content (built and styled, reachable once a second type exists); dropdown deep-link branch unused (only `?categorie=` is mapped) — kept for symmetry.
+
+### Verification 2 (2026-09-25, after F1–F2)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | `/` › Projets › WIP › Go › empty › reset › card click › back › démo; same via Prompts and Skills, both themes; lists and 7 detail pages 200 |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | 13 lines exact; exit 1 on 17 injected defects |
+| R6 | proven | removing `version` / `variables` / `license` from Zod turns "mappe TOUS" red; removing `license` from `config.yml` red; required tests unchanged |
+| R7 | proven | `license: MIT` × 2, numstat exact; LICENSE and `plugin.json` re-read |
+| R8 | proven | projets flows both themes; keyboard reset → focus `Tous` (`:focus-visible`) |
+| R9 | proven | prompts and skills flows both themes; reset focus `Tous` |
+| R10–R14 | proven | segmented, dropdown, hero, grid card, compact cards and empty-state values both themes |
+| R15 | proven | no-JS iframes: entries visible, controls hidden, links 200 |
+| R16 | proven | 375–1280: 0 overflow, columns 1/2/2/2/3/3, hero stacking |
+| R17 | smoke | design MCP refused; prototype lines 345–400 + inventory match; allowed differences only |
+| R18 | proven | audit 54 runs: 0 / 0 / 0 / 0 |
+| R19 | proven | radii ⊂ {7, 8, 10, 12, 14, 20, 24, 999}; fonts as specified |
+| R20–R24 | proven | as stated; 312 tests; frozen diff empty |
+
+Carried to plan 18: pin `TZ` in the `featuredSince` test so it guards the UTC read on any machine; search Escape clears then closes (outside this plan).
