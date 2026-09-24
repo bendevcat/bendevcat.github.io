@@ -38,8 +38,13 @@
  * niveau `rail` (`bg-rail`, `[data-thumb-derived]`) : son plus proche ancêtre
  * peint est de niveau `card` (`.card-inner`, `bg-card`) — sauf s'il porte
  * `data-rail` (rail explicite du prototype, D74) : il peut alors reposer sur
- * `surface` (ou `card`), jamais sur `bg` ni `panel`. `rail column` compte ces
- * rails explicites hors vignettes dérivées (le rail de /blog). « Peint » = une
+ * `surface` (ou `card`), jamais sur `bg` ni `panel`. Plan 13 (D88) : un
+ * `.card-inner` peut aussi reposer sur `rail` quand cet hôte peint est, ou se
+ * trouve dans, un `[data-rail]` qui n'est pas une vignette dérivée — les
+ * cartes « Articles liés » et « Projets liés » des rails de l'article ; un
+ * `.card-inner` sur `bg` reste une erreur. `rail column` compte ces rails
+ * explicites hors vignettes dérivées (le rail de /blog, les deux rails de
+ * chaque article : 1 + 2 × 5 = 11). « Peint » = une
  * classe de patron qui pose un fond (`card`, `card-inner`, `panel`, `pill`)
  * ou un utilitaire `bg-<token>` (avec ou sans `/NN`) nommant un token
  * `--color-*` de global.css ; les variantes (`hover:`, `dark:`, `backdrop:`…)
@@ -216,6 +221,14 @@ function paintedParent(el) {
 const CARD_HOSTS = new Set(['surface', 'panel', 'card']);
 /** Hôtes admis pour un rail explicite `[data-rail]` (D74) : `surface`, ou `card` comme tout rail. */
 const EXPLICIT_RAIL_HOSTS = new Set(['surface', 'card']);
+/**
+ * D88 : un `.card-inner` dont l'hôte peint est de niveau `rail` et est, ou se
+ * trouve dans, un rail explicite `[data-rail]` (hors vignette dérivée).
+ */
+function cardOnExplicitRail(el, host) {
+  if (!classes(el).includes('card-inner') || host.level !== 'rail' || !host.el) return false;
+  return [host.el, ...ancestors(host.el)].some((node) => has(node, 'data-rail') && !has(node, 'data-thumb-derived'));
+}
 let cardOnBg = 0;
 let railOffCard = 0;
 let railColumns = 0;
@@ -231,7 +244,7 @@ for (const file of htmlFiles(DIST)) {
     if (has(el, 'data-rail') && !has(el, 'data-thumb-derived')) railColumns += 1;
     if (own === 'card') {
       const host = paintedParent(el);
-      if (!CARD_HOSTS.has(host.level)) {
+      if (!CARD_HOSTS.has(host.level) && !cardOnExplicitRail(el, host)) {
         cardOnBg += 1;
         errors.push(`${page} ${describe(el)} : niveau card posé sur ${host.level}${host.el ? ` (${describe(host.el)})` : ''}`);
       }

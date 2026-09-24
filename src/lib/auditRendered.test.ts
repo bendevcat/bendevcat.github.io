@@ -30,8 +30,9 @@ interface AuditLib {
   tokenVerdict(value: string, tokens: Record<string, Color>): string | null;
   enumerateTokenNames(sheets: unknown[]): string[];
   shortPath(el: FakeEl): string;
-  v2Jump(level: 'card' | 'rail', explicitRail: boolean): string | null;
+  v2Jump(level: 'card' | 'rail', explicitRail: boolean, onRail?: boolean): string | null;
   isExplicitRail(el: unknown): boolean;
+  onExplicitRail(el: unknown): boolean;
 }
 
 const SCRIPT = resolve(__dirname, '../../scripts/audit-rendered.js');
@@ -192,7 +193,29 @@ describe('audit-rendered.js', () => {
     expect(lib.isExplicitRail(el(['data-rail']))).toBe(true);
     expect(lib.isExplicitRail(el(['data-thumb-derived']))).toBe(false);
     expect(lib.isExplicitRail(null)).toBe(false);
-    expect(source).toMatch(/v2Jump\(level, isExplicitRail\(el\)\)/);
+    expect(source).toMatch(/v2Jump\(level, isExplicitRail\(el\)/);
+  });
+
+  it('lets a card sit on an explicit [data-rail] rail, never on bg (V2, D88)', () => {
+    // plan 13 : cartes « Articles liés » / « Projets liés » posées sur les rails de l'article
+    expect(lib.v2Jump('card', false, true)).toBeNull();
+    // sans rail explicite sous elle, une carte reste interdite sur bg
+    expect(lib.v2Jump('card', false, false)).toBe('bg');
+    expect(lib.v2Jump('card', false)).toBe('bg');
+    // l'exemption ne touche pas la règle du niveau rail
+    expect(lib.v2Jump('rail', false, true)).toBe('surface');
+    // l'hôte peint est jugé : le rail explicite lui-même, ou un ancêtre [data-rail]
+    const node = (attrs: string[], parentElement: unknown = null) => ({
+      hasAttribute: (name: string) => attrs.includes(name),
+      parentElement,
+    });
+    const rail = node(['data-rail']);
+    expect(lib.onExplicitRail(rail)).toBe(true);
+    expect(lib.onExplicitRail(node([], rail))).toBe(true);
+    expect(lib.onExplicitRail(node([], node([])))).toBe(false);
+    expect(lib.onExplicitRail(node(['data-thumb-derived']))).toBe(false);
+    expect(lib.onExplicitRail(null)).toBe(false);
+    expect(source).toMatch(/v2Jump\(level, isExplicitRail\(el\), onExplicitRail\(under && under\.el\)\)/);
   });
 
   it('enumerates contract names from the theme-override rule, not from Tailwind\'s palette', () => {
