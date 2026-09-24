@@ -304,3 +304,15 @@ Choice: fixed empty sentences passed as slot-less templates (keeps "Aucune skill
 
 ## D101 · Plan 14 · F1–F2 — Schema-driven CMS test; reset focuses the filters
 Choice: `cms-config.test.ts` reads each collection's keys from the exported `collections` (stand-in `image()` for blog / projects) and keeps the form-order checks as separate written-out tests — orchestrator re-ran the `license` removal: 1 failed / 48 passed, restored 49/49; after a reset, pure `resetFocusIndex` focuses the first group's `Tous`/`Tout` control (dropdown → its trigger), for keyboard and mouse alike — measured on `/projets`: focus on `Tous 2` (`aria-pressed="true"`) · Alternatives: parse the source text; focus only on keyboard resets · Reversibility: cheap · Why: verification 1 R6 and finding 2.
+
+## D102 · Plan 15 · authoring — No project licence: field added, left empty   ⚑ à relire
+Choice: optional `license` on projects (schema + Sveltia), empty on both entries; the sidebar licence row is omitted · Alternatives: fill a guessed licence · Reversibility: cheap · Why: no LICENSE file in this repo nor in any local `bencatlab/gha-svu` clone (checked by the orchestrator); D65 forbids unsourced values.
+
+## D103 · Plan 15 · authoring — Code windows show whole real workflow files   ⚑ à relire
+Choice: `snippet` + `snippetFile` in frontmatter; `site-bencat` ← this repo's `.github/workflows/deploy.yml` (35 lines, verbatim); `gha-svu` ← `check-pr.yml` from `~/workspace/tools/gha-svu` at `cbf8c36` (30 lines, verbatim) · Alternatives: gha-svu's README example (pins a non-existent `@v0.1.0` tag and reads an undefined step id); first body code block (none exists); no window · Reversibility: cheap · Why: prototype's code window fed from a real source; security flag because CI permissions and deploy steps are shown (both files already sit in public repos).
+
+## D104 · Plan 15 · authoring — Stack roles quoted from the projects' own text
+Choice: roles stored as a Sveltia-editable list `{ name, role }`, each a fragment quoted from the project's title, description or body (a test enforces it): Astro `statique`, Tailwind CSS `thème`, Sveltia CMS `écrire sans toucher au code`, GitHub Pages `déploiement`, GitHub Actions `action composite`, SVU `prochain numéro de version`; TypeScript, Bash, Go without role; a tech without a logo shows a monogram · Alternatives: no roles; roles from `action.yml` · Reversibility: cheap · Why: D65 sourced filling.
+
+## D105 · Plan 15 · authoring — Project page layout details
+Choice: Aperçu = whole body then the code window (first paragraph plays the "why"); the cover becomes the banner and no longer feeds Aperçu; `démo ↗` kept as a second sidebar button; 10 always-dark window colour tokens (identical in both themes, traffic lights = standard macOS values) + `--radius-aside: 18px`; one column below 1024 px, sidebar after the card; sidebar, window, labels and back link out of the search index; sidebar label "Le projet en bref" · Alternatives: first paragraph only; drop `démo ↗` · Reversibility: cheap · Why: plan-author choices within the inventory.
