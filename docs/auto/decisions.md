@@ -187,3 +187,6 @@ Choice: the verifier refused D60's widened reading of R14; the criterion stays a
 
 ## D62 · Plan 11 · F2 — The script hides an empty grid
 Choice: `list-pattern.ts` sets `grid.hidden` whenever no card is visible, and `[data-list-grid][hidden]` joins the list-pattern `display: none !important` guards; the server never renders the grid hidden (no-JS unchanged) · Alternatives: a CSS `:has()` rule hiding a grid whose children are all hidden; a `gridEmpty` field in `computeListState` · Reversibility: cheap · Why: the script already knows the visible count; measured after the fix: the empty block sits 0 px from the frame's inner top and bottom on `/blog`, `/projets`, `/prompts`, both themes, and the grid returns when results do.
+
+## D63 · Plan 10 · after the run — `/a-propos` confirmed by the user
+Choice: D42 and D48 are re-read and kept — the user confirmed on 2026-09-24 that `/a-propos` matches what the prototype asked for · Alternatives: — · Reversibility: cheap · Why: user's review of the ⚑ decisions.
