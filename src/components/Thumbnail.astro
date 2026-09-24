@@ -28,8 +28,15 @@ interface Props {
    *   (prototype 163–227). Son visuel dérivé repose directement sur `surface`
    *   (la ligne ne peint aucun fond) : il porte `data-rail`, l'exemption V2
    *   des rails explicites (D74).
+   * Ajouts Plan 14 (T4, /projets — prototype 344–431, D92) :
+   * - `tile` = vignette de carte de grille, 120 px de haut, rayon 14 ;
+   * - `hero` = colonne visuelle du héros, 300 px de haut au moins (180 sous
+   *   768 px, empilé), sans rayon propre (la carte rogne ses coins).
+   *   Les deux reposent directement sur la carte (`surface`) : leur visuel
+   *   dérivé porte `data-rail` (D74), sans monogramme, avec la trame du
+   *   prototype (`0 2px / 2px 12px`, ligne 377).
    */
-  size?: 'card' | 'featured' | 'header' | 'square' | 'row';
+  size?: 'card' | 'featured' | 'header' | 'square' | 'row' | 'tile' | 'hero';
   /**
    * Couverture au-dessus de la ligne de flottaison (les deux entrées « à la
    * une » : accueil et /blog) : `loading="eager"`. Toutes les autres restent
@@ -55,6 +62,8 @@ const FRAME: Record<NonNullable<Props['size']>, { box: string; width: string; ra
   header: { box: 'h-[196px]', width: 'w-full', radius: 'rounded-inner' },
   square: { box: 'size-[72px]', width: 'shrink-0', radius: 'rounded-thumb' },
   row: { box: 'h-16', width: 'w-[76px] shrink-0', radius: 'rounded-thumb' },
+  tile: { box: 'h-[120px]', width: 'w-full', radius: 'rounded-inner' },
+  hero: { box: 'h-full min-h-[180px] md:min-h-[300px]', width: 'w-full', radius: '' },
 };
 const { box, width: frameWidth, radius } = FRAME[size];
 // La vignette carrée s'affiche en 72×72 (object-cover) : on ne livre pas
@@ -73,6 +82,14 @@ const height =
   size === 'square' && landscape ? squareSide : size === 'row' && widerThanRow ? ROW.height : undefined;
 // Monogramme à l'échelle du cadre : `text-2xl` déborderait presque du carré 72 px.
 const monogramSize = size === 'square' || size === 'row' ? 'text-base' : 'text-2xl';
+// Plan 14 : les visuels de /projets (`tile`, `hero`) sont une trame nue, sans
+// monogramme, à la trame du prototype ; ils reposent sur la carte, d'où
+// `data-rail` (comme `row`).
+const bare = size === 'tile' || size === 'hero';
+const hatch = bare
+  ? 'repeating-linear-gradient(135deg, var(--color-hatch) 0 2px, transparent 2px 12px)'
+  : 'repeating-linear-gradient(135deg, var(--color-hatch) 0 1px, transparent 1px 9px)';
+const explicitRail = size === 'row' || bare;
 ---
 
 {
@@ -94,12 +111,12 @@ const monogramSize = size === 'square' || size === 'row' ? 'text-base' : 'text-2
     */
     <div
       class={`${box} flex ${frameWidth} items-center justify-center ${radius} bg-rail`}
-      style="background-image: repeating-linear-gradient(135deg, var(--color-hatch) 0 1px, transparent 1px 9px);"
+      style={`background-image: ${hatch};`}
       aria-hidden="true"
       data-thumb-derived
-      data-rail={size === 'row' ? '' : undefined}
+      data-rail={explicitRail ? '' : undefined}
     >
-      <span class={`font-mono ${monogramSize} font-medium tracking-[.06em] text-muted`}>{monogram}</span>
+      {!bare && <span class={`font-mono ${monogramSize} font-medium tracking-[.06em] text-muted`}>{monogram}</span>}
     </div>
   )
 }

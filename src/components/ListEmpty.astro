@@ -1,0 +1,47 @@
+---
+/**
+ * ListEmpty.astro (plan 14, T4 ; inventaire §3 « Empty state », D93) — l'état
+ * vide partagé de /projets, /prompts et /skills.
+ *
+ * Bordure 1 px pointillée `line`, rayon 20, colonne centrée, padding 48/24,
+ * écart 12 ; tuile 38 × 38 rayon 12 sur `chip`, icône `muted` ; phrase 14 px
+ * sans `muted` dans `[data-list-empty-text]` (src/scripts/list-pattern.ts la
+ * réécrit à chaque filtre, depuis le gabarit de la page quand elle en
+ * déclare un) ; bouton de remise à zéro `[data-list-reset]` 13 px / 600
+ * `accent`.
+ *
+ * Rendu `hidden` : seul le script le révèle, quand aucune entrée ne reste.
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  icon: 'folder' | 'file-text' | 'filter';
+  /** Phrase rendue par le serveur (réécrite par le script avant affichage). */
+  text: string;
+  /** Libellé du bouton de remise à zéro (`voir tous les projets →`). */
+  resetLabel: string;
+}
+
+const { icon, text, resetLabel } = Astro.props;
+---
+
+<div
+  data-list-empty
+  hidden
+  class="flex flex-col items-center gap-3 rounded-card border border-dashed border-line px-6 py-12 text-center"
+>
+  <span
+    class="inline-flex size-[38px] items-center justify-center rounded-nested bg-chip text-muted"
+    aria-hidden="true"
+  >
+    <Icon name={icon} size={18} />
+  </span>
+  <p class="font-sans text-sm text-muted" data-list-empty-text>{text}</p>
+  <button
+    type="button"
+    data-list-reset
+    class="cursor-pointer font-sans text-[13px] font-semibold text-accent hover:underline"
+  >
+    {resetLabel}
+  </button>
+</div>

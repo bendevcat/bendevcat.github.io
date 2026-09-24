@@ -1,0 +1,100 @@
+---
+/**
+ * FeaturedProject.astro — héros « à la une » de /projets (plan 14, T4 ;
+ * inventaire §3, prototype 375–397, D92–D93).
+ *
+ * Un `.card` rayon 24 (`--radius-feature`), `overflow-hidden`, en deux
+ * colonnes `1fr | 1.1fr` dès 768 px (empilées dessous). À gauche, la
+ * vignette `hero` : la couverture (`eager`, au-dessus de la ligne de
+ * flottaison) ou un creux `rail` tramé, 300 px de haut au moins, sans
+ * monogramme ni badge. À droite (padding 34/36, écart 14) : pilule de statut
+ * (ton de PROJECT_STATUS_META) + `depuis <mois année> · à la une` ; h2
+ * 30 / 1,15 / 600 ; description 15 / 1,6 `muted` ; technos (rayon 8) ; puis
+ * les boutons `démo ↗` (aplat `accent`) et `code source ↗` (bordure `line`),
+ * chacun omis sans son URL, ouverts dans un nouvel onglet sans `opener`.
+ *
+ * Le lien du titre est étiré sur la carte ; les boutons passent au-dessus
+ * (`relative z-10`) — trois liens frères, aucun imbriqué.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { PROJECT_STATUS_META } from '../lib/projectStatus';
+import { featuredSince } from '../lib/listCards';
+import Thumbnail from './Thumbnail.astro';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { title, description, status, stack, cover, coverAlt, startDate, demoUrl, repoUrl } = project.data;
+const statusMeta = PROJECT_STATUS_META[status];
+const meta = [featuredSince(startDate), 'à la une'].filter(Boolean).join(' · ');
+const BUTTON = 'inline-flex items-center rounded-pill px-4 py-2.5 font-sans text-[13px] leading-none transition-colors';
+---
+
+<article
+  class="card group relative grid overflow-hidden rounded-feature md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
+  data-entry-id={project.id}
+  data-featured
+>
+  <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={status} size="hero" eager />
+
+  <div class="flex flex-col gap-3.5 px-9 py-[34px]">
+    <div class="flex flex-wrap items-center gap-2.5">
+      <span
+        class={`rounded-pill border px-[11px] py-[5px] font-mono text-[11px] leading-none ${statusMeta.chipClass}`}
+        data-hero-status
+      >
+        {statusMeta.label}
+      </span>
+      <span class="font-mono text-[11px] text-muted" data-hero-meta>{meta}</span>
+    </div>
+
+    <h2 class="font-sans text-[30px] leading-[1.15] font-semibold tracking-[-.02em] text-ink transition-colors group-hover:text-accent">
+      <a href={`/projets/${project.id}/`} class="after:absolute after:inset-0 after:rounded-feature">{title}</a>
+    </h2>
+
+    <p class="text-[15px] leading-[1.6] text-pretty text-muted">{description}</p>
+
+    {
+      stack.length > 0 && (
+        <ul class="flex flex-wrap gap-[7px]" aria-label="Technologies">
+          {stack.map((tech) => (
+            <li class="rounded-tag bg-chip px-2.5 py-[5px] font-mono text-[11px] text-muted" data-hero-stack>
+              {tech}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      (demoUrl || repoUrl) && (
+        <div class="relative z-10 mt-auto flex flex-wrap gap-2.5 pt-4">
+          {demoUrl && (
+            <a
+              href={demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-hero-link="demo"
+              class={`${BUTTON} bg-accent font-semibold text-accentInk`}
+            >
+              démo ↗
+            </a>
+          )}
+          {repoUrl && (
+            <a
+              href={repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-hero-link="repo"
+              class={`${BUTTON} border border-line text-ink hover:bg-chip`}
+            >
+              code source ↗
+            </a>
+          )}
+        </div>
+      )
+    }
+  </div>
+</article>

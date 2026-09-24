@@ -18,8 +18,14 @@ const SRC = resolve(__dirname, '..');
 const LISTS = ['blog', 'projets', 'prompts', 'skills'] as const;
 // /blog n'a plus d'entrée à la une ni de cartes (plan 12, T5 : rail + lignes
 // compactes) — ses gardes sont dans le bloc « blog list (plan 12, T5) ».
-const FEATURED_LISTS = ['projets', 'prompts', 'skills'] as const;
-const CARDS = ['ProjectCard', 'PromptCard', 'SkillCard'] as const;
+// Plan 14 (D92) : /projets quitte le cadre du plan 11 — ses gardes sont dans
+// le bloc « grid lists (plan 14) » ; /prompts et /skills l'y rejoignent en T5.
+const FEATURED_LISTS = ['prompts', 'skills'] as const;
+const CARDS = ['PromptCard', 'SkillCard'] as const;
+/** Listes en grille de `.card` posées sur le fond de page (plan 14, D92). */
+const GRID_LISTS = ['projets'] as const;
+/** Carte d'entrée de chaque liste en grille. */
+const GRID_CARDS: Record<(typeof GRID_LISTS)[number], string> = { projets: 'ProjectCard' };
 
 const read = (path: string) => readFileSync(resolve(SRC, path), 'utf8');
 const listPage = (list: string) => read(`pages/${list}/index.astro`);
@@ -172,5 +178,108 @@ describe('blog list (plan 12, T5)', () => {
     expect(classes).not.toContain('card-inner');
     expect(classes.filter((cls) => /^(hover:)?bg-/.test(cls)), 'aucun fond').toEqual([]);
     expect(classes).toContain('border-line2');
+  });
+});
+
+// Plan 14 (D92, D93 ; inventaire §0, §3) : /projets — puis /prompts et
+// /skills en T5 — quitte le cadre du plan 11. Chaque entrée est un `.card`
+// posé sur le fond de page ; au-dessus, une barre de filtres `hidden` côté
+// serveur (contrôle segmenté à gauche, menu de facette à droite) ; l'état
+// vide est le composant partagé `ListEmpty`. Plus aucun `<select>`.
+describe('grid lists (plan 14)', () => {
+  it('drops the outer frame and the <select>, and uses the list header', () => {
+    for (const list of GRID_LISTS) {
+      const source = listPage(list);
+      expect(openingTags(source, 'data-list-frame'), `${list}: plus de cadre`).toEqual([]);
+      const cards = openingTags(source, 'class').filter((tag) => classesOf(tag).includes('card'));
+      expect(cards, `${list}: aucun .card dans la page elle-même`).toEqual([]);
+      expect(source, `${list}: plus de <select>`).not.toMatch(/<select\b/);
+      expect(source, `${list}: en-tête de liste`).toMatch(/<ListHeader\b/);
+    }
+  });
+
+  it('renders the filter bar hidden, with a segmented control and a facet dropdown', () => {
+    for (const list of GRID_LISTS) {
+      const source = listPage(list);
+      const bars = openingTags(source, 'data-list-filters');
+      expect(bars, `${list}: une barre de filtres`).toHaveLength(1);
+      expect(bars[0], `${list}: barre hidden`).toMatch(/\shidden(?=[\s=>/])/);
+      expect(source, `${list}: contrôle segmenté`).toMatch(/<SegmentedControl\b/);
+      const dropdown = source.match(/<Dropdown\b[\s\S]*?\/>/)?.[0] ?? '';
+      expect(dropdown, `${list}: menu de facette`).toMatch(/\sdata-facet-key=/);
+      expect(dropdown, `${list}: libellé de facette`).toMatch(/\sdata-facet-label=/);
+      expect(dropdown, `${list}: icône filtre`).toMatch(/\sicon="filter"/);
+      expect(dropdown, `${list}: largeur mini 230 (D84)`).toMatch(/\sminWidth=\{230\}/);
+      expect(source, `${list}: état vide partagé`).toMatch(/<ListEmpty\b/);
+    }
+  });
+
+  it('keeps the meta line as a visually hidden live region', () => {
+    for (const list of GRID_LISTS) {
+      const [meta] = openingTags(listPage(list), 'data-list-meta');
+      expect(classesOf(meta), list).toContain('sr-only');
+    }
+  });
+
+  it('draws every entry card as an <article class="card">, never .card-inner', () => {
+    for (const list of GRID_LISTS) {
+      const card = GRID_CARDS[list];
+      const [root] = openingTags(read(`components/${card}.astro`), 'data-entry-id');
+      expect(root, `${card}: racine data-entry-id`).toBeTruthy();
+      expect(root, `${card}: <article>`).toMatch(/^<article\b/);
+      const classes = classesOf(root);
+      expect(classes, card).toContain('card');
+      expect(classes, card).not.toContain('card-inner');
+    }
+  });
+
+  it('builds the segmented control as a group of pressed buttons with count badges', () => {
+    const source = read('components/SegmentedControl.astro');
+    const [track] = openingTags(source, 'data-segmented');
+    expect(track, 'piste data-segmented').toBeTruthy();
+    expect(track).toMatch(/\srole="group"/);
+    // Rayon 999 dès 640 px ; dessous, la piste passe à la ligne en rayon 20 (D93).
+    expect(classesOf(track)).toEqual(
+      expect.arrayContaining(['bg-chip', 'border', 'border-line', 'rounded-card', 'sm:rounded-pill', 'sm:flex-nowrap']),
+    );
+    const [button] = openingTags(source, 'data-facet-value');
+    expect(button, 'segment').toMatch(/^<button\b/);
+    expect(button).toMatch(/\saria-pressed=/);
+    expect(button).toMatch(/\sdata-facet-key=/);
+    expect(button).toMatch(/\sdata-facet-label=/);
+    const [badge] = openingTags(source, 'data-segment-count');
+    expect(badge, 'badge de compte').toBeTruthy();
+    expect(classesOf(badge)).toEqual(expect.arrayContaining(['font-mono', 'text-muted', 'rounded-pill']));
+  });
+
+  it('renders the empty state hidden, with its text node and a reset button', () => {
+    const source = read('components/ListEmpty.astro');
+    const [box] = openingTags(source, 'data-list-empty');
+    expect(box, 'état vide').toMatch(/\shidden(?=[\s=>/])/);
+    expect(classesOf(box)).toEqual(expect.arrayContaining(['border-dashed', 'border-line', 'rounded-card']));
+    expect(openingTags(source, 'data-list-empty-text')).toHaveLength(1);
+    const [reset] = openingTags(source, 'data-list-reset');
+    expect(reset, 'bouton de remise à zéro').toMatch(/^<button\b/);
+  });
+
+  it('declares the /projets empty-sentence template and its slot prefixes', () => {
+    const source = listPage('projets');
+    expect(source).toMatch(/const EMPTY_TEMPLATE = "Aucun projet\{status\}\{stack\} pour l'instant\.";/);
+    const [root] = openingTags(source, 'data-list');
+    expect(root, 'gabarit posé sur [data-list]').toMatch(/\sdata-list-empty-template=\{EMPTY_TEMPLATE\}/);
+    expect(source).toMatch(/emptyPrefix=" "/);
+    expect(source).toMatch(/data-facet-empty-prefix=" en "/);
+  });
+
+  it('opens the hero buttons in a new tab, without opener', () => {
+    const source = read('components/FeaturedProject.astro');
+    const links = openingTags(source, 'data-hero-link');
+    expect(links, 'démo + code source').toHaveLength(2);
+    for (const link of links) {
+      expect(link).toMatch(/\starget="_blank"/);
+      expect(link).toMatch(/\srel="noopener noreferrer"/);
+    }
+    const [root] = openingTags(source, 'data-entry-id');
+    expect(classesOf(root)).toEqual(expect.arrayContaining(['card', 'rounded-feature', 'overflow-hidden']));
   });
 });
