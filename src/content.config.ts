@@ -68,6 +68,9 @@ const prompts = defineCollection({
     title: z.string(),
     description: z.string(),
     format: z.enum(PROMPT_FORMATS).default('fiche'),
+    // Plan 16 : `{nom}` dans `prompt` est une variable seulement si `nom` est
+    // déclaré dans `variables` (src/lib/promptWindow.ts) ; toute autre accolade
+    // reste littérale.
     prompt: z.string().optional(),
     // Plan 14 (D94) : forme de l'inventaire §11, lue par la carte (`N variables`)
     // et par la fiche prompt (plan 16). Vide tant qu'aucune source n'existe.
@@ -80,6 +83,9 @@ const prompts = defineCollection({
     model: z.string().optional(),
     // Plan 14 (D94) : pastille `v<version>` de la carte, masquée sans valeur.
     version: z.string().optional(),
+    // Plan 16 (D111) : date de la version, affichée « v<version> — <date> » sur
+    // la fiche prompt ; vide tant qu'aucune source ne la donne.
+    updated: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
     relatedSkills: z.array(reference('skills')).optional(),

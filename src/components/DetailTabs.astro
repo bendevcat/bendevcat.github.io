@@ -2,7 +2,7 @@
 /**
  * Patron « détail à onglets » (contrat visuel §5.2, Plan 8) — LE composant des
  * trois pages de détail (/projets, /prompts, /skills). Il ne décide pas QUELS
- * onglets existent : la page les calcule avec projectTabs / promptTabs /
+ * onglets existent : la page les calcule avec projectTabs / promptPageTabs /
  * skillTabs (src/lib/detailTabs.ts) et lui passe la liste. Chaque panneau est
  * un slot nommé d'après l'id de l'onglet (`<div slot="stack">…</div>`).
  *
@@ -29,6 +29,16 @@
  *   boîte de remplissage y créerait un défilement vertical d'1 px, le
  *   soulignement étant de toute façon rogné à cette limite. Le soulignement
  *   `accent` repose donc au-dessus du filet `line2`.
+ * - `track` (plan 16) : colonne latérale d'une fiche (inventaire §6, et §8
+ *   pour les skills — la variante reste générique, quel que soit le nombre
+ *   d'onglets). Pas d'enveloppe `.card` : racine
+ *   `data-tab-variant="track"` en colonne (gap 12), rangée en rail pilule
+ *   `chip` bordé `line` (padding 4, gap 4), onglets `flex-1` mono 11 `muted`,
+ *   l'actif en `card` + bordure `line` + `ink` 500. Chaque panneau est sa
+ *   propre carte `.card rounded-aside p-5` ombrée (`var(--shadow)` en style
+ *   écrit, jamais l'utilitaire `.shadow` figé en clair au build). Un seul
+ *   onglet : pas de rangée, le panneau reste une carte, nue (D13).
+ *   `Tab.count` n'y est pas rendu (effectif : variante soulignée seule).
  */
 import { hasTabRow, type Tab } from '../lib/detailTabs';
 
@@ -36,23 +46,37 @@ interface Props {
   tabs: Tab[];
   /** Nom accessible de la rangée d'onglets (`aria-label` du tablist). */
   label: string;
-  /** `pill` (défaut, prompts et skills) ou `underline` (fiche projet, plan 15). */
-  variant?: 'pill' | 'underline';
+  /**
+   * `pill` (défaut, prompts et skills), `underline` (fiche projet, plan 15)
+   * ou `track` (colonne latérale d'une fiche, plan 16).
+   */
+  variant?: 'pill' | 'underline' | 'track';
 }
 
 const { tabs, label, variant = 'pill' } = Astro.props;
 const withRow = hasTabRow(tabs);
 const underline = variant === 'underline';
+const track = variant === 'track';
 
 // Classes par variante. Celles de `pill` sont celles d'avant le plan 15, à
 // l'identique : le HTML des prompts et des skills ne doit pas bouger (R20).
-const rootClass = underline ? 'mt-6' : 'card mt-10 p-4 sm:p-6';
+const rootClass = underline ? 'mt-6' : track ? 'flex flex-col gap-3' : 'card mt-10 p-4 sm:p-6';
 const tablistClass = underline
   ? 'flex overflow-x-auto border-b border-line2 px-5 sm:px-8'
-  : 'flex flex-wrap gap-2';
+  : track
+    ? 'flex gap-1 rounded-pill border border-line bg-chip p-1'
+    : 'flex flex-wrap gap-2';
 const tabClass = underline
   ? 'shrink-0 cursor-pointer whitespace-nowrap border-b-2 border-transparent bg-transparent px-4 py-3 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink aria-selected:border-accent aria-selected:font-semibold aria-selected:text-ink'
-  : 'cursor-pointer rounded-pill border border-transparent bg-transparent px-3 py-1.5 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:text-ink';
+  : track
+    ? 'min-w-0 flex-1 cursor-pointer whitespace-nowrap rounded-pill border border-transparent bg-transparent px-2 py-1.5 font-mono text-[11px] text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:font-medium aria-selected:text-ink'
+    : 'cursor-pointer rounded-pill border border-transparent bg-transparent px-3 py-1.5 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:text-ink';
+// Carte d'un panneau de la variante `track` (inventaire §6 : surface, rayon
+// 18, ombre, padding 20). L'ombre passe par l'attribut `style`, comme
+// ProjectAside : l'utilitaire `.shadow` resterait clair en thème sombre.
+const trackPanelClass = 'card rounded-aside p-5';
+const trackPanelStyle = 'box-shadow: var(--shadow);';
+const variantAttr = underline ? 'underline' : track ? 'track' : undefined;
 
 // Rendu des slots côté serveur : un nom de slot dynamique ne passe pas par
 // `<slot name={…} />` de façon fiable, `Astro.slots.render` si.
@@ -61,7 +85,7 @@ const panels = await Promise.all(
 );
 ---
 
-<div class={rootClass} data-detail-tabs data-tab-variant={underline ? 'underline' : undefined}>
+<div class={rootClass} data-detail-tabs data-tab-variant={variantAttr}>
   {
     withRow ? (
       <>
@@ -116,6 +140,32 @@ const panels = await Promise.all(
               </>
             ))}
           </div>
+        ) : track ? (
+          // Panneaux de la variante `track` : chacun est sa propre carte, la
+          // racine en colonne les espace de 12 px. Sans JS, le titre de repli
+          // précède chaque carte (12 px de plus au-dessus, sauf le premier).
+          panels.map(({ tab, html }, index) => (
+            <>
+              <h2
+                class="mt-3 font-mono text-sm text-muted first-of-type:mt-0"
+                data-tab-fallback-heading
+                data-pagefind-ignore
+              >
+                // {tab.label.toLowerCase()}
+              </h2>
+              <div
+                role="tabpanel"
+                id={`tabpanel-${tab.id}`}
+                aria-labelledby={`tab-${tab.id}`}
+                tabindex="0"
+                hidden={index !== 0}
+                class={`${trackPanelClass} focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink`}
+                style={trackPanelStyle}
+              >
+                <Fragment set:html={html} />
+              </div>
+            </>
+          ))
         ) : (
           panels.map(({ tab, html }, index) => (
             <>
@@ -149,6 +199,12 @@ const panels = await Promise.all(
           </div>
         ))}
       </div>
+    ) : track ? (
+      panels.map(({ html }) => (
+        <div class={trackPanelClass} style={trackPanelStyle}>
+          <Fragment set:html={html} />
+        </div>
+      ))
     ) : (
       panels.map(({ html }) => (
         <div>

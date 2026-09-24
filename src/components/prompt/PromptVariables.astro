@@ -1,0 +1,69 @@
+---
+/**
+ * PromptVariables.astro (plan 16, T5 ; inventaire §6) — panneau `variables`
+ * de la colonne de la fiche prompt. Hors index de recherche.
+ *
+ * - `N variables` 13 / 600 `ink` + `réinitialiser` (mono 11 `muted`, survol
+ *   `accent`), rendu `hidden` jusqu'au script.
+ * - Par variable : `<label>` mono 11 `accent` `{nom}` ; champ texte
+ *   `data-var-input="<nom>"`, `data-default` et `value` = le défaut, `code`
+ *   bordé `line`, rayon 10, mono 13 `ink`, bordure `accent` au focus — rendu
+ *   `hidden` (sans JS, le texte de la fenêtre reste celui des défauts et
+ *   aucun champ inerte n'est montré) ; indication 11.5 px `muted` en anglais
+ *   (`lang="en"`, citée telle quelle, D109), omise sans indication.
+ *
+ * La saisie réécrit les segments `[data-var]` de la fenêtre :
+ * src/scripts/prompt-window.ts.
+ */
+import type { PromptVariable } from '../../lib/promptWindow';
+
+interface Props {
+  variables: PromptVariable[];
+}
+
+const { variables } = Astro.props;
+const count = variables.length;
+const fieldId = (name: string) => `prompt-var-${name.replace(/[^A-Za-z0-9_-]/g, '-')}`;
+---
+
+<div data-prompt-variables data-pagefind-ignore>
+  <div class="flex items-baseline justify-between gap-3">
+    <p class="font-sans text-[13px] font-semibold text-ink">{count} {count > 1 ? 'variables' : 'variable'}</p>
+    <button
+      type="button"
+      hidden
+      class="cursor-pointer font-mono text-[11px] text-muted transition-colors hover:text-accent focus-visible:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      data-var-reset>réinitialiser</button
+    >
+  </div>
+  <div class="mt-4 flex flex-col gap-4">
+    {
+      variables.map((variable) => {
+        const id = fieldId(variable.name);
+        const hintId = `${id}-hint`;
+        return (
+          <div class="flex flex-col gap-1.5" data-var-field={variable.name}>
+            <label for={id} class="font-mono text-[11px] text-accent">{`{${variable.name}}`}</label>
+            <input
+              type="text"
+              id={id}
+              hidden
+              value={variable.default ?? ''}
+              data-var-input={variable.name}
+              data-default={variable.default ?? ''}
+              aria-describedby={variable.hint ? hintId : undefined}
+              autocomplete="off"
+              spellcheck="false"
+              class="w-full rounded-thumb border border-line bg-code px-3 py-2 font-mono text-[13px] text-ink transition-colors focus:border-accent focus:outline-hidden"
+            />
+            {variable.hint && (
+              <p id={hintId} lang="en" class="text-[11.5px] leading-snug text-muted">
+                {variable.hint}
+              </p>
+            )}
+          </div>
+        );
+      })
+    }
+  </div>
+</div>

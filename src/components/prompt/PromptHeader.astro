@@ -1,0 +1,72 @@
+---
+/**
+ * PromptHeader.astro (plan 16, T5 ; inventaire §6 ; prototype 582–736) —
+ * l'en-tête de la fiche prompt, sans carte, posé sur le fond de page.
+ *
+ * - Colonne, écart 12.
+ * - `~/ prompts` : lien `/prompts/`, mono 13 `accent`, hors index de recherche.
+ * - h1 34 px / 700 `ink`, 760 px au plus.
+ * - Description 16 px `muted`, 640 px au plus.
+ * - Rangée méta mono 11 qui passe à la ligne : pilule de format
+ *   (`accentSoft` / `accent`), pilules d'outil et de modèle (`chip` /
+ *   `muted` ; modèle omis sans valeur), `· v<version> — <date>` (chaque
+ *   partie omise sans valeur, l'emplacement entier sans aucune), puis
+ *   `· N lignes · ~N tokens` `muted` — les comptes du texte de la fenêtre aux
+ *   défauts (promptMetaSlots, src/lib/promptDetail.ts), ceux de la carte de
+ *   `/prompts/`.
+ *
+ * Crochets lus par scripts/check-prompt.mjs : `data-prompt-back`,
+ * `data-meta-field`. Une `div` et pas un `<header>` : la page n'a qu'un
+ * `<header>`, celui du site.
+ */
+import type { PromptMetaSlots } from '../../lib/promptDetail';
+
+interface Props {
+  title: string;
+  description: string;
+  format: string;
+  tool: string;
+  model?: string;
+  meta: PromptMetaSlots;
+  /** Date `updated` brute, pour l'attribut `datetime`. */
+  updated?: Date;
+}
+
+const { title, description, format, tool, model, meta, updated } = Astro.props;
+const CHIP = 'rounded-pill px-2 py-1 leading-none';
+---
+
+<div class="flex flex-col gap-3" data-prompt-header>
+  <a
+    href="/prompts/"
+    class="self-start font-mono text-[13px] text-accent underline-offset-4 hover:underline"
+    data-prompt-back
+    data-pagefind-ignore>~/ prompts</a
+  >
+  <h1 class="max-w-[760px] font-sans text-[34px] leading-[1.15] font-bold tracking-[-.03em] text-pretty text-ink">
+    {title}
+  </h1>
+  <p class="max-w-[640px] font-sans text-base leading-[1.6] text-pretty text-muted">{description}</p>
+  <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 font-mono text-[11px] text-muted" data-prompt-meta>
+    <span class={`${CHIP} bg-accentSoft text-accent`} data-meta-field="format">{format}</span>
+    <span class={`${CHIP} bg-chip text-muted`} data-meta-field="tool">{tool}</span>
+    {model && <span class={`${CHIP} bg-chip text-muted`} data-meta-field="model">{model}</span>}
+    {
+      meta.versionDate && (
+        <span>
+          <span aria-hidden="true">· </span>
+          {meta.version && <span data-meta-field="version">{meta.version}</span>}
+          {meta.version && meta.date && ' — '}
+          {meta.date && (
+            <time datetime={updated?.toISOString().slice(0, 10)} data-meta-field="date">
+              {meta.date}
+            </time>
+          )}
+        </span>
+      )
+    }
+    <span>
+      <span aria-hidden="true">· </span><span data-meta-field="counts">{meta.headerCounts}</span>
+    </span>
+  </div>
+</div>

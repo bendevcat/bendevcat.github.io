@@ -11,6 +11,9 @@ document.querySelectorAll<HTMLPreElement>('article pre').forEach((pre) => {
   // CodeWindow.astro) a son propre « Copier » dans sa barre de titre, câblé
   // par src/scripts/code-window.ts — pas de second bouton ni d'enveloppe ici.
   if (pre.closest('[data-code-window]')) return;
+  // Plan 16 : idem pour la fenêtre du prompt (`[data-prompt-window]`,
+  // PromptWindow.astro), câblée par src/scripts/prompt-window.ts.
+  if (pre.closest('[data-prompt-window]')) return;
 
   const codeText = pre.querySelector('code')?.innerText ?? pre.innerText;
 

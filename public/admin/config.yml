@@ -195,7 +195,7 @@ collections:
         options:
           - { label: 'Fiche — prompt copiable + notes', value: fiche }
           - { label: 'Guide — write-up long', value: guide }
-      - { name: prompt, label: Texte du prompt, widget: text, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide.' }
+      - { name: prompt, label: Texte du prompt, widget: text, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide. Écrire {nom} là où le lecteur remplit une variable déclarée ci-dessous.' }
       # Plan 14 (D94) : forme `{name, hint?, default?}` de l'inventaire §11,
       # miroir de `variables` dans src/content.config.ts. Seul `name` est requis.
       - name: variables
@@ -203,7 +203,7 @@ collections:
         label_singular: Variable
         widget: list
         required: false
-        hint: 'Emplacements du prompt que le lecteur peut remplir ; la carte affiche « N variables »'
+        hint: 'Emplacements {nom} du prompt que le lecteur peut remplir (Nom = nom sans accolades) ; la carte affiche « N variables »'
         fields:
           - { name: name, label: Nom, widget: string }
           - { name: hint, label: Aide, widget: string, required: false }
@@ -211,6 +211,8 @@ collections:
       - { name: tool, label: Outil, widget: string, default: Claude, hint: 'Alimente le filtre « outil » de /prompts' }
       - { name: model, label: Modèle, widget: string, required: false, hint: 'Affiché en pastille sur la fiche du prompt, si renseigné' }
       - { name: version, label: Version, widget: string, required: false, hint: 'Affichée « v<version> » sur la carte, si renseignée' }
+      # Plan 16 (D111) : miroir de `updated` (z.coerce.date().optional()).
+      - { name: updated, label: Date de mise à jour, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ', required: false, hint: 'Date de la version, affichée sur la fiche du prompt, si renseignée' }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
       - name: relatedSkills
@@ -222,7 +224,8 @@ collections:
         value_field: '{{slug}}'
         search_fields: [title]
         display_fields: [title]
-      - { name: body, label: Contenu, widget: markdown }
+      # Plan 16 (D110) : facultatif — une fiche peut n'avoir que son prompt.
+      - { name: body, label: Contenu, widget: markdown, required: false }
 
   - name: skills
     label: Skills

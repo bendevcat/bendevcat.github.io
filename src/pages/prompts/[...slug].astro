@@ -1,189 +1,190 @@
 ---
-import { getEntries, render } from 'astro:content';
+/**
+ * Fiche prompt (plan 16, T5 ; inventaire §6 ; prototype 582–736 ; D111).
+ *
+ * `<main>` › `<article data-pagefind-body>`, 40 px sous le header du site :
+ * l'en-tête (PromptHeader, sans carte), puis, 28 px dessous, une grille — à
+ * partir de 1024 px `minmax(0,1fr) | 340px`, écart 22 ; en dessous une
+ * colonne, fenêtre puis colonne latérale (ordre du DOM).
+ *
+ * - Fenêtre (PromptWindow) : le texte que mesure la carte de `/prompts/`
+ *   (measurePromptText) — le `prompt` d'une fiche qui en a un, variables à
+ *   leur défaut, sinon le corps. En-tête, barre et carte partagent ses comptes.
+ * - Colonne `<aside aria-label="Autour du prompt">`, écart 12 : onglets en
+ *   piste (DetailTabs `variant="track"`) variables · décryptage · infos — un
+ *   onglet sans données est omis (promptPageTabs, src/lib/detailTabs.ts) ;
+ *   puis Skills liés et Prompts liés (src/lib/promptDetail.ts), chacune omise
+ *   quand elle est vide.
+ * - Le corps d'une fiche nourrit `décryptage` (prose, indexée) ; celui d'un
+ *   guide est dans la fenêtre. Pas de `sortie` : aucun champ ne la nourrit.
+ *
+ * Crochets lus par scripts/check-prompt.mjs : `data-prompt-aside` et ceux des
+ * composants de src/components/prompt/.
+ */
+import { getCollection, getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
-import TagChip from '../../components/TagChip.astro';
+import PromptHeader from '../../components/prompt/PromptHeader.astro';
+import PromptWindow from '../../components/prompt/PromptWindow.astro';
+import PromptVariables from '../../components/prompt/PromptVariables.astro';
+import PromptInfos from '../../components/prompt/PromptInfos.astro';
+import RelatedSkillsCard from '../../components/prompt/RelatedSkillsCard.astro';
+import RelatedPromptsCard from '../../components/prompt/RelatedPromptsCard.astro';
 import { getSortedPrompts } from '../../lib/prompts';
-import { sortAndFilterSkills } from '../../lib/skills';
+import { sortSkills } from '../../lib/skills';
 import { assertEntriesResolved } from '../../lib/references';
-import { shouldRenderPromptBlock } from '../../lib/promptView';
-import { promptTabs } from '../../lib/detailTabs';
+import { promptPageTabs } from '../../lib/detailTabs';
+import { measurePromptText, promptStats } from '../../lib/listCards';
+import { promptWindowSource } from '../../lib/promptWindow';
+import { promptMetaSlots, relatedPromptIds, relatedSkillIds } from '../../lib/promptDetail';
+import { tagSlug } from '../../lib/tags';
 
 export async function getStaticPaths() {
   const prompts = await getSortedPrompts();
-  return prompts.map((prompt) => ({ params: { slug: prompt.id }, props: { prompt } }));
+  return prompts.map((prompt) => ({ params: { slug: prompt.id }, props: { prompt, prompts } }));
 }
 
-const { prompt } = Astro.props;
+const { prompt, prompts } = Astro.props;
 const { Content } = await render(prompt);
-const { title, description, format, tool, model, tags } = prompt.data;
+const { title, description, format, tool, model, tags, updated } = prompt.data;
 
-const showPromptBlock = shouldRenderPromptBlock(format, prompt.data.prompt);
+// D06 : une référence `relatedSkills` cassée fait échouer le build en nommant
+// le prompt et l'id manquant, au lieu de disparaître en silence.
+if (prompt.data.relatedSkills?.length) {
+  assertEntriesResolved(prompt.id, prompt.data.relatedSkills, await getEntries(prompt.data.relatedSkills));
+}
 
-// ADDITION n°2 (ratifiée au gate) : sens prompt → skills. R6/R7 n'exigent que
-// le sens skill → prompts ; sans ceci, `relatedSkills` serait un champ de
-// données jamais affiché. `assertEntriesResolved` fait échouer le build avec
-// un message nommant l'entrée et l'id manquant plutôt que de laisser passer
-// un `undefined` (D06, Plan 3) — appelé EN PREMIER, sinon une référence
-// cassée serait masquée.
-// `sortAndFilterSkills` (src/lib/skills.ts) est composé ENSUITE : il écarte
-// les skills `draft` (référence valide, mais pas de route publique — les
-// lier produirait un 404) et trie A→Z. D09 (fix round 1, T-C2) : réutilise le
-// helper testé existant au lieu de réécrire le filtre à la main, qui perdait
-// le tri (cf. sortAndFilterPrompts, composé symétriquement côté skill →
-// prompts).
-const relatedSkills = prompt.data.relatedSkills?.length
-  ? sortAndFilterSkills(
-      assertEntriesResolved(
-        prompt.id,
-        prompt.data.relatedSkills,
-        await getEntries(prompt.data.relatedSkills),
-      ),
-    )
-  : [];
+// Skills liées : déclarées d'abord, puis celles dont `relatedPrompts` liste le
+// prompt ; publiées seulement (relatedSkillIds écarte les brouillons).
+const allSkills = sortSkills(await getCollection('skills'));
+const skillInputs = allSkills.map((skill) => ({
+  id: skill.id,
+  draft: skill.data.draft,
+  relatedPrompts: skill.data.relatedPrompts,
+}));
+const skillsById = new Map(allSkills.map((skill) => [skill.id, skill]));
+const skillIdsOf = (entry: typeof prompt) => relatedSkillIds(entry.id, entry.data.relatedSkills, skillInputs);
+const relatedSkills = skillIdsOf(prompt).map((id) => skillsById.get(id)!);
 
-// Plan 8 : QUELS onglets existent se décide dans src/lib/detailTabs.ts —
-// jamais ici. Le corps, fiche ou guide, nourrit « Pourquoi » (D3) ; « Infos »
-// est toujours là (format et tool ont des valeurs par défaut). Le bloc du
-// prompt, lui, reste AU-DESSUS des onglets (D6) : c'est l'action principale.
-const tabs = promptTabs({ body: prompt.body });
+// Prompts liés : skill liée ou tag en commun (clés `tagSlug`), 3 au plus.
+const relationOf = (entry: typeof prompt) => ({
+  id: entry.id,
+  title: entry.data.title,
+  draft: entry.data.draft,
+  skillIds: skillIdsOf(entry),
+  tagKeys: entry.data.tags.map(tagSlug),
+});
+const promptsById = new Map(prompts.map((entry) => [entry.id, entry]));
+const relatedPrompts = relatedPromptIds(relationOf(prompt), prompts.map(relationOf)).map(
+  (id) => promptsById.get(id)!,
+);
+
+// Fenêtre et comptes : un seul texte (measurePromptText), aux défauts.
+const source = promptWindowSource(prompt.data, prompt.body);
+const windowText = measurePromptText(prompt.data, prompt.body);
+const meta = promptMetaSlots(prompt.data, promptStats(windowText));
+
+// QUELS onglets existent se décide dans src/lib/detailTabs.ts.
+const tabs = promptPageTabs({
+  variableCount: source.variables.length,
+  windowShowsPrompt: source.showsPrompt,
+  body: prompt.body,
+});
 const shown = new Set(tabs.map((tab) => tab.id));
+const origin = relatedSkills[0] ? { id: relatedSkills[0].id, title: relatedSkills[0].data.title } : null;
+
+// Prose du décryptage à 14 px, h2 16 / 600 : `.prose` (global.css) est hors
+// couche et l'emporterait sur un utilitaire simple — d'où le `!`.
+const DECRYPTAGE =
+  'prose [&_ol]:text-[14px]! [&_p]:text-[14px]! [&_ul]:text-[14px]! [&_h2]:mt-6! [&_h2]:mb-2! [&_h2]:text-base! [&_h2]:font-semibold! [&>:first-child]:mt-0!';
 ---
 
 <BaseLayout title={`${title} — bencat_`} description={description}>
-  <article class="mx-auto max-w-3xl py-10" data-pagefind-body>
-    <p class="font-mono text-sm text-accent">~/ prompts</p>
+  <main>
+    <article data-pagefind-body class="pt-10">
+      <PromptHeader
+        title={title}
+        description={description}
+        format={format}
+        tool={tool}
+        model={model}
+        meta={meta}
+        updated={updated}
+      />
 
-    <h1 class="mt-4 font-sans text-4xl font-bold text-ink">{title}</h1>
+      <div class="mt-7 grid grid-cols-1 gap-[22px] lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <PromptWindow
+          id={prompt.id}
+          template={source.template}
+          variables={source.variables}
+          text={windowText}
+          counts={meta.windowCounts}
+        />
 
-    <p class="mt-4 text-muted">{description}</p>
+        <aside aria-label="Autour du prompt" class="flex min-w-0 flex-col gap-3" data-prompt-aside>
+          <DetailTabs tabs={tabs} label="Sections du prompt" variant="track">
+            {
+              shown.has('variables') && (
+                <div slot="variables">
+                  <PromptVariables variables={source.variables} />
+                </div>
+              )
+            }
 
-    {
-      showPromptBlock && (
-        <section class="mt-10">
-          <h2 class="font-mono text-sm text-muted">// le prompt</h2>
-          {/*
-            Correctif D07 (pending-user, cheap) : le Step 6 d'origine rendait
-            ce <pre> hors de tout `.prose`, or la règle `.prose :where(pre)`
-            de src/styles/global.css — overflow-x:auto, padding,
-            bordure, rayon — est SCOPÉE à `.prose`. Résultat mesuré au smoke
-            navigateur : overflow-x:visible, padding/border/radius à 0,
-            2461px de débordement horizontal à 375px (R9 cassée) et aucun
-            style du composant code-block du Plan 1 appliqué (spec §6.2).
+            {
+              shown.has('decryptage') && (
+                <div slot="decryptage" class={DECRYPTAGE} data-prompt-notes>
+                  <Content />
+                </div>
+              )
+            }
 
-            Fix : on place le <pre> dans un conteneur `.prose`, exactement
-            comme le corps (panneau « Pourquoi ») ci-dessous — on RÉUTILISE
-            `.prose :where(pre)`, on ne duplique aucune règle CSS et on ne
-            touche pas à src/styles/global.css. Le label « // le prompt »
-            reste hors de `.prose`, comme les titres de repli des onglets :
-            `.prose :where(h2)` (police display, 1.5rem) écraserait sinon
-            son style de label mono discret.
+            {
+              shown.has('infos') && (
+                <div slot="infos">
+                  <PromptInfos
+                    format={format}
+                    tool={tool}
+                    model={model}
+                    length={meta.headerCounts}
+                    versionDate={meta.versionDate}
+                    tags={tags}
+                    origin={origin}
+                  />
+                </div>
+              )
+            }
+          </DetailTabs>
 
-            Correctif addendum D07 (revue qualité, round 1) : ce <pre> ne
-            porte PAS la classe `astro-code`. Une première version l'ajoutait
-            en pensant que `.prose { font-family: var(--font-sans) }`
-            (règle `.prose` de global.css) écraserait sinon la police mono par héritage — c'est
-            faux : une valeur héritée ne concurrence JAMAIS une règle qui
-            matche l'élément directement, et le preflight Tailwind v4 déclaré
-            en tête de ce fichier (`@import "tailwindcss"`) fait déjà
-            `code, kbd, samp, pre { font-family: --theme(--default-mono-
-            font-family, …) }`, qui se résout à `var(--font-mono)` via
-            `--font-mono` (notre `@theme`) — donc ce <pre> est en JetBrains
-            Mono sans rien ajouter. Pire : `astro-code` n'est pas neutre —
-            la règle `.astro-code` de global.css lui impose un fond
-            `background-color: var(--color-code) !important` (garde-fou du
-            thème Shiki tiré des tokens, plan 11), étranger à ce bloc. (Avant
-            le plan 11, c'étaient 5 déclarations `!important` de bascule
-            sombre de Shiki, retirées depuis.) Vérifié sur le HTML buildé et en dev :
-            `getComputedStyle(pre).fontFamily` reste bien
-            `"JetBrains Mono Variable", ui-monospace, …` sans la classe.
+          {
+            relatedSkills.length > 0 && (
+              <RelatedSkillsCard
+                skills={relatedSkills.map((skill) => ({
+                  id: skill.id,
+                  title: skill.data.title,
+                  version: skill.data.version,
+                  description: skill.data.description,
+                }))}
+              />
+            )
+          }
 
-            R3 : ce <pre> reste DANS <article> (juste un niveau plus profond,
-            via .prose puis .code-block-wrapper), donc
-            src/scripts/copy-code.ts (importé plus bas) lui accroche toujours
-            son bouton « Copier »/« Copié ! ». Aucun second mécanisme de
-            copie — spec §6.2.
-          */}
-          <div class="prose mt-4">
-            <pre><code>{prompt.data.prompt}</code></pre>
-          </div>
-        </section>
-      )
-    }
-
-    {/*
-      Plan 8 (D7) : format, outil, modèle, tags et skills liés quittent
-      l'en-tête pour le panneau « Infos » — les afficher aux deux endroits
-      rendrait Infos redondant.
-    */}
-    <DetailTabs tabs={tabs} label="Sections du prompt">
-      {
-        shown.has('pourquoi') && (
-          <div slot="pourquoi" class="prose">
-            <Content />
-          </div>
-        )
-      }
-
-      {
-        shown.has('infos') && (
-          <dl slot="infos" class="grid gap-x-6 gap-y-2 font-mono text-xs sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-y-4">
-            <dt class="text-muted">format</dt>
-            <dd class="mb-2 sm:mb-0">
-              <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{format}</span>
-            </dd>
-
-            <dt class="text-muted">outil</dt>
-            <dd class="mb-2 sm:mb-0">
-              <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{tool}</span>
-            </dd>
-
-            {model && (
-              <>
-                <dt class="text-muted">modèle</dt>
-                <dd class="mb-2 sm:mb-0">
-                  <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{model}</span>
-                </dd>
-              </>
-            )}
-
-            {tags.length > 0 && (
-              <>
-                <dt class="text-muted">tags</dt>
-                <dd class="mb-2 sm:mb-0">
-                  <ul class="flex flex-wrap gap-2" aria-label="Tags">
-                    {tags.map((tag) => (
-                      <TagChip tag={tag} />
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-
-            {relatedSkills.length > 0 && (
-              <>
-                <dt class="text-muted">skills liés</dt>
-                <dd class="min-w-0">
-                  <ul class="flex flex-col gap-2 font-sans text-base">
-                    {relatedSkills.map((skill) => (
-                      <li>
-                        <a
-                          href={`/skills/${skill.id}/`}
-                          class="text-body underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                        >
-                          {skill.data.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-          </dl>
-        )
-      }
-    </DetailTabs>
-  </article>
+          {
+            relatedPrompts.length > 0 && (
+              <RelatedPromptsCard
+                prompts={relatedPrompts.map((entry) => ({
+                  id: entry.id,
+                  title: entry.data.title,
+                  format: entry.data.format,
+                  tool: entry.data.tool,
+                }))}
+              />
+            )
+          }
+        </aside>
+      </div>
+    </article>
+  </main>
 
   <script>
     import '../../scripts/copy-code.ts';

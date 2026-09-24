@@ -473,6 +473,7 @@ describe('config CMS — collection prompts', () => {
       'tool',
       'model',
       'version',
+      'updated',
       'tags',
       'draft',
       'relatedSkills',
@@ -491,7 +492,9 @@ describe('config CMS — collection prompts', () => {
       .filter((f: any) => f.required !== false)
       .map((f: any) => f.name)
       .sort();
-    expect(required).toEqual(['body', 'description', 'format', 'title', 'tool']);
+    // Plan 16 (D110) : `body` facultatif — une fiche peut n'avoir que son
+    // prompt (macos-clone, corps vidé) ; Astro accepte un corps vide.
+    expect(required).toEqual(['description', 'format', 'title', 'tool']);
   });
 
   it('utilise les widgets attendus pour les champs typés (I3, D10)', () => {
@@ -509,6 +512,7 @@ describe('config CMS — collection prompts', () => {
     expect(byName.tool.widget).toBe('string');
     expect(byName.model.widget).toBe('string');
     expect(byName.version.widget).toBe('string');
+    expect(byName.updated.widget).toBe('datetime');
     expect(byName.variables.widget).toBe('list');
     expect(byName.tags.widget).toBe('list');
     expect(byName.draft.widget).toBe('boolean');

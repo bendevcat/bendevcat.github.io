@@ -1,0 +1,149 @@
+# Plan 16 — fiche-prompt
+
+Brief: `docs/auto/brief.md` · Branch: `auto/plan-16-fiche-prompt` · Base: `1e4ef429b3551cd37c4afe5dce29b83d054946ed`
+
+## Goal
+From `/prompts`, the user opens any prompt and sees the prototype's prompt page (inventory §6): header meta row (format, tool, model, version and date when sourced, line and token counts); a dark prompt window (both themes) with the prompt's line breaks, `.md` and Copier → `Copié`; beside it a 340 px column with the pill tab track (variables · décryptage · sortie · infos — a tab without data is omitted) whose variable inputs rewrite the highlighted segments of the prompt live, then Skills liés and Prompts liés cards; the literal `No content` is shown nowhere
+
+## Reachability
+From `http://localhost:4321/`: header nav `Prompts` › `/prompts/` › a card title › `/prompts/<id>/` (also: the home's Prompts panel, a skill page's prompts, `/tags/<tag>/`, search). The path exists; this plan changes what `src/pages/prompts/[...slug].astro` renders. From the page: `~/ prompts` › `/prompts/`; Skills liés / `Vient du skill` › `/skills/<id>/`; Prompts liés › `/prompts/<id>/`; `Tous les prompts →` › `/prompts/`.
+
+### Built facts (measured at base)
+Three published prompts. `bootstrap-session-anti-drift`: fiche, Claude Code, model `claude-opus-5`, `prompt` 129 lines / ~2645 tk (an emitted instance of the anti-drift bootstrap), body = author's notes with `## Ce qu'il porte`, `## Quand le coller`, `## Ce qu'il empêche`, relatedSkills `[anti-drift-planning]`, 4 tags. `decouper-un-projet-en-plans-anti-drift`: guide, no `prompt`, body 134 lines / ~1597 tk with 10 lines starting `##`–`######`, relatedSkills `[anti-drift-planning]`, 3 tags. `macos-clone`: fiche, Claude, `Opus 5`, `prompt` stored on one line (2424 chars, 43 ` - ` bullets flattened), body = `No content`, no tags, no relatedSkills; skill `superpowers` lists it in `relatedPrompts`. No prompt has `version`, `variables` or a date. `check-detail-tabs` prints prompts `Pourquoi | Infos`; `check-lists` prints `macos-clone fiche · Claude · 1 l. · ~606 tk`; `check-finition` prints `fallback: 15/15 data-pagefind-ignore`; `npx vitest run` → 332 passed.
+
+### Sources (Content rule, D65) — each touched file gets a decision entry `⚑ à relire`
+- **bootstrap variables** ← `~/workspace/claudeworkspaces/anti-drift-planning/skills/anti-drift-planning/references/bootstrap-prompt-template.md` (placeholder names `{N}`, `{topic}`, `{BASE_REF}`, `{LANGUAGE}`) and `commands/start-session.md` step 4 (hints, verbatim English: `N` "plan number", `topic` "topic extracted from the spec filename", `BASE_REF` "the ref the execution session must branch off", `LANGUAGE` "the language the user is currently conversing in"; `IMPL_PLAN_PATH` = `<base>/plans/<spec-date>-plan-<N>-<topic>.md`, ledger / deviations `plan-<N>-…`). The stored `prompt` becomes the template form of the instance: `{N}` at prompt lines 18, 22, 23, 24, 25, 29, 36, 72, 94, 97, 122, 124, 127 (13), `{topic}` at 18, 22, 23, 29 (4), `{BASE_REF}` at 29, `{LANGUAGE}` at 129 — exactly where the canonical template has that placeholder. Defaults = the instance's values `4`, `librairies-prompts-skills`, `main`, `français`. Left literal: the verify prefix (lines 1–16: comment, re-validation notes), `milestone-plan-3` (lines 98, 123 — the instance's typo the body discusses), the methodology path, the date `2026-07-19`. Rendered with defaults, the text is byte-identical to the base instance.
+- **macos-clone line breaks** ← its own text, whitespace only: each ` - ` → `\n- `, ` Exigences:` → `\n\nExigences:`, ` Important:` → `\n\nImportant:` (flat list, no nesting) → 48 lines, ~607 tk; collapsing `\s+` to one space gives back the base text. Body emptied (D66).
+- **décryptage** ← the fiche's own body (verbatim, rendered as prose). No `why`, `useWhen`, `avoidWhen`, `output`, `outNote` field: no source, no tab, no field.
+
+### Design rules (prototype 582–736 via inventory §6, §9; authoring choices are decision candidates)
+- **Window text** = `measurePromptText` (plan 14 rule, now rendering declared variables at their defaults): the `prompt` of a fiche that has one, else the body (the guide shows its markdown). Header, window and `/prompts/` card counts come from that one text. Counts stay those of the default text while the user types.
+- **Placeholders**: `{name}` in `prompt` is a variable only when `name` is declared in `variables`; other braces stay literal. A segment shows the input's value, or `{name}` when the value is empty (and when there is no default).
+- **Page**: `<main>` › `<article data-pagefind-body>`, `pt-10`. Header (no card, gap 12): `~/ prompts` link mono 13 `accent` → `/prompts/`; h1 34 px / 700 `ink`, `max-w-[760px]`; description 16 px `muted`, `max-w-[640px]`; meta row mono 11, wraps: format pill `bg-accentSoft text-accent`, tool pill and model pill `bg-chip text-muted` (model omitted when unset), `· v<version> — <date fr-FR long>` (each part omitted when unset, the whole slot when both are), `· N lignes · ~N tokens` `muted`. Grid 28 px below: from 1024 px `minmax(0,1fr) 340px`, gap 22; below 1024 one column, window then column (DOM order).
+- **Prompt window** `<figure data-prompt-window aria-label="Prompt : <id>.md">`, `rounded-aside` (18), border 1 px `windowLine`, `overflow-hidden`, same colours in both themes. Bar `windowHead`, padding 10/14: `<id>.md` mono 11 `windowInk` + ` · N l. · ~N tk` `windowDim`; right: `.md` button (mono 10 `windowDim` on `windowLine`, radius 7, hover `windowInk`) then `Copier` (mono 10 `windowAccent` on `windowAccentInk`, radius 7). Both rendered `hidden` (no display utility on them), revealed by the script. No traffic lights, no gutter. Body `windowBg`: `<pre>` mono 13 / 1.95, padding 20, `whitespace-pre-wrap` + `[overflow-wrap:anywhere]` (no horizontal scroll), `<code>` `windowInk` whose text is exactly the window text; a line starting with 2–6 `#` then a space → `<span data-prompt-heading>` `windowKey` 600; each variable occurrence → `<span data-var="<name>">` `bg-windowVarBg text-windowVar rounded-small`. Built as an escaped string (`set:html`) like `CodeWindow`; a render guard throws if the segments do not rebuild the text. Bar is `data-pagefind-ignore`; the prompt text stays indexed.
+- **Script** `src/scripts/prompt-window.ts` (vanilla): on `input`, every `[data-var="<name>"]` gets `varDisplay(name, value)`; `réinitialiser` puts each input back to its `data-default`; `Copier` → `copyText(code.textContent)` at click time, label `Copié` 1.4 s (`Échec — copie manuelle` on failure), `aria-live="polite"`; `.md` → `Blob` (`text/markdown;charset=utf-8`) of the current text downloaded as `<id>.md`. `copy-code.ts` skips `[data-prompt-window] pre`.
+- **Column** `<aside aria-label="Autour du prompt">`, `flex-col gap-3`: `DetailTabs` new variant `track` (the `pill` variant stays byte-identical — skills, plan 17), root `data-tab-variant="track"`, no own card: tablist `flex gap-1 rounded-pill border border-line bg-chip p-1`; tabs `flex-1` mono 11 radius 999, `muted`, `aria-selected` → `bg-card border-line text-ink` 500; each panel is a `.card rounded-aside p-5` with `box-shadow: var(--shadow)`; fallback headings, roving tabindex, `data-js` fallback and D13 (< 2 tabs → no track, the one panel card bare) unchanged.
+- **Tabs** (`promptPageTabs`, order fixed): `variables` when `variables` is non-empty; `décryptage` when the window shows the `prompt` field and the body is not blank; `infos` always. No `sortie` (no field). → bootstrap `variables | décryptage | infos`; guide and macos-clone one panel, `infos`.
+- **variables** panel (`data-pagefind-ignore`): `N variables` 13 / 600 `ink` + `réinitialiser` (mono 11 `muted`, hover `accent`, `hidden` until the script). Per variable: `<label>` mono 11 `accent` `{name}`; `<input data-var-input="<name>" data-default value=<default>>` `bg-code border-line rounded-thumb` (10) mono 13 `ink`, focus border `accent`, rendered `hidden`; hint 11.5 px `muted` `lang="en"`, omitted without hint.
+- **décryptage** panel: the body as `.prose` at 14 px, its h2 16 px / 600 (indexed).
+- **infos** panel (`data-pagefind-ignore`): `Fiche technique` 13 / 600; `<dl>` mono 11 label `muted` / value: format (accent pill), outil, modèle (if set), longueur `N lignes · ~N tokens`, version · date (if set), tags (`TagChip`s, kept from base); `line2` divider; `Vient du skill` → first related skill (omitted when none).
+- **Related skills** = published entries of `prompt.relatedSkills` (declared order), then published skills whose `relatedPrompts` list the prompt, deduplicated. **Skills liés** card (`.card rounded-aside p-5`, shadow, `data-pagefind-ignore`, omitted when empty): label mono 10 uppercase .12em `muted`; per skill a `.card-inner` link padding 12: title 14 / 600 `ink`, `v<version>` mono 10 `accent`, description 12.5 px `muted` clamped to 2 lines.
+- **Related prompts** = other published prompts sharing ≥ 1 related skill or ≥ 1 tag, most shared (skills + tags) first, then title A→Z, at most 3. **Prompts liés** card (same frame, omitted when empty): per prompt a `.card-inner` link: format mono 10 `accent`, title 14 / 500 `ink`, tool mono 10 `muted`; then `Tous les prompts →` 13 / 600 `accent` → `/prompts/`.
+- **Tokens** (both `@theme static` and `:root[data-theme="dark"]`, identical values): `--color-windowAccent: #4ADE80`, `--color-windowAccentInk: #06210F`, `--color-windowVar: #86EFAC`, `--color-windowVarBg: rgba(74,222,128,.16)` — the prototype's light highlight (`#0A5F45`) measures ≈ 2.4:1 on the always-dark window; body / bar reuse `windowBg` / `windowHead`, `##` lines `windowKey`. Contract colours 47 → 51.
+- **Schema / CMS** (optional): prompts `updated` (`z.coerce.date()`; Sveltia `datetime`, `required: false`, after `version`); prompts `body` `required: false`; hints of `prompt` / `variables` name the `{nom}` syntax.
+
+Expected output of `node scripts/check-prompt.mjs` after `npm run build`:
+```
+prompts: 3/3 · ~/ prompts → /prompts/ · h1 · 1 prompt window · 1 aside · no "No content"
+bootstrap-session-anti-drift: fiche · Claude Code · claude-opus-5 · version — · date — · 129 lignes · ~2645 tokens
+bootstrap-session-anti-drift window: bootstrap-session-anti-drift.md · 129 l. · ~2645 tk · .md · Copier · 0 headings · N×13=4 topic×4=librairies-prompts-skills BASE_REF×1=main LANGUAGE×1=français
+bootstrap-session-anti-drift aside: variables | décryptage | infos · 4 inputs · vient du skill anti-drift-planning · skills liés anti-drift-planning · prompts liés decouper-un-projet-en-plans-anti-drift
+decouper-un-projet-en-plans-anti-drift: guide · Claude Code · — · version — · date — · 134 lignes · ~1597 tokens
+decouper-un-projet-en-plans-anti-drift window: decouper-un-projet-en-plans-anti-drift.md · 134 l. · ~1597 tk · .md · Copier · 10 headings · no variables
+decouper-un-projet-en-plans-anti-drift aside: infos · 0 inputs · vient du skill anti-drift-planning · skills liés anti-drift-planning · prompts liés bootstrap-session-anti-drift
+macos-clone: fiche · Claude · Opus 5 · version — · date — · 48 lignes · ~607 tokens
+macos-clone window: macos-clone.md · 48 l. · ~607 tk · .md · Copier · 0 headings · no variables
+macos-clone aside: infos · 0 inputs · vient du skill superpowers · skills liés superpowers · prompts liés —
+counts: header = window = /prompts/ card on 3/3
+links: every internal href resolves in dist/
+search: 3 fragments · title and prompt text indexed · window bar, variables, infos and related cards not indexed
+```
+Exit 1 if a page lacks one of these blocks; if the `.md` / `Copier` / `réinitialiser` buttons or an input are not `hidden` in the HTML; if an input's `value` ≠ its `data-default`; if a `[data-var]` text ≠ its default; if the window's line count or `round(length / 4)` differs from the header or from the page's `/prompts/` card; if `No content` appears in `dist/prompts/**/index.html`; if an internal `href` does not resolve in `dist/`; or if a prompt fragment (read as in `check-article.mjs`) lacks its title or its window's first line, or contains `Copier`, `réinitialiser`, `Fiche technique`, `Skills liés`, `Prompts liés`, `Vient du skill` or `Tous les prompts`.
+
+## Criteria
+| ID | Criterion | Measure | Guarantee |
+|---|---|---|---|
+| R0 | From `/prompts`, the user opens any prompt and sees the prototype's prompt page (inventory §6): header meta row (format, tool, model, version and date when sourced, line and token counts); a dark prompt window (both themes) with the prompt's line breaks, `.md` and Copier → `Copié`; beside it a 340 px column with the pill tab track (variables · décryptage · sortie · infos — a tab without data is omitted) whose variable inputs rewrite the highlighted segments of the prompt live, then Skills liés and Prompts liés cards; the literal `No content` is shown nowhere | reachability walkthrough on `npm run build && npx astro preview`, light then dark: `/` › Prompts › each of the 3 cards › every block above present (version / date absent — no source; sortie absent — no data) › on bootstrap type `7` in `{N}` → the 13 highlighted segments read `7`; every link in the column → a 200 page that is not `/404`; R1–R22 hold | no |
+| R1 | Window text and segments | `npx vitest run src/lib/promptWindow.test.ts` → "substitutes declared variables and leaves other braces literal", "shows {name} for an empty value or a variable without default", "marks each occurrence of a variable as its own segment", "flags lines starting with 2 to 6 # and a space as headings", "rebuilds the measured text from the segments at their defaults" pass | yes |
+| R2 | Counts shared with the card | `npx vitest run src/lib/listCards.test.ts` → "measures a fiche's prompt with its variables at their defaults" and the existing "measures the prompt text for a fiche and the body for a guide" pass | yes |
+| R3 | Tab rules | `npx vitest run src/lib/detailTabs.test.ts` → "gives a prompt variables, décryptage and infos in that order when all are fed", "omits décryptage when the window shows the body", "leaves infos alone without variables or notes" pass; no prompt tab has id `sortie` or `pourquoi` | yes |
+| R4 | Related entries and meta slots | `npx vitest run src/lib/promptDetail.test.ts` → "lists declared related skills first, then skills listing the prompt, once each", "relates prompts sharing a skill or a tag, most shared first, at most 3, never itself", "hides version and date when unset", "formats header counts as N lignes · ~N tokens and window counts as N l. · ~N tk" pass | yes |
+| R5 | Sourced content only | `npx vitest run src/lib/promptContent.test.ts` → "every declared variable occurs in its prompt", "bootstrap keeps its placeholders where the canonical template has them" (N×13, topic×4, BASE_REF×1, LANGUAGE×1, `milestone-plan-3` twice, `milestone-plan-{N}` never), "bootstrap renders to 129 lines and ~2645 tokens at its defaults", "macos-clone has 48 lines, one bullet per line, and an empty body", "no prompt body is the literal No content" pass; shell: bootstrap `prompt` with each `{name}` replaced by its default `\| diff -` the `prompt` of `git show 1e4ef42:src/content/prompts/bootstrap-session-anti-drift/index.md` → empty; macos-clone `prompt` with `\s+` → ` ` equals the base `prompt` → `true`; each of the 4 hints `grep -cF` in `…/commands/start-session.md` → ≥ 1; each `{N}`, `{topic}`, `{BASE_REF}`, `{LANGUAGE}` `grep -cF` in `…/references/bootstrap-prompt-template.md` → ≥ 1 | yes |
+| R6 | Schema and CMS agree | `npx vitest run src/lib/cms-config.test.ts` → 0 failed; `sed -n '/^const prompts/,/^});/p' src/content.config.ts \| grep -cE '^\s+updated:'` → `1`; `sed -n '/^  - name: prompts/,/^  - name: skills/p' public/admin/config.yml \| grep -cE 'name: updated\|name: body.*required: false'` → `2` | no |
+| R7 | Built prompt pages | `npm run build && node scripts/check-prompt.mjs` → the 13 lines above, exit 0; exit 1 on each defect class listed under the block | no |
+| R8 | Tab rows | `node scripts/check-detail-tabs.mjs` → 7 rows, exit 0: `prompts/bootstrap-session-anti-drift: variables \| décryptage \| infos`, `prompts/decouper-un-projet-en-plans-anti-drift: (panneau unique)`, `prompts/macos-clone: (panneau unique)`, the 4 project / skill rows unchanged; a page without `[data-detail-tabs]`, or whose single panel is empty, still exits 1 | no |
+| R9 | Window tokens | `npx vitest run src/lib/contrast.test.ts src/lib/auditRendered.test.ts` → "reads the 51 colour tokens of both themes from global.css", "falls back on the 51 contract colour names of global.css", "gives the window tokens the same value in both themes and keeps windowInk, windowDim, windowKey and windowValue at 4.5:1 on windowBg and windowHead" (extended: `windowVar` on `windowVarBg` over `windowBg`, `windowAccent` on `windowAccentInk` ≥ 4.5:1) pass; `git diff 1e4ef42 -- src/styles/global.css \| grep -cE '^\+\s*--color-window'` → `8`; `… \| grep -cE '^-\s*--color-'` → `0` | yes |
+| R10 | Layout and header | preview, 1280, both themes, 3 prompts: column 340 wide, window = 1180 − 362 (± 1), gap 22; `~/ prompts` mono 13 `accent`; h1 34 px / 700, width ≤ 760; description 16 px `muted`, width ≤ 640; meta row mono 11 with format pill on `accentSoft`, tool / model pills on `chip`, counts as in R7 | no |
+| R11 | Prompt window | preview, 1280: body `#0B1017` and bar `#111823` in light and dark; bar text = `<id>.md · N l. · ~N tk` as R7; macos-clone shows 48 lines, `Exigences:` and `Important:` each preceded by a blank line; guide `##` lines compute `windowKey` / 600; bootstrap `[data-var]` spans compute colour `#86EFAC` in both themes; no horizontal scroll in the `pre` at any width; `Copier` → `Copié` then back after ≈ 1.4 s, `navigator.clipboard.readText()` = the window text; `.md` downloads `<id>.md` whose content = the window text | no |
+| R12 | Live variables | preview, bootstrap, both themes: typing `7` in `{N}` changes all 13 `[data-var="N"]` to `7` on each keystroke and nothing else in the text; clearing it shows `{N}`; `réinitialiser` restores `4`, `librairies-prompts-skills`, `main`, `français`; after editing, Copier and `.md` carry the edited text; header and bar counts do not change | no |
+| R13 | Column | preview, 1280, both themes: bootstrap track shows 3 pills (`variables`, `décryptage`, `infos`) on `chip`, the selected one `card` + `line` + `ink`; panel, Skills liés and Prompts liés cards radius 18 with a shadow, gap 12; guide and macos-clone show the infos card without a track; macos-clone has Skills liés (superpowers) and no Prompts liés; `Vient du skill`, skill links, prompt links and `Tous les prompts →` open 200 pages | no |
+| R14 | Keyboard and without JavaScript | bootstrap: only the selected tab has `tabindex="0"`; ArrowRight / ArrowLeft / Home / End move focus and selection; each input is reachable with Tab and has a label; in a `sandbox` iframe without scripts, on the 3 pages: no track, every panel with its fallback heading visible, no input / `réinitialiser` / `.md` / `Copier` visible, the window text = the defaults | no |
+| R15 | Below 1024 | preview, both themes, 375 and 768: one column, window then column, each as wide as the content (± 1); `scrollWidth` = `clientWidth`; at 1024 two columns | no |
+| R16 | Search | `check-prompt.mjs` `search:` line as above; preview, search dialog: `Finder Safari` → `MacOS Clone` among the results; `Fiche technique` → no `/prompts/<id>/` result | no |
+| R17 | Fidelity with the prototype | verifier renders the prototype's prompt screen (`claude-design` `render_preview`, project `bb013596-0cd6-4e70-afad-e92b42d3f7f6`; URL never written down) and `/prompts/bootstrap-session-anti-drift/` at 1280, light and dark: side-by-side table, same blocks, order and two columns; allowed differences = the Design rules (no sortie, no version / date, tags in infos, body as décryptage, no À utiliser / À éviter). **If the MCP is unavailable: smoke**, static comparison with inventory §6 in the evidence | no |
+| R18 | Audit | `scripts/audit-rendered.js` on the 3 prompt pages, each tab selected in turn, light and dark, 375 / 768 / 1280: 0 overflow, 0 contrast failure, 0 off-token colour, 0 V2 jump | no |
+| R19 | Radii and mono | preview, both themes: every non-zero `border-radius` ∈ {7, 8, 9, 10, 12, 13, 14, 16, 18, 20, 24, 999} px; breadcrumb, meta row, window text and bar, tab pills, variable labels, inputs, infos rows, card meta compute `"JetBrains Mono`; h1, description, décryptage prose, card titles compute `"Nebula Sans"` | no |
+| R20 | Nothing else moves | after build: `check-shell-blog`, `check-article`, `check-home`, `check-secondary`, `check-project` → base lines; `check-lists` → base lines except `prompts cards:` = `… macos-clone fiche · Claude · 48 l. · ~607 tk \| bootstrap-session-anti-drift fiche · Claude Code · 4 variables · 129 l. · ~2645 tk`; `check-finition` → base lines except `fallback: 12/12 data-pagefind-ignore`; `dist/projets/*/index.html` and `dist/skills/*/index.html` identical to a base build's after replacing `/_astro/<name>.<hash>.<ext>` by `/_astro/<name>.<ext>`; pattern classes (`sed -n '/@layer components {/,/^}/p' src/styles/global.css \| grep -cE '^\s+\.[a-z-]+ \{'`) → `4` | no |
+| R21 | Frozen paths, suite, types | `git diff 1e4ef42 --stat -- src/content/blog src/content/projects src/content/skills docs/anti-drift .github/workflows package.json package-lock.json` → empty; `git diff 1e4ef42 --name-only -- src/content` → `src/content/prompts/bootstrap-session-anti-drift/index.md`, `src/content/prompts/macos-clone/index.md`; `npx vitest run` → 0 failed, > 332 tests; `npm run check` → `0 errors`; `grep -c 'export function matchesFilters' src/lib/projectFilters.ts` → `1` | no |
+| R22 | No `No content` on prompts | `grep -rl 'No content' src/content/prompts dist/prompts dist/index.html` → empty (the skill `superpowers` is plan 17's) | no |
+
+## Shared resources
+- `src/styles/global.css` — 4 more window tokens in both blocks (plan 17 reuses the family). No fifth pattern class.
+- `src/components/DetailTabs.astro` (+ `src/lib/detailTabs.ts`, `src/scripts/detail-tabs.ts`) — skills keep `pill` byte-identical; projects keep `underline`; plan 17 adopts `track`.
+- `src/lib/listCards.ts` — `/prompts/` cards; `src/scripts/copy-code.ts` — one more exclusion.
+- `scripts/audit-rendered.js` (+ test), `src/lib/contrast.test.ts` — 47 → 51; `scripts/check-detail-tabs.mjs` — single-panel rule.
+- `src/content.config.ts`, `public/admin/config.yml` — plan 17 adds skill fields; additions only.
+- `dist/`, port 4321. No version bump (D68).
+
+## Tasks
+### T1 — Prompt data: window text, counts, tabs, related entries
+- Files: `src/lib/promptWindow.ts` + test (new: `renderPromptText`, `varDisplay`, `promptWindowLines`), `src/lib/listCards.ts` + test (`measurePromptText` renders defaults), `src/lib/detailTabs.ts` + test (new `promptPageTabs`; the old `promptTabs` stays until T5 so the base page still builds), `src/lib/promptDetail.ts` + test (new: `relatedSkillIds`, `relatedPromptIds`, `promptMetaSlots`); no `astro:content` import
+- Covers: R1, R2, R3, R4
+- Acceptance: `npx vitest run src/lib/promptWindow.test.ts src/lib/listCards.test.ts src/lib/detailTabs.test.ts src/lib/promptDetail.test.ts` → the named tests pass, 0 failed; `npm run check` → `0 errors`
+- Depends on: —
+
+### T2 — Schema, CMS and sourced prompt content
+- Files: `src/content.config.ts`, `public/admin/config.yml`, `src/content/prompts/bootstrap-session-anti-drift/index.md` (`prompt` placeholders + `variables` per Sources), `src/content/prompts/macos-clone/index.md` (`prompt` line breaks as a `|` block, body emptied), `src/lib/promptContent.test.ts` (new)
+- Covers: R5, R6, R22 (source side)
+- Acceptance: `npx vitest run src/lib/cms-config.test.ts src/lib/promptContent.test.ts` → 0 failed; the R5 shell measures → empty / `true` / ≥ 1; the R6 greps → `1` and `2`; `npm run build && node scripts/check-lists.mjs` → `prompts cards:` line as in R20
+- Depends on: T1
+
+### T3 — Window tokens
+- Files: `src/styles/global.css`, `scripts/audit-rendered.js` (`CONTRACT_COLOR_NAMES`, comments 47 → 51), `src/lib/auditRendered.test.ts`, `src/lib/contrast.test.ts`
+- Covers: R9
+- Acceptance: `npx vitest run src/lib/contrast.test.ts src/lib/auditRendered.test.ts src/lib/palette.test.ts` → 0 failed, the 3 R9 tests pass; the two R9 counts → `8`, `0`; `npm run build` → exit 0
+- Depends on: —
+
+### T4 — Track variant of the tabs
+- Files: `src/components/DetailTabs.astro` (`variant="track"`, `data-tab-variant="track"`)
+- Covers: R8 (component), R20 (pill and underline unchanged)
+- Acceptance: `npm run build && node scripts/check-detail-tabs.mjs` → the 6 rows other than `prompts/macos-clone` identical to the T2 commit's output (macos-clone reports `(aucune rangée d'onglets)` and exits 1 until T5 teaches the script `(panneau unique)` — T2 emptied its body); `dist/projets/*`, `dist/prompts/*`, `dist/skills/*` `index.html` identical to a build of the T2 commit (`5661e5f`) after hash normalisation (scratch build in the scratchpad)
+- Depends on: —
+
+### T5 — The prompt page
+- Files: `src/pages/prompts/[...slug].astro`, `src/components/prompt/{PromptHeader,PromptWindow,PromptVariables,PromptInfos,RelatedSkillsCard,RelatedPromptsCard}.astro` (new), `src/scripts/prompt-window.ts` (new), `src/scripts/copy-code.ts` (skip `[data-prompt-window] pre`), `scripts/check-prompt.mjs` (new, like `check-project.mjs`), `scripts/check-detail-tabs.mjs` (`(panneau unique)` rule), `src/lib/detailTabs.ts` + test (old `promptTabs` and its tests removed)
+- Covers: R7, R8, R16 (built), R20, R22; rendered rows R10–R15, R17–R19 are measured by the verifier
+- Acceptance: `npm run build && node scripts/check-prompt.mjs` → the 13 expected lines, exit 0; `node scripts/check-detail-tabs.mjs` → the R8 rows; the seven other instruments → the R20 lines; `grep -rl 'No content' dist/prompts dist/index.html` → empty; `npx vitest run` → 0 failed; `npm run check` → `0 errors`
+- Depends on: T1, T2, T3, T4
+
+## Out of scope
+- `sortie` tab and `output` / `outNote`, `why`, `useWhen` / `avoidWhen` fields (no source); a version or date value; live counts; nested bullets in macos-clone; French translations of the hints; the verify prefix and `milestone-plan-3` as variables.
+- The skill page (plan 17, including superpowers' `No content`); moving skills to the track variant; any change to posts, projects, skills content, `.github/workflows/**`, `docs/anti-drift/**`; version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-25)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | `/` › Prompts › each card, dark then light; typing `7` in `{N}` rewrites 13 segments; header row, window, 340 px column, cards; no version / date / sortie; every column link 200; no "No content" |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | defaults re-inserted → bootstrap identical (10579 chars); placeholder counts 13 / 4 / 1 / 1 on template placeholders only; hints found in `start-session.md`; macos-clone collapse-equal, 48 lines, body emptied; red under 9 mutations |
+| R6 | proven | CMS tests 0 failed; greps `1` / `2` |
+| R7 | proven | `check-prompt` 13 lines exact; exit 1 on every injected defect class |
+| R8 | proven | 7 rows incl. `(panneau unique)`; exit 1 on missing root and empty single panel |
+| R9 | proven | tokens identical in both themes, contrast ≥ 4.5; red under 5 mutations |
+| R10 | proven | 1280 both themes: 818 + 22 + 340, header values |
+| R11 | proven | window colours both themes, macos-clone blank lines, `##` highlight, no horizontal scroll, Copier timing, clipboard = window text, `.md` blob = window text |
+| R12 | proven | live rewrite (`7`, `12`, backspace → `{N}`), Copier / `.md` carry typed values, reset restores defaults, counts fixed |
+| R13 | proven | track values; single-panel pages; related cards and links |
+| R14 | proven | roving keys; labelled inputs; no-JS iframe: panels with headings, inputs / buttons hidden, defaults shown |
+| R15 | proven | 375 / 768 one column, no overflow; 1024 two columns |
+| R16 | proven | `Finder Safari` → MacOS Clone; `Fiche technique` → no result |
+| R17 | smoke | design MCP refused; inventory §6 matches; accepted differences listed (window colours reuse plan 15 tokens — D114) |
+| R18 | proven | audit 40 runs, 51 tokens: 0 / 0 / 0 |
+| R19 | proven | radii {7, 10, 14, 18, 999}; mono / Nebula split |
+| R20 | proven | other instruments identical to base except the stated `prompts cards` and `fallback` lines; project / skill pages identical after hash normalisation |
+| R21 | proven | frozen diff empty; only the 2 prompt files in `src/content`; 348 tests; 0 errors |
+| R22 | proven | no `No content` in prompt sources or pages |
+
+Carried to plan 18: whitespace inside a macos-clone bullet is not guarded by a test; no-JS variables panel shows names and hints without values.

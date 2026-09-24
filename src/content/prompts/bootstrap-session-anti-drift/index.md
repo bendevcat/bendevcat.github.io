@@ -23,25 +23,25 @@ prompt: |
 
   ---
 
-  Vous démarrez l'exécution du Plan 4 — librairies-prompts-skills.
+  Vous démarrez l'exécution du Plan {N} — {topic}.
 
   FICHIERS DE CONTEXTE (à lire AVANT toute autre action) :
   - docs/anti-drift/specs/2026-07-19-methodology.md — les 4 verrous anti-drift
-  - docs/anti-drift/specs/2026-07-19-plan-4-librairies-prompts-skills.md — la spec de ce plan
-  - docs/anti-drift/plans/2026-07-19-plan-4-librairies-prompts-skills.md — plan d'implémentation (le générer s'il manque)
-  - docs/anti-drift/handoffs/plan-4-ledger.md — scope ledger (le créer s'il manque)
-  - docs/anti-drift/handoffs/plan-4-deviations.md — log des déviations (le créer s'il manque)
+  - docs/anti-drift/specs/2026-07-19-plan-{N}-{topic}.md — la spec de ce plan
+  - docs/anti-drift/plans/2026-07-19-plan-{N}-{topic}.md — plan d'implémentation (le générer s'il manque)
+  - docs/anti-drift/handoffs/plan-{N}-ledger.md — scope ledger (le créer s'il manque)
+  - docs/anti-drift/handoffs/plan-{N}-deviations.md — log des déviations (le créer s'il manque)
   - CLAUDE.md — conventions du repo
 
   PRÉ-FLIGHT (dans cet ordre, avant tout le reste) :
-  1. Créer la branche `plan-4-librairies-prompts-skills` depuis `main`.
+  1. Créer la branche `plan-{N}-{topic}` depuis `{BASE_REF}`.
   2. Si le plan d'implémentation manque, l'écrire depuis la spec — via superpowers:writing-plans
      si installé ; sinon l'écrire soi-même : chaque exigence de la spec couverte par au
      moins une tâche, chaque tâche listant les fichiers qu'elle touche et un critère
      d'acceptation binaire.
   3. Si le ledger manque, le créer depuis la spec §3 (chaque ligne `Pending`).
   4. Si le log des déviations manque, le créer (en-tête + template d'entrée uniquement).
-  5. Committer : `chore(p4): seed plan + scope ledger + deviations log`.
+  5. Committer : `chore(p{N}): seed plan + scope ledger + deviations log`.
   6. Demander à l'utilisateur de valider le plan d'implémentation avant de démarrer T1.
 
   CE QUI COMPTE COMME UNE DÉVIATION — appliquer ce test avant chaque choix non trivial.
@@ -77,7 +77,7 @@ prompt: |
        publié) → NE PAS procéder. Basculer sur une tâche indépendante ; s'il n'y en a
        pas, écrire le handoff et finir le tour.
   4. Procéder ≠ shipper. Le script de release et le tag de milestone ne tournent JAMAIS
-     tant qu'une entrée est `pending-user` — `/anti-drift-planning:verify 4` l'impose.
+     tant qu'une entrée est `pending-user` — `/anti-drift-planning:verify {N}` l'impose.
      Si l'utilisateur est indisponible, finir la session « prêt à ship, une décision en
      attente » EST l'état de succès. Un tag posé sur une déviation non approuvée ne l'est
      pas.
@@ -99,10 +99,10 @@ prompt: |
   RÈGLES D'EXÉCUTION :
   1. Avant chaque tâche : vérifier le ledger, marquer la tâche `In progress`.
   2. Après chaque tâche : mettre à jour le ledger (les lignes Done lient le SHA du commit)
-     et le committer : `chore(p4): ledger after T<x>`.
+     et le committer : `chore(p{N}): ledger after T<x>`.
   3. Dispatcher un subagent par tâche — via superpowers:subagent-driven-development si
      installé — avec l'instruction explicite « report comprehensively, don't paraphrase ».
-  4. La dernière phase est la Phase Z : lancer `/anti-drift-planning:verify 4`. C'est le
+  4. La dernière phase est la Phase Z : lancer `/anti-drift-planning:verify {N}`. C'est le
      SEUL chemin vers le script de release et le tag `milestone-plan-3`. Elle ne peut pas
      être résumée de mémoire ; un contexte qui se remplit est une raison d'écrire un
      handoff, pas de compresser la Phase Z.
@@ -127,14 +127,27 @@ prompt: |
   - « Les tests étaient verts il y a vingt minutes, pas besoin de relancer »
   - « Je suis à court de contexte, je ferai une Phase Z légère »
 
-  OBJECTIF DE SESSION : exécuter le Plan 4 jusqu'à la Phase Z incluse ; shipper (script de
+  OBJECTIF DE SESSION : exécuter le Plan {N} jusqu'à la Phase Z incluse ; shipper (script de
   release) et taguer `milestone-plan-3` UNIQUEMENT si la Phase Z passe. Sur PASS,
-  `/anti-drift-planning:verify 4` vous remet automatiquement l'étape suivante (le bootstrap
+  `/anti-drift-planning:verify {N}` vous remet automatiquement l'étape suivante (le bootstrap
   du plan suivant, ou `/new-plan`, ou — pour le dernier plan — l'audit de fin de projet
   `/anti-drift-planning:status`). Sinon : committer tout, écrire le handoff, lister les
-  décisions précises que vous attendez, et noter que `/anti-drift-planning:resume 4`
+  décisions précises que vous attendez, et noter que `/anti-drift-planning:resume {N}`
   régénère le prompt de reprise.
-  Écrire les réponses destinées à l'utilisateur en français.
+  Écrire les réponses destinées à l'utilisateur en {LANGUAGE}.
+variables:
+  - name: N
+    hint: plan number
+    default: "4"
+  - name: topic
+    hint: topic extracted from the spec filename
+    default: librairies-prompts-skills
+  - name: BASE_REF
+    hint: the ref the execution session must branch off
+    default: main
+  - name: LANGUAGE
+    hint: the language the user is currently conversing in
+    default: français
 relatedSkills: [anti-drift-planning]
 ---
 

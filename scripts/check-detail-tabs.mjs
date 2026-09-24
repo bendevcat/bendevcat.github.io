@@ -8,7 +8,7 @@
  * Parcourt `dist/{projets,prompts,skills}/<slug>/index.html` et imprime, sur
  * stdout, une ligne par page dans l'ordre famille puis slug :
  *
- *   <famille>/<slug>: Label | Label
+ *   <famille>/<slug>: Label | Label        (ou `(panneau unique)`)
  *
  * Code de sortie 1 (erreurs détaillées sur stderr) si une page viole R2/R8 :
  * - exactement un `role="tablist"`, avec un `aria-label` non vide ;
@@ -19,6 +19,10 @@
  *   panneau sans `hidden`, tous les autres avec ;
  * - aucun panneau vide (texte, balises retirées, trimé) ;
  * - `<article>` garde `data-pagefind-body`.
+ * Une page à un seul onglet (D13) n'a pas de rangée : elle s'imprime
+ * `(panneau unique)` (plan 16) si elle a exactement une racine
+ * `[data-detail-tabs]` au texte non vide — sinon code 1 (aucune racine, ou
+ * panneau unique vide).
  * Code 1 aussi si, dans `dist/_astro/*.css`, le repli sans JS des panneaux
  * (R9) n'est pas dans `@layer base` à côté du preflight `[hidden]`.
  *
@@ -118,7 +122,19 @@ function checkPage(family, html) {
   const panels = byRole('tabpanel');
 
   if (tablists.length === 0 && tabs.length === 0 && panels.length === 0) {
-    if (!PENDING_FAMILIES.has(family)) errors.push('aucune rangée d\'onglets (role="tablist")');
+    // Moins de deux onglets (D13) : pas de rangée, le panneau unique est
+    // rendu nu dans la racine `[data-detail-tabs]` (plan 16). Il doit exister
+    // et ne pas être vide ; sans racine du tout, la page n'a pas le patron.
+    const roots = elements.filter((el) => 'data-detail-tabs' in el.attrs);
+    if (roots.length === 1) {
+      if (roots[0].text === '') errors.push('panneau unique vide ([data-detail-tabs] sans texte)');
+      return { row: '(panneau unique)', errors };
+    }
+    if (roots.length > 1) {
+      errors.push(`${roots.length} [data-detail-tabs] sans rangée d'onglets (attendu : 1)`);
+      return { row: '(panneau unique)', errors };
+    }
+    if (!PENDING_FAMILIES.has(family)) errors.push('aucune rangée d\'onglets (role="tablist") ni [data-detail-tabs]');
     return { row: '(aucune rangée d\'onglets)', errors };
   }
 
@@ -171,7 +187,7 @@ for (const family of FAMILIES) {
   for (const slug of slugs) {
     const { row, errors } = checkPage(family, readFileSync(join(dir, slug, 'index.html'), 'utf8'));
     console.log(`${family}/${slug}: ${row}`);
-    if (row.startsWith('(') && errors.length === 0) pending += 1;
+    if (row === '(aucune rangée d\'onglets)' && errors.length === 0) pending += 1;
     for (const error of errors) console.error(`  ✗ ${family}/${slug} — ${error}`);
     if (errors.length > 0) failed = true;
   }

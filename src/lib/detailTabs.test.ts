@@ -4,7 +4,7 @@ import {
   hasTabRow,
   nextTabIndex,
   projectTabs,
-  promptTabs,
+  promptPageTabs,
   skillTabs,
   type Tab,
 } from './detailTabs';
@@ -71,23 +71,44 @@ describe('projectTabs', () => {
   });
 });
 
-describe('promptTabs', () => {
-  it('lists Pourquoi then Infos when the body is not blank', () => {
-    expect(labels(promptTabs({ body: 'Pourquoi ce prompt.' }))).toEqual(['Pourquoi', 'Infos']);
+describe('promptPageTabs', () => {
+  const ids = (tabs: Tab[]) => tabs.map((tab) => tab.id);
+
+  it('gives a prompt variables, décryptage and infos in that order when all are fed', () => {
+    const tabs = promptPageTabs({ variableCount: 4, windowShowsPrompt: true, body: 'Ce qu\'il porte.' });
+    expect(labels(tabs)).toEqual(['variables', 'décryptage', 'infos']);
+    expect(ids(tabs)).toEqual(['variables', 'decryptage', 'infos']);
+    // Les onglets des prompts n'ont pas de compteur.
+    expect(tabs.every((tab) => tab.count === undefined)).toBe(true);
   });
 
-  it('omits Pourquoi when the body is blank', () => {
-    expect(labels(promptTabs({ body: '   ' }))).toEqual(['Infos']);
-    expect(labels(promptTabs({ body: undefined }))).toEqual(['Infos']);
+  it('omits décryptage when the window shows the body', () => {
+    // Un guide (ou une fiche sans prompt) : le corps est déjà dans la fenêtre.
+    expect(labels(promptPageTabs({ variableCount: 0, windowShowsPrompt: false, body: '## Titre\ntexte' }))).toEqual([
+      'infos',
+    ]);
+    expect(labels(promptPageTabs({ variableCount: 2, windowShowsPrompt: false, body: 'texte' }))).toEqual([
+      'variables',
+      'infos',
+    ]);
+    // Fenêtre sur le prompt mais corps blanc : rien à décrypter.
+    expect(labels(promptPageTabs({ variableCount: 0, windowShowsPrompt: true, body: ' \n ' }))).toEqual(['infos']);
+    expect(labels(promptPageTabs({ variableCount: 0, windowShowsPrompt: true, body: undefined }))).toEqual(['infos']);
   });
 
-  it('always lists Infos', () => {
-    expect(labels(promptTabs({ body: 'x' }))).toContain('Infos');
-    expect(labels(promptTabs({ body: '' }))).toContain('Infos');
-  });
-
-  it('counts the literal "No content" body as content (D4)', () => {
-    expect(labels(promptTabs({ body: 'No content\n' }))).toEqual(['Pourquoi', 'Infos']);
+  it('leaves infos alone without variables or notes', () => {
+    const tabs = promptPageTabs({ variableCount: 0, windowShowsPrompt: true, body: '' });
+    expect(labels(tabs)).toEqual(['infos']);
+    expect(hasTabRow(tabs)).toBe(false);
+    // Jamais de `sortie` (aucun champ) ni de `pourquoi` (onglet de l'ancienne page).
+    for (const input of [
+      { variableCount: 3, windowShowsPrompt: true, body: 'x' },
+      { variableCount: 0, windowShowsPrompt: false, body: 'x' },
+    ]) {
+      const found = ids(promptPageTabs(input));
+      expect(found).not.toContain('sortie');
+      expect(found).not.toContain('pourquoi');
+    }
   });
 });
 
@@ -114,7 +135,7 @@ describe('hasTabRow', () => {
   });
 
   it('is true from two tabs', () => {
-    expect(hasTabRow(promptTabs({ body: 'x' }))).toBe(true);
+    expect(hasTabRow(promptPageTabs({ variableCount: 1, windowShowsPrompt: true, body: '' }))).toBe(true);
   });
 });
 
