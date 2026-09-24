@@ -19,6 +19,9 @@
     l'`arrow-up-down` Lucide de T3), `sort-recent`, `sort-oldest`,
     `sort-shortest`, `sort-longest` (une icône par option). Trait 1,8 comme
     au prototype (`strokeWidth` du glyphe), au lieu du 1,75 de Lucide.
+  - 2 glyphes en TRAIT des badges 22×22 des rails d'article, plan 13 / T4 —
+    dessins du PROTOTYPE (lignes 268 et 323), même statut que ceux du tri :
+    `file-text` (« Articles liés ») et `folder` (« Projets liés »). Trait 1,8.
   - marque GitHub en APLAT — Simple Icons (`simple-icons@16.31.0`), licence
     CC0-1.0 (domaine public). Lucide a sorti les marques de son set :
     `github.svg` n'y existe plus, d'où cette seconde source.
@@ -54,7 +57,9 @@ export type IconName =
   | 'sort-shortest'
   | 'sort-longest'
   | 'filter'
-  | 'chevron-down';
+  | 'chevron-down'
+  | 'file-text'
+  | 'folder';
 
 interface Props {
   name: IconName;
@@ -184,6 +189,21 @@ const GLYPHS: Record<IconName, Glyph> = {
   'chevron-down': {
     mode: 'stroke',
     paths: `<path d="m6 9 6 6 6-6" />`,
+  },
+  // — Prototype (ligne 268) — badge « Articles liés » du rail d'article —
+  'file-text': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" />
+<path d="M14 2v5h6" />
+<path d="M9 13h6" />
+<path d="M9 17h4" />`,
+  },
+  // — Prototype (ligne 323) — badge « Projets liés » du rail d'article —
+  folder: {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />`,
   },
 };
 

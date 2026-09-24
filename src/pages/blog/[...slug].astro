@@ -1,12 +1,35 @@
 ---
+/**
+ * Page article (plan 13, T4 ; inventaire §2 ; prototype 230–342 ; D86, D87).
+ *
+ * `<main>` › `<article data-pagefind-body>` : l'en-tête (fil d'Ariane, h1,
+ * méta) puis UN cadre `.card` en trois colonnes à partir de 1024 px —
+ * `250px | minmax(0,1fr) | 230px`. Ordre du DOM : centre → rail droit →
+ * rail gauche, placés par colonnes de grille ; sous 1024 px les trois
+ * s'empilent dans cet ordre (l'article d'abord sur un téléphone). Sans
+ * Sommaire ni Projets liés, le rail droit est omis et la grille passe à
+ * `250px | 1fr`.
+ *
+ * Les rails, la carte IA et les tuiles précédent / suivant portent
+ * `data-pagefind-ignore` : la recherche indexe le titre, la méta et la prose,
+ * pas la navigation (R13). La bannière IA du haut a quitté l'article : la carte IA
+ * de fin la remplace (D87) ; la bannière ne sert plus que /transparence-ia (R19).
+ */
 import { Image } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 import { getPublishedPosts } from '../../lib/posts';
 import { sortProjects } from '../../lib/projects';
 import { assertEntriesResolved } from '../../lib/references';
+import { adjacentPosts, relatedPosts, tocEntries } from '../../lib/article';
+import { blogCategoryRows, blogTagCloud } from '../../lib/blogList';
+import { CATEGORIES } from '../../content.config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import TableOfContents from '../../components/TableOfContents.astro';
-import AiBanner from '../../components/AiBanner.astro';
+import ArticleHeader from '../../components/blog/ArticleHeader.astro';
+import ArticleAside from '../../components/blog/ArticleAside.astro';
+import AiMarkerCard from '../../components/blog/AiMarkerCard.astro';
+import BlogRail from '../../components/blog/BlogRail.astro';
+import PrevNext from '../../components/blog/PrevNext.astro';
+import RelatedPosts from '../../components/blog/RelatedPosts.astro';
 
 export async function getStaticPaths() {
   // getPublishedPosts() filtre les drafts (R4/R6) — cf. C2 (src/pages/blog/index.astro)
@@ -19,9 +42,13 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
 
-// TOC = uniquement H2/H3 (cf. brief C3 gotcha #4) ; TableOfContents.astro se
-// masque lui-même si la liste est vide (pas d'encart TOC vide).
-const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+// Toute la collection publiée, dans l'ordre canonique : rail gauche (mêmes
+// catégories et tags que /blog), articles liés, précédent / suivant.
+const posts = await getPublishedPosts();
+const categories = blogCategoryRows(posts, CATEGORIES);
+const tags = blogTagCloud(posts);
+const related = relatedPosts(post, posts);
+const { previous, next } = adjacentPosts(post, posts);
 
 // R5, sens article → projets : les références sont résolues en entrées réelles
 // pour afficher un titre, jamais un id ni `undefined`. Les projets n'ont pas de
@@ -39,50 +66,67 @@ const relatedProjects = post.data.relatedProjects?.length
       ),
     )
   : [];
+
+// Rail droit omis quand il n'aurait rien à montrer (D86).
+const hasRightRail = tocEntries(headings).length > 0 || relatedProjects.length > 0;
 ---
 
 <BaseLayout title={post.data.title} description={post.data.description}>
-  <article class="mx-auto max-w-3xl py-10" data-pagefind-body>
-    <h1 class="mb-6 font-sans text-4xl font-bold text-ink">{post.data.title}</h1>
+  <main>
+    <article data-pagefind-body>
+      <ArticleHeader post={post} />
 
-    {
-      post.data.cover && (
-        <Image
-          src={post.data.cover}
-          alt={post.data.coverAlt ?? ''}
-          class="mb-8 aspect-video w-full rounded-inner object-cover"
-        />
-      )
-    }
+      {/* Cadre unique (V2, D51). `overflow-hidden` rogne le fond des rails sur
+           le rayon du cadre. Classes de grille littérales (Tailwind, D41). */}
+      <div
+        class:list={[
+          'card mt-[26px] overflow-hidden',
+          hasRightRail
+            ? 'lg:grid lg:grid-cols-[250px_minmax(0,1fr)_230px]'
+            : 'lg:grid lg:grid-cols-[250px_minmax(0,1fr)]',
+        ]}
+      >
+        <div class="min-w-0 px-5 pt-7 pb-8 sm:px-10 sm:pt-[34px] sm:pb-11 lg:col-start-2 lg:row-start-1">
+          <p class="font-sans text-[17px] leading-[1.6] text-pretty text-muted">{post.data.description}</p>
 
-    {post.data.aiUsage && <AiBanner usage={post.data.aiUsage} />}
+          {
+            post.data.cover && (
+              <Image
+                src={post.data.cover}
+                alt={post.data.coverAlt ?? ''}
+                loading="eager"
+                class="mt-6 h-[210px] w-full rounded-hero bg-chip object-cover"
+              />
+            )
+          }
 
-    <TableOfContents headings={tocHeadings} />
+          <div class="prose mt-[34px]">
+            <Content />
+          </div>
 
-    <div class="prose">
-      <Content />
-    </div>
+          {post.data.aiUsage && <AiMarkerCard usage={post.data.aiUsage} />}
 
-    {
-      relatedProjects.length > 0 && (
-        <section class="mt-12 border-t border-line pt-8">
-          <h2 class="font-mono text-sm text-muted">// projets liés</h2>
-          <ul class="mt-4 flex flex-col gap-2">
-            {relatedProjects.map((project) => (
-              <li>
-                <a
-                  href={`/projets/${project.id}/`}
-                  class="text-body underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                >
-                  {project.data.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
-  </article>
+          <PrevNext previous={previous} next={next} />
+        </div>
+
+        {
+          hasRightRail && (
+            <ArticleAside headings={headings} projects={relatedProjects} class="lg:col-start-3 lg:row-start-1" />
+          )
+        }
+
+        <BlogRail
+          categories={categories}
+          tags={tags}
+          variant="links"
+          label="Catégories, tags et articles liés"
+          class="lg:col-start-1 lg:row-start-1"
+        >
+          <RelatedPosts posts={related} />
+        </BlogRail>
+      </div>
+    </article>
+  </main>
 
   <script>
     import '../../scripts/copy-code.ts';

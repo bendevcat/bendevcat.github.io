@@ -1,23 +1,36 @@
 ---
+/**
+ * TableOfContents.astro — le « Sommaire » d'un article, en tête du rail droit
+ * (plan 13, T4 ; inventaire §2 ; prototype 314–319).
+ *
+ * Les titres h2 et h3 seuls, dans l'ordre du document (tocEntries, R3) :
+ * libellé mono 10 capitales `muted`, puis un lien par titre, 12 / 1.4
+ * `muted` (survol `ink`), écart 9, les h3 décalés de 14 px. Chaque lien vise
+ * `#<slug>`, l'`id` posé sur le titre par le rendu Markdown. Rien n'est
+ * rendu sans titre : le rail omet alors le Sommaire.
+ */
 import type { MarkdownHeading } from 'astro';
+import { tocEntries } from '../lib/article';
 
 interface Props {
-  /** Idéalement déjà filtré aux profondeurs H2/H3 par l'appelant. */
   headings: MarkdownHeading[];
 }
 
-const { headings } = Astro.props;
+const entries = tocEntries(Astro.props.headings);
 ---
 
 {
-  headings.length > 0 && (
-    <nav class="toc card mb-8 p-4" aria-label="Sommaire de l'article">
-      <p class="font-mono text-xs uppercase tracking-wide text-muted">Sommaire</p>
-      <ul class="mt-2 space-y-1.5 text-sm">
-        {headings.map((heading) => (
-          <li class={heading.depth === 3 ? 'pl-4' : ''}>
-            <a href={`#${heading.slug}`} class="text-muted transition-colors hover:text-accent">
-              {heading.text}
+  entries.length > 0 && (
+    <nav aria-label="Sommaire de l'article" class="flex flex-col gap-3">
+      <p class="font-mono text-[10px] tracking-[.12em] text-muted uppercase">Sommaire</p>
+      <ul class="flex flex-col gap-[9px]">
+        {entries.map((entry) => (
+          <li class:list={[entry.indented && 'pl-3.5']}>
+            <a
+              href={`#${entry.slug}`}
+              class="block font-sans text-xs leading-[1.4] text-pretty text-muted transition-colors hover:text-ink"
+            >
+              {entry.text}
             </a>
           </li>
         ))}

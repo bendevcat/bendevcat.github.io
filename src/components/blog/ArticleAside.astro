@@ -1,0 +1,86 @@
+---
+/**
+ * ArticleAside.astro (plan 13, T4 ; inventaire §2 ; prototype 312–338) — le
+ * rail droit d'un article.
+ *
+ * - Fond `rail` sur le `surface` du cadre : `data-rail` le déclare comme rail
+ *   explicite (D74). Padding 22/16 ; bordure gauche `line2` à partir de
+ *   1024 px (trois colonnes) ; en dessous, il suit l'article dans la pile et
+ *   porte une bordure haute.
+ * - « Sommaire » (TableOfContents) : omis sans titre.
+ * - « Projets liés » : 22 px sous le Sommaire, `padding-top` 16 et bordure
+ *   haute `line2` ; libellé et badge dossier comme « Articles liés » ; une
+ *   carte `.card-inner` rayon 12 par projet (ordre sortProjects), lien
+ *   `/projets/<id>/` : point `accent` de 6 px, titre 13 / 600 `ink`, statut
+ *   mono 10 `accent`, description 12 / 1.45 `muted`. Omis sans
+ *   `relatedProjects`.
+ * - Hors index de recherche (`data-pagefind-ignore`).
+ *
+ * La page ne pose pas ce rail quand les deux blocs sont vides (la grille
+ * passe alors à deux colonnes, D86).
+ */
+import type { CollectionEntry } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
+import Icon from '../Icon.astro';
+import TableOfContents from '../TableOfContents.astro';
+import { tocEntries } from '../../lib/article';
+import { PROJECT_STATUS_META } from '../../lib/projectStatus';
+
+interface Props {
+  headings: MarkdownHeading[];
+  projects: CollectionEntry<'projects'>[];
+  /** Classes de placement ajoutées par la page (colonne de grille). */
+  class?: string;
+}
+
+const { headings, projects, class: extra } = Astro.props;
+const hasToc = tocEntries(headings).length > 0;
+const LABEL = 'font-mono text-[10px] tracking-[.12em] text-muted uppercase';
+---
+
+<aside
+  data-rail
+  data-pagefind-ignore
+  aria-label="Sommaire et projets liés"
+  class:list={[
+    'flex min-w-0 flex-col gap-[22px] border-t border-line2 bg-rail px-4 py-[22px] lg:border-t-0 lg:border-l',
+    extra,
+  ]}
+>
+  <TableOfContents headings={headings} />
+
+  {
+    projects.length > 0 && (
+      <section
+        aria-labelledby="article-related-projects"
+        class:list={['flex flex-col gap-3', hasToc && 'border-t border-line2 pt-4']}
+        data-related-projects
+      >
+        <div class="flex items-center gap-2">
+          <p id="article-related-projects" class:list={['min-w-0 flex-1', LABEL]}>
+            Projets liés
+          </p>
+          <span class="inline-flex size-[22px] shrink-0 items-center justify-center rounded-small bg-badgeBg text-badgeInk">
+            <Icon name="folder" size={13} />
+          </span>
+        </div>
+        <ul class="flex flex-col gap-2">
+          {projects.map((project) => (
+            <li>
+              <a href={`/projets/${project.id}/`} class="group card-inner flex flex-col gap-1.5 rounded-nested p-3">
+                <span class="flex items-center gap-[7px]">
+                  <span class="size-1.5 shrink-0 rounded-pill bg-accent" aria-hidden="true" />
+                  <span class="min-w-0 flex-1 font-sans text-[13px] font-semibold text-ink transition-colors group-hover:text-accent">
+                    {project.data.title}
+                  </span>
+                  <span class="font-mono text-[10px] text-accent">{PROJECT_STATUS_META[project.data.status].label}</span>
+                </span>
+                <span class="font-sans text-xs leading-[1.45] text-pretty text-muted">{project.data.description}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</aside>
