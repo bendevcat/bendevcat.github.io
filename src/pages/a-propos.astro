@@ -1,56 +1,74 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Identity from '../components/about/Identity.astro';
+import Terminal from '../components/about/Terminal.astro';
+import AiPanel from '../components/about/AiPanel.astro';
+import Toolbox from '../components/about/Toolbox.astro';
+import { collectTagIndex, getTagBuckets } from '../lib/tags';
+import { ABOUT_FACTS, collectStack, whoamiLines } from '../lib/about';
 
-// Contenu composé À PARTIR DES TEXTES DE L'AUTEUR, sur décision de
-// l'utilisateur au gate du 2026-09-04 : aucune phrase inventée. Sources :
-// - src/content/blog/bienvenue-dans-mon-foutoir/index.md (parcours, le
-//   pourquoi du site, la règle sur l'IA) ;
-// - src/components/Hero.astro (identité, GitHub).
-// Registre : tutoiement, comme le Hero et la spec de design §4.
+// Plan 10 — structure « à propos » du prototype (contrat E11, About map),
+// nourrie UNIQUEMENT par ce que le dépôt contient déjà (D26, D42) : aucune
+// phrase inventée (gate du 2026-09-04), aucune valeur de démo du prototype.
+// Textes de l'auteur repris VERBATIM (R6) :
+// - src/content/blog/bienvenue-dans-mon-foutoir/index.md, via l'ancienne
+//   version de cette page (Qui je suis, Pourquoi ce site, la règle sur l'IA) ;
+// - l'ancien Hero.astro (h1 et présentation), supprimé (D44).
+// Registre : tutoiement, comme la spec de design §4.
+//
+// Données dérivées : les 4 collections publiées, chacune dans son ordre
+// canonique (getTagBuckets : drafts écartés) → index des tags, comptes,
+// stack des projets.
+const buckets = await getTagBuckets();
+const stack = collectStack(buckets.projects);
+const lines = whoamiLines({
+  ...ABOUT_FACTS,
+  tags: collectTagIndex(buckets),
+  counts: {
+    articles: buckets.blog.length,
+    projets: buckets.projects.length,
+    prompts: buckets.prompts.length,
+    skills: buckets.skills.length,
+  },
+  stack,
+});
 ---
 
 <BaseLayout
   title="À propos — bencat_"
   description="Benoît Catillon, alias benCat_ : ingénieur DevOps, et pourquoi ce site existe."
 >
-  <main>
-    <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <p class="font-mono text-sm text-accent">~/ a-propos</p>
-      <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">À propos</h1>
-    </section>
+  <main class="mx-auto flex max-w-5xl flex-col gap-5 px-4 pt-6 pb-20 sm:px-6 sm:pt-8">
+    {/* Rangée 1 : identité (sur bg) et terminal, empilés en étroit, côte à côte en large. */}
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+      <Identity />
+      <Terminal lines={lines} />
+    </div>
 
-    <section class="prose mx-auto max-w-3xl px-4 pb-20 sm:px-6">
-      <h2>Qui je suis</h2>
-      <p>
-        Benoît Catillon, <strong>benCat_</strong> en ligne. Bientôt la quarantaine — mais je le
-        vis bien. Ingénieur DevOps depuis 2019, en France. Passionné de tech, de geekerie en tout
-        genre, de science-fiction et de manga, depuis toujours.
-      </p>
+    {/* Rangée 2 : deux `.card` sur bg, textes de l'auteur (le « On parle ? »
+        du prototype n'a pas de canal réel ici, D42). */}
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2" data-about="row2">
+      <section class="card min-w-0 p-4 sm:p-5" aria-labelledby="about-who-title">
+        <h2 id="about-who-title" class="text-[17px] font-semibold tracking-[-.01em] text-ink">Qui je suis</h2>
+        <p class="mt-2 text-[15px] leading-[1.6] text-body">
+          Benoît Catillon, <strong>benCat_</strong> en ligne. Bientôt la quarantaine — mais je le
+          vis bien. Ingénieur DevOps depuis 2019, en France. Passionné de tech, de geekerie en tout
+          genre, de science-fiction et de manga, depuis toujours.
+        </p>
+      </section>
 
-      <h2>Pourquoi ce site</h2>
-      <p>
-        Pour décharger mon cerveau : centraliser des idées, des réflexions, des snippets et des
-        tutos en lien avec mon « vis ma vie » de DevOps — ou pas. J'espère bien réussir à garder
-        cet espace aussi clean que possible, une sorte de base de données fun à utiliser.
-      </p>
+      <section class="card min-w-0 p-4 sm:p-5" aria-labelledby="about-why-title">
+        <h2 id="about-why-title" class="text-[17px] font-semibold tracking-[-.01em] text-ink">Pourquoi ce site</h2>
+        <p class="mt-2 text-[15px] leading-[1.6] text-body">
+          Pour décharger mon cerveau : centraliser des idées, des réflexions, des snippets et des
+          tutos en lien avec mon « vis ma vie » de DevOps — ou pas. J'espère bien réussir à garder
+          cet espace aussi clean que possible, une sorte de base de données fun à utiliser.
+        </p>
+      </section>
+    </div>
 
-      <h2>L'IA : une aide, pas un <em>ghostwriter</em></h2>
-      <p>
-        En 2025, il serait idiot de ne pas me faire aider par une IA. Mais tu sauras toujours ce
-        qui vient d'où : chaque article déclare son niveau de contribution IA. Je fais un gros
-        travail de vérification sur les informations produites par l'IA — le but est de délivrer
-        une information juste et de qualité.
-      </p>
-      <p>
-        <a href="/transparence-ia/">Comment je déclare l'usage de l'IA</a>
-      </p>
+    <AiPanel />
 
-      <h2>Où me trouver</h2>
-      <p>
-        <a href="https://github.com/bendevcat" target="_blank" rel="noopener noreferrer">
-          GitHub — @bendevcat
-        </a>
-      </p>
-    </section>
+    {stack.length > 0 && <Toolbox stack={stack} />}
   </main>
 </BaseLayout>

@@ -1,0 +1,49 @@
+---
+/*
+  /a-propos, rangée 1 à gauche — identité (plan 10, About map).
+  Posée sur `bg`, SANS classe de patron. Textes repris de l'ancien Hero.astro
+  (supprimé, D44) : le `<h1>` « Benoît Catillon, alias benCat_ » — nom et
+  alias lus dans ABOUT_FACTS, qui alimente aussi le terminal — et le
+  paragraphe de présentation, VERBATIM (R6, contrôlé par
+  scripts/check-secondary.mjs). Liens en mono vers les deux canaux qui
+  existent : GitHub et le flux RSS (D42 ; pas d'e-mail ni de LinkedIn, D26).
+  Balisage `data-about` : convention lue par scripts/check-secondary.mjs.
+*/
+import { ABOUT_FACTS } from '../../lib/about';
+
+const links = [
+  { label: 'github.com/bendevcat', href: 'https://github.com/bendevcat', external: true },
+  { label: 'rss.xml', href: '/rss.xml', external: false },
+];
+---
+
+<section class="flex min-w-0 flex-col py-1 sm:py-2" data-about="identity">
+  <p class="font-mono text-sm text-accent">~/ whoami</p>
+
+  <h1 class="mt-3 text-4xl leading-[1.1] font-bold tracking-[-.02em] break-words text-ink sm:text-5xl">
+    {ABOUT_FACTS.name}, alias <span class="text-accent">{ABOUT_FACTS.alias}</span>
+  </h1>
+
+  {/* Prose → Nebula Sans (R12). */}
+  <p class="mt-5 text-[17px] leading-[1.6] text-body">
+    Ingénieur DevOps en France, je poste ici sur le DevOps, l'IA et mes
+    geekeries diverses — avec une règle simple : je t'indique toujours si un
+    article a été écrit seul, co-créé ou relu avec l'aide d'une IA.
+  </p>
+
+  <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[13px]">
+    {
+      links.map(({ label, href, external }) => (
+        <li>
+          <a
+            href={href}
+            class="text-accent underline-offset-4 transition-opacity hover:underline hover:opacity-80"
+            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          >
+            {label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>

@@ -3,6 +3,16 @@
  * Contrôle des pages secondaires sur la sortie de build (Plan 10, critères
  * R4 à R7). À lancer après `npm run build` :
  *
+ * R5, R6 (T4) — /a-propos : les 5 blocs de l'About map dans l'ordre
+ * (`data-about` identity, terminal, row2, ai, toolbox) ; un seul `<h1>` ;
+ * `~/ whoami` et les liens GitHub + /rss.xml dans l'identité, sans classe de
+ * patron ; terminal `.card` en mono, lignes `clé: valeur` (clé `badgeInk`,
+ * valeur `body`) ; rangée 2 = deux `.card` ; panneau IA `.panel` à 3
+ * `.card-inner` (none, partial, full, tuile 28×28 dans le ton du niveau) et
+ * lien vers /transparence-ia/ ; boîte à outils `.card`, pilules neutres,
+ * logos en `<svg>` inline (ni `<img>` ni URL http) ; textes de l'auteur
+ * présents verbatim dans le `<main>` ; aucune valeur de démo du prototype.
+ *
  *   node scripts/check-secondary.mjs
  *
  * Imprime sur stdout, dans cet ordre :
@@ -191,13 +201,6 @@ if (!existsSync(DIST)) {
   process.exit(1);
 }
 
-// — T4 : /a-propos (R5, R6) — pas encore construit —
-for (const key of ['nom', 'alias', 'rôle', 'lieu', 'terrain', 'écrit', 'stack', 'règle']) {
-  errors.push(`whoami ${key} : absent (plan 10 / T4)`);
-}
-errors.push('toolbox : absent (plan 10 / T4)');
-errors.push('ai-rule : absent (plan 10 / T4)');
-// — T3 : niveaux IA et patrons des pages secondaires (R7) —
 const AI_TONES = { none: 'green', partial: 'amber', full: 'blue' }; // D40, src/lib/aiUsage.ts
 const hasClass = (el, name) => classes(el).includes(name);
 const closest = (el, name) => ancestors(el).find((a) => hasClass(a, name));
@@ -211,6 +214,164 @@ function loadPage(path) {
   }
   return collectElements(tokenize(readFileSync(file, 'utf8')));
 }
+
+// — T4 : /a-propos (R5, R6) —
+//
+// Balisage lu (src/components/about/*) : les 5 blocs portent
+// `data-about="identity|terminal|row2|ai|toolbox"` ; chaque ligne du terminal
+// `data-whoami="<clé>"` (clé `text-badgeInk`, valeur `text-body`) ; chaque
+// pilule de la boîte à outils `data-toolbox-item` ; chaque marqueur IA
+// `data-ai-marker="<niveau>"`, sa tuile `data-ai-marker-tile` (+ `data-tone`)
+// et son libellé `data-ai-marker-label`.
+const WHOAMI_KEYS = ['nom', 'alias', 'rôle', 'lieu', 'terrain', 'écrit', 'stack', 'règle']; // src/lib/about.ts
+const ABOUT_BLOCKS = ['identity', 'terminal', 'row2', 'ai', 'toolbox']; // ordre de l'About map
+
+/**
+ * R6 — textes de l'auteur qui doivent survivre VERBATIM (espaces normalisés)
+ * dans le `<main>` de /a-propos : le paragraphe de l'ancien Hero.astro, puis
+ * les trois paragraphes de /a-propos à la base du plan (6d4d8a7).
+ */
+const AUTHOR_TEXTS = {
+  hero:
+    "Ingénieur DevOps en France, je poste ici sur le DevOps, l'IA et mes geekeries diverses — avec une règle simple : je t'indique toujours si un article a été écrit seul, co-créé ou relu avec l'aide d'une IA.",
+  'Qui je suis':
+    'Benoît Catillon, benCat_ en ligne. Bientôt la quarantaine — mais je le vis bien. Ingénieur DevOps depuis 2019, en France. Passionné de tech, de geekerie en tout genre, de science-fiction et de manga, depuis toujours.',
+  'Pourquoi ce site':
+    "Pour décharger mon cerveau : centraliser des idées, des réflexions, des snippets et des tutos en lien avec mon « vis ma vie » de DevOps — ou pas. J'espère bien réussir à garder cet espace aussi clean que possible, une sorte de base de données fun à utiliser.",
+  "L'IA":
+    "En 2025, il serait idiot de ne pas me faire aider par une IA. Mais tu sauras toujours ce qui vient d'où : chaque article déclare son niveau de contribution IA. Je fais un gros travail de vérification sur les informations produites par l'IA — le but est de délivrer une information juste et de qualité.",
+};
+/** R6 — valeurs de démo du prototype, jamais sur la page (D26). */
+const PROTOTYPE_VALUES = /mailto:|linkedin|hello@|github\.com\/bencat(?![a-z])/i;
+
+const aboutFile = join(DIST, 'a-propos', 'index.html');
+const about = loadPage('/a-propos/');
+if (about) {
+  const { elements } = about;
+  const block = {};
+  for (const name of ABOUT_BLOCKS) {
+    const found = elements.filter((el) => el.attrs['data-about'] === name);
+    if (found.length !== 1) errors.push(`/a-propos/ : ${found.length} bloc(s) [data-about="${name}"] (attendu : 1)`);
+    block[name] = found[0];
+  }
+  const present = ABOUT_BLOCKS.filter((name) => block[name]);
+  const order = present.map((name) => elements.indexOf(block[name]));
+  if (order.some((at, i) => i > 0 && at < order[i - 1])) {
+    errors.push(`/a-propos/ : blocs dans l'ordre ${present.slice().sort((a, b) => elements.indexOf(block[a]) - elements.indexOf(block[b])).join(', ')} (attendu : ${ABOUT_BLOCKS.join(', ')})`);
+  }
+
+  // Terminal `whoami --long` : une ligne `clé: valeur` par clé présente.
+  const terminal = block.terminal;
+  for (const key of WHOAMI_KEYS) {
+    const line = elements.find((el) => el.attrs['data-whoami'] === key);
+    if (!line) {
+      errors.push(`whoami ${key} : absent`);
+      continue;
+    }
+    lines.push(`whoami ${line.text}`);
+    if (!line.text.startsWith(`${key}: `)) errors.push(`whoami ${key} : ligne « ${line.text} » (attendu : « ${key}: <valeur> »)`);
+    if (terminal && !ancestors(line).includes(terminal)) errors.push(`whoami ${key} : hors du terminal`);
+    const spans = line.children;
+    if (spans.length !== 2 || !hasClass(spans[0], 'text-badgeInk') || !hasClass(spans[1], 'text-body')) {
+      errors.push(`whoami ${key} : attendu une clé text-badgeInk puis une valeur text-body`);
+    }
+  }
+
+  // Boîte à outils : pilules neutres, logo en <svg> inline, jamais <img> ni URL http.
+  const toolbox = block.toolbox;
+  const items = elements.filter((el) => 'data-toolbox-item' in el.attrs);
+  if (items.length === 0) errors.push('toolbox : absent');
+  else lines.push(`toolbox: ${items.map((item) => `${item.text}${descendants(item).some((el) => el.tag === 'svg') ? '+' : ''}`).join(' | ')}`);
+  for (const item of items) {
+    const where = `toolbox « ${item.text} »`;
+    if (toolbox && !ancestors(item).includes(toolbox)) errors.push(`${where} : hors du bloc toolbox`);
+    for (const el of [item, ...descendants(item)]) {
+      if (el.tag === 'img') errors.push(`${where} : contient un <img>`);
+      for (const [name, value] of Object.entries(el.attrs)) {
+        // `xmlns` est un identifiant d'espace de noms, jamais chargé.
+        if (!name.startsWith('xmlns') && /https?:/i.test(value)) errors.push(`${where} : URL http (${name}="${value}")`);
+      }
+    }
+    for (const c of ['rounded-pill', 'bg-chip', 'font-mono']) {
+      if (!hasClass(item, c)) errors.push(`${where} : classe sans ${c}`);
+    }
+  }
+
+  // Panneau IA : trois marqueurs none, partial, full, chacun une tuile dans le ton du niveau.
+  const markers = elements.filter((el) => 'data-ai-marker' in el.attrs);
+  const rule = markers.map((marker) => {
+    const tile = descendants(marker).find((el) => 'data-ai-marker-tile' in el.attrs);
+    const label = descendants(marker).find((el) => 'data-ai-marker-label' in el.attrs);
+    const level = marker.attrs['data-ai-marker'];
+    const where = `ai-rule « ${level} »`;
+    if (!tile || !label) {
+      errors.push(`${where} : tuile ou libellé absent`);
+      return `${level} ?`;
+    }
+    const tone = tile.attrs['data-tone'] ?? '?';
+    if (tone !== AI_TONES[level]) errors.push(`${where} : data-tone="${tone}" (attendu : ${AI_TONES[level] ?? '?'})`);
+    const missing = [...(TONES.includes(tone) ? toneUtilities(tone) : []), 'size-7'].filter((c) => !hasClass(tile, c));
+    if (missing.length > 0) errors.push(`${where} : tuile sans ${missing.join(', ')}`);
+    if (!hasClass(marker, 'card-inner')) errors.push(`${where} : pas un .card-inner`);
+    if (block.ai && !ancestors(marker).includes(block.ai)) errors.push(`${where} : hors du panneau IA`);
+    return `${tile.text} ${label.text} ${tone}`;
+  });
+  if (markers.length === 0) errors.push('ai-rule : absent');
+  else lines.push(`ai-rule: ${rule.join(' | ')}`);
+  const markerOrder = markers.map((m) => m.attrs['data-ai-marker']).join(',');
+  if (markers.length > 0 && markerOrder !== 'none,partial,full') {
+    errors.push(`ai-rule : marqueurs ${markerOrder} (attendu : none,partial,full)`);
+  }
+
+  // R5 — structure de l'About map.
+  const h1Count = elements.filter((el) => el.tag === 'h1').length;
+  if (h1Count !== 1) errors.push(`/a-propos/ : ${h1Count} <h1> (attendu : 1)`);
+  const identity = block.identity;
+  if (identity) {
+    if (!identity.text.includes('~/ whoami')) errors.push('/a-propos/ identité : pas de « ~/ whoami »');
+    if (!descendants(identity).some((el) => el.tag === 'h1')) errors.push('/a-propos/ identité : le <h1> n’y est pas');
+    const hrefs = descendants(identity).filter((el) => el.tag === 'a').map((el) => el.attrs.href ?? '');
+    for (const href of ['https://github.com/bendevcat', '/rss.xml']) {
+      if (!hrefs.includes(href)) errors.push(`/a-propos/ identité : pas de lien vers ${href}`);
+    }
+    const drawn = ['card', 'card-inner', 'panel'].filter((c) => hasClass(identity, c));
+    if (drawn.length > 0) errors.push(`/a-propos/ identité : porte .${drawn.join(', .')} (attendu : aucune classe de patron, sur bg)`);
+  }
+  if (terminal) {
+    if (!hasClass(terminal, 'card')) errors.push('/a-propos/ terminal : pas un .card');
+    if (!hasClass(terminal, 'font-mono')) errors.push('/a-propos/ terminal : pas en font-mono');
+    if (!terminal.text.includes('whoami --long')) errors.push('/a-propos/ terminal : pas de « whoami --long »');
+  }
+  if (block.row2) {
+    const cards = block.row2.children;
+    if (cards.length !== 2 || !cards.every((el) => hasClass(el, 'card'))) {
+      errors.push(`/a-propos/ rangée 2 : ${cards.length} enfant(s), attendu deux .card`);
+    }
+  }
+  if (block.ai) {
+    if (!hasClass(block.ai, 'panel')) errors.push('/a-propos/ panneau IA : pas un .panel');
+    const inner = descendants(block.ai).filter((el) => hasClass(el, 'card-inner')).length;
+    if (inner !== 3) errors.push(`/a-propos/ panneau IA : ${inner} .card-inner (attendu : 3)`);
+    if (!descendants(block.ai).some((el) => el.tag === 'a' && el.attrs.href === '/transparence-ia/')) {
+      errors.push('/a-propos/ panneau IA : pas de lien vers /transparence-ia/');
+    }
+  }
+  if (toolbox && !hasClass(toolbox, 'card')) errors.push('/a-propos/ boîte à outils : pas un .card');
+
+  // R6 — aucun texte d'auteur perdu, aucune valeur du prototype.
+  const mains = elements.filter((el) => el.tag === 'main');
+  if (mains.length !== 1) errors.push(`/a-propos/ : ${mains.length} <main> (attendu : 1)`);
+  const mainText = mains[0]?.text ?? '';
+  for (const [source, text] of Object.entries(AUTHOR_TEXTS)) {
+    if (!mainText.includes(text)) errors.push(`/a-propos/ : texte d'auteur « ${source} » absent ou modifié`);
+  }
+  const prototype = readFileSync(aboutFile, 'utf8').match(PROTOTYPE_VALUES);
+  if (prototype) errors.push(`/a-propos/ : valeur du prototype « ${prototype[0]} »`);
+} else {
+  errors.push('whoami : /a-propos/ absent');
+}
+
+// — T3 : niveaux IA et patrons des pages secondaires (R7) —
 
 // Toute bannière IA du site porte le ton de son niveau.
 for (const file of htmlFiles(DIST)) {

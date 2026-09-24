@@ -1,0 +1,64 @@
+---
+/*
+  /a-propos — panneau « L'IA : une aide, pas un ghostwriter » (plan 10,
+  About map ; D42). Un `.panel` sur `bg` : le titre et le paragraphe de
+  l'auteur (VERBATIM, R6), puis les trois niveaux en `.card-inner` dans
+  l'ordre none, partial, full — tuile 28×28 dans le ton du niveau (D40) avec
+  son emoji, libellé et description, TOUS lus dans AI_USAGE_META, jamais
+  recopiés ici. Lien vers /transparence-ia/ (texte de l'auteur).
+  Balisage `data-about` / `data-ai-marker*` : convention lue par
+  scripts/check-secondary.mjs.
+*/
+import { AI_USAGE_META, type AiUsage } from '../../lib/aiUsage';
+import { TONE_CLASSES } from '../../lib/tones';
+
+// L'échelle, du plus humain au plus assisté (comme /transparence-ia).
+const LEVELS: AiUsage[] = ['none', 'partial', 'full'];
+---
+
+<section class="panel min-w-0 p-4 sm:p-5" data-about="ai" aria-labelledby="about-ai-title">
+  <h2 id="about-ai-title" class="text-[21px] leading-[1.25] font-semibold tracking-[-.01em] text-ink">
+    L'IA : une aide, pas un <em>ghostwriter</em>
+  </h2>
+
+  {/* Prose → Nebula Sans (R12). */}
+  <p class="mt-3 text-[15px] leading-[1.6] text-body">
+    En 2025, il serait idiot de ne pas me faire aider par une IA. Mais tu sauras toujours ce
+    qui vient d'où : chaque article déclare son niveau de contribution IA. Je fais un gros
+    travail de vérification sur les informations produites par l'IA — le but est de délivrer
+    une information juste et de qualité.
+  </p>
+
+  <ul class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+    {
+      LEVELS.map((level) => {
+        const meta = AI_USAGE_META[level];
+        return (
+          <li class="card-inner flex min-w-0 items-start gap-3 p-3" data-ai-marker={level}>
+            <span
+              class={`grid size-7 shrink-0 place-items-center rounded-badge border text-[14px] leading-none ${TONE_CLASSES[meta.tone]}`}
+              data-ai-marker-tile
+              data-tone={meta.tone}
+              aria-hidden="true"
+            >
+              {meta.emoji}
+            </span>
+            <div class="min-w-0">
+              <p class="text-[15px] leading-[1.3] font-medium text-ink" data-ai-marker-label>
+                {meta.label}
+              </p>
+              <p class="mt-1 text-[13px] leading-[1.5] text-muted">{meta.description}</p>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+
+  <a
+    href="/transparence-ia/"
+    class="mt-4 inline-block text-sm font-medium text-accent transition-opacity hover:opacity-80"
+  >
+    Comment je déclare l'usage de l'IA →
+  </a>
+</section>

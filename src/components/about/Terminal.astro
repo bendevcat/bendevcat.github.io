@@ -1,0 +1,33 @@
+---
+/*
+  /a-propos, rangée 1 à droite — terminal `whoami --long` (plan 10, About map).
+  Un `.card` sur `bg`, tout en mono (R12) : l'invite, puis une ligne
+  `clé: valeur` par ligne reçue — clé en `badgeInk`, valeur en `body`.
+  Les lignes viennent de whoamiLines() (src/lib/about.ts) : textes de
+  l'auteur ou dérivations du dépôt ; une ligne sans source n'arrive pas ici.
+  Balisage `data-about` / `data-whoami` : convention lue par
+  scripts/check-secondary.mjs (clé puis valeur, séparées par un blanc).
+*/
+import type { WhoamiLine } from '../../lib/about';
+
+interface Props {
+  lines: WhoamiLine[];
+}
+
+const { lines } = Astro.props;
+---
+
+<div class="card min-w-0 p-4 font-mono text-[13px] leading-[1.7] sm:p-5" data-about="terminal">
+  <p class="text-dim"><span class="text-accent" aria-hidden="true">➜</span> <span class="text-badgeInk">~</span> whoami --long</p>
+
+  <dl class="mt-3 flex flex-col gap-1">
+    {
+      lines.map(({ key, value }) => (
+        <div class="break-words" data-whoami={key}>
+          {/* Sur UNE ligne : Astro supprime le blanc à saut de ligne entre deux éléments. */}
+          <dt class="inline text-badgeInk">{key}:</dt> <dd class="inline text-body">{value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</div>
