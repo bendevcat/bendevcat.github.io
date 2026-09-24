@@ -262,3 +262,9 @@ Choice: previous/next without wrap (précédent = next-older); category rows lin
 
 ## D87 · Plan 13 · authoring — The AI card replaces the top banner on articles   ⚑ à relire
 Choice: the article's AI-usage declaration moves from `AiBanner` at the top to the prototype's AI-marker card at the end of the post (site emoji and labels, link `ma règle sur l'IA →` to `/transparence-ia/`); the header meta row also shows the AI marker, so the level stays visible above the fold · Alternatives: keep the banner at the top as well · Reversibility: cheap · Why: prototype placement; transparency content, so to re-read.
+
+## D88 · Plan 13 · T4 — Cards may sit on an explicit rail   ⚑ à relire
+Choice: `check-finition` (T5) accepts a `.card-inner` on `rail` when inside a `[data-rail]` element — the prototype's related-post and related-project cards sit on the article rails · Alternatives: drop the card style from rail cards (departs from the prototype) · Reversibility: cheap · Why: D67; second narrowing of V2 after D74, to re-read together.
+
+## D89 · Plan 13 · T4 — Article page details
+Choice: tile titles turn `accent` on hover; below 640 px the AI card's link wraps under the text; the AI card keeps `role="note"` + label from `AiBanner`; prose starts 34 px under the cover; related-post dates in long fr-FR form; checker hooks `data-article-*` · Alternatives: no hover; one squeezed row · Reversibility: cheap · Why: implementer choices within the plan.
