@@ -1,30 +1,34 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Hero from '../components/Hero.astro';
-import ArticleCard from '../components/ArticleCard.astro';
+import FeaturedPost from '../components/home/FeaturedPost.astro';
+import LatestPosts from '../components/home/LatestPosts.astro';
 import { getPublishedPosts } from '../lib/posts';
+import { pickHomePosts } from '../lib/home';
 
-const posts = await getPublishedPosts();
-// getPublishedPosts() trie déjà par pubDate desc (src/lib/posts.ts) ; on ne
-// fait ici qu'un tri stable additionnel pour faire remonter un éventuel
-// article `featured` en tête (aucun featured actuellement — no-op tant que
-// le CMS Plan 2 n'en déclare pas), conformément au plan d'impl C1.
-const orderedPosts = [...posts].sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+// Plan 9 — accueil du prototype (contrat E3) : plus de hero (D27, Hero.astro
+// gardé inutilisé pour le plan 10, D33).
+//
+// UN SEUL tableau (D35) : getPublishedPosts() donne l'ordre canonique (drafts
+// retirés, pubDate desc) ; on l'enveloppe une fois pour exposer `featured` à
+// pickHomePosts(), comme /blog le fait pour pickFeaturedEntry() — même règle,
+// même entrée à la une. L'exclusion de l'article à la une dans `latest` se
+// fait par identité d'objet : ne jamais recréer les enveloppes entre les deux.
+const entries = (await getPublishedPosts()).map((post) => ({ post, featured: post.data.featured }));
+const { featured, latest } = pickHomePosts(entries);
 ---
 
 <BaseLayout
 	title="bencat_"
 	description="Site perso de Benoît Catillon — blog, projets, prompts et skills."
 >
-	<main>
-		<Hero />
+	<main class="mx-auto flex max-w-5xl flex-col gap-5 px-4 pt-6 pb-20 sm:px-6 sm:pt-8">
+		{/* Un seul <h1> sur la page, le nom du site, masqué visuellement (D32). */}
+		<h1 class="sr-only">bencat_</h1>
 
-		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-			<h2 class="font-mono text-sm text-muted">// derniers articles</h2>
-
-			<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{orderedPosts.map((post) => <ArticleCard post={post} />)}
-			</div>
-		</section>
+		{/* Rangée 1 : empilée en étroit, côte à côte en large (prototype 1.35fr / 1fr). */}
+		<div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.35fr_1fr]">
+			{featured && <FeaturedPost post={featured.post} />}
+			{latest.length > 0 && <LatestPosts posts={latest.map((entry) => entry.post)} />}
+		</div>
 	</main>
 </BaseLayout>

@@ -1,0 +1,58 @@
+---
+/*
+  Accueil, rangée 1 — l'article « à la une » (Plan 9, Home map ; contrat §3.3).
+  `.card` posée sur `bg` (V2). Chaque champ vient du contenu ou d'une
+  dérivation (D26) : catégorie, date, temps de lecture estimé depuis le corps
+  (estimateReadingMinutes, la même formule que les cartes de /blog),
+  `description` comme extrait, marqueur IA lu dans AI_USAGE_META — omis quand
+  l'article ne déclare pas d'`aiUsage`.
+  Balisage `data-home*` : convention lue par scripts/check-home.mjs (R2).
+*/
+import type { CollectionEntry } from 'astro:content';
+import { AI_USAGE_META } from '../../lib/aiUsage';
+import { estimateReadingMinutes } from '../../lib/posts';
+import Thumbnail from '../Thumbnail.astro';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, category, cover, coverAlt, aiUsage } = post.data;
+
+const href = `/blog/${post.id}/`;
+const dateFr = pubDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const readingMinutes = estimateReadingMinutes(post.body ?? '');
+const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
+---
+
+<article class="card flex min-w-0 flex-col gap-4 p-4 sm:p-5" data-home="featured">
+  <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={category} size="header" />
+
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <span class="pill text-[11px]">à la une</span>
+    {/* Donnée machine → mono (§3.1, R8). */}
+    <p class="font-mono text-[11px] text-dim">
+      <span data-home-field="category">{category}</span> ·
+      <time datetime={pubDate.toISOString()}>{dateFr}</time> · {readingMinutes} min
+    </p>
+  </div>
+
+  <h2 class="text-[29px] leading-[1.18] font-bold tracking-[-.02em] break-words text-ink">
+    <a href={href} class="transition-colors hover:text-accent" data-home-title>{title}</a>
+  </h2>
+
+  {/* Prose → Nebula Sans (R8). */}
+  <p class="text-[15px] leading-[1.6] text-body">{description}</p>
+
+  <div class="mt-auto flex flex-wrap items-center justify-between gap-3 pt-1">
+    {
+      usage && (
+        <span class="font-mono text-[11px] text-muted" data-home-field="ai">
+          {usage.emoji} {usage.label}
+        </span>
+      )
+    }
+    <a href={href} class="ml-auto text-sm font-medium text-accent transition-opacity hover:opacity-80">Lire →</a>
+  </div>
+</article>
