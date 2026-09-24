@@ -48,12 +48,24 @@ export interface FacetLabel {
    * active.
    */
   allLabel?: string;
+  /**
+   * Préfixe de l'emplacement `{clé}` du gabarit d'état vide (plan 14, D93 —
+   * `data-facet-empty-prefix`, ex. ` en ` pour la techno). Absent : une espace.
+   */
+  emptyPrefix?: string;
 }
 
 export interface ListLabels {
   singular: string;
   plural: string;
   facets: FacetLabel[];
+  /**
+   * Gabarit de la phrase d'état vide (plan 14, D93 — `data-list-empty-template`,
+   * ex. `Aucun projet{status}{stack} pour l'instant.`). Chaque emplacement
+   * `{clé}` devient `<préfixe><valeur>` quand la facette est active, rien
+   * sinon. Absent : la phrase historique (`Aucun projet pour …`).
+   */
+  emptyTemplate?: string;
 }
 
 /**
@@ -113,6 +125,49 @@ function metaFacets(selected: FacetSelection, labels: ListLabels): string[] {
 function joinWithEt(items: string[]): string {
   if (items.length <= 1) return items.join('');
   return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
+}
+
+/** Préfixe d'un emplacement de gabarit quand la facette n'en déclare pas. */
+const DEFAULT_EMPTY_PREFIX = ' ';
+
+/**
+ * Remplit le gabarit d'état vide d'une page (plan 14, D93). Un emplacement
+ * `{clé}` d'une facette active devient `<préfixe><valeur>` ; celui d'une
+ * facette inactive — ou inconnue de la sélection — disparaît.
+ */
+function fillEmptyTemplate(template: string, selected: FacetSelection, labels: ListLabels): string {
+  return template.replace(/\{([^{}]+)\}/g, (_slot, key: string) => {
+    const value = selected[key] ?? ALL;
+    if (value === ALL) return '';
+    const prefix = labels.facets.find((facet) => facet.key === key)?.emptyPrefix ?? DEFAULT_EMPTY_PREFIX;
+    return `${prefix}${value}`;
+  });
+}
+
+/**
+ * Comptes statiques d'une facette (plan 14, R1, D93) : pour chaque valeur
+ * déclarée (`values`, dans l'ordre des segments ou des options), le nombre
+ * d'entrées qui la portent, sur TOUTES les entrées reçues — un segment peut
+ * donc lire 0. La sentinelle `ALL` compte toutes les entrées. Une entrée
+ * compte une fois par valeur, même si elle la répète. Ne dépend pas de la
+ * sélection courante : les comptes ne bougent pas quand on filtre.
+ */
+export function facetCounts(
+  entries: readonly Pick<ListEntry, 'facets'>[],
+  key: string,
+  values: readonly string[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const value of values) {
+    counts[value] =
+      value === ALL
+        ? entries.length
+        : entries.filter((entry) => {
+            const carried = entry.facets[key];
+            return Array.isArray(carried) && carried.includes(value);
+          }).length;
+  }
+  return counts;
 }
 
 /**
@@ -197,10 +252,14 @@ export function computeListState(
 
   // R6 : contextualisé — le message nomme les facettes actives. Prose, donc
   // jamais en `font-mono` (contrainte globale n°7).
+  // Plan 14 (D93) : une page qui déclare un gabarit écrit sa propre phrase ;
+  // sans gabarit, la phrase historique ci-dessous est inchangée (/blog).
   const empty =
     count > 0
       ? null
-      : active.length > 0
+      : labels.emptyTemplate !== undefined
+        ? fillEmptyTemplate(labels.emptyTemplate, selected, labels)
+        : active.length > 0
         ? `Aucun ${labels.singular} pour ${joinWithEt(active)}.`
         : `Aucun ${labels.singular} à afficher.`;
 

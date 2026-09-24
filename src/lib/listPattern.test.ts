@@ -3,6 +3,7 @@ import { ALL } from './facetFilters';
 import {
   computeListState,
   domOrder,
+  facetCounts,
   facetsFromQuery,
   isAnyFacetActive,
   pickFeaturedEntry,
@@ -334,5 +335,92 @@ describe('facetsFromQuery — lien profond de catégorie (plan 13, T1)', () => {
     const state = computeListState(entries, selected, 'recent', labels, { featured: false });
     expect(state.visibleIds).toEqual(['x']);
     expect(state.meta).toBe('1 article · catégorie : DevOps');
+  });
+});
+
+// Plan 14, T3 (R1, D93) : les comptes des segments et des options de menu
+// sont statiques — chaque valeur déclarée comptée sur TOUTES les entrées
+// publiées de la liste, zéro compris (`Archivé 0` est ce qui mène à l'état vide).
+describe('facetCounts — comptes statiques des facettes (plan 14, R1)', () => {
+  it('compte chaque valeur déclarée sur toutes les entrées, zéro compris', () => {
+    const counts = facetCounts(ENTRIES, 'status', [ALL, 'actif', 'wip', 'archivé']);
+    expect(counts).toEqual({ [ALL]: 3, actif: 2, wip: 1, archivé: 0 });
+    // Ordre des clés = ordre des valeurs déclarées (celui des segments).
+    expect(Object.keys(counts)).toEqual([ALL, 'actif', 'wip', 'archivé']);
+    // Facette multi-valeur : une entrée compte une fois par valeur qu'elle porte.
+    const multi: ListEntry[] = [
+      { id: 'x', facets: { stack: ['Astro', 'Go'] }, featured: false, date: 0, minutes: 0 },
+      { id: 'y', facets: { stack: ['Go', 'Go'] }, featured: false, date: 0, minutes: 0 },
+      { id: 'z', facets: {}, featured: false, date: 0, minutes: 0 },
+    ];
+    expect(facetCounts(multi, 'stack', [ALL, 'Astro', 'Go', 'Bash'])).toEqual({
+      [ALL]: 3,
+      Astro: 1,
+      Go: 2,
+      Bash: 0,
+    });
+    // Liste vide : tout à zéro ; les entrées reçues ne sont pas mutées.
+    expect(facetCounts([], 'stack', [ALL, 'Go'])).toEqual({ [ALL]: 0, Go: 0 });
+    expect(ENTRIES.map((e) => e.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+// Plan 14, T3 (R2, D93) : une page peut déclarer un gabarit d'état vide
+// (`data-list-empty-template`) ; chaque emplacement `{clé}` devient
+// `<préfixe><valeur>` quand la facette est active, rien sinon. Préfixe lu sur
+// le contrôle (`data-facet-empty-prefix`), une espace par défaut.
+describe('computeListState — gabarit d’état vide (plan 14, R2)', () => {
+  const PROJECT_LABELS: ListLabels = {
+    singular: 'projet',
+    plural: 'projets',
+    emptyTemplate: "Aucun projet{status}{stack} pour l'instant.",
+    facets: [
+      { key: 'status', label: 'statut' },
+      { key: 'stack', label: 'techno', emptyPrefix: ' en ' },
+    ],
+  };
+  const PROJECTS: ListEntry[] = [
+    { id: 'site', facets: { status: ['wip'], stack: ['Astro'] }, featured: true, date: 2, minutes: 0 },
+    { id: 'gha', facets: { status: ['actif'], stack: ['Go'] }, featured: false, date: 1, minutes: 0 },
+  ];
+
+  it("écrit l'état vide d'un gabarit de page : « Aucun projet wip en Go pour l'instant. »", () => {
+    const state = computeListState(PROJECTS, { status: 'wip', stack: 'Go' }, 'none', PROJECT_LABELS);
+    expect(state.count).toBe(0);
+    expect(state.empty).toBe("Aucun projet wip en Go pour l'instant.");
+    // La ligne de méta ne change pas de format.
+    expect(state.meta).toBe('0 projet · statut wip · techno Go');
+  });
+
+  it('vide les emplacements des facettes inactives', () => {
+    const archived = computeListState(PROJECTS, { status: 'archivé', stack: ALL }, 'none', PROJECT_LABELS);
+    expect(archived.empty).toBe("Aucun projet archivé pour l'instant.");
+    const stackOnly = computeListState(PROJECTS, { status: ALL, stack: 'Bash' }, 'none', PROJECT_LABELS);
+    expect(stackOnly.empty).toBe("Aucun projet en Bash pour l'instant.");
+    // Liste vide sans facette active : tous les emplacements sont vidés.
+    expect(computeListState([], { status: ALL, stack: ALL }, 'none', PROJECT_LABELS).empty).toBe(
+      "Aucun projet pour l'instant.",
+    );
+    // Un gabarit sans emplacement (prompts, skills) est rendu tel quel.
+    const prompts: ListLabels = {
+      singular: 'prompt',
+      plural: 'prompts',
+      emptyTemplate: 'Aucun prompt ne correspond à ce filtre.',
+      facets: [{ key: 'format', label: 'format' }],
+    };
+    expect(computeListState([], { format: 'guide' }, 'none', prompts).empty).toBe(
+      'Aucun prompt ne correspond à ce filtre.',
+    );
+    // Tant qu'il reste un résultat, pas d'état vide, gabarit ou non.
+    expect(computeListState(PROJECTS, { status: 'wip', stack: ALL }, 'none', PROJECT_LABELS).empty).toBeNull();
+  });
+
+  it('garde la phrase historique sans gabarit', () => {
+    const { emptyTemplate: _unused, ...plain } = PROJECT_LABELS;
+    const state = computeListState(PROJECTS, { status: 'wip', stack: 'Go' }, 'none', plain);
+    expect(state.empty).toBe('Aucun projet pour statut wip et techno Go.');
+    expect(computeListState([], { status: ALL, stack: ALL }, 'none', plain).empty).toBe(
+      'Aucun projet à afficher.',
+    );
   });
 });
