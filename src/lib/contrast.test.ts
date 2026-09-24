@@ -42,11 +42,11 @@ describe('contrast', () => {
     expect(() => contrastRatio(parseColor('#000'), parseColor('rgba(0,0,0,.5)'))).toThrow();
   });
 
-  it('reads the 37 colour tokens of both themes from global.css', () => {
+  it('reads the 47 colour tokens of both themes from global.css', () => {
     // 22 tokens couleur du contrat §2 (le 23e, `shadow`, n'est pas une couleur)
-    // + 15 tokens de tons §2.3.
+    // + 15 tokens de tons §2.3 + 10 tokens de fenêtre toujours sombre (plan 15, D105).
     for (const theme of THEMES) {
-      expect(Object.keys(themes[theme])).toHaveLength(37);
+      expect(Object.keys(themes[theme])).toHaveLength(47);
     }
     // Contrat §2, verbatim.
     expect(themes.light.bg).toEqual(parseColor('#F1F4F7'));
@@ -77,6 +77,37 @@ describe('contrast', () => {
     for (const theme of THEMES) {
       const ratio = tokenContrast(themes[theme], 'accent', ['bg', 'surface', 'card', 'accentSoft']);
       expect(ratio, `${theme} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+  });
+
+  it('gives the window tokens the same value in both themes and keeps windowInk, windowDim, windowKey and windowValue at 4.5:1 on windowBg and windowHead', () => {
+    // Fenêtre toujours sombre (inventaire §9, D105) : les 10 tokens sont
+    // déclarés dans LES DEUX blocs, avec la même valeur. `readThemeTokens`
+    // fait hériter le sombre du clair : on relit donc le bloc sombre brut pour
+    // exiger une redéclaration explicite (l'audit énumère ses noms là).
+    const WINDOW = [
+      'windowBg', 'windowHead', 'windowLine', 'windowInk', 'windowDim',
+      'windowKey', 'windowValue', 'windowDotRed', 'windowDotAmber', 'windowDotGreen',
+    ];
+    const uncommented = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const block = (opener: string) => {
+      const open = uncommented.indexOf('{', uncommented.indexOf(opener));
+      return uncommented.slice(open + 1, uncommented.indexOf('}', open));
+    };
+    const declared = (body: string) =>
+      Object.fromEntries([...body.matchAll(/--color-(window\w*)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+    const light = declared(block('@theme static'));
+    const dark = declared(block(':root[data-theme="dark"]'));
+    expect(Object.keys(light).sort()).toEqual([...WINDOW].sort());
+    expect(dark).toEqual(light);
+    for (const name of WINDOW) expect(themes.dark[name], name).toEqual(themes.light[name]);
+
+    const t = themes.light;
+    for (const text of ['windowInk', 'windowDim', 'windowKey', 'windowValue']) {
+      for (const stack of [['windowBg'], ['windowHead'], ['windowHead', 'windowLine']]) {
+        const ratio = tokenContrast(t, text, stack);
+        expect(ratio, `${text} on ${stack.join(' + ')} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
     }
   });
 });
