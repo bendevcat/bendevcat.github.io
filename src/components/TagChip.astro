@@ -14,6 +14,10 @@
   du ton. `label` (liens seulement) devient l'`aria-label` du lien : sur
   /tags, « <tag> <compte> » avec une espace, sinon le nom accessible se lit
   « claude-code5 » (plan 11, R15).
+
+  `shape="tag"` (plan 12, T5) : la puce du rail de /blog (prototype 163–227) —
+  rayon 8 (`rounded-tag`), padding 4/9, mono 10. La forme `pill` par défaut
+  rend exactement les mêmes classes qu'avant (check-secondary.mjs).
 */
 import { tagSlug, tagTone } from '../lib/tags';
 import { TONE_CLASSES } from '../lib/tones';
@@ -25,16 +29,19 @@ interface Props {
   label?: string;
   /** Classes de mise en page supplémentaires (padding, gap…). */
   class?: string;
+  /** `pill` (défaut, toutes les pages) ou `tag` (rail de /blog). */
+  shape?: 'pill' | 'tag';
 }
 
-const { tag, href, label, class: extra } = Astro.props;
+const { tag, href, label, class: extra, shape = 'pill' } = Astro.props;
 const slug = tagSlug(tag);
 const tone = tagTone(tag);
-const classes = [
-  'rounded-pill border font-mono text-xs',
-  TONE_CLASSES[tone],
-  extra ?? 'px-2 py-0.5',
-];
+const SHAPES = {
+  pill: { base: 'rounded-pill border font-mono text-xs', padding: 'px-2 py-0.5', gap: 'gap-2' },
+  tag: { base: 'rounded-tag border font-mono text-[10px]', padding: 'px-[9px] py-1', gap: 'gap-1' },
+} as const;
+const { base, padding, gap } = SHAPES[shape];
+const classes = [base, TONE_CLASSES[tone], extra ?? padding];
 ---
 
 {
@@ -44,7 +51,7 @@ const classes = [
       aria-label={label}
       data-tag={slug}
       data-tone={tone}
-      class:list={[...classes, 'inline-flex items-center gap-2 transition-colors hover:border-current']}
+      class:list={[...classes, `inline-flex items-center ${gap} transition-colors hover:border-current`]}
     >
       {tag}
       <slot />
