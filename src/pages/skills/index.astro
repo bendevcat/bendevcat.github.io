@@ -4,6 +4,8 @@ import SkillCard from '../../components/SkillCard.astro';
 import { getSortedSkills, collectTypes, collectSkillTags } from '../../lib/skills';
 import { ALL } from '../../lib/facetFilters';
 import { pickFeaturedEntry } from '../../lib/listPattern';
+import { tagSlug, tagTone } from '../../lib/tags';
+import { TONE_CLASSES } from '../../lib/tones';
 
 // getSortedSkills() applique déjà l'ordre du plan (titre A→Z) et écarte les
 // `draft` — cf. src/lib/skills.ts. Pas de re-tri ici.
@@ -50,7 +52,7 @@ const NOUNS = ['skill', 'skills'] as const;
 						data-facet-label="tag"
 						data-facet-value={ALL}
 						aria-pressed="true"
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent aria-pressed:ring-2 aria-pressed:ring-current"
 					>
 						tous
 					</button>
@@ -61,8 +63,13 @@ const NOUNS = ['skill', 'skills'] as const;
 								data-facet-key="tag"
 								data-facet-label="tag"
 								data-facet-value={tag}
+								data-tag={tagSlug(tag)}
+								data-tone={tagTone(tag)}
 								aria-pressed="false"
-								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+								class:list={[
+									'rounded-pill border px-3 py-1 font-mono text-xs transition-colors hover:border-current aria-pressed:ring-2 aria-pressed:ring-current',
+									TONE_CLASSES[tagTone(tag)],
+								]}
 							>
 								{tag}
 							</button>

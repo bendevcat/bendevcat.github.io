@@ -13,16 +13,27 @@ interface Props {
    * est pas un.
    */
   ariaLabel?: string;
+  /**
+   * Marge externe. Par défaut `mb-8`, l'espacement sous la bannière d'un
+   * article ; /transparence-ia la pose dans un `.card-inner` et passe la
+   * sienne.
+   */
+  class?: string;
 }
 
-const { usage, ariaLabel = 'Transparence IA de cet article' } = Astro.props;
+const { usage, ariaLabel = 'Transparence IA de cet article', class: margin = 'mb-8' } = Astro.props;
 const meta = AI_USAGE_META[usage];
 ---
 
+{/* `data-ai-usage` + `data-tone` : le niveau et son ton (D40), lus par
+    scripts/check-secondary.mjs (R7) — les couleurs, elles, viennent de
+    `meta.bannerClass` (TONE_CLASSES). */}
 <div
-  class={`mb-8 flex items-start gap-3 rounded-card border px-4 py-3 ${meta.bannerClass}`}
+  class={`${margin} flex items-start gap-3 rounded-card border px-4 py-3 ${meta.bannerClass}`}
   role="note"
   aria-label={ariaLabel}
+  data-ai-usage={usage}
+  data-tone={meta.tone}
 >
   <span class="text-lg leading-none" aria-hidden="true">{meta.emoji}</span>
   <div class="text-sm">

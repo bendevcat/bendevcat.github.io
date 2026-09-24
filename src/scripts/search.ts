@@ -70,12 +70,16 @@ if (dialog && input && output) {
       heading.className = 'font-mono text-xs uppercase tracking-wide text-accent';
       heading.textContent = `${group.label} (${group.results.length})`;
       const list = document.createElement('ul');
-      list.className = 'mt-2 flex flex-col gap-1';
+      list.className = 'mt-2 flex flex-col gap-2';
       for (const result of group.results) {
         const item = document.createElement('li');
         const link = document.createElement('a');
         link.href = result.url;
-        link.className = 'block rounded-thumb px-2 py-2 hover:bg-accentSoft focus-visible:bg-accentSoft';
+        // Patron `.card-inner` du contrat §4 (R8) : fond `card` dans le modal
+        // `.card` (surface) — un seul niveau d'écart (§2.1). Survol et focus
+        // marqués par la bordure, comme les entrées des panneaux de l'accueil.
+        link.className =
+          'card-inner block px-3 py-2 transition-colors hover:border-accent/50 focus-visible:border-accent';
         const title = document.createElement('span');
         title.className = 'block text-sm text-ink';
         title.textContent = result.title; // texte, jamais innerHTML

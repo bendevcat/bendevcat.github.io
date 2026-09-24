@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import TagChip from './TagChip.astro';
 import Thumbnail from './Thumbnail.astro';
 
 interface Props {
@@ -67,9 +68,7 @@ const facets = JSON.stringify({ format: [format], tool: [tool], tag: tags });
     tags.length > 0 && (
       <ul class="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Tags">
         {tags.map((tag) => (
-          <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
-            {tag}
-          </li>
+          <TagChip tag={tag} />
         ))}
       </ul>
     )

@@ -73,6 +73,26 @@
   --color-code: #EFF3F7;                /* fond de bloc de code */
   --color-hatch: rgba(11,107,76,.20);   /* trames décoratives */
 
+  /* — tons de tags (plan 10 / T1) : contrat §2.3, verbatim. Système distinct
+     des deux accents, un triplet fond / texte / bordure par ton. Noms repris
+     par src/lib/tones.ts (utilitaires `bg-tag<Ton>Bg text-tag<Ton>Ink
+     border-tag<Ton>Line`) ; servent aux puces de tag et aux niveaux IA (D40). — */
+  --color-tagGreenBg: #DCEFE6;
+  --color-tagGreenInk: #0A5F45;
+  --color-tagGreenLine: rgba(11,107,76,.16);
+  --color-tagBlueBg: #DCE8F8;
+  --color-tagBlueInk: #1B4E8C;
+  --color-tagBlueLine: rgba(27,78,140,.14);
+  --color-tagVioletBg: #E6E1F7;
+  --color-tagVioletInk: #4B3B9C;
+  --color-tagVioletLine: rgba(75,59,156,.14);
+  --color-tagAmberBg: #F7E7D6;
+  --color-tagAmberInk: #8A4B1E;
+  --color-tagAmberLine: rgba(138,75,30,.14);
+  --color-tagRoseBg: #F7DEE4;
+  --color-tagRoseInk: #93334C;
+  --color-tagRoseLine: rgba(147,51,76,.14);
+
   /* — 23e token : élévation de carte (nom nu `shadow`, cf. contrat §2) — */
   --shadow: 0 10px 18px -12px rgba(16,24,34,.26), 0 2px 4px -2px rgba(16,24,34,.08);
 
@@ -113,6 +133,23 @@
   --color-cardHover: rgba(255,255,255,.03);
   --color-code: #0A0C0F;
   --color-hatch: rgba(74,222,128,.16);
+
+  /* tons de tags, colonne « Sombre » du contrat §2.3 */
+  --color-tagGreenBg: rgba(74,222,128,.13);
+  --color-tagGreenInk: #86EFAC;
+  --color-tagGreenLine: rgba(74,222,128,.22);
+  --color-tagBlueBg: rgba(96,165,250,.14);
+  --color-tagBlueInk: #93C5FD;
+  --color-tagBlueLine: rgba(96,165,250,.22);
+  --color-tagVioletBg: rgba(167,139,250,.14);
+  --color-tagVioletInk: #C4B5FD;
+  --color-tagVioletLine: rgba(167,139,250,.22);
+  --color-tagAmberBg: rgba(251,146,60,.14);
+  --color-tagAmberInk: #FDBA74;
+  --color-tagAmberLine: rgba(251,146,60,.22);
+  --color-tagRoseBg: rgba(244,114,182,.14);
+  --color-tagRoseInk: #F9A8D4;
+  --color-tagRoseLine: rgba(244,114,182,.22);
 
   --shadow: 0 12px 22px -16px rgba(0,0,0,.85);
 }

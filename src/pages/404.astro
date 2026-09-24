@@ -10,36 +10,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <p class="font-mono text-sm text-accent">~/ 404</p>
       <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Page introuvable</h1>
-      <p class="mt-6 text-muted">
-        Cette page n'existe pas, ou plus — un lien cassé, une faute de frappe, ou un article
-        déplacé. Voici où aller ensuite.
-      </p>
+    </section>
 
-      <ul class="mt-8 flex flex-col gap-3">
-        <li>
-          <a href="/" class="text-accent underline underline-offset-4 hover:no-underline">
-            Retour à l'accueil
-          </a>
-        </li>
-        <li>
-          <a href="/blog" class="text-accent underline underline-offset-4 hover:no-underline">
-            Voir le blog
-          </a>
-        </li>
-        <li>
-          <a href="/tags" class="text-accent underline underline-offset-4 hover:no-underline">
-            Parcourir les tags
-          </a>
-        </li>
-      </ul>
+    <section class="mx-auto max-w-3xl px-4 pb-20 sm:px-6">
+      {/* Patrons du contrat §4 (R7) : un `.card` posé sur `bg`, les trois
+          sorties en `.pill` (convention des pilules d'action du site :
+          libellé court + flèche, comme « tous les tags → »). */}
+      <div class="card p-5 sm:p-6">
+        <p class="text-muted">
+          Cette page n'existe pas, ou plus — un lien cassé, une faute de frappe, ou un article
+          déplacé. Voici où aller ensuite.
+        </p>
 
-      <p class="mt-8 text-sm text-muted">
-        {/* Le texte qui suit </kbd> doit rester sur CETTE ligne : un saut de
-            ligne entre un élément et le texte suivant fait disparaître
-            l'espace d'indentation à la compilation Astro, ce qui produisait
-            « ⌘K— ça marche ». */}
-        Ou lance une recherche avec <kbd class="rounded-pill border border-line px-1.5 py-0.5 font-mono">⌘K</kbd> — ça marche depuis n'importe quelle page, y compris celle-ci.
-      </p>
+        <ul class="mt-6 flex flex-wrap gap-2">
+          <li>
+            <a href="/" class="pill inline-block text-sm transition-colors hover:ring-1 hover:ring-accent">
+              accueil →
+            </a>
+          </li>
+          <li>
+            <a href="/blog" class="pill inline-block text-sm transition-colors hover:ring-1 hover:ring-accent">
+              blog →
+            </a>
+          </li>
+          <li>
+            <a href="/tags" class="pill inline-block text-sm transition-colors hover:ring-1 hover:ring-accent">
+              tags →
+            </a>
+          </li>
+        </ul>
+
+        <p class="mt-6 text-sm text-muted">
+          {/* Le texte qui suit </kbd> doit rester sur CETTE ligne : un saut de
+              ligne entre un élément et le texte suivant fait disparaître
+              l'espace d'indentation à la compilation Astro, ce qui produisait
+              « ⌘K— ça marche ». */}
+          Ou lance une recherche avec <kbd class="rounded-pill border border-line px-1.5 py-0.5 font-mono">⌘K</kbd> — ça marche depuis n'importe quelle page, y compris celle-ci.
+        </p>
+      </div>
     </section>
   </main>
 </BaseLayout>

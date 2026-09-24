@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import TagChip from '../../components/TagChip.astro';
 import {
   collectTagIndex,
   entriesWithTag,
@@ -60,22 +61,29 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
     <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <p class="font-mono text-sm text-accent">~/ tags / {tag.label}</p>
       <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">{tag.label}</h1>
+      {/* Puce d'en-tête (D39) : le ton de ce tag, le même que sur /tags et partout ailleurs. */}
+      <ul class="mt-4 flex flex-wrap gap-2" aria-label="Tags">
+        <TagChip tag={tag.label} />
+      </ul>
     </section>
 
     <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-      <div class="flex flex-col gap-10">
+      {/* Patrons du contrat §4 (R7) : chaque groupe de collection est un
+          `.card` posé sur `bg`, chaque entrée un lien `.card-inner` dedans
+          (§2.1). `data-tag-group` est lu par scripts/check-secondary.mjs. */}
+      <div class="flex flex-col gap-6">
         {
           groups.map((group) => (
-            <section>
+            <section class="card p-4 sm:p-6" data-tag-group={group.collection}>
               <h2 class="font-mono text-sm text-accent">
                 {group.label} ({group.entries.length})
               </h2>
-              <ul class="mt-4 flex flex-col gap-4">
+              <ul class="mt-4 flex flex-col gap-3">
                 {group.entries.map((entry) => (
                   <li>
                     <a
                       href={`${group.href}/${entry.id}/`}
-                      class="block rounded-card border border-line p-4 transition-colors hover:border-accent"
+                      class="card-inner block p-4 transition-colors hover:border-accent/50"
                     >
                       <p class="font-sans text-lg font-bold text-ink">{entry.data.title}</p>
                       <p class="mt-1 text-sm text-muted">{entry.data.description}</p>

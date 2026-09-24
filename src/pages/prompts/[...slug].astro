@@ -2,6 +2,7 @@
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
+import TagChip from '../../components/TagChip.astro';
 import { getSortedPrompts } from '../../lib/prompts';
 import { sortAndFilterSkills } from '../../lib/skills';
 import { assertEntriesResolved } from '../../lib/references';
@@ -151,7 +152,7 @@ const shown = new Set(tabs.map((tab) => tab.id));
                 <dd class="mb-2 sm:mb-0">
                   <ul class="flex flex-wrap gap-2" aria-label="Tags">
                     {tags.map((tag) => (
-                      <li class="rounded-pill border border-line px-2 py-0.5 text-muted">{tag}</li>
+                      <TagChip tag={tag} />
                     ))}
                   </ul>
                 </dd>
