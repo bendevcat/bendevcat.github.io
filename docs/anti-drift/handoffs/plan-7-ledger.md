@@ -245,3 +245,25 @@ cours d'exécution, et rend un écart futur visible.
 | `projects` | 2 | 1 (`site-bencat`) | **0/2** | `status` (2 utilisées), `stack` (8) |
 | `prompts` | 3 | *champ absent* | *champ absent* | `format` (2), `tool` (2), `tag` (4) |
 | `skills` | 2 | *champ absent* | *champ absent* | `type` (**1 seule valeur**), `tag` (4) |
+
+## Vérification en production — `https://bendevcat.github.io`, 2026-09-24
+
+Livrer n'est pas pousser : mesuré **sur le site déployé**, après le merge `9ed2b8c` sur `main`
+(tag `v1.2.0`) et le passage de l'action GitHub Pages en `success` (test · build · deploy). La
+feuille servie est passée de `BaseLayout.NAZFE38K.css` (livraison du Plan 6) à
+`BaseLayout.BeMZaNZy.css` — **exactement** le nom produit par le build local de `1e60186`, dont
+l'arbre est identique à celui du merge (`git diff 1e60186 9ed2b8c` vide). Le déploiement a bien pris.
+
+| Contrôle | Mesuré en production |
+|---|---|
+| R3 / R9 — les 6 éléments du patron | présents sur les **4** listes (filtres, méta, à la une, grille, état vide, réinitialisation) |
+| R4 — compte annoncé | `/projets` 2 · `/blog` 5 · `/prompts` 3 · `/skills` 2 — égal au nombre d'entrées rendues |
+| R4 / R5 — sous filtre | `/projets`, pilule `Astro` : « 1 projet · techno Astro », à la une **0**, `aria-pressed="true"` |
+| R6 — état vide | `+ statut archivé` : « 0 projet · techno Astro · statut archivé », message « Aucun projet pour techno Astro et statut archivé. » |
+| R6 — réversibilité | bouton de réinitialisation → « 2 projets », à la une **1** |
+| R7 — dropdowns | `/projets` statut · `/blog` tri + tag · `/prompts` format + tag · `/skills` type |
+| R8 — vignettes | `/blog` : `<img>` webp réels (chargement différé, image effectivement affichée) ; `/projets` : monogrammes dérivés `WI` / `AC` |
+| R12 — 375 px | `scrollWidth === innerWidth` (375) sur les 4 listes |
+
+Suite rejouée à neuf avant le merge, sur `1e60186` : **13 suites / 144 tests**, `astro check`
+0 erreur, **52** fichiers HTML — les chiffres de la Phase Z.
