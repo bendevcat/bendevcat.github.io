@@ -162,3 +162,30 @@ blog sort: plus récents ✓ | plus anciens | lecture la plus courte | lecture l
 | R20 | proven | frozen diff empty; 251 tests; 0 errors; `matchesFilters` 1 |
 
 Findings outside criteria → F4: sort sets `style.order` (keyboard order ≠ visual order); `check-home` ignores `featured`; stale `ArticleCard` comments; `max-w-[calc(100vw-2rem)]` overridden by inline `min-width`.
+
+### Verification 2 (2026-09-24, after F1–F4)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | walkthrough light then dark (`/` › Blog › DevOps 2 › sort `plus anciens` › row › back › tag chip › `/tags/`); 20 routes 200 on preview, dev log only `[200]`, 0 console errors; R16 smoke (see below) |
+| R1 | proven | test passes; red on 1024px token, Footer/Header/page `max-w-5xl`, missing `data-shell="main"` |
+| R2 | proven | first 5 lines exact, exit 0; exit 1 on 5 injected defects |
+| R3 | proven | named tests pass; red on swap, neutral active, active branch removed |
+| R4 | proven | red on `prototype cliquable`; dist clean |
+| R5 | proven | 14 routes × 2 themes: content box 1180 at x 50 (`box-content`), no header border, **pill tops 20/20/20**, footer 60 / 24 / `line2` |
+| R6 | proven | every header value on 14 routes × 2 themes; sun/moon per theme; 375 two rows in bounds |
+| R7 | proven | footer last, mono 11 `muted`, edges ± 1 |
+| R8 | proven | 3 tests; red on 4 mutations |
+| R9 | proven | 36/36, 0 deleted lines; red on 2 mutations |
+| R10 | proven | 5 named tests, each red under a targeted mutation |
+| R11 | proven | 6 blog lines exact; exit 1 on 9 injected defects |
+| R12 | proven | all 1280 values both themes; rail above list at 375/767, beside at 768/1024 |
+| R13 | proven | DevOps 2 / Outils 3 / Tout 5 rows and meta; real keyboard |
+| R14 | proven | 1280: gap 10.0, right edges equal, width 250, ✓, 4 sorts, DOM order = screen order, Escape, outside click, keyboard; **375 and 320: x 8→258, 0 clipped** |
+| R15 | proven | no-JS iframe both themes: 5 rows, meta, 20 chip links, no dead control of this plan |
+| R16 | smoke | `claude-design` MCP refused (`needs_design_scopes`) for the verifier and the orchestrator; F1/F3 target values measured (content 1180 at 50–1230; options mono 11 + icons, 250 px). Orchestrator side-by-side at 1280 dark before F1 (header, /blog) matched in blocks and order. **Smoke step: user runs `/design-login`, then the side-by-side is replayed (header, footer, /blog, both themes).** |
+| R17 | proven | `audit-rendered.js` 102 runs (14 routes × 3 widths × 2 themes + open states): 0 overflow / contrast / off-token / V2; injected `#ff0000` caught |
+| R18 | proven | 2,342 elements: radii {999, 9, 20, 10, 8, 14}; mono/Nebula split as specified |
+| R19 | proven | earlier scripts identical to base except amended lines; runtime filters intact on the 3 other lists |
+| R20 | proven | frozen diff empty; 268 tests; 0 errors; `matchesFilters` 1 |
+
+Finding outside criteria: the theme toggle stays visible and inert without JS (true since base) — carried to plan 18.
