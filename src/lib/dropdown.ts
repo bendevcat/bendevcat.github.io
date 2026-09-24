@@ -126,3 +126,52 @@ export function dropdownToggle(state: DropdownState, count: number, selected: nu
   if (state.open) return { state: CLOSED, select: null, focus: 'trigger', handled: true };
   return openOn(selected, count);
 }
+
+/**
+ * Marge gardée entre le popover et chaque bord de la fenêtre (px) : à 375 le
+ * popover tient dans 375 − 2 × 8 = 359 px.
+ */
+export const POPOVER_MARGIN = 8;
+
+export interface PopoverPlacementInput {
+  /** Bord droit de la racine = du déclencheur, en px depuis le bord gauche de la fenêtre. */
+  anchorRight: number;
+  /** Largeur naturelle du popover (min-width compris), mesurée aligné à droite. */
+  width: number;
+  /** Largeur utile de la fenêtre (`documentElement.clientWidth`). */
+  viewportWidth: number;
+  margin?: number;
+}
+
+export interface PopoverPlacement {
+  /**
+   * Valeur CSS `right` (px) du popover, relative au bord droit de la racine :
+   * 0 = aligné à droite sur le déclencheur (le cas de R14 à 1280) ; positif =
+   * décalé vers la gauche ; négatif = déborde à droite du déclencheur.
+   */
+  offsetRight: number;
+  /** Largeur retenue : la largeur naturelle, plafonnée à la fenêtre moins deux marges. */
+  width: number;
+}
+
+/**
+ * Placement horizontal du popover (plan 12, F2) : aligné à droite sur son
+ * déclencheur tant qu'il tient ; sinon glissé juste assez pour rester à
+ * `margin` px des bords de la fenêtre ; largeur plafonnée à la fenêtre moins
+ * deux marges.
+ */
+export function placePopover({
+  anchorRight,
+  width,
+  viewportWidth,
+  margin = POPOVER_MARGIN,
+}: PopoverPlacementInput): PopoverPlacement {
+  const available = Math.max(0, viewportWidth - 2 * margin);
+  const placedWidth = Math.min(width, available);
+  const minLeft = margin;
+  const maxLeft = viewportWidth - margin - placedWidth;
+  const left = Math.min(Math.max(anchorRight - placedWidth, minLeft), maxLeft);
+  const offsetRight = anchorRight - (left + placedWidth);
+  // `-0` → 0 : toEqual et le style CSS n'en ont que faire, mais restons nets.
+  return { offsetRight: offsetRight === 0 ? 0 : offsetRight, width: placedWidth };
+}

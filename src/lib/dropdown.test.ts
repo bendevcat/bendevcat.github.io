@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { CLOSED, dropdownKey, dropdownToggle, indexOfValue, type DropdownState } from './dropdown';
+import {
+  CLOSED,
+  POPOVER_MARGIN,
+  dropdownKey,
+  dropdownToggle,
+  indexOfValue,
+  placePopover,
+  type DropdownState,
+} from './dropdown';
 
 // Les noms des cinq tests de R10 (plan 12) sont repris MOT POUR MOT : le
 // critère se mesure par nom de test.
@@ -113,5 +121,54 @@ describe('indexOfValue', () => {
     expect(indexOfValue(values, 'nope')).toBe(0);
     expect(indexOfValue(values, undefined)).toBe(0);
     expect(indexOfValue([], 'recent')).toBe(-1);
+  });
+});
+
+describe('placePopover — le popover reste dans la fenêtre (plan 12, F2 / R14)', () => {
+  // Rect du popover qu'on obtient en posant `right: offsetRight px` sur la
+  // racine (dont le bord droit est celui du déclencheur).
+  const rectOf = (anchorRight: number, placement: { offsetRight: number; width: number }) => {
+    const right = anchorRight - placement.offsetRight;
+    return { left: right - placement.width, right };
+  };
+
+  it('keeps the popover right-aligned to its trigger when it fits (1280)', () => {
+    const placement = placePopover({ anchorRight: 1230, width: 236, viewportWidth: 1280 });
+    expect(placement).toEqual({ offsetRight: 0, width: 236 });
+  });
+
+  it('shifts right when right alignment would cross the left edge (375, verifier case)', () => {
+    // Mesure du vérificateur : déclencheur x 37–200, popover 236 → x −36 → 200.
+    const placement = placePopover({ anchorRight: 200, width: 236, viewportWidth: 375 });
+    const rect = rectOf(200, placement);
+    expect(rect.left).toBe(POPOVER_MARGIN);
+    expect(rect.right).toBeLessThanOrEqual(375 - POPOVER_MARGIN);
+    expect(placement.width).toBe(236);
+  });
+
+  it('shifts left when the trigger sits past the right margin', () => {
+    const placement = placePopover({ anchorRight: 372, width: 236, viewportWidth: 375 });
+    const rect = rectOf(372, placement);
+    expect(rect.right).toBe(375 - POPOVER_MARGIN);
+    expect(rect.left).toBeGreaterThanOrEqual(POPOVER_MARGIN);
+  });
+
+  it('caps the width to the viewport minus both margins', () => {
+    const placement = placePopover({ anchorRight: 100, width: 500, viewportWidth: 320 });
+    expect(placement.width).toBe(320 - 2 * POPOVER_MARGIN);
+    const rect = rectOf(100, placement);
+    expect(rect.left).toBe(POPOVER_MARGIN);
+    expect(rect.right).toBe(320 - POPOVER_MARGIN);
+  });
+
+  it('stays within the viewport for any trigger position at 375', () => {
+    for (let anchorRight = 40; anchorRight <= 375; anchorRight += 7) {
+      for (const width of [216, 236, 250, 400]) {
+        const placement = placePopover({ anchorRight, width, viewportWidth: 375 });
+        const rect = rectOf(anchorRight, placement);
+        expect(rect.left, `${anchorRight}/${width}`).toBeGreaterThanOrEqual(0);
+        expect(rect.right, `${anchorRight}/${width}`).toBeLessThanOrEqual(375);
+      }
+    }
   });
 });

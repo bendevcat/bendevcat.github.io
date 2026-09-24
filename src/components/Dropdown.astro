@@ -7,7 +7,9 @@
  * - Déclencheur : bouton transparent, mono 11 `muted`, icône + `label :` +
  *   valeur `ink`/500 + caret ; `aria-haspopup="listbox"`, `aria-expanded`.
  * - Popover : `role="listbox"`, `top: calc(100% + 10px)`, aligné à droite,
- *   largeur mini `minWidth` (216 par défaut, 236 pour le tri), 300 px de haut
+ *   largeur mini `minWidth` (216 par défaut, 236 pour le tri) ; s'il
+ *   déborderait de la fenêtre, le script le glisse et plafonne sa largeur à
+ *   la fenêtre moins 2 × 8 px (placePopover, plan 12 F2) ; 300 px de haut
  *   au plus puis défilement, padding 6, rayon 14, `surface`, bordure `line`,
  *   ombre `var(--shadow)` posée par global.css — jamais l'utilitaire
  *   `.shadow`, figé en clair au build.
@@ -90,8 +92,9 @@ const current = options[indexOfValue(options.map((option) => option.value), sele
     tabindex="-1"
     hidden
     data-dropdown-listbox
-    class="absolute top-[calc(100%+10px)] right-0 z-20 max-h-[300px] max-w-[calc(100vw-2rem)] overflow-auto rounded-inner border border-line bg-surface p-1.5"
-    style={`min-width: ${minWidth}px`}
+    data-min-width={minWidth}
+    class="absolute top-[calc(100%+10px)] right-0 z-20 max-h-[300px] max-w-[calc(100vw-16px)] overflow-auto rounded-inner border border-line bg-surface p-1.5"
+    style={`min-width: min(${minWidth}px, calc(100vw - 16px))`}
   >
     {
       options.map((option) => {

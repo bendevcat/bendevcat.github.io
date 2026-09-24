@@ -19,7 +19,15 @@
  * qu'une exécution — module ES — et chaque racine n'est câblée qu'une fois
  * (`data-dropdown-ready`).
  */
-import { CLOSED, dropdownKey, dropdownToggle, indexOfValue, type DropdownState, type DropdownStep } from '../lib/dropdown';
+import {
+  CLOSED,
+  dropdownKey,
+  dropdownToggle,
+  indexOfValue,
+  placePopover,
+  type DropdownState,
+  type DropdownStep,
+} from '../lib/dropdown';
 
 export const DROPDOWN_CHANGE = 'dropdown-change';
 
@@ -47,6 +55,29 @@ function partsOf(root: HTMLElement): Parts | null {
 }
 
 const valuesOf = (options: HTMLElement[]) => options.map((option) => option.dataset.value ?? '');
+
+/**
+ * Place le popover ouvert dans la fenêtre (plan 12, F2) : la règle est
+ * placePopover() (src/lib/dropdown.ts, testée) ; ici on mesure et on pose.
+ * La mesure se fait aligné à droite, largeur naturelle (min-width du
+ * composant) — les options sont `nowrap`, cette largeur est donc celle du
+ * texte le plus long.
+ */
+function placeListbox(root: HTMLElement, listbox: HTMLElement): void {
+  const viewportWidth = document.documentElement.clientWidth;
+  const minWidth = Number(listbox.dataset.minWidth) || 0;
+  listbox.style.right = '0px';
+  listbox.style.maxWidth = 'none';
+  listbox.style.minWidth = `${minWidth}px`;
+  const { offsetRight, width } = placePopover({
+    anchorRight: root.getBoundingClientRect().right,
+    width: listbox.getBoundingClientRect().width,
+    viewportWidth,
+  });
+  listbox.style.right = `${offsetRight}px`;
+  listbox.style.maxWidth = `${width}px`;
+  listbox.style.minWidth = `${Math.min(minWidth, width)}px`;
+}
 
 /** Peint la sélection : `aria-selected`, coche ✓, valeur affichée sur le déclencheur. */
 function paintSelection(root: HTMLElement, parts: Parts, value: string): void {
@@ -87,6 +118,7 @@ function enhance(root: HTMLElement): void {
   const apply = (step: DropdownStep) => {
     state = step.state;
     listbox.hidden = !state.open;
+    if (state.open) placeListbox(root, listbox);
     trigger.setAttribute('aria-expanded', String(state.open));
 
     if (step.select !== null) {
@@ -143,6 +175,11 @@ function enhance(root: HTMLElement): void {
     if (state.open && next !== null && !root.contains(next)) {
       apply({ state: CLOSED, select: null, focus: null, handled: false });
     }
+  });
+
+  // Rotation d'écran, redimensionnement : le popover ouvert se replace.
+  window.addEventListener('resize', () => {
+    if (state.open) placeListbox(root, listbox);
   });
 
   root.hidden = false;
