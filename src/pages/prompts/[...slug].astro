@@ -1,10 +1,12 @@
 ---
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import DetailTabs from '../../components/DetailTabs.astro';
 import { getSortedPrompts } from '../../lib/prompts';
 import { sortAndFilterSkills } from '../../lib/skills';
 import { assertEntriesResolved } from '../../lib/references';
 import { shouldRenderPromptBlock } from '../../lib/promptView';
+import { promptTabs } from '../../lib/detailTabs';
 
 export async function getStaticPaths() {
   const prompts = await getSortedPrompts();
@@ -38,6 +40,13 @@ const relatedSkills = prompt.data.relatedSkills?.length
       ),
     )
   : [];
+
+// Plan 8 : QUELS onglets existent se décide dans src/lib/detailTabs.ts —
+// jamais ici. Le corps, fiche ou guide, nourrit « Pourquoi » (D3) ; « Infos »
+// est toujours là (format et tool ont des valeurs par défaut). Le bloc du
+// prompt, lui, reste AU-DESSUS des onglets (D6) : c'est l'action principale.
+const tabs = promptTabs({ body: prompt.body });
+const shown = new Set(tabs.map((tab) => tab.id));
 ---
 
 <BaseLayout title={`${title} — bencat_`} description={description}>
@@ -46,25 +55,7 @@ const relatedSkills = prompt.data.relatedSkills?.length
 
     <h1 class="mt-4 font-sans text-4xl font-bold text-ink">{title}</h1>
 
-    <div class="mt-4 flex flex-wrap items-center gap-3 font-mono text-xs text-muted">
-      <span class="rounded-pill border border-line px-2 py-0.5">{format}</span>
-      <span class="rounded-pill border border-line px-2 py-0.5">{tool}</span>
-      {model && <span class="rounded-pill border border-line px-2 py-0.5">{model}</span>}
-    </div>
-
     <p class="mt-4 text-muted">{description}</p>
-
-    {
-      tags.length > 0 && (
-        <ul class="mt-6 flex flex-wrap gap-2" aria-label="Tags">
-          {tags.map((tag) => (
-            <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
-              {tag}
-            </li>
-          ))}
-        </ul>
-      )
-    }
 
     {
       showPromptBlock && (
@@ -80,10 +71,10 @@ const relatedSkills = prompt.data.relatedSkills?.length
             style du composant code-block du Plan 1 appliqué (spec §6.2).
 
             Fix : on place le <pre> dans un conteneur `.prose`, exactement
-            comme le corps de l'article ci-dessous — on RÉUTILISE
+            comme le corps (panneau « Pourquoi ») ci-dessous — on RÉUTILISE
             `.prose :where(pre)`, on ne duplique aucune règle CSS et on ne
             touche pas à src/styles/global.css. Le label « // le prompt »
-            reste hors de `.prose`, comme « // skills liés » plus bas :
+            reste hors de `.prose`, comme les titres de repli des onglets :
             `.prose :where(h2)` (police display, 1.5rem) écraserait sinon
             son style de label mono discret.
 
@@ -118,29 +109,78 @@ const relatedSkills = prompt.data.relatedSkills?.length
       )
     }
 
-    <div class="prose mt-10">
-      <Content />
-    </div>
+    {/*
+      Plan 8 (D7) : format, outil, modèle, tags et skills liés quittent
+      l'en-tête pour le panneau « Infos » — les afficher aux deux endroits
+      rendrait Infos redondant.
+    */}
+    <DetailTabs tabs={tabs} label="Sections du prompt">
+      {
+        shown.has('pourquoi') && (
+          <div slot="pourquoi" class="prose">
+            <Content />
+          </div>
+        )
+      }
 
-    {
-      relatedSkills.length > 0 && (
-        <section class="mt-12 border-t border-line pt-8">
-          <h2 class="font-mono text-sm text-muted">// skills liés</h2>
-          <ul class="mt-4 flex flex-col gap-2">
-            {relatedSkills.map((skill) => (
-              <li>
-                <a
-                  href={`/skills/${skill.id}/`}
-                  class="text-body underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                >
-                  {skill.data.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
+      {
+        shown.has('infos') && (
+          <dl slot="infos" class="grid gap-x-6 gap-y-2 font-mono text-xs sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-y-4">
+            <dt class="text-muted">format</dt>
+            <dd class="mb-2 sm:mb-0">
+              <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{format}</span>
+            </dd>
+
+            <dt class="text-muted">outil</dt>
+            <dd class="mb-2 sm:mb-0">
+              <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{tool}</span>
+            </dd>
+
+            {model && (
+              <>
+                <dt class="text-muted">modèle</dt>
+                <dd class="mb-2 sm:mb-0">
+                  <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{model}</span>
+                </dd>
+              </>
+            )}
+
+            {tags.length > 0 && (
+              <>
+                <dt class="text-muted">tags</dt>
+                <dd class="mb-2 sm:mb-0">
+                  <ul class="flex flex-wrap gap-2" aria-label="Tags">
+                    {tags.map((tag) => (
+                      <li class="rounded-pill border border-line px-2 py-0.5 text-muted">{tag}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+
+            {relatedSkills.length > 0 && (
+              <>
+                <dt class="text-muted">skills liés</dt>
+                <dd class="min-w-0">
+                  <ul class="flex flex-col gap-2 font-sans text-base">
+                    {relatedSkills.map((skill) => (
+                      <li>
+                        <a
+                          href={`/skills/${skill.id}/`}
+                          class="text-body underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+                        >
+                          {skill.data.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+          </dl>
+        )
+      }
+    </DetailTabs>
   </article>
 
   <script>

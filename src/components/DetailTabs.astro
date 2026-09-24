@@ -1,0 +1,90 @@
+---
+/**
+ * Patron « détail à onglets » (contrat visuel §5.2, Plan 8) — LE composant des
+ * trois pages de détail (/projets, /prompts, /skills). Il ne décide pas QUELS
+ * onglets existent : la page les calcule avec projectTabs / promptTabs /
+ * skillTabs (src/lib/detailTabs.ts) et lui passe la liste. Chaque panneau est
+ * un slot nommé d'après l'id de l'onglet (`<div slot="stack">…</div>`).
+ *
+ * - Enveloppe `.card` (surface) : l'onglet actif, en `card`, est exactement un
+ *   niveau au-dessus de son fond — pas de saut de surface (D12, R6).
+ * - Aucune 5e classe de patron (D9, R13) : les onglets sont en utilitaires.
+ * - Ids préfixés `tab-` / `tabpanel-` : ils ne peuvent pas entrer en collision
+ *   avec les ancres de titres générées par rehype-slug dans le corps.
+ * - Le serveur rend le premier onglet sélectionné et masque les autres
+ *   panneaux (`hidden`) : pas de flash au chargement (D11). Sans JS, la
+ *   rangée est cachée et tous les panneaux s'affichent (règles
+ *   `html:not([data-js])` de global.css), chacun précédé d'un titre de repli.
+ * - Moins de deux onglets : pas de rangée, le panneau unique s'affiche nu (D13).
+ */
+import { hasTabRow, type Tab } from '../lib/detailTabs';
+
+interface Props {
+  tabs: Tab[];
+  /** Nom accessible de la rangée d'onglets (`aria-label` du tablist). */
+  label: string;
+}
+
+const { tabs, label } = Astro.props;
+const withRow = hasTabRow(tabs);
+
+// Rendu des slots côté serveur : un nom de slot dynamique ne passe pas par
+// `<slot name={…} />` de façon fiable, `Astro.slots.render` si.
+const panels = await Promise.all(
+  tabs.map(async (tab) => ({ tab, html: await Astro.slots.render(tab.id) })),
+);
+---
+
+<div class="card mt-10 p-4 sm:p-6" data-detail-tabs>
+  {
+    withRow ? (
+      <>
+        <div role="tablist" aria-label={label} class="flex flex-wrap gap-2">
+          {tabs.map((tab, index) => (
+            <button
+              type="button"
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-controls={`tabpanel-${tab.id}`}
+              aria-selected={index === 0 ? 'true' : 'false'}
+              tabindex={index === 0 ? 0 : -1}
+              class="cursor-pointer rounded-pill border border-transparent bg-transparent px-3 py-1.5 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:text-ink"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {panels.map(({ tab, html }, index) => (
+          <>
+            {/* Titre de repli : visible seulement sans JS, quand la rangée est
+                cachée et que les panneaux s'empilent. Hors du panneau, pour
+                que le contrôle « aucun panneau vide » (R2) reste honnête. */}
+            <h2 class="mt-8 font-mono text-sm text-muted first-of-type:mt-0" data-tab-fallback-heading>
+              // {tab.label.toLowerCase()}
+            </h2>
+            <div
+              role="tabpanel"
+              id={`tabpanel-${tab.id}`}
+              aria-labelledby={`tab-${tab.id}`}
+              tabindex="0"
+              hidden={index !== 0}
+              class="mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+            >
+              <Fragment set:html={html} />
+            </div>
+          </>
+        ))}
+      </>
+    ) : (
+      panels.map(({ html }) => (
+        <div>
+          <Fragment set:html={html} />
+        </div>
+      ))
+    )
+  }
+</div>
+
+<script>
+  import '../scripts/detail-tabs.ts';
+</script>
