@@ -117,7 +117,49 @@ Exit 1 if, inside a list's `[data-list]`: a `<select>` exists; an entry is not a
 - Acceptance: `npm run build`, then the six scripts of R21–R22 → the stated lines, exit 0; R23 and R24 commands → as stated
 - Depends on: T5
 
+### F1 — CMS test derives its field lists from the Zod schema
+- Files: `src/lib/cms-config.test.ts`
+- Covers: R6 (guarantee)
+- Acceptance (verifier failure): removing `license` (skills), `version` or `variables` (prompts) from `src/content.config.ts` turns `cms-config.test.ts` red — the expected field list per collection is built from the schema's shape (e.g. importing the schema objects or parsing `content.config.ts`), not written into the test; with the schema intact the suite is green; demonstrate the three mutations red then restore
+- Depends on: —
+
+### F2 — Focus lands on the filters after a reset
+- Files: `src/scripts/list-pattern.ts` (and its pure helper + test if one is extracted)
+- Covers: R8, R9, R14 (keyboard), verification 1 finding 2
+- Acceptance: on `/projets`, `/prompts`, `/skills` and `/blog`, activating the empty state's reset button with the keyboard moves focus to the active (`Tous` / `Tout`) facet control of the first filter group instead of `<body>`; mouse behaviour unchanged; `npx vitest run` 0 failed; the seven check scripts exit 0
+- Depends on: —
+
 ## Out of scope
 - Detail pages (plans 15–17): project `license`, stack roles, snippets; prompt `updated`, `useWhen`, `why`, `output`; skill `updated`, `triggers`, `changelog`, `files`, command / sub-skill counts; updating `superpowers`' `version` (6.2.0 in content, 6.3.0 / 6.4.1 in the plugin cache) and emptying `macos-clone`'s body.
 - A prompt `version` value (no source: slot stays hidden); `variables` values (no prompt has placeholders).
 - The prototype's "prochain projet" card; `/blog` changes; home and about gaps (18); version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-24)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | nav `/` › Projets › Prompts › Skills; both themes: segments, dropdowns, empty states, reset, real card clicks to detail pages; démo / repo URLs 200; every internal link on the lists 200 |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | `check-lists` 13 lines exact; exit 1 on 16 injected defect classes |
+| R6 | failed | lists include the new fields and 0 errors, **but removing `license` / `version` / `variables` from Zod leaves 305/305 green** — `cms-config.test.ts` compares the CMS to a hard-coded list |
+| R7 | proven | `license: MIT` × 2, numstat `1 0` × 2; LICENSE and `plugin.json` re-read for both plugins; D95/D97 flagged |
+| R8 | proven | WIP / Go / Archivé / reset / Astro flows, both themes |
+| R9 | proven | Guide, Guide + Claude empty state, reset; skills tag filters |
+| R10 | proven | segmented track and items values, 1280 both themes; hover `panel` |
+| R11 | proven | triggers, popover 230 / gap 10 / right-aligned, ✓, Escape, outside click, keyboard; 375 → x 8–238 |
+| R12 | proven | hero and grid-card values |
+| R13 | proven | prompt / skill cards: 3 columns, values, stats `134 l. · ~1597 tk` etc., `MIT`, install `break-all`, hover |
+| R14 | proven | empty states both themes, reset restores everything |
+| R15 | proven | no-JS iframes: entries once, controls hidden, links 200 |
+| R16 | proven | 0 overflow 375–1280; columns 1 / 2 / 3 at the stated breakpoints; hero stacking |
+| R17 | smoke | design MCP refused; prototype lines 345–400 + inventory: blocks, order, columns, px match; allowed differences only |
+| R18 | proven | audit 48 runs: 0 / 0 / 0 / 0 |
+| R19 | proven | radii ⊂ {7, 8, 10, 12, 14, 20, 24, 999}; mono / Nebula split |
+| R20 | proven | `1`, `4`, `0` |
+| R21 | proven | only `lists`, `v2`, `tags` lines change, as stated |
+| R22 | proven | `/blog` and article instruments identical; `/blog` walk holds |
+| R23 | proven | `matchesFilters` 1, diff empty, red under mutation |
+| R24 | proven | frozen diff empty; 305 tests; 0 errors |
+
+Findings → F1 (R6), F2 (focus lost after reset). Not taken: `/skills` empty state unreachable with today's content (built and styled, reachable once a second type exists); dropdown deep-link branch unused (only `?categorie=` is mapped) — kept for symmetry.
