@@ -36,12 +36,11 @@ const isActive = (href: string) =>
 
 // Look commun des pilules de nav. Rayon 999 via l'utilitaire `rounded-pill`
 // (généré par Tailwind depuis `--radius-pill`) — jamais `rounded-full`, dont
-// la valeur ne vient pas du contrat. Anneau de focus neutre `ink` : visible
-// dans les deux thèmes, et il ne réinjecte ni le vert (contenu/action) ni le
-// bleu (méta) dans un élément de navigation (contrat §2.2).
+// la valeur ne vient pas du contrat. Anneau de focus `accent`, comme tout
+// contrôle hors onglets (plan 11, R14 — D61 remplace l'anneau `ink` du plan 6).
 const NAV_PILL =
   'inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-sm transition-colors ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
 // R7 — look unique des trois boutons ronds de la barre d'actions (32 px,
 // rayon 999 via `--radius-pill`). Une seule chaîne : les trois doivent être
@@ -53,7 +52,7 @@ const NAV_PILL =
 const ROUND_BTN =
   'grid size-8 place-items-center rounded-pill text-muted transition-colors ' +
   'hover:bg-chip hover:text-ink ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 ---
 
 <header class="border-b border-line">
@@ -70,7 +69,7 @@ const ROUND_BTN =
     <a
       href="/"
       aria-label="bencat_ — accueil"
-      class="pill inline-flex items-center gap-2 border border-line text-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      class="pill inline-flex items-center gap-2 border border-line text-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       <Icon name="logo" size={16} />
       <span>bencat<span class="text-accent">_</span></span>
