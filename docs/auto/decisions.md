@@ -226,3 +226,21 @@ Choice: an element marked `data-rail` may paint `rail` directly on `surface`, as
 
 ## D75 · Plan 12 · authoring — Dropdown and list-engine details
 Choice: dropdown = button + listbox with focus on options, Tab closes, label `tri :`, default `plus récents`; meta line `5 articles · catégorie : Tout` at rest; site AI labels kept (`co-créé avec IA`); engine skips the featured entry when a page has none; `ListHeader.astro` used on /blog only (plan 14 adopts it); first row image eager · Alternatives: `aria-activedescendant`; prototype's shorter labels · Reversibility: cheap · Why: plan-author choices within the inventory; labels already validated on the site.
+
+## D76 · Plan 12 · T1 — Shell wrapper is a `div`; 404 and transparence-ia lose their own side padding
+Choice: `<div data-shell="main">` in `BaseLayout` (pages keep their `<main>`); `/404` and `/transparence-ia` keep `max-w-3xl` without `px-*`; `Header.astro` container widened in T1 · Alternatives: move `<main>` into the layout (touches every page); double padding · Reversibility: cheap · Why: minimal change that keeps `check-secondary`'s single-`<main>` assertion.
+
+## D77 · Plan 12 · T2 — Header details the inventory leaves open
+Choice: nav pill radius 20 px below 640 px (five items wrap to two rows; 999 would clip corners), 999 above; action icons 15 px like the nav; logo tile bars 3 px tall, 3 px gaps; actions pill on `nav` + `line` like the other two; unused `logo` glyph removed; theme button label unchanged · Alternatives: 999 at every width; 16 px icons; transparent actions container · Reversibility: cheap · Why: values the inventory does not fix; checked rendered at 1280 px against the prototype.
+
+## D78 · Plan 12 · T3 — Dropdown component details
+Choice: generic `Dropdown.astro` (label, options with counts, selected, minWidth, icon `sort|filter`, id) + `dropdown-change` event fired only on a real change; ✓ in a fixed left slot, rendered in the HTML; options in sans 13 px `body`, counts mono 10 `muted`; Lucide glyphs `sort`, `filter`, `chevron-down` typed in `Icon.astro`; id derived from the label slug (deterministic builds) · Alternatives: ✓ on the right or via CSS; random ids · Reversibility: cheap · Why: values the inventory leaves open; plan 14 reuses the component.
+
+## D79 · Plan 12 · T4 — Engine options
+Choice: `computeListState(..., { featured })` 5th argument; `[data-sort]` found page-wide (`<select>` or dropdown); reset returns a sort dropdown to its server value; the empty-state sentence keeps `label value`; an all-label facet keeps its declared position in the meta line; dropdown-driven facets deferred to plan 14 · Alternatives: flag on `ListLabels`; scope `[data-sort]` to `[data-list]` · Reversibility: cheap · Why: additive change, existing lists unchanged (check-finition identical to base).
+
+## D80 · Plan 12 · T5 — Blog list details
+Choice: `ListHeader` root is a `div` (one `<header>` per page); rail labels are `<p>` labelling their group; rows are h2 with a stretched link and declare only the `category` facet; chip text carries a real space (`devops 3`); `ArticleCard.astro` and `blog-filters.ts` deleted; open values (h1 lh 1.1, toolbar `pb-4`, rows gap 6 px, main `px-5` below 640 px) taken by the implementer; rendered at 1280 px dark and compared to the prototype by the orchestrator · Alternatives: keep dead code; h2 rail labels · Reversibility: cheap · Why: carries out D73.
+
+## D81 · Plan 12 · T6 — Instruments: row lists named, explicit rails on surface or card
+Choice: check-finition applies row rules to lists named in `ROW_LISTS` (`blog`; plan 14 adds its own); `rail column` counts non-thumbnail `data-rail` elements; an explicit rail may sit on `surface` or `card`, never on `bg`/`panel`; check-home fails on several `data-featured` rows · Alternatives: infer rows from `[data-rail]`; count every `data-rail` · Reversibility: cheap · Why: carries out D74 with the narrowest exemption.
