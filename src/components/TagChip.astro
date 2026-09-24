@@ -1,0 +1,53 @@
+---
+/*
+  TagChip.astro (Plan 10 / T2) — LA puce de tag du site (contrat E10, §2.3).
+
+  Ton = `tagTone(tag)` : hash stable du SLUG, donc un tag a le même ton sur
+  toutes les pages (`Claude Code` et `claude-code` compris). La puce porte
+  `data-tag="<slug>"` et `data-tone="<ton>"` — lus par
+  scripts/check-secondary.mjs (R4) — et les trois utilitaires du ton
+  (`TONE_CLASSES`, fond / texte / couleur de bordure) ; jamais `text-muted`.
+
+  Rendu : `<a>` quand `href` est donné (liens de /tags), `<li>` sinon — la
+  puce se pose alors directement dans un `<ul aria-label="Tags">`.
+  Le contenu du slot (ex. le compte sur /tags) suit le libellé, dans l'encre
+  du ton.
+*/
+import { tagSlug, tagTone } from '../lib/tags';
+import { TONE_CLASSES } from '../lib/tones';
+
+interface Props {
+  tag: string;
+  href?: string;
+  /** Classes de mise en page supplémentaires (padding, gap…). */
+  class?: string;
+}
+
+const { tag, href, class: extra } = Astro.props;
+const slug = tagSlug(tag);
+const tone = tagTone(tag);
+const classes = [
+  'rounded-pill border font-mono text-xs',
+  TONE_CLASSES[tone],
+  extra ?? 'px-2 py-0.5',
+];
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      data-tag={slug}
+      data-tone={tone}
+      class:list={[...classes, 'inline-flex items-center gap-2 transition-colors hover:border-current']}
+    >
+      {tag}
+      <slot />
+    </a>
+  ) : (
+    <li data-tag={slug} data-tone={tone} class:list={classes}>
+      {tag}
+      <slot />
+    </li>
+  )
+}

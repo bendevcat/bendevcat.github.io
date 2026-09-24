@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import TagChip from '../../components/TagChip.astro';
 import { collectTagIndex, getTagBuckets } from '../../lib/tags';
 
 const tags = collectTagIndex(await getTagBuckets());
@@ -20,13 +21,9 @@ const tags = collectTagIndex(await getTagBuckets());
           <ul class="flex flex-wrap gap-2">
             {tags.map((tag) => (
               <li>
-                <a
-                  href={`/tags/${tag.slug}/`}
-                  class="flex items-center gap-2 rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-                >
-                  {tag.label}
-                  <span class="text-accent">{tag.count}</span>
-                </a>
+                <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} class="px-3 py-1">
+                  <span>{tag.count}</span>
+                </TagChip>
               </li>
             ))}
           </ul>

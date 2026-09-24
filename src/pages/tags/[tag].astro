@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import TagChip from '../../components/TagChip.astro';
 import {
   collectTagIndex,
   entriesWithTag,
@@ -60,6 +61,10 @@ const groups = TAG_COLLECTIONS.map((collection) => ({
     <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <p class="font-mono text-sm text-accent">~/ tags / {tag.label}</p>
       <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">{tag.label}</h1>
+      {/* Puce d'en-tête (D39) : le ton de ce tag, le même que sur /tags et partout ailleurs. */}
+      <ul class="mt-4 flex flex-wrap gap-2" aria-label="Tags">
+        <TagChip tag={tag.label} />
+      </ul>
     </section>
 
     <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
