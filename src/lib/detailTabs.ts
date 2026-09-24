@@ -6,7 +6,8 @@
  * unitaires — comme listPattern.ts pour le patron liste.
  *
  * Deux familles de fonctions :
- * - `projectTabs` / `promptPageTabs` / `skillTabs` décident, côté serveur, QUELS
+ * - `projectTabs` / `promptPageTabs` / `skillPageTabs` (et `skillTabs`, retiré
+ *   au plan 17 T4) décident, côté serveur, QUELS
  *   onglets existent : un onglet n'apparaît que si le contenu existant le
  *   nourrit (D1). Les pages leur passent des faits bruts (corps, présence
  *   d'un extrait de code, tailles), jamais une entrée de collection.
@@ -61,6 +62,13 @@ export interface PromptPageTabInput {
   body: string | undefined;
 }
 
+export interface SkillPageTabInput {
+  /** Nombre de phrases de déclenchement (`triggers`), 0 sans le champ. */
+  triggerCount: number;
+  /** Nombre de lignes du journal des versions (`changelog`), 0 sans le champ. */
+  changelogCount: number;
+}
+
 /**
  * « Vide » = vide après trim. Le texte littéral `No content` n'est PAS vide
  * (D4) : c'est un placeholder conservé volontairement, il nourrit son onglet.
@@ -96,6 +104,21 @@ export function promptPageTabs(input: PromptPageTabInput): Tab[] {
   const tabs: Tab[] = [];
   if (input.variableCount > 0) tabs.push({ id: 'variables', label: 'variables' });
   if (input.windowShowsPrompt && !isBlank(input.body)) tabs.push({ id: 'decryptage', label: 'décryptage' });
+  tabs.push({ id: 'infos', label: 'infos' });
+  return tabs;
+}
+
+/**
+ * Onglets de la colonne de la fiche skill (plan 17, piste de pastilles) —
+ * ordre figé : `déclencheurs` quand des déclencheurs sont renseignés ;
+ * `versions` quand le journal a des lignes ; `infos` toujours (`type` a une
+ * valeur par défaut). Pas d'`apercu` : le corps vit dans la colonne de gauche
+ * (carte « En détail », D117).
+ */
+export function skillPageTabs(input: SkillPageTabInput): Tab[] {
+  const tabs: Tab[] = [];
+  if (input.triggerCount > 0) tabs.push({ id: 'declencheurs', label: 'déclencheurs' });
+  if (input.changelogCount > 0) tabs.push({ id: 'versions', label: 'versions' });
   tabs.push({ id: 'infos', label: 'infos' });
   return tabs;
 }

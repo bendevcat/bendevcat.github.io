@@ -5,6 +5,7 @@ import {
   nextTabIndex,
   projectTabs,
   promptPageTabs,
+  skillPageTabs,
   skillTabs,
   type Tab,
 } from './detailTabs';
@@ -108,6 +109,36 @@ describe('promptPageTabs', () => {
       const found = ids(promptPageTabs(input));
       expect(found).not.toContain('sortie');
       expect(found).not.toContain('pourquoi');
+    }
+  });
+});
+
+// Les noms de tests cités par R4 (plan 17) sont repris MOT POUR MOT.
+describe('skillPageTabs', () => {
+  const ids = (tabs: Tab[]) => tabs.map((tab) => tab.id);
+
+  it('gives a skill déclencheurs, versions and infos in that order when fed', () => {
+    const tabs = skillPageTabs({ triggerCount: 7, changelogCount: 4 });
+    expect(labels(tabs)).toEqual(['déclencheurs', 'versions', 'infos']);
+    expect(ids(tabs)).toEqual(['declencheurs', 'versions', 'infos']);
+    // Piste de pastilles : pas de compteur.
+    expect(tabs.every((tab) => tab.count === undefined)).toBe(true);
+    expect(hasTabRow(tabs)).toBe(true);
+  });
+
+  it('omits déclencheurs without triggers and versions without changelog', () => {
+    expect(labels(skillPageTabs({ triggerCount: 0, changelogCount: 3 }))).toEqual(['versions', 'infos']);
+    expect(labels(skillPageTabs({ triggerCount: 2, changelogCount: 0 }))).toEqual(['déclencheurs', 'infos']);
+    const alone = skillPageTabs({ triggerCount: 0, changelogCount: 0 });
+    expect(labels(alone)).toEqual(['infos']);
+    expect(hasTabRow(alone)).toBe(false);
+  });
+
+  it('never gives a skill an apercu tab', () => {
+    for (const triggerCount of [0, 1]) {
+      for (const changelogCount of [0, 1]) {
+        expect(ids(skillPageTabs({ triggerCount, changelogCount }))).not.toContain('apercu');
+      }
     }
   });
 });

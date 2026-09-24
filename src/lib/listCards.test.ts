@@ -6,6 +6,7 @@ import {
   promptStats,
   relatedPromptsSummary,
   skillCardData,
+  skillContentSummary,
 } from './listCards';
 
 // Des objets simples suffisent : listCards.ts n'importe jamais `astro:content`.
@@ -108,6 +109,42 @@ describe('skill card data', () => {
       install: null,
       summary: null,
     });
+  });
+});
+
+// Les noms de tests cités par R2 (plan 17) sont repris MOT POUR MOT.
+describe('skill content summary (plan 17)', () => {
+  const published = { data: { draft: false } };
+  const draft = { data: { draft: true } };
+
+  it('summarises skills, commands and prompts in that order, omitting zeros', () => {
+    expect(skillContentSummary({ skillCount: 1, commandCount: 7 }, [published, published])).toBe(
+      '1 skill · 7 commandes · 2 prompts',
+    );
+    expect(skillContentSummary({ skillCount: 15 }, [published])).toBe('15 skills · 1 prompt');
+    expect(skillContentSummary({ skillCount: 15, commandCount: 0 }, [published, draft])).toBe('15 skills · 1 prompt');
+    expect(skillContentSummary({ skillCount: 0, commandCount: 3 }, [])).toBe('3 commandes');
+    expect(skillContentSummary({}, [published, published])).toBe('2 prompts');
+    // La carte de /skills/ et l'en-tête de la fiche lisent la même chaîne.
+    const card = skillCardData(
+      { type: 'claude-code', license: 'MIT', version: '0.4.0', skillCount: 1, commandCount: 7 },
+      [published, published],
+    );
+    expect(card.summary).toBe('1 skill · 7 commandes · 2 prompts');
+  });
+
+  it('uses singular forms for 1 skill, 1 commande, 1 prompt', () => {
+    expect(skillContentSummary({ skillCount: 1, commandCount: 1 }, [published])).toBe('1 skill · 1 commande · 1 prompt');
+    expect(skillContentSummary({ skillCount: 2, commandCount: 2 }, [published, published])).toBe(
+      '2 skills · 2 commandes · 2 prompts',
+    );
+  });
+
+  it('returns null when nothing is counted', () => {
+    expect(skillContentSummary({}, [])).toBeNull();
+    expect(skillContentSummary({}, undefined)).toBeNull();
+    expect(skillContentSummary({ skillCount: 0, commandCount: 0 }, [draft])).toBeNull();
+    expect(skillCardData({ type: 'claude-code', skillCount: 0 }, [draft]).summary).toBeNull();
   });
 });
 
