@@ -407,8 +407,10 @@ describe('config CMS — collection prompts', () => {
       'description',
       'format',
       'prompt',
+      'variables',
       'tool',
       'model',
+      'version',
       'tags',
       'draft',
       'relatedSkills',
@@ -444,6 +446,8 @@ describe('config CMS — collection prompts', () => {
     expect(byName.prompt.widget).toBe('text');
     expect(byName.tool.widget).toBe('string');
     expect(byName.model.widget).toBe('string');
+    expect(byName.version.widget).toBe('string');
+    expect(byName.variables.widget).toBe('list');
     expect(byName.tags.widget).toBe('list');
     expect(byName.draft.widget).toBe('boolean');
     expect(byName.body.widget).toBe('markdown');
@@ -454,6 +458,22 @@ describe('config CMS — collection prompts', () => {
     const f = field(cfg, 'prompts', 'format');
     expect(f.options.map((o: any) => o.value)).toEqual([...PROMPT_FORMATS]);
     expect(f.default).toBe('fiche');
+  });
+
+  it('décrit chaque variable comme `{name, hint?, default?}`, comme le schéma Zod (plan 14, D94)', () => {
+    // Forme de l'inventaire §11, réutilisée par la fiche prompt (plan 16).
+    // `name` est le seul sous-champ requis : un sous-champ optionnel laissé
+    // vide est omis (`omit_empty_optional_fields`) et Zod l'accepte absent.
+    const f = field(loadCmsConfig(), 'prompts', 'variables');
+    expect(f.required).toBe(false);
+    const sub = Object.fromEntries(f.fields.map((x: any) => [x.name, x]));
+    expect(f.fields.map((x: any) => x.name)).toEqual(['name', 'hint', 'default']);
+    expect(sub.name.widget).toBe('string');
+    expect(sub.name.required).not.toBe(false);
+    expect(sub.hint.widget).toBe('string');
+    expect(sub.hint.required).toBe(false);
+    expect(sub.default.widget).toBe('string');
+    expect(sub.default.required).toBe(false);
   });
 
   it('garde le défaut `Claude` sur `tool`, comme le schéma Zod', () => {
@@ -494,6 +514,7 @@ describe('config CMS — collection skills', () => {
       'description',
       'type',
       'version',
+      'license',
       'repoUrl',
       'installCmd',
       'tags',
@@ -522,6 +543,7 @@ describe('config CMS — collection skills', () => {
     expect(byName.description.widget).toBe('text');
     expect(byName.type.widget).toBe('string');
     expect(byName.version.widget).toBe('string');
+    expect(byName.license.widget).toBe('string');
     expect(byName.repoUrl.widget).toBe('string');
     expect(byName.installCmd.widget).toBe('string');
     expect(byName.tags.widget).toBe('list');

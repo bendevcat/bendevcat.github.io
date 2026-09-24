@@ -4,6 +4,7 @@ name: anti-drift-planning
 description: "Méthodologie de planification multi-sessions résistante à la dérive : specs binaires, anti-arbitrage silencieux, scope ledger, phase de vérification, lint mécanique."
 type: claude-code
 version: "0.4.0"
+license: MIT
 installCmd: "claude plugin marketplace add ~/workspace/anti-drift-planning && claude plugin install anti-drift-planning@anti-drift-marketplace"
 tags: [anti-drift, planification, claude-code, méthodologie]
 relatedPrompts: [bootstrap-session-anti-drift, decouper-un-projet-en-plans-anti-drift]

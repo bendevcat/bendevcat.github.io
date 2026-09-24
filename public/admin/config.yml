@@ -179,8 +179,21 @@ collections:
           - { label: 'Fiche — prompt copiable + notes', value: fiche }
           - { label: 'Guide — write-up long', value: guide }
       - { name: prompt, label: Texte du prompt, widget: text, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide.' }
+      # Plan 14 (D94) : forme `{name, hint?, default?}` de l'inventaire §11,
+      # miroir de `variables` dans src/content.config.ts. Seul `name` est requis.
+      - name: variables
+        label: Variables
+        label_singular: Variable
+        widget: list
+        required: false
+        hint: 'Emplacements du prompt que le lecteur peut remplir ; la carte affiche « N variables »'
+        fields:
+          - { name: name, label: Nom, widget: string }
+          - { name: hint, label: Aide, widget: string, required: false }
+          - { name: default, label: Valeur par défaut, widget: string, required: false }
       - { name: tool, label: Outil, widget: string, default: Claude, hint: 'Alimente le filtre « outil » de /prompts' }
       - { name: model, label: Modèle, widget: string, required: false, hint: 'Affiché en pastille sur la fiche du prompt, si renseigné' }
+      - { name: version, label: Version, widget: string, required: false, hint: 'Affichée « v<version> » sur la carte, si renseignée' }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }
       - name: relatedSkills
@@ -217,6 +230,7 @@ collections:
       - { name: description, label: Description, widget: text, hint: 'Le « when to use » — affiché sur les cartes' }
       - { name: type, label: Type, widget: string, default: claude-code }
       - { name: version, label: Version, widget: string, required: false }
+      - { name: license, label: Licence, widget: string, required: false, hint: 'Identifiant lu dans le LICENSE du plugin (ex. MIT)' }
       # Motif ancré des deux côtés (D03, Plan 3), hôte resserré contre les ports
       # invalides (D10, Plan 4, fix round 1) — voir le commentaire détaillé sur
       # `projects.repoUrl` plus haut dans ce fichier ; motif identique partagé
