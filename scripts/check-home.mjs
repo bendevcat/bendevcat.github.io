@@ -280,6 +280,13 @@ if (banner) {
   }
 }
 
+// — Séparateurs « · » : toujours entourés d'espaces (un saut de ligne dans le
+// gabarit Astro peut manger l'espace, « DevOps ·28 octobre » au plan 9 / T4).
+for (const block of blocks) {
+  const glued = block.text.replace(/\s+/g, ' ').match(/\S·|·\S/);
+  if (glued) errors.push(`bloc ${block.attrs['data-home']} : séparateur collé « ${glued[0]} »`);
+}
+
 // — Page entière —
 const h1 = elements.filter((el) => el.tag === 'h1');
 if (h1.length !== 1) errors.push(`${h1.length} <h1> (attendu : 1)`);

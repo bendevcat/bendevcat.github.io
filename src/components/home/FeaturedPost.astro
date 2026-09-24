@@ -33,8 +33,9 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
     <span class="pill text-[11px]">à la une</span>
     {/* Donnée machine → mono (§3.1, R8). */}
     <p class="font-mono text-[11px] text-dim">
-      <span data-home-field="category">{category}</span> ·
-      <time datetime={pubDate.toISOString()}>{dateFr}</time> · {readingMinutes} min
+      {/* Sur UNE ligne : Astro supprime le blanc à saut de ligne entre un
+          texte et l'élément suivant, ce qui donnait « DevOps ·28 octobre ». */}
+      <span data-home-field="category">{category}</span> · <time datetime={pubDate.toISOString()}>{dateFr}</time> · {readingMinutes} min
     </p>
   </div>
 
