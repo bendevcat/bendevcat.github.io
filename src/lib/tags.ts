@@ -2,6 +2,7 @@ import { getPublishedPosts } from './posts';
 import { getSortedProjects, type ProjectEntry } from './projects';
 import { getSortedPrompts, type PromptEntry } from './prompts';
 import { getSortedSkills, type SkillEntry } from './skills';
+import { TONES, type Tone } from './tones';
 import type { CollectionEntry } from 'astro:content';
 
 /** Ordre d'affichage des groupes sur `/tags/<tag>` — figé. */
@@ -46,6 +47,24 @@ export function tagSlug(tag: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Ton d'un tag (contrat §2.3, D24) : hash FNV-1a 32 bits du SLUG, modulo 5.
+ * Calculé sur le slug, donc `Claude Code` et `claude-code` partagent leur ton
+ * comme ils partagent leur page ; déterministe, donc un tag a le même ton sur
+ * toutes les pages et d'un build à l'autre, sans table à tenir quand un tag
+ * est ajouté depuis le CMS. Changer ce hash repeint tous les tags du site
+ * (épinglé par tags.test.ts).
+ */
+export function tagTone(tag: string): Tone {
+  const slug = tagSlug(tag);
+  let hash = 0x811c9dc5; // FNV offset basis
+  for (let i = 0; i < slug.length; i++) {
+    hash ^= slug.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0; // FNV prime, ramené en uint32
+  }
+  return TONES[hash % TONES.length];
 }
 
 /**

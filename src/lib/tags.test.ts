@@ -1,6 +1,7 @@
 // src/lib/tags.test.ts
 import { describe, it, expect } from 'vitest';
-import { collectTagIndex, entriesWithTag, tagSlug, TAG_COLLECTIONS } from './tags';
+import { collectTagIndex, entriesWithTag, tagSlug, tagTone, TAG_COLLECTIONS } from './tags';
+import { TONES } from './tones';
 
 const entry = (...tags: string[]) => ({ data: { tags } }) as any;
 
@@ -122,5 +123,43 @@ describe('entriesWithTag', () => {
 describe('TAG_COLLECTIONS', () => {
   it('couvre les 4 collections, dans l’ordre d’affichage', () => {
     expect(TAG_COLLECTIONS).toEqual(['blog', 'projects', 'prompts', 'skills']);
+  });
+});
+
+describe('tagTone', () => {
+  /** Les 30 slugs publiés du contenu actuel (frontmatter `tags`, brouillons exclus). */
+  const SITE_SLUGS = [
+    'anti-drift', 'astro', 'automation', 'bash', 'ci-cd', 'claude-code', 'cli', 'cms',
+    'containers', 'devops', 'docker', 'github-actions', 'k9s', 'kubernetes', 'linux',
+    'methodologie', 'monitoring', 'no-log', 'orchestration', 'planification', 'privacy',
+    'prompt-engineering', 'security', 'sysadmin', 'tailwind', 'terminal', 'tools',
+    'versioning', 'vpn', 'wireguard',
+  ];
+
+  it('returns one of the five contract tones', () => {
+    for (const tag of [...SITE_SLUGS, 'Sécurité', 'CI/CD', '', '⚡', 'x']) {
+      expect(TONES).toContain(tagTone(tag));
+    }
+  });
+
+  it('gives one tone to every spelling of a slug', () => {
+    expect(tagTone('Sécurité')).toBe(tagTone('securite'));
+    expect(tagTone('Claude Code')).toBe(tagTone('claude-code'));
+    expect(tagTone('DevOps')).toBe(tagTone('devops'));
+  });
+
+  it('keeps the pinned tone of known slugs', () => {
+    // Épingle de non-régression : ce sont les tons que le hash rend
+    // aujourd'hui. Changer le hash repeindrait tous les tags du site.
+    expect(tagTone('devops')).toBe('green');
+    expect(tagTone('claude-code')).toBe('amber');
+    expect(tagTone('kubernetes')).toBe('rose');
+    expect(tagTone('anti-drift')).toBe('green');
+  });
+
+  it("spreads the site's current tags over at least 3 tones", () => {
+    expect(SITE_SLUGS).toHaveLength(30);
+    const used = new Set(SITE_SLUGS.map(tagTone));
+    expect(used.size).toBeGreaterThanOrEqual(3);
   });
 });
