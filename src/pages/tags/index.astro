@@ -23,7 +23,12 @@ const tags = collectTagIndex(await getTagBuckets());
             <ul class="flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <li>
-                  <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} class="px-3 py-1">
+                  <TagChip
+                    tag={tag.label}
+                    href={`/tags/${tag.slug}/`}
+                    label={`${tag.label} ${tag.count}`}
+                    class="px-3 py-1"
+                  >
                     <span>{tag.count}</span>
                   </TagChip>
                 </li>

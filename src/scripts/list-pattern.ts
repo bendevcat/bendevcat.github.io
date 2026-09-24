@@ -80,7 +80,10 @@ if (root && toolbar && grid) {
       }
     }
 
-    if (metaBox) metaBox.textContent = state.meta;
+    // Région live (`aria-live="polite"`, plan 11) : ne réécrire le texte que
+    // s'il change — au chargement il est déjà celui du serveur, et une
+    // réécriture identique peut quand même être annoncée (D57).
+    if (metaBox && metaBox.textContent !== state.meta) metaBox.textContent = state.meta;
     if (emptyBox) emptyBox.hidden = state.empty === null;
     if (emptyText && state.empty !== null) emptyText.textContent = state.empty;
 

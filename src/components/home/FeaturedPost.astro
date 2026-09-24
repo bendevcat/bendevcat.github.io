@@ -27,7 +27,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
 ---
 
 <article class="card flex min-w-0 flex-col gap-4 p-4 sm:p-5" data-home="featured">
-  <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={category} size="header" />
+  <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={category} size="header" eager />
 
   <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
     <span class="pill text-[11px]">à la une</span>
@@ -49,7 +49,9 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
   <div class="mt-auto flex flex-wrap items-center justify-between gap-3 pt-1">
     {
       usage && (
-        <span class="font-mono text-[11px] text-muted" data-home-field="ai">
+        /* Marqueur IA insécable (plan 11, R13) : l'emoji ne se sépare pas de
+           son libellé à 375 px. */
+        <span class="font-mono text-[11px] whitespace-nowrap text-muted" data-home-field="ai" data-ai-marker>
           {usage.emoji} {usage.label}
         </span>
       )

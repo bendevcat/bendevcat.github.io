@@ -6,6 +6,14 @@
 @import "@fontsource/nebula-sans/700.css";
 @import "@fontsource-variable/jetbrains-mono";
 
+/* Tailwind v4 détecte les classes dans tous les fichiers du dépôt, docs
+   comprises : un utilitaire de palette cité dans un .md de docs/ générait
+   des règles mortes, et avec elles des couleurs hors contrat dans le bundle
+   (plan 11, D55). Même chose pour les tests, qui citent de tels utilitaires
+   comme contre-exemples (src/lib/palette.test.ts). */
+@source not "../../docs";
+@source not "../**/*.test.ts";
+
 /* bascule de thème pilotée par [data-theme] sur <html> */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -390,13 +398,29 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 }
 
 /* ==========================================================================
+   Anneau de focus (plan 11, R14, D53) — un seul, sur un token du contrat :
+   2 px `accent` décalé de 2 px, pour tout élément focalisé au clavier. Dans
+   `@layer base` : n'importe quel utilitaire `focus-visible:outline-*` (les
+   onglets de DetailTabs gardent `ink`) le surcharge sans lutte de
+   spécificité. Remplace l'anneau natif du navigateur, bleu hors contrat.
+   ========================================================================== */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ==========================================================================
    Patron « détail à onglets » (Plan 8) : composant src/components/DetailTabs.astro,
    glue src/scripts/detail-tabs.ts. Ces règles vivent HORS de
    `@layer components` : la couche garde ses quatre classes (D9, R13), et le
    style des onglets eux-mêmes est en utilitaires dans le composant.
-   - Un panneau non sélectionné porte `hidden` ; `!important` pour la même
-     raison que plus haut (le preflight `[hidden]` a la spécificité d'un
-     utilitaire de `display`).
+   - Un panneau non sélectionné porte `hidden` : le preflight
+     `[hidden] { display: none !important }` (`@layer base`) suffit à le
+     masquer — un `!important` rangé en couche bat tout CSS non rangé, et le
+     panneau ne porte aucun utilitaire de `display`. L'ancienne règle hors
+     couche qui le répétait est retirée (plan 11, R11).
    - Repli sans JS (D11) : le script inline de BaseLayout pose `data-js` sur
      <html>. Sans lui, la rangée d'onglets — un contrôle mort — est cachée et
      tous les panneaux s'affichent, chacun sous son titre de repli. Avec lui,
@@ -412,9 +436,6 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
      qu'en l'absence de `data-js` : avec JS, le masquage par `hidden` reste
      entier, sans flash (le script inline pose `data-js` avant le rendu).
    ========================================================================== */
-[data-detail-tabs] [role="tabpanel"][hidden] {
-  display: none !important;
-}
 html:not([data-js]) [data-detail-tabs] [role="tablist"] {
   display: none !important;
 }
