@@ -91,3 +91,26 @@ banner: /transparence-ia/
 - Changes to `ArticleCard`, `ProjectCard`, `PromptCard`, `SkillCard`, `Header.astro`, `Icon.astro`, the list pages.
 - Any change to `src/content/**`, `src/content.config.ts`, `public/admin/config.yml`, `docs/anti-drift/**`, `.github/workflows/**`; prototype demo values (email, LinkedIn, handles, quotes).
 - Version bump, tag, merge, push, deploy.
+
+## Evidence
+Verifier, attempt 1, tip `13d3a74`, base `9a61f7a` (the plan's `bce581d` adds docs only). Every criterion proven; no smoke step.
+
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | Walk of `/` at 1180 / 768 / 375, light and dark: blocks in order featured, latest, projets, prompts, skills, banner with the Home map content; clicks `Lire →`, a latest item, `Plus d'articles →`, 3 section titles, 4 entries and the banner pill each land on the right non-404 page; curl of the 21 internal hrefs → 200; `scrollWidth` 375 at 375 px in both themes; dev logs only `[200]` |
+| R1 | proven | `npx vitest run --no-cache src/lib/home.test.ts` → 5/5, the 5 named tests present; 5 mutations (featured not excluded, featured = `posts[0]`, `latestCount` fixed, reversed / `count+1` section entries) each turn 1–2 tests red |
+| R2 | proven | `npm run build && node scripts/check-home.mjs` → the 7 expected lines, exit 0; broken copies (second `<h1>`, dead link, swapped order, `Lire →` elsewhere, `whoami`, reordered banner labels, missing thumbnail) → exit 1 |
+| R3 | proven | entry texts in `dist/index.html` carry the listed literals (`wip` / stack, `actif` / stack, `guide` / `Claude Code`, `fiche` / `Claude`, `v0.4.0`, `v6.2.0`, `type · name`) plus frontmatter title and description |
+| R4 | proven | `grep -c AI_USAGE_META` → 3, no label literal in the component; built banner has the 3 labels in order |
+| R5 | proven | light and dark, 1180: 3 panels = `panel` bg, `panelLine` border, 20px; 4 badges 28×28, 9px, `badgeBg` / `badgeInk`; 6 `.card-inner` = `card` bg, 14px, shadow differs by theme |
+| R6 | proven | featured title 29px/700; block titles 17px/600; latest titles 17px/500 |
+| R7 | proven | 1180: featured and latest 107–595, panels share top 615, banner 1130 > 1110; 375: blocks stack in DOM order; `scrollWidth <= innerWidth` at 375 / 768 / 1180, both themes |
+| R8 | proven | excerpt, 6 descriptions, banner sentence → `"Nebula Sans"`; category, date, stack, tool, `type · name` → `"JetBrains Mono Variable"` |
+| R9 | proven | both `.card` on `bg`, all 6 `.card-inner` on a `.panel` (dark 1180/768/375, light 375) |
+| R10 | proven | radii ∈ {999, 20, 14, 9, 10}px, both themes, 3 widths; dark: 0 element with green + blue; light: 0 colour `125, 211, 252` |
+| R11 | proven | base `bce581d` built from `git archive`: `<main>` text and class multiset identical on the 4 lists (`/blog` byte-identical; others differ only by `data-thumb-derived`) |
+| R12 | proven | pattern-class count → `4` |
+| R13 | proven | frozen-path diff vs `bce581d` and vs `9a61f7a` → empty |
+| R14 | proven | `npx vitest run --no-cache` → 173 passed; `npm run check` → 0 errors; `matchesFilters` count → 1 |
+
+Outside the criteria (none blocking; carried to plan 11's 375 px / a11y pass): the featured cover is `loading="lazy"` above the fold (same on `/blog` before this plan); at 375 px `🤖 IA relue` wraps between words in latest items and `co-créé` wraps at its hyphen in the banner; focus ring is the browser default (no `:focus-visible` rule in `global.css`); `Hero.astro` unused until plan 10 (D33).
