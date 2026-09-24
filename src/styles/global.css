@@ -117,6 +117,15 @@
   --color-windowDotRed: #FF5F57;           /* pastille fermer */
   --color-windowDotAmber: #FEBC2E;         /* pastille réduire */
   --color-windowDotGreen: #28C840;         /* pastille agrandir */
+  /* fenêtre de prompt (plan 16, D111) : mêmes valeurs dans le bloc sombre.
+     Surlignage de variable = la valeur sombre du prototype dans les deux
+     thèmes (son #0A5F45 clair ne fait que ~2.4:1 sur windowBg). Contraste
+     windowVar sur windowVarBg/windowBg et windowAccent sur windowAccentInk
+     ≥ 4.5:1, gardé par src/lib/contrast.test.ts. */
+  --color-windowAccent: #4ADE80;           /* texte du bouton « Copier » */
+  --color-windowAccentInk: #06210F;        /* fond du bouton « Copier » */
+  --color-windowVar: #86EFAC;              /* texte d'une variable surlignée */
+  --color-windowVarBg: rgba(74,222,128,.16); /* fond d'une variable surlignée */
 
   /* — 23e token : élévation de carte (nom nu `shadow`, cf. contrat §2) — */
   --shadow: 0 10px 18px -12px rgba(16,24,34,.26), 0 2px 4px -2px rgba(16,24,34,.08);
@@ -204,6 +213,10 @@
   --color-windowDotRed: #FF5F57;
   --color-windowDotAmber: #FEBC2E;
   --color-windowDotGreen: #28C840;
+  --color-windowAccent: #4ADE80;
+  --color-windowAccentInk: #06210F;
+  --color-windowVar: #86EFAC;
+  --color-windowVarBg: rgba(74,222,128,.16);
 
   --shadow: 0 12px 22px -16px rgba(0,0,0,.85);
 }

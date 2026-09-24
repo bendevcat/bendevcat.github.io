@@ -42,11 +42,12 @@ describe('contrast', () => {
     expect(() => contrastRatio(parseColor('#000'), parseColor('rgba(0,0,0,.5)'))).toThrow();
   });
 
-  it('reads the 47 colour tokens of both themes from global.css', () => {
+  it('reads the 51 colour tokens of both themes from global.css', () => {
     // 22 tokens couleur du contrat §2 (le 23e, `shadow`, n'est pas une couleur)
-    // + 15 tokens de tons §2.3 + 10 tokens de fenêtre toujours sombre (plan 15, D105).
+    // + 15 tokens de tons §2.3 + 10 tokens de fenêtre toujours sombre (plan 15, D105)
+    // + 4 tokens de fenêtre de prompt (plan 16, D111).
     for (const theme of THEMES) {
-      expect(Object.keys(themes[theme])).toHaveLength(47);
+      expect(Object.keys(themes[theme])).toHaveLength(51);
     }
     // Contrat §2, verbatim.
     expect(themes.light.bg).toEqual(parseColor('#F1F4F7'));
@@ -81,13 +82,14 @@ describe('contrast', () => {
   });
 
   it('gives the window tokens the same value in both themes and keeps windowInk, windowDim, windowKey and windowValue at 4.5:1 on windowBg and windowHead', () => {
-    // Fenêtre toujours sombre (inventaire §9, D105) : les 10 tokens sont
+    // Fenêtre toujours sombre (inventaire §9, D105, D111) : les 14 tokens sont
     // déclarés dans LES DEUX blocs, avec la même valeur. `readThemeTokens`
     // fait hériter le sombre du clair : on relit donc le bloc sombre brut pour
     // exiger une redéclaration explicite (l'audit énumère ses noms là).
     const WINDOW = [
       'windowBg', 'windowHead', 'windowLine', 'windowInk', 'windowDim',
       'windowKey', 'windowValue', 'windowDotRed', 'windowDotAmber', 'windowDotGreen',
+      'windowAccent', 'windowAccentInk', 'windowVar', 'windowVarBg',
     ];
     const uncommented = css.replace(/\/\*[\s\S]*?\*\//g, '');
     const block = (opener: string) => {
@@ -108,6 +110,16 @@ describe('contrast', () => {
         const ratio = tokenContrast(t, text, stack);
         expect(ratio, `${text} on ${stack.join(' + ')} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_NORMAL);
       }
+    }
+    // Fenêtre de prompt (plan 16, D111) : variable surlignée sur le corps,
+    // bouton « Copier » (texte windowAccent sur fond windowAccentInk).
+    const prompt: Array<[string, string[]]> = [
+      ['windowVar', ['windowBg', 'windowVarBg']],
+      ['windowAccent', ['windowAccentInk']],
+    ];
+    for (const [text, stack] of prompt) {
+      const ratio = tokenContrast(t, text, stack);
+      expect(ratio, `${text} on ${stack.join(' + ')} = ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(AA_NORMAL);
     }
   });
 });

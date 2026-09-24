@@ -59,8 +59,8 @@ describe('audit-rendered.js', () => {
     expect(typeof lib.parseColor).toBe('function');
   });
 
-  it('falls back on the 47 contract colour names of global.css', () => {
-    expect(lib.CONTRACT_COLOR_NAMES).toHaveLength(47);
+  it('falls back on the 51 contract colour names of global.css', () => {
+    expect(lib.CONTRACT_COLOR_NAMES).toHaveLength(51);
     expect([...lib.CONTRACT_COLOR_NAMES].sort()).toEqual(Object.keys(themes.light).sort());
     expect([...lib.CONTRACT_COLOR_NAMES].sort()).toEqual(Object.keys(themes.dark).sort());
   });
