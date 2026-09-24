@@ -244,3 +244,15 @@ Choice: `ListHeader` root is a `div` (one `<header>` per page); rail labels are 
 
 ## D81 · Plan 12 · T6 — Instruments: row lists named, explicit rails on surface or card
 Choice: check-finition applies row rules to lists named in `ROW_LISTS` (`blog`; plan 14 adds its own); `rail column` counts non-thumbnail `data-rail` elements; an explicit rail may sit on `surface` or `card`, never on `bg`/`panel`; check-home fails on several `data-featured` rows · Alternatives: infer rows from `[data-rail]`; count every `data-rail` · Reversibility: cheap · Why: carries out D74 with the narrowest exemption.
+
+## D82 · Plan 12 · F1 — `box-content` shell and top-aligned 47 px header pills
+Choice: the three `[data-shell]` boxes are `box-content` (1180 content + padding outside, footer border spans 26–1254 at 1280 as in the prototype); header row `items-start`; nav items `flex` + `leading-[17px]` → nav pill 47 px. Measured at 1280: shells and card 50–1230 / 1180, pill tops 20/20/20; 375 px: scrollWidth 375 · Alternatives: padded outer wrapper; keep `items-center` · Reversibility: cheap · Why: reproduces the prototype's content-box wrapper exactly.
+
+## D83 · Plan 12 · F2 — Popover slides to stay 8 px inside the viewport
+Choice: pure `placePopover` (width capped at viewport − 16, right-aligned when it fits, otherwise slid just enough), re-run on open and resize. Measured: 375 → x 8–244, 0 clipped options; 1280 → right edges 1201/1201, gap 10.75, width 236 · Alternatives: left-align to the trigger; close on resize · Reversibility: cheap · Why: minimal movement keeps the popover near its trigger.
+
+## D84 · Plan 12 · F3 — Sort options in mono 11 with the prototype's icons; token shadow kept
+Choice: options JetBrains Mono 11 px with the prototype's 14 px stroke icons (✓ moves to the right end when an option has an icon); sort popover `minWidth` 250 = prototype's 236 content-box + padding + border (facet dropdowns in plan 14: 216 → 230 by the same sum); trigger icon redrawn from the prototype; shadow stays `var(--shadow)` (prototype colour is off-token, no dark variant). Measured: font JetBrains Mono 11px, width 250, 4 icons, right edges 1201/1201; 375 → x 8–258, 0 clipped · Alternatives: ✓ before the icon; a new shadow token · Reversibility: cheap · Why: fidelity within the token contract; the prototype's drawings are the site owner's own work.
+
+## D85 · Plan 12 · F4 — Sort moves nodes; hidden entries go last
+Choice: pure `domOrder(ids, visibleIds)` → visible entries in sort order, then hidden ones in server order, applied with `grid.append`; only direct grid children are entries; the first `featured: true` post's row carries `data-featured` (none today). Measured: after `plus anciens`, DOM order = visual order (docker → k9s → vpn → linux → comment) · Alternatives: leave hidden entries in place · Reversibility: cheap · Why: keyboard order must follow the visual order (WCAG 1.3.2).
