@@ -193,3 +193,15 @@ Choice: D42 and D48 are re-read and kept — the user confirmed on 2026-09-24 th
 
 ## D64 · Run · E1 — Publish wave 2 as v1.4.0
 Choice: fast-forward `main` to the integration branch, annotated tag `v1.4.0`, push `main`, `v1.4.0`, `milestone-plan-9`, `milestone-plan-10`, `milestone-plan-11`, then a production check · Alternatives: wait · Reversibility: expensive (a published tag and a production deploy) · Why: user's answer "A" to escalation E1.
+
+## D65 · Run 3 · cadrage — Schema unfrozen, sourced filling only (supersedes D1)
+Choice: new optional fields in `src/content.config.ts` and `public/admin/config.yml`; values written into `src/content/{projects,prompts,skills}/**` only from a verifiable source, each file touched logged `⚑ à relire`; a block without data is omitted · Alternatives: fields only, left empty; keep the freeze · Reversibility: cheap · Why: user's answer A at cadrage — the freeze is what stripped the detail pages.
+
+## D66 · Run 3 · cadrage — `No content` bodies: source or empty (supersedes D4)
+Choice: `superpowers` body written from the plugin's README / SKILL.md (`⚑ à relire`); `macos-clone` body emptied, block hidden · Alternatives: empty both; leave as is · Reversibility: cheap · Why: user's answer A at cadrage.
+
+## D67 · Run 3 · cadrage — The prototype outranks the contract text where they disagree   ⚑ à relire
+Choice: contract §5.1 (four identical lists) and §8.2 (thumbnail + featured everywhere) are superseded by the prototype's per-list designs; the prototype's own radii (7, 8, 12, 16, 18, 24 px) join V6's set; always-dark windows get named tokens; D7/D8 are superseded where the prototype places metadata and the install command elsewhere · Alternatives: amend the prototype to the contract · Reversibility: cheap · Why: the contract names the artboard as its single source of truth; the user asked to align on the prototype.
+
+## D68 · Run 3 · cadrage — One publication at the end of the run (v1.5.0)
+Choice: a single `publication` escalation after plan 18 · Alternatives: per plan; two stages · Reversibility: cheap · Why: user's answer A at cadrage — production never shows a half-migrated site.
