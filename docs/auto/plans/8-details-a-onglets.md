@@ -97,3 +97,27 @@ The bodies of `macos-clone` and `superpowers` are the literal text `No content`,
 - Tab state in the URL (hash / query) and deep links to a tab.
 - Plan 9 items: V2 audit of pre-existing surface jumps, tag tones (E10), `/a-propos` (E11), `aria-live` on list meta lines, out-of-contract palettes.
 - Version bump, tag, merge, push, deploy.
+
+## Evidence
+Verifier, attempt 1 (2026-09-24, HEAD `0c19970`). All criteria proven; guarantees R1, R3, R7 mutation-tested in a detached worktree (every mutation turned its named test red).
+
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | Dev server; from `/` via nav pill › card to all 7 pages; every tab clicked in light and dark; R3–R5 held at every step (`errs: []` on 14 page×theme runs); rows as expected; dev logs only `[200]`, no console error |
+| R1 | proven | `detailTabs.test.ts` 24 passed, the 8 named tests present; 8 mutations (Stack / Articles liés / Aperçu / Pourquoi always pushed, Infos removed ×2, `hasTabRow >= 1`) each turned its test red |
+| R2 | proven | `npm run build && node scripts/check-detail-tabs.mjs` → the 7 expected rows, exit 0; checker exits 1 on a removed `hidden`, an emptied panel, a broken `aria-labelledby` |
+| R3 | proven | `computeTabState` test passes; 3 mutations (`i===active \|\| i===0`, `panelHidden:false`, `tabIndex:0`) each red |
+| R4 | proven | 7 pages × 2 themes, each tab clicked: exactly 1 visible panel (the clicked one), exactly 1 `aria-selected="true"` |
+| R5 | proven | Transitions neutralised, probes compared. Dark: active bg `rgb(24,29,36)`=card, border `rgba(255,255,255,0.08)`=line; inactive transparent, `rgb(154,166,180)`=muted. Light: active `rgb(255,255,255)`=card, `rgba(16,24,34,0.11)`=line; inactive transparent, `rgb(84,97,111)`=muted. Values swap on click; radius 999px; font `"Nebula Sans"`; all 7 pages |
+| R6 | proven | Dark, 7 pages: nearest painted ancestor of the tablist is `.card`, bg `rgb(18,22,27)` = surface |
+| R7 | proven | 3 named tests pass; mutations (no wrap, Home/End removed or off by one, default returns `current`) each red. Real keys on `/projets/gha-svu`: ArrowRight/End/wrap/ArrowLeft/Home move focus + selection + panel; Tab → focused panel; only the selected tab has `tabindex="0"` |
+| R8 | proven | Checker exits 0 on the real build; exits 1 when `data-pagefind-body` is removed; covers tablist `aria-label`, `<button>` tabs, `aria-controls` ↔ `aria-labelledby`, first tab selected, `hidden` on others |
+| R9 | proven | `astro preview`, iframe `sandbox="allow-same-origin"` (`dataJs: false`): 7 pages, tablist `none`, every panel `block`, fallback headings shown; control with JS: tablist `flex`, other panels `none` |
+| R10 | proven | Prompt Copier above the tablist on bootstrap and macos-clone → `Copié !`, `writeText` received the prompt (10579 / 2424 chars); superpowers Infos (hidden at load) Copier → `Copié !`, `writeText` = `/plugin install superpowers@claude-plugins-official` (`readText` denied by the browser) |
+| R11 | proven | Base `19759e7` built in scratch; 7 pages: sorted `<article>` hrefs identical (6, 4, 4, 11, 0, 9, 2), 0 base words missing |
+| R12 | proven | 375 px iframe, both themes, 7 pages, every tab: `scrollWidth` 375 = `innerWidth`; rightmost tab edge ≤ 291.5; pane at 375×812 cross-check on superpowers Infos |
+| R13 | proven | Plan command → `4` |
+| R14 | proven | Frozen-paths diff → empty |
+| R15 | proven | `npx vitest run` 168 passed (> 144); `npm run check` 0 errors; `matchesFilters` count `1` |
+
+Findings outside the criteria (none blocking): (1) the unlayered `[data-detail-tabs] [role="tabpanel"][hidden]{display:none!important}` duplicates the preflight rule; (2) the no-JS fallback headings (`// aperçu`…) sit inside `<article data-pagefind-body>`, so Pagefind indexes them; (3) small spacing changes (project links `mt-8` → `mt-6`) and D7's move of header chips into Infos; (4) the CSS-layer check in `check-detail-tabs.mjs` parses minified output with a regex; (5) a comment in `src/pages/skills/[...slug].astro` cites `global.css` line numbers written before this plan.
