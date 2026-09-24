@@ -32,7 +32,8 @@
  * - `data-pagefind-ignore` : le rail n'entre pas dans l'index de recherche.
  * - Bordure droite à partir de 1024 px (trois colonnes) ; en dessous, le rail
  *   vient en dernier dans la pile et porte une bordure haute.
- * La variante `filter` (défaut) rend exactement le rail du plan 12.
+ * La variante `filter` (défaut) rend le rail du plan 12, aux retraits près des
+ * libellés (8 px) et du nuage de tags (6 px) repris du prototype (plan 13, F2).
  */
 import TagChip from '../TagChip.astro';
 import { ALL_CATEGORIES_LABEL, type CategoryRow } from '../../lib/blogList';
@@ -63,8 +64,12 @@ const {
 const links = variant === 'links';
 // Les classes de la racine restent des chaînes littérales dans `class:list`
 // (lues par les gardes de listPages.test.ts) ; celle de `filter` est celle du
-// plan 12, inchangée : /blog sort octet pour octet comme avant (R17).
-const LABEL = 'font-mono text-[10px] tracking-[.12em] text-muted uppercase';
+// plan 12, inchangée ; seuls les retraits des libellés et du nuage (F2)
+// changent le HTML de /blog.
+// Libellés « Catégories » / « Tags » : `padding:0 8px` du prototype (174, 244 ;
+// x = 24 dans le rail) ; le nuage de tags `padding:0 6px` (185, 255 ; puces à
+// x = 22). Les lignes de catégorie gardent leur boîte à x = 16 (plan 13, F2).
+const LABEL = 'px-2 font-mono text-[10px] tracking-[.12em] text-muted uppercase';
 ---
 
 <aside
@@ -134,7 +139,7 @@ const LABEL = 'font-mono text-[10px] tracking-[.12em] text-muted uppercase';
     tags.length > 0 && (
       <div class="flex flex-col gap-2.5">
         <p id="blog-rail-tags" class={LABEL}>Tags</p>
-        <ul class="flex flex-wrap gap-1.5" aria-labelledby="blog-rail-tags">
+        <ul class="flex flex-wrap gap-1.5 px-1.5" aria-labelledby="blog-rail-tags">
           {tags.map((tag) => (
             <li>
               <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} label={`${tag.label} ${tag.count}`} shape="tag">

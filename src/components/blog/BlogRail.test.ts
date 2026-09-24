@@ -44,6 +44,31 @@ describe('BlogRail, filter variant (plan 12, unchanged)', () => {
   });
 });
 
+// Plan 13, F2 (prototype 174, 184–185, 244, 254–255) : les libellés
+// « Catégories » et « Tags » portent `padding:0 8px` (x = 24 dans le rail) et
+// le nuage `padding:0 6px` (puces à x = 22) ; les lignes de catégorie gardent
+// leur boîte (x = 16, padding 8/10).
+describe.each(['filter', 'links'] as const)('BlogRail, %s variant — insets (plan 13, F2)', (variant) => {
+  it('insets the Catégories and Tags labels by 8 px and the tag cloud by 6 px', async () => {
+    const html = await render({ variant });
+    for (const id of ['blog-rail-categories', 'blog-rail-tags']) {
+      const label = html.match(new RegExp(`<p\\b[^>]*\\sid="${id}"[^>]*>`))?.[0] ?? '';
+      expect(label, id).toBeTruthy();
+      expect(classesOf(label), id).toContain('px-2');
+    }
+    const cloud = html.match(/<ul\b[^>]*\saria-labelledby="blog-rail-tags"[^>]*>/)?.[0] ?? '';
+    expect(cloud, 'nuage de tags').toBeTruthy();
+    expect(classesOf(cloud)).toContain('px-1.5');
+    const rows = html.match(variant === 'links' ? /<a\b[^>]*\shref="\/blog\/[^"]*"[^>]*>/g : /<button\b[^>]*>/g) ?? [];
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      const classes = classesOf(row);
+      expect(classes).toEqual(expect.arrayContaining(['px-2.5', 'py-2']));
+      expect(classes.filter((cls) => /^(m[xl]?|-m[xl]?)-/.test(cls)), 'boîte de ligne inchangée').toEqual([]);
+    }
+  });
+});
+
 describe('BlogRail, links variant (plan 13, T3)', () => {
   it('links each category row to /blog/ or /blog/?categorie=<value>, visible without JavaScript', async () => {
     const html = await render({ variant: 'links' });
