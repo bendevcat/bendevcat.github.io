@@ -8,7 +8,7 @@
  * Imprime sur stdout, dans cet ordre :
  *
  *   live: <listes>                  (R6 — T3)
- *   lists: <n> × 1 .card · <e> .card-inner entries · <r> blog rows   (R7 — T3 ; plan 12)
+ *   lists: blog <n> .card · <r> blog rows · <e> .card entries on bg (projets <p> · prompts <q> · skills <s>)   (R7 — T3 ; plans 12, 14)
  *   v2: <a> card-level on bg · <b> rail off card level · <c> rail column · <d> derived thumbnails   (R7 — T3 ; plan 12)
  *   fallback: <n>/<total> data-pagefind-ignore   (R11 — T4)
  *   eager: / · /blog/                               (R12 — T4)
@@ -22,14 +22,18 @@
  * exactement un `[data-list-meta]` — le nœud dont src/scripts/list-pattern.ts
  * réécrit le texte —, qui porte `aria-live="polite"` et `aria-atomic="true"`.
  *
- * R7 (listes) — dans le `[data-list]` de chaque liste : exactement un `.card`
- * (le cadre), qui contient `[data-list-featured]`, `[data-list-grid]` et
- * `[data-list-empty]` ; chaque entrée (`[data-entry-id]`, copie masquée de la
- * carte à la une comprise) est un `.card-inner` DANS ce cadre.
- * Plan 12 (/blog, prototype 163–227) : le cadre de /blog contient à la place
- * `[data-rail]`, `[data-list-grid]` et `[data-list-empty]`, aucun
- * `[data-list-featured]` ; ses entrées sont des lignes compactes DANS le cadre,
- * jamais des `.card-inner` — comptées à part (`blog rows`).
+ * R7 (listes) — Plan 12 (/blog, prototype 163–227) : dans le `[data-list]` de
+ * /blog, exactement un `.card` (le cadre), qui contient `[data-rail]`,
+ * `[data-list-grid]` et `[data-list-empty]`, aucun `[data-list-featured]` ;
+ * ses entrées sont des lignes compactes DANS le cadre, jamais des
+ * `.card-inner` — comptées à part (`blog rows`).
+ * Plan 14 (D92, /projets, /prompts, /skills — listes en grille) : aucun cadre ;
+ * `[data-list-grid]` et `[data-list-empty]` existent une fois, et
+ * `[data-list-featured]` une fois sur /projets, jamais sur /prompts ni
+ * /skills ; chaque entrée (`[data-entry-id]`, copie masquée de la carte à la
+ * une comprise) est un `.card` dont le plus proche ancêtre peint est le fond
+ * de page `bg`, et tout `.card` du `[data-list]` est une entrée. Seules ces
+ * entrées sont comptées (`.card entries on bg`, par liste).
  *
  * R7 (V2, statique) — sur chaque page de `dist/`, pour tout élément de niveau
  * `card` (`.card-inner`, `bg-card`) : son plus proche ancêtre PEINT est de
@@ -42,7 +46,10 @@
  * `.card-inner` peut aussi reposer sur `rail` quand cet hôte peint est, ou se
  * trouve dans, un `[data-rail]` qui n'est pas une vignette dérivée — les
  * cartes « Articles liés » et « Projets liés » des rails de l'article ; un
- * `.card-inner` sur `bg` reste une erreur. `rail column` compte ces rails
+ * `.card-inner` sur `bg` reste une erreur. Plan 14 (D96) : un élément de
+ * niveau `card` peut reposer sur `chip` quand cet hôte peint est, ou se trouve
+ * dans, un `[data-segmented]` — les badges de compte du contrôle segmenté ;
+ * hors de `[data-segmented]`, `card` sur `chip` reste une erreur. `rail column` compte ces rails
  * explicites hors vignettes dérivées (le rail de /blog, les deux rails de
  * chaque article : 1 + 2 × 5 = 11). « Peint » = une
  * classe de patron qui pose un fond (`card`, `card-inner`, `panel`, `pill`)
@@ -229,6 +236,15 @@ function cardOnExplicitRail(el, host) {
   if (!classes(el).includes('card-inner') || host.level !== 'rail' || !host.el) return false;
   return [host.el, ...ancestors(host.el)].some((node) => has(node, 'data-rail') && !has(node, 'data-thumb-derived'));
 }
+/**
+ * D96 : un élément de niveau `card` dont l'hôte peint est de niveau `chip` et
+ * est, ou se trouve dans, un contrôle segmenté `[data-segmented]` (badge de
+ * compte d'un segment inactif).
+ */
+function cardOnSegmentedChip(host) {
+  if (host.level !== 'chip' || !host.el) return false;
+  return [host.el, ...ancestors(host.el)].some((node) => has(node, 'data-segmented'));
+}
 let cardOnBg = 0;
 let railOffCard = 0;
 let railColumns = 0;
@@ -244,7 +260,7 @@ for (const file of htmlFiles(DIST)) {
     if (has(el, 'data-rail') && !has(el, 'data-thumb-derived')) railColumns += 1;
     if (own === 'card') {
       const host = paintedParent(el);
-      if (!CARD_HOSTS.has(host.level) && !cardOnExplicitRail(el, host)) {
+      if (!CARD_HOSTS.has(host.level) && !cardOnExplicitRail(el, host) && !cardOnSegmentedChip(host)) {
         cardOnBg += 1;
         errors.push(`${page} ${describe(el)} : niveau card posé sur ${host.level}${host.el ? ` (${describe(host.el)})` : ''}`);
       }
@@ -263,26 +279,30 @@ for (const file of htmlFiles(DIST)) {
   }
 }
 
-// — Listes : région live (R6) et cadre unique (R7) —
+// — Listes : région live (R6), cadre de /blog et grilles sans cadre (R7) —
 const live = [];
-const frameCounts = [];
-let entries = 0;
+/** Nombre de `.card` dans le `[data-list]` de /blog (le cadre ; attendu : 1). */
+let blogFrames = 0;
+/** Entrées `.card` posées sur `bg`, par liste en grille (plan 14). */
+const gridEntries = {};
 let rows = 0;
-/** Listes en lignes compactes (plan 12) : rail au lieu du bloc à la une, entrées sans `.card-inner`. */
+/** Listes en lignes compactes (plan 12) : un cadre `.card`, un rail, des lignes sans `.card-inner`. */
 const ROW_LISTS = new Set(['blog']);
+/** Listes en grille (plan 14, D92) : entrées `.card` sur `bg`, bloc à la une sur /projets seulement. */
+const FEATURED_LISTS = new Set(['projets']);
 
 for (const list of LISTS) {
+  const rowList = ROW_LISTS.has(list);
+  if (!rowList) gridEntries[list] = 0;
   const file = join(DIST, list, 'index.html');
   if (!existsSync(file)) {
     errors.push(`${file} introuvable`);
-    frameCounts.push(0);
     continue;
   }
   const { elements } = collectElements(tokenize(readFileSync(file, 'utf8')));
   const roots = elements.filter((el) => has(el, 'data-list'));
   if (roots.length !== 1) {
     errors.push(`/${list}/ : ${roots.length} [data-list] (attendu : 1)`);
-    frameCounts.push(0);
     continue;
   }
   const scope = descendants(roots[0]);
@@ -295,45 +315,64 @@ for (const list of LISTS) {
     );
   } else live.push(list);
 
-  const frames = scope.filter((el) => classes(el).includes('card'));
-  frameCounts.push(frames.length);
-  if (frames.length !== 1) {
-    errors.push(`/${list}/ : ${frames.length} .card dans [data-list] (attendu : 1)`);
-  }
-  const frame = frames[0];
-  const inFrame = frame ? new Set(descendants(frame)) : new Set();
-  const rowList = ROW_LISTS.has(list);
-  const parts = rowList
-    ? ['data-rail', 'data-list-grid', 'data-list-empty']
-    : ['data-list-featured', 'data-list-grid', 'data-list-empty'];
-  for (const part of parts) {
-    const found = scope.filter((el) => has(el, part) && !(part === 'data-rail' && has(el, 'data-thumb-derived')));
-    if (found.length !== 1) errors.push(`/${list}/ : ${found.length} [${part}] (attendu : 1)`);
-    else if (!inFrame.has(found[0])) errors.push(`/${list}/ : [${part}] hors du .card`);
-  }
+  const cards = scope.filter((el) => classes(el).includes('card'));
+  const entries = scope.filter((el) => has(el, 'data-entry-id'));
+  if (entries.length === 0) errors.push(`/${list}/ : aucune entrée [data-entry-id]`);
+  const found = (part) =>
+    scope.filter((el) => has(el, part) && !(part === 'data-rail' && has(el, 'data-thumb-derived')));
+
   if (rowList) {
+    blogFrames = cards.length;
+    if (cards.length !== 1) errors.push(`/${list}/ : ${cards.length} .card dans [data-list] (attendu : 1)`);
+    const inFrame = cards[0] ? new Set(descendants(cards[0])) : new Set();
+    for (const part of ['data-rail', 'data-list-grid', 'data-list-empty']) {
+      const parts = found(part);
+      if (parts.length !== 1) errors.push(`/${list}/ : ${parts.length} [${part}] (attendu : 1)`);
+      else if (!inFrame.has(parts[0])) errors.push(`/${list}/ : [${part}] hors du .card`);
+    }
     const featured = elements.filter((el) => has(el, 'data-list-featured'));
     if (featured.length > 0) errors.push(`/${list}/ : ${featured.length} [data-list-featured] (attendu : 0)`);
-  }
-  for (const entry of scope.filter((el) => has(el, 'data-entry-id'))) {
-    const id = entry.attrs['data-entry-id'];
-    if (rowList) {
+    for (const entry of entries) {
+      const id = entry.attrs['data-entry-id'];
       rows += 1;
       if (classes(entry).includes('card-inner')) errors.push(`/${list}/ : la ligne ${id} est un .card-inner`);
-    } else {
-      entries += 1;
-      if (!classes(entry).includes('card-inner')) errors.push(`/${list}/ : l'entrée ${id} n'est pas un .card-inner`);
+      if (!inFrame.has(entry)) errors.push(`/${list}/ : la ligne ${id} est hors du .card`);
     }
-    if (!inFrame.has(entry)) errors.push(`/${list}/ : l'entrée ${id} est hors du .card`);
+    continue;
   }
-  if (!scope.some((el) => has(el, 'data-entry-id'))) errors.push(`/${list}/ : aucune entrée [data-entry-id]`);
+
+  // Liste en grille (plan 14) : pas de cadre, chaque entrée est un `.card` sur `bg`.
+  const featuredExpected = FEATURED_LISTS.has(list) ? 1 : 0;
+  for (const [part, expected] of [
+    ['data-list-featured', featuredExpected],
+    ['data-list-grid', 1],
+    ['data-list-empty', 1],
+  ]) {
+    const parts = found(part);
+    if (parts.length !== expected) errors.push(`/${list}/ : ${parts.length} [${part}] (attendu : ${expected})`);
+  }
+  const entrySet = new Set(entries);
+  for (const card of cards) {
+    if (!entrySet.has(card)) errors.push(`/${list}/ : ${describe(card)} est un .card sans data-entry-id (cadre ?)`);
+  }
+  for (const entry of entries) {
+    const id = entry.attrs['data-entry-id'];
+    const host = paintedParent(entry);
+    if (!classes(entry).includes('card')) errors.push(`/${list}/ : l'entrée ${id} n'est pas un .card`);
+    else if (host.level !== 'bg') {
+      errors.push(`/${list}/ : l'entrée ${id} est posée sur ${host.level} (${describe(host.el)}) (attendu : bg)`);
+    } else gridEntries[list] += 1;
+  }
 }
 
 lines.push(`live: ${live.join(' ') || '(aucune)'}`);
-const frames = frameCounts.every((n) => n === 1)
-  ? `${LISTS.length} × 1 .card`
-  : LISTS.map((list, i) => `${list} ${frameCounts[i]} .card`).join(', ');
-lines.push(`lists: ${frames} · ${entries} .card-inner entries · ${rows} blog rows`);
+const gridLists = Object.keys(gridEntries);
+const onBg = gridLists.reduce((sum, list) => sum + gridEntries[list], 0);
+lines.push(
+  `lists: blog ${blogFrames} .card · ${rows} blog rows · ${onBg} .card entries on bg (${gridLists
+    .map((list) => `${list} ${gridEntries[list]}`)
+    .join(' · ')})`,
+);
 lines.push(
   `v2: ${cardOnBg} card-level on bg · ${railOffCard} rail off card level · ${railColumns} rail column · ${derived} derived thumbnails`,
 );

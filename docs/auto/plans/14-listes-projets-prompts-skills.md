@@ -1,0 +1,185 @@
+# Plan 14 — listes-projets-prompts-skills
+
+Brief: `docs/auto/brief.md` · Branch: `auto/plan-14-listes-projets-prompts-skills` · Base: `5037b204e3a8c65b98fb08f9d135386a881a588b`
+
+## Goal
+On `/projets`, `/prompts`, `/skills`, in both themes, the user sees the prototype's lists (inventory §3, §5, §7): a segmented control with counts for the primary facet (status · format · type) and a dropdown for the secondary one (techno · outil · tag), both filtering; on `/projets` a two-column featured hero with démo / code source buttons shown only when no filter is active, then a 3-column grid; on `/prompts` and `/skills` a 3-column grid of compact cards with **no thumbnail, no featured entry, no tag chips** — prompt cards show format, tool, version, `N l.` · `~N tk` (and `N variables` when the prompt has any); skill cards show type, licence, version, the install command and a content summary; each list has its contextual empty state with a reset link
+
+## Reachability
+From `http://localhost:4321/`: header nav pill › `Projets` / `Skills` / `Prompts` › `/projets/`, `/skills/`, `/prompts/` (also the home's section panels). On a list: a segment or a dropdown option filters; the empty state's reset link restores everything; a card title opens `/<list>/<id>/`; the hero's `démo ↗` / `code source ↗` open the project's `demoUrl` / `repoUrl`. Every path exists; this plan changes what the three list pages render.
+
+### Built facts (measured at base, `npm run build`)
+Projects (canonical order `sortProjects`): `site-bencat` (featured, wip, since 2026-07-30, 5 stack, demoUrl + repoUrl, no cover), `gha-svu` (actif, 4 stack, repoUrl, no cover). Prompts (A→Z): `decouper-un-projet-en-plans-anti-drift` (guide, Claude Code), `macos-clone` (fiche, Claude), `bootstrap-session-anti-drift` (fiche, Claude Code); none has `version` or placeholders. Skills (A→Z): `anti-drift-planning` (claude-code, v0.4.0, 2 related prompts), `superpowers` (claude-code, v6.2.0, 1 related prompt); no `license` field. Sources: `~/workspace/claudeworkspaces/anti-drift-planning/LICENSE` "MIT License · Copyright (c) 2026 bendevcat" (+ `plugin.json` `"license": "MIT"`); `~/.claude/plugins/cache/claude-plugins-official/superpowers/{6.3.0,6.4.1}/LICENSE` "MIT License · Copyright (c) 2025 Jesse Vincent" (+ `plugin.json` `"license": "MIT"`). Base instruments: `check-finition` → `lists: 4 × 1 .card · 10 .card-inner entries · 5 blog rows`, `v2: 0 card-level on bg · 0 rail off card level · 11 rail column · 10 derived thumbnails` (all 10 on these three lists); `check-secondary` → `tags: 30 slugs · 208 chips on 43 pages · 5/5 tones` (23 of those chips on `/prompts/` and `/skills/`); `npx vitest run` → 285 passed.
+
+### Design rules (prototype 344–431, 524–580, 738–793 via inventory px; authoring choices are decision candidates)
+- **Page frame** (all three): `ListHeader` (`~/ projets` · `Projets`, etc.); filter bar 22 px below the h1 (`[data-list-filters]`, `hidden` server-side, flex `justify-between`, gap 20, wraps): segmented control left, facet dropdown right; content 18 px below, flex column gap 18. **No outer `.card` frame**: every entry is a `.card` (surface, radius 20) on the page `bg` (D67 supersedes D51 on these three lists). `[data-list-meta]` stays, as an `sr-only` polite atomic live region (the prototype draws no meta line; the count announcement stays); server text = first computed text (D57). No `<select>` left on the three pages.
+- **Segmented control** `SegmentedControl.astro` (inventory §0): track `[data-segmented]` `role="group"` padding 5, `chip`, 1 px `line`, radius 999, gap 4, nowrap; items `<button data-facet-key data-facet-label data-facet-value aria-pressed>` padding 8/16, 14 px sans, gap 8; active = `card` bg + 1 px `line` + `ink` + 500, badge on `chip`; inactive transparent (1 px transparent border), `muted`, badge on `card`, hover `panel`. Badge min 20×20, padding 0 6, radius 999, mono 11 `muted`. Item text = `<label> <count>`. Below 640 px the track wraps with radius 20 (D77 precedent).
+- **Facet dropdown** = plan 12's `Dropdown` with `icon="filter"`, `minWidth={230}` (D84), first option `ALL` (`toutes` for techno, `tous` for outil and tag) with the total, then each value with its count; root carries `data-facet-key` + `data-facet-label`. Options carry no `data-tag`.
+- **Counts** are static: each value counted over all published entries of the list (a segment may read 0 — `Archivé 0` is kept, it is how the empty state is reached). Labels: statut `Tous · Actif · WIP · Archivé` (values `actif`, `wip`, `archivé`, all of `PROJECT_STATUSES`); format `Tous · Fiche · Guide` (all of `PROMPT_FORMATS`); type `Tous` + each used type as written (`claude-code`).
+- **Engine** (additions only): `[data-dropdown][data-facet-key]` inside a filter group is a facet control (value = `data-value`, `dropdown-change` → apply, reset → `setDropdownValue(root, ALL)`); pure `facetCounts(entries, key, values)`; `ListLabels.emptyTemplate` (page attribute `data-list-empty-template`) whose `{key}` slots expand to `<prefix><value>` when the facet is active, else to nothing — prefix from the control's `data-facet-empty-prefix`, default one space; without a template the sentence is today's.
+- **Empty state** `ListEmpty.astro` (`[data-list-empty]`, `hidden` server-side): 1 px dashed `line`, radius 20, centred column, padding 48/24, gap 12; 38×38 radius-12 tile on `chip` with a `muted` icon (`folder` projets, `file-text` prompts, `filter` skills); sentence 14 px sans `muted` in `[data-list-empty-text]`; reset `<button data-list-reset>` 13 px / 600 `accent`. Sentences: projets template `Aucun projet{status}{stack} pour l'instant.` (prefix ` ` for status, ` en ` for stack) + `voir tous les projets →`; prompts `Aucun prompt ne correspond à ce filtre.` + `réinitialiser les filtres →`; skills `Aucune skill ne correspond à ce filtre.` + `réinitialiser les filtres →` (static sentences also rendered server-side).
+- **Cards** are `<article class="card …" data-entry-id data-facet>` with an h2 title whose `<a>` is stretched over the card (no nested links); hover: title `accent`; prompt and skill cards also `bg-cardHover`. Grid: 3 columns from 1024 px, 2 from 640, 1 below; gap 18 (projets) / 16 (prompts, skills).
+- **`/projets` hero** `FeaturedProject.astro` in `[data-list-featured]` (engine featured mode kept: hidden once a facet is active; the grid keeps its server-hidden copy): `.card` radius 24 (`--radius-feature`), `overflow-hidden`, grid `1fr | 1.1fr` from 768 px (stacked below, visual min-height 180). Left: `Thumbnail size="hero"` — cover (`eager`) or `rail` + hatch `0 2px / 2px 12px`, min-height 300, `data-rail`, no monogram, no badge. Right padding 34/36, gap 14: status pill (`PROJECT_STATUS_META` tone, padding 5/11, mono 11) + `depuis <mois année> · à la une` mono 11 `muted` (`depuis` part omitted without `startDate`); h2 30 / 1.15 / 600 / −.02em; description 15 / 1.6 `muted`; stack chips padding 5/10, radius 8, `chip`, mono 11 `muted`, gap 7; buttons (margin-top auto, padding-top 16, gap 10) `démo ↗` (padding 10/16, radius 999, `accent` bg, `accentInk`, 13 / 600) → `demoUrl` and `code source ↗` (same box, 1 px `line`, `ink`, 13) → `repoUrl`, each `target="_blank" rel="noopener noreferrer"`, each omitted without its URL.
+- **`/projets` grid card** `ProjectCard.astro`: padding 8/8/22, gap 14; `Thumbnail size="tile"` 120 px high, radius 14, `data-rail`, no monogram, status pill overlaid bottom-left 12 px inset; then (padding 0/14) h2 18 / 600, description 13 `muted`, stack chips radius 7, padding 3/8, `chip`, mono 10 `muted`. The prototype's dashed "prochain projet" card is **not shipped** (demo copy, no sourced content).
+- **Prompt card** `PromptCard.astro`: padding 22/22/18, gap 12; top row mono 10: format pill (`accentSoft`/`accent`), tool pill (`chip`/`muted`), spacer, `v<version>` `muted` only when set; h2 18 / 600; description 13.5 `muted` `flex-1`; footer `border-top: 1px line2`, padding-top 12, mono 10.5 `muted`: `N variables` (`accent`, only when > 0) · `N l.` · `~N tk` · spacer · `ouvrir la fiche →`. Text measured = `prompt` when `shouldRenderPromptBlock`, else the body; trimmed; lines = `\n` count + 1; tokens = round(chars / 4), no thousands separator.
+- **Skill card** `SkillCard.astro`: same frame; top row: type pill (`accentSoft`/`accent`), licence pill (`chip`/`muted`, only when set), spacer, `v<version>` `muted`; h2; description; install command mono 11 `accent` `break-all` (only when set); footer summary `N prompt(s)` `accent` (published related prompts; omitted at 0) + `ouvrir la fiche →`.
+- **Schema** (optional fields, `src/content.config.ts` + `public/admin/config.yml`): prompts `version` (string), `variables` (list of `{name, hint?, default?}`, inventory §11 shape, reused by plan 16); skills `license` (string). Content written: `license: MIT` in the two skill files only, from the LICENSE files above.
+- **V2 amendment**: a card-level element painted on `chip` inside `[data-segmented]` (the prototype's count badges) is accepted by `check-finition.mjs`, like D74 / D88.
+
+Expected output of `node scripts/check-lists.mjs` after `npm run build`:
+```
+headers: ~/ projets · Projets | ~/ prompts · Prompts | ~/ skills · Skills
+projets segments: statut · Tous 2 · Actif 1 · WIP 1 · Archivé 0
+projets dropdown: techno · toutes 2 · Astro 1 · Bash 1 · GitHub Actions 1 · GitHub Pages 1 · Go 1 · Sveltia CMS 1 · SVU 1 · Tailwind CSS 1 · TypeScript 1
+projets hero: site-bencat · wip · depuis juillet 2026 · à la une · 5 stack · démo ↗ https://bendevcat.github.io/ · code source ↗ https://github.com/bendevcat/bendevcat.github.io
+projets grid: site-bencat (hidden) | gha-svu · actif · 4 stack
+prompts segments: format · Tous 3 · Fiche 2 · Guide 1
+prompts dropdown: outil · tous 3 · Claude 1 · Claude Code 2
+prompts cards: decouper-un-projet-en-plans-anti-drift guide · Claude Code · 134 l. · ~1597 tk | macos-clone fiche · Claude · 1 l. · ~606 tk | bootstrap-session-anti-drift fiche · Claude Code · 129 l. · ~2645 tk
+skills segments: type · Tous 2 · claude-code 2
+skills dropdown: tag · tous 2 · anti-drift 1 · claude-code 2 · méthodologie 1 · planification 1
+skills cards: anti-drift-planning claude-code · MIT · v0.4.0 · install · 2 prompts | superpowers claude-code · MIT · v6.2.0 · install · 1 prompt
+empty: projets « Aucun projet{status}{stack} pour l'instant. » voir tous les projets → | prompts « Aucun prompt ne correspond à ce filtre. » réinitialiser les filtres → | skills « Aucune skill ne correspond à ce filtre. » réinitialiser les filtres →
+bare: /prompts/ /skills/ · 0 img · 0 derived · 0 tag chip · 0 featured
+```
+Exit 1 if, inside a list's `[data-list]`: a `<select>` exists; an entry is not a `.card` or its nearest painted ancestor is not the page `bg`; a card's title `href` does not resolve in `dist/`; a segment lacks `aria-pressed` or its count badge; `[data-list-filters]`, `[data-dropdown]` or `[data-list-empty]` is not `hidden` server-side; `/projets/` has ≠ 1 `[data-list-featured]` or a hero button without `target="_blank"` and `rel` containing `noopener`; `/prompts/` or `/skills/` has an `img`, a `[data-thumb-derived]`, a `data-tag`, a `ul[aria-label="Tags"]` or a `[data-list-featured]`; a card's `install` differs from the entry's `installCmd`.
+
+## Criteria
+| ID | Criterion | Measure | Guarantee |
+|---|---|---|---|
+| R0 | On `/projets`, `/prompts`, `/skills`, in both themes, the user sees the prototype's lists (inventory §3, §5, §7): a segmented control with counts for the primary facet (status · format · type) and a dropdown for the secondary one (techno · outil · tag), both filtering; on `/projets` a two-column featured hero with démo / code source buttons shown only when no filter is active, then a 3-column grid; on `/prompts` and `/skills` a 3-column grid of compact cards with **no thumbnail, no featured entry, no tag chips** — prompt cards show format, tool, version, `N l.` · `~N tk` (and `N variables` when the prompt has any); skill cards show type, licence, version, the install command and a content summary; each list has its contextual empty state with a reset link | reachability walkthrough on `npm run build && npx astro preview`, light then dark (`localStorage.theme` + reload): `/` › `Projets` › a segment › the techno dropdown › empty state › reset › a card › back › `démo ↗` (new tab, 200) ; same for `Prompts` and `Skills`; every internal link lands on a 200 page that is not `/404`; R1–R24 hold | no |
+| R1 | Static facet counts | `npx vitest run src/lib/listPattern.test.ts` → "compte chaque valeur déclarée sur toutes les entrées, zéro compris" passes | yes |
+| R2 | Page empty-state template | `npx vitest run src/lib/listPattern.test.ts` → "écrit l'état vide d'un gabarit de page : « Aucun projet wip en Go pour l'instant. »", "vide les emplacements des facettes inactives" and "garde la phrase historique sans gabarit" pass; `git diff 5037b20 -- src/lib/listPattern.test.ts \| grep -c '^-[^-]'` → `0` | yes |
+| R3 | Prompt card data | `npx vitest run src/lib/listCards.test.ts` → "measures the prompt text for a fiche and the body for a guide", "counts lines and rounds chars / 4 into tokens", "shows N variables only when the prompt declares some" and "shows the version slot only when the prompt declares one" pass | yes |
+| R4 | Skill card data and hero date | `npx vitest run src/lib/listCards.test.ts` → "summarises published related prompts as « 2 prompts », « 1 prompt », nothing at 0" and "writes the featured project's start as « depuis juillet 2026 »" pass | yes |
+| R5 | Built lists | `npm run build && node scripts/check-lists.mjs` → the 13 lines above, exit 0; exit 1 on each defect class listed under the block | no |
+| R6 | Schema and CMS agree | `npx vitest run src/lib/cms-config.test.ts` → 0 failed, its "mappe TOUS les champs" tests list `version` + `variables` (prompts) and `license` (skills), and the required-fields tests are unchanged; `npm run check` → `0 errors` | yes |
+| R7 | Sourced content only | `grep -h '^license:' src/content/skills/*/index.md` → `license: MIT` twice; `git diff 5037b20 --numstat -- src/content` → exactly `1 0` for the two skill files and nothing else; `docs/auto/decisions.md` has a `⚑ à relire` entry naming each file and its LICENSE source | no |
+| R8 | Facet filtering on `/projets` | preview, both themes: click `WIP 1` → only `site-bencat` visible (grid), hero hidden, `WIP` `aria-pressed="true"`; choose techno `Go` → `Aucun projet wip en Go pour l'instant.` + `voir tous les projets →`; `Archivé 0` alone → `Aucun projet archivé pour l'instant.`; reset → hero back, `gha-svu` in the grid, `Tous` pressed, trigger `techno : toutes`; techno `Astro` alone → only `site-bencat` card, hero hidden | no |
+| R9 | Facet filtering on `/prompts` and `/skills` | preview, both themes: `/prompts` `Guide 1` → 1 card (`decouper-…`); + outil `Claude` → `Aucun prompt ne correspond à ce filtre.`; `réinitialiser les filtres →` → 3 cards, `Tous` pressed, `outil : tous`; `/skills` tag `méthodologie` → 1 card (`anti-drift-planning`), `claude-code 2` → 2 cards after reset; the `[data-list-meta]` node reads `1 prompt · format guide` etc. | no |
+| R10 | Segmented control | preview, 1280, both themes, three lists: track padding 5, bg `chip`, 1 px `line`, radius 999, gap 4; items padding 8/16, 14 px Nebula Sans; active bg `card`, border `line`, colour `ink`, weight 500, badge bg `chip`; inactive transparent, `muted`, badge bg `card`; badges ≥ 20×20, radius 999, JetBrains Mono 11 px `muted`; track top − h1 bottom = 22 ± 2 | no |
+| R11 | Facet dropdown | preview, both themes: trigger text `techno : toutes` / `outil : tous` / `tag : tous`; open → popover width ≥ 230, top − trigger bottom = 10 ± 1, right edges equal ± 1, counts mono 10 `muted`, `✓` + `aria-selected="true"` only on the current option; Escape closes and refocuses the trigger; outside click closes; keyboard-only selection works; at 375 the open popover lies within 0…375 | no |
+| R12 | `/projets` hero and grid | preview, 1280, both themes, no filter: hero radius 24, two columns (visual ≥ 300 high, text column ≈ 1.1 × visual ± 2 px), text padding 34/36, h2 30 px / 600, description 15 px `muted`, stack chips radius 8 mono 11, `démo ↗` bg `accent` colour `accentInk` radius 999, `code source ↗` border `line`; grid card radius 20, padding 8/8/22, thumbnail 120 high radius 14 with the status pill inside it, h2 18 px, description 13 px, chips radius 7; first grid card top − hero bottom = 18 ± 1 | no |
+| R13 | Prompt and skill cards | preview, 1280, both themes: 3 cards per row (prompts), radius 20, padding 22/22/18, gap 16; no `img`, no hatch, no tag chip, no featured block; top row mono 10 with format/type pill on `accentSoft`; footer `border-top` `line2`, mono 10.5; prompt footers read `134 l. · ~1597 tk`, `1 l. · ~606 tk`, `129 l. · ~2645 tk`; skill cards show `MIT`, `v0.4.0` / `v6.2.0`, the install command in mono 11 `accent` wrapping inside the card, `2 prompts` / `1 prompt`; hover paints `cardHover` | no |
+| R14 | Empty state | preview, both themes, on `/projets` (`Archivé`) and `/prompts` (`Guide` + `Claude`): dashed 1 px `line` border, radius 20, 38×38 tile radius 12 on `chip`, sentence 14 px Nebula `muted`, reset 13 px / 600 `accent`; the grid is hidden; reset restores every control and the full list | no |
+| R15 | Without JavaScript | each list in a `sandbox` iframe without scripts: every entry once (projets: hero + `gha-svu`), no segmented control, dropdown or empty state visible, every card title link works | no |
+| R16 | Responsive | preview, both themes, 375 and 768: 0 horizontal overflow (`scrollWidth` = `clientWidth`); every segment's rect within the viewport; grid 1 column at 375, 2 at 768, 3 at 1280; hero stacked at 375 and 767, side by side at 768 | no |
+| R17 | Fidelity with the prototype | verifier renders the prototype (`claude-design` `render_preview`, project `bb013596-0cd6-4e70-afad-e92b42d3f7f6`, file `bencat_ Prototype cliquable.dc.html`, the three list screens; URL never written down) and the three pages at 1280, light and dark: a side-by-side table lists the same blocks in the same order and columns; differences allowed only where the Design rules say so (no "prochain projet" card, no hero badge, `muted` for `dim`, sr-only meta, site status tones). **If the MCP is unavailable: smoke**, with the replay step written in the evidence | no |
+| R18 | Audit on the three lists | `scripts/audit-rendered.js` on the preview, `/projets`, `/prompts`, `/skills`, light and dark, at 375, 768 and 1280, at rest and with a facet dropdown open and an empty state shown: 0 overflow, 0 contrast failure, 0 off-token colour, 0 V2 jump | no |
+| R19 | Radii and mono (V6 amended, V5) | preview, both themes, three lists: every non-zero computed `border-radius` ∈ {7, 8, 10, 12, 14, 20, 24, 999} px; counts, pills, versions, `N l.` / `~N tk`, install commands, stack chips and dates compute `"JetBrains Mono`; h1, titles, descriptions, segment labels, empty sentences compute `"Nebula Sans"` | no |
+| R20 | Tokens and patterns | `grep -c -- '--radius-feature: 24px' src/styles/global.css` → `1`; pattern-class count (`sed -n '/@layer components {/,/^}/p' src/styles/global.css \| grep -cE '^\s+\.[a-z-]+ \{'`) → `4`; `git diff 5037b20 -- src/styles/global.css \| grep -cE '^[-+]\s*--color-'` → `0` | no |
+| R21 | Earlier instruments | after build: `check-finition.mjs` → its 7 base lines except `lists: blog 1 .card · 5 blog rows · 8 .card entries on bg (projets 3 · prompts 3 · skills 2)` and `v2: 0 card-level on bg · 0 rail off card level · 11 rail column · 3 derived thumbnails`; `check-secondary.mjs` → its 12 base lines except `tags: 30 slugs · 192 chips on 41 pages · 5/5 tones`; `check-home.mjs` → its 7 base lines; `check-detail-tabs.mjs` → its 7 base rows; all exit 0 | no |
+| R22 | `/blog` does not regress | after build `check-shell-blog.mjs` → its 11 base lines and `check-article.mjs` → its 9 base lines, exit 0; preview `/blog/`: plan 12's R13 and R14 walkthroughs hold | no |
+| R23 | Plan 7 filter API kept | `grep -c 'export function matchesFilters' src/lib/projectFilters.ts` → `1`; `git diff 5037b20 -- src/lib/projectFilters.ts src/lib/projectFilters.test.ts` → empty; `npx vitest run src/lib/projectFilters.test.ts` → 0 failed | yes |
+| R24 | Frozen paths, suite, types | `git diff 5037b20 --stat -- src/content/blog src/content/projects src/content/prompts docs/anti-drift .github/workflows package.json package-lock.json` → empty; `npx vitest run` → 0 failed, > 285 tests; `npm run check` → `0 errors` | no |
+
+## Shared resources
+- `src/content.config.ts`, `public/admin/config.yml`, `src/lib/cms-config.test.ts` — schema contract also read by plans 15–17 (T1 only).
+- `src/lib/listPattern.ts`, `src/scripts/list-pattern.ts` — also drive `/blog` (R22); additions only.
+- `src/components/Thumbnail.astro` (also home and `/blog` rows — sizes `header`, `square`, `row` unchanged), `Dropdown.astro` (no change expected), `src/styles/global.css` (one radius token).
+- `scripts/check-*.mjs`, `src/lib/listPages.test.ts` — earlier plans' instruments, amended in T4–T6 only.
+- `dist/`, port 4321. No version bump (D68).
+
+## Tasks
+### T1 — Schema, CMS and sourced licences
+- Files: `src/content.config.ts`, `public/admin/config.yml`, `src/lib/cms-config.test.ts`, `src/content/skills/anti-drift-planning/index.md`, `src/content/skills/superpowers/index.md`
+- Covers: R6, R7 (report names each file's source for the orchestrator's `⚑` entries)
+- Acceptance: `npx vitest run src/lib/cms-config.test.ts` → 0 failed; `npm run check` → `0 errors`; `npm run build` → exit 0; the two R7 commands → as stated
+- Depends on: —
+
+### T2 — Card data (pure)
+- Files: `src/lib/listCards.ts` + `listCards.test.ts` (new, no `astro:content` import; reuses `shouldRenderPromptBlock`)
+- Covers: R3, R4
+- Acceptance: `npx vitest run src/lib/listCards.test.ts` → the 6 named tests pass; `npm run check` → `0 errors`
+- Depends on: —
+
+### T3 — Engine: dropdown facets, counts, empty template
+- Files: `src/lib/listPattern.ts`, `src/lib/listPattern.test.ts` (additions only), `src/scripts/list-pattern.ts`
+- Covers: R1, R2
+- Acceptance: `npx vitest run src/lib/listPattern.test.ts` → R1/R2 tests pass, the `git diff` count → `0`; `npm run build && node scripts/check-shell-blog.mjs` → its 11 base lines
+- Depends on: —
+
+### T4 — `/projets`
+- Files: `src/pages/projets/index.astro`, `src/components/ProjectCard.astro`, `src/components/FeaturedProject.astro`, `src/components/SegmentedControl.astro`, `src/components/ListEmpty.astro` (new three), `src/components/Thumbnail.astro` (`tile`, `hero`; `card` / `featured` removed once unused), `src/styles/global.css` (`--radius-feature`), `src/lib/listPages.test.ts` (projets leaves the plan-11 frame / `.card-inner` tests for new "grid list" tests), `scripts/check-lists.mjs` (new, dependency-free like `check-finition.mjs`; prompts/skills lines reported missing until T5)
+- Covers: R5 (`headers`, `projets` lines), R20
+- Acceptance: `npx vitest run` → 0 failed; `npm run build && node scripts/check-lists.mjs` → the 5 `headers`/`projets` lines as expected; R20 commands → `1`, `4`, `0`; `npm run check` → `0 errors`
+- Depends on: T2, T3
+
+### T5 — `/prompts` and `/skills`
+- Files: `src/pages/prompts/index.astro`, `src/pages/skills/index.astro`, `src/components/PromptCard.astro`, `src/components/SkillCard.astro`, `src/lib/listPages.test.ts` (prompts and skills move to the grid-list tests; the emptied plan-11 tests are deleted), `scripts/check-lists.mjs`
+- Covers: R5 (remaining lines)
+- Acceptance: `npx vitest run` → 0 failed; `npm run build && node scripts/check-lists.mjs` → the 13 lines, exit 0; `npm run check` → `0 errors`
+- Depends on: T1, T2, T3, T4
+
+### T6 — Earlier instruments follow the new lists
+- Files: `scripts/check-finition.mjs` (grid lists: entries `.card` on `bg`, no frame, new `lists` line; card-level on `chip` inside `[data-segmented]` accepted), `scripts/check-secondary.mjs` (comment only if its chip sources change), `scripts/audit-rendered.js` + `src/lib/auditRendered.test.ts` (only if the V2 rule needs the same segmented exemption)
+- Covers: R21, R22, R23, R24
+- Acceptance: `npm run build`, then the six scripts of R21–R22 → the stated lines, exit 0; R23 and R24 commands → as stated
+- Depends on: T5
+
+### F1 — CMS test derives its field lists from the Zod schema
+- Files: `src/lib/cms-config.test.ts`
+- Covers: R6 (guarantee)
+- Acceptance (verifier failure): removing `license` (skills), `version` or `variables` (prompts) from `src/content.config.ts` turns `cms-config.test.ts` red — the expected field list per collection is built from the schema's shape (e.g. importing the schema objects or parsing `content.config.ts`), not written into the test; with the schema intact the suite is green; demonstrate the three mutations red then restore
+- Depends on: —
+
+### F2 — Focus lands on the filters after a reset
+- Files: `src/scripts/list-pattern.ts` (and its pure helper + test if one is extracted)
+- Covers: R8, R9, R14 (keyboard), verification 1 finding 2
+- Acceptance: on `/projets`, `/prompts`, `/skills` and `/blog`, activating the empty state's reset button with the keyboard moves focus to the active (`Tous` / `Tout`) facet control of the first filter group instead of `<body>`; mouse behaviour unchanged; `npx vitest run` 0 failed; the seven check scripts exit 0
+- Depends on: —
+
+## Out of scope
+- Detail pages (plans 15–17): project `license`, stack roles, snippets; prompt `updated`, `useWhen`, `why`, `output`; skill `updated`, `triggers`, `changelog`, `files`, command / sub-skill counts; updating `superpowers`' `version` (6.2.0 in content, 6.3.0 / 6.4.1 in the plugin cache) and emptying `macos-clone`'s body.
+- A prompt `version` value (no source: slot stays hidden); `variables` values (no prompt has placeholders).
+- The prototype's "prochain projet" card; `/blog` changes; home and about gaps (18); version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-24)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | nav `/` › Projets › Prompts › Skills; both themes: segments, dropdowns, empty states, reset, real card clicks to detail pages; démo / repo URLs 200; every internal link on the lists 200 |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | `check-lists` 13 lines exact; exit 1 on 16 injected defect classes |
+| R6 | failed | lists include the new fields and 0 errors, **but removing `license` / `version` / `variables` from Zod leaves 305/305 green** — `cms-config.test.ts` compares the CMS to a hard-coded list |
+| R7 | proven | `license: MIT` × 2, numstat `1 0` × 2; LICENSE and `plugin.json` re-read for both plugins; D95/D97 flagged |
+| R8 | proven | WIP / Go / Archivé / reset / Astro flows, both themes |
+| R9 | proven | Guide, Guide + Claude empty state, reset; skills tag filters |
+| R10 | proven | segmented track and items values, 1280 both themes; hover `panel` |
+| R11 | proven | triggers, popover 230 / gap 10 / right-aligned, ✓, Escape, outside click, keyboard; 375 → x 8–238 |
+| R12 | proven | hero and grid-card values |
+| R13 | proven | prompt / skill cards: 3 columns, values, stats `134 l. · ~1597 tk` etc., `MIT`, install `break-all`, hover |
+| R14 | proven | empty states both themes, reset restores everything |
+| R15 | proven | no-JS iframes: entries once, controls hidden, links 200 |
+| R16 | proven | 0 overflow 375–1280; columns 1 / 2 / 3 at the stated breakpoints; hero stacking |
+| R17 | smoke | design MCP refused; prototype lines 345–400 + inventory: blocks, order, columns, px match; allowed differences only |
+| R18 | proven | audit 48 runs: 0 / 0 / 0 / 0 |
+| R19 | proven | radii ⊂ {7, 8, 10, 12, 14, 20, 24, 999}; mono / Nebula split |
+| R20 | proven | `1`, `4`, `0` |
+| R21 | proven | only `lists`, `v2`, `tags` lines change, as stated |
+| R22 | proven | `/blog` and article instruments identical; `/blog` walk holds |
+| R23 | proven | `matchesFilters` 1, diff empty, red under mutation |
+| R24 | proven | frozen diff empty; 305 tests; 0 errors |
+
+Findings → F1 (R6), F2 (focus lost after reset). Not taken: `/skills` empty state unreachable with today's content (built and styled, reachable once a second type exists); dropdown deep-link branch unused (only `?categorie=` is mapped) — kept for symmetry.
+
+### Verification 2 (2026-09-25, after F1–F2)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | `/` › Projets › WIP › Go › empty › reset › card click › back › démo; same via Prompts and Skills, both themes; lists and 7 detail pages 200 |
+| R1–R4 | proven | named tests pass; each red under targeted mutations |
+| R5 | proven | 13 lines exact; exit 1 on 17 injected defects |
+| R6 | proven | removing `version` / `variables` / `license` from Zod turns "mappe TOUS" red; removing `license` from `config.yml` red; required tests unchanged |
+| R7 | proven | `license: MIT` × 2, numstat exact; LICENSE and `plugin.json` re-read |
+| R8 | proven | projets flows both themes; keyboard reset → focus `Tous` (`:focus-visible`) |
+| R9 | proven | prompts and skills flows both themes; reset focus `Tous` |
+| R10–R14 | proven | segmented, dropdown, hero, grid card, compact cards and empty-state values both themes |
+| R15 | proven | no-JS iframes: entries visible, controls hidden, links 200 |
+| R16 | proven | 375–1280: 0 overflow, columns 1/2/2/2/3/3, hero stacking |
+| R17 | smoke | design MCP refused; prototype lines 345–400 + inventory match; allowed differences only |
+| R18 | proven | audit 54 runs: 0 / 0 / 0 / 0 |
+| R19 | proven | radii ⊂ {7, 8, 10, 12, 14, 20, 24, 999}; fonts as specified |
+| R20–R24 | proven | as stated; 312 tests; frozen diff empty |
+
+Carried to plan 18: pin `TZ` in the `featuredSince` test so it guards the UTC read on any machine; search Escape clears then closes (outside this plan).

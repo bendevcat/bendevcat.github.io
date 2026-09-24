@@ -1,10 +1,21 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListHeader from '../../components/ListHeader.astro';
+import SegmentedControl from '../../components/SegmentedControl.astro';
+import Dropdown from '../../components/Dropdown.astro';
+import FeaturedProject from '../../components/FeaturedProject.astro';
 import ProjectCard from '../../components/ProjectCard.astro';
+import ListEmpty from '../../components/ListEmpty.astro';
 import { getSortedProjects, collectStacks } from '../../lib/projects';
+import { projectFacets } from '../../lib/projectFilters';
 import { PROJECT_STATUSES } from '../../content.config';
 import { ALL } from '../../lib/facetFilters';
-import { pickFeaturedEntry } from '../../lib/listPattern';
+import { computeListState, facetCounts, pickFeaturedEntry, type ListLabels } from '../../lib/listPattern';
+
+// Plan 14, T4 (inventaire §3, prototype 344–431 ; D92–D93) : en-tête de liste,
+// barre de filtres (statut segmenté à gauche, menu techno à droite), héros
+// « à la une » puis grille de `.card` posés sur le fond de page — plus de
+// cadre englobant. Pas de carte « prochain projet » (texte de démo, D92).
 
 // getSortedProjects() applique déjà l'ordre du plan (featured, startDate desc,
 // titre) — cf. src/lib/projects.ts. Pas de re-tri ici.
@@ -12,15 +23,61 @@ const projects = await getSortedProjects();
 const stacks = collectStacks(projects);
 
 // Même règle de dérivation que src/scripts/list-pattern.ts (spec §6.1,
-// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, pour que la
-// carte « à la une » et sa copie masquée dans la grille pointent exactement
-// vers la même entrée que computeListState() désignerait sans filtre.
+// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, pour que le
+// héros et sa copie masquée dans la grille pointent exactement vers la même
+// entrée que computeListState() désignerait sans filtre.
 const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data.featured })));
 
-// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
-// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
-// jamais.
+// Source unique du vocabulaire : `data-list-nouns` ET la méta serveur.
 const NOUNS = ['projet', 'projets'] as const;
+
+// Comptes statiques (D93) : chaque valeur comptée sur TOUS les projets
+// publiés — `Archivé 0` reste, c'est lui qui mène à l'état vide.
+const entries = projects.map((project) => ({
+	id: project.id,
+	facets: projectFacets({ status: project.data.status, stack: project.data.stack }),
+	featured: project.data.featured,
+	date: project.data.startDate?.getTime() ?? 0,
+	minutes: 0,
+}));
+const STATUS_LABELS: Record<(typeof PROJECT_STATUSES)[number], string> = {
+	actif: 'Actif',
+	wip: 'WIP',
+	'archivé': 'Archivé',
+};
+const statusCounts = facetCounts(entries, 'status', [ALL, ...PROJECT_STATUSES]);
+const statusSegments = [
+	{ value: ALL, label: 'Tous', count: statusCounts[ALL] },
+	...PROJECT_STATUSES.map((status) => ({ value: status, label: STATUS_LABELS[status], count: statusCounts[status] })),
+];
+const stackCounts = facetCounts(entries, 'stack', [ALL, ...stacks]);
+const stackOptions = [
+	{ value: ALL, label: 'toutes', count: stackCounts[ALL] },
+	...stacks.map((tech) => ({ value: tech, label: tech, count: stackCounts[tech] })),
+];
+
+// Gabarit de l'état vide (D93) : `{status}` et `{stack}` se remplissent des
+// facettes actives, préfixées d'une espace et de ` en `.
+const EMPTY_TEMPLATE = "Aucun projet{status}{stack} pour l'instant.";
+
+// Méta serveur = premier texte calculé par le script (D57), par la MÊME
+// fonction et les mêmes libellés que ceux que list-pattern.ts lit dans la barre
+// (segments d'abord, puis menu). La phrase d'état vide serveur est celle du
+// gabarit sans facette ; le script la réécrit avant de l'afficher. (Les
+// préfixes d'emplacement vivent sur les contrôles : sans facette active, aucun
+// emplacement ne se remplit.)
+const labels: ListLabels = {
+	singular: NOUNS[0],
+	plural: NOUNS[1],
+	facets: [
+		{ key: 'status', label: 'statut' },
+		{ key: 'stack', label: 'techno' },
+	],
+	emptyTemplate: EMPTY_TEMPLATE,
+};
+const rest = { status: ALL, stack: ALL };
+const { meta } = computeListState(entries, rest, 'none', labels);
+const emptyText = computeListState([], rest, 'none', labels).empty ?? '';
 ---
 
 <BaseLayout
@@ -28,83 +85,49 @@ const NOUNS = ['projet', 'projets'] as const;
 	description="Les projets de bencat_ : extensions, outils et POCs."
 >
 	<main>
-		<section class="py-16">
-			<p class="font-mono text-sm text-accent">~/ projets</p>
-			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Projets</h1>
-		</section>
+		<ListHeader path="projets" title="Projets" />
 
-		<section class="pb-20" data-list data-list-nouns={NOUNS.join('|')}>
-			{/* 1 · pilules de filtre + 2 · dropdown — `hidden` côté serveur (contrainte n°5) */}
-			<div
-				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-				data-list-filters
-				hidden
-			>
-				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par techno">
-					<button
-						type="button"
-						data-facet-key="stack"
-						data-facet-label="techno"
-						data-facet-value={ALL}
-						aria-pressed="true"
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-					>
-						toutes
-					</button>
-					{
-						stacks.map((tech) => (
-							<button
-								type="button"
-								data-facet-key="stack"
-								data-facet-label="techno"
-								data-facet-value={tech}
-								aria-pressed="false"
-								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-							>
-								{tech}
-							</button>
-						))
-					}
-				</div>
-
-				<label class="flex items-center gap-2 font-mono text-xs text-muted">
-					statut
-					<select
-						data-facet-key="status"
-						data-facet-label="statut"
-						class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
-					>
-						<option value={ALL}>tous</option>
-						{PROJECT_STATUSES.map((status) => <option value={status}>{status}</option>)}
-					</select>
-				</label>
+		<section data-list data-list-nouns={NOUNS.join('|')} data-list-empty-template={EMPTY_TEMPLATE}>
+			{/* Barre de filtres, 22 px sous le h1 — `hidden` côté serveur, révélée par
+			     le script (pas de contrôle mort sans JS). Segments à gauche, menu à
+			     droite ; elle passe à la ligne quand la place manque. */}
+			<div class="mt-[22px] flex flex-wrap items-center justify-between gap-5" data-list-filters hidden>
+				<SegmentedControl
+					facetKey="status"
+					facetLabel="statut"
+					label="Filtrer par statut"
+					segments={statusSegments}
+					emptyPrefix=" "
+				/>
+				<Dropdown
+					label="techno"
+					icon="filter"
+					minWidth={230}
+					options={stackOptions}
+					selected={ALL}
+					data-facet-key="stack"
+					data-facet-label="techno"
+					data-facet-empty-prefix=" en "
+				/>
 			</div>
 
-			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7). Région
-			     live polie et atomique (plan 11, R6) : list-pattern.ts réécrit le texte
-			     de CE nœud à chaque filtre, le lecteur d'écran annonce le nouveau
-			     compte en entier. `muted` et non `dim` : `dim` sur `bg` = 4,19:1 en
-			     clair (R8). */}
-			<p class="mb-6 font-mono text-xs text-muted" data-list-meta aria-live="polite" aria-atomic="true">{projects.length} {projects.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
+			{/* Ligne de méta — le prototype n'en dessine pas : elle reste une région
+			     live polie et atomique (plan 11, R6), visuellement masquée (D93). */}
+			<p class="sr-only text-muted" data-list-meta aria-live="polite" aria-atomic="true">{meta}</p>
 
-			{/* Cadre des entrées (plan 11, D51 — V2) : à la une, grille et état vide
-			     dans UN `.card` (niveau `surface`), chaque carte d'entrée un
-			     `.card-inner` (niveau `card`) — un seul niveau d'écart, comme
-			     /tags/<tag> et la recherche. L'écart entre blocs est un `gap` : un
-			     bloc `hidden` (à la une filtrée, état vide) n'en laisse aucun. Une
-			     grille vide, elle, reste un élément flex et prendrait une place de
-			     `gap` (l'état vide ne serait plus centré) : le script la rend `hidden`
-			     dès qu'aucune carte n'y est visible (F2) ; le serveur jamais. */}
-			<div class="card flex flex-col gap-6 p-4 sm:p-6" data-list-frame>
-				{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
+			{/* Contenu, 18 px sous la barre : héros, grille, état vide — sans cadre
+			     (D92). L'écart est un `gap` : un bloc `hidden` n'en laisse aucun. */}
+			<div class="mt-[18px] flex flex-col gap-[18px]">
+				{/* Héros — UNE seule entrée, désignée côté serveur (décision I3) ;
+				     masqué par le script dès qu'une facette est active. */}
 				<div data-list-featured>
-					{featured && <ProjectCard project={featured} featured isFeaturedEntry />}
+					{featured && <FeaturedProject project={featured} />}
 				</div>
 
-				{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
-				     rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
+				{/* Grille — contient TOUTES les entrées ; celle du héros y est rendue
+				     `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
 				     chaque entrée exactement une fois (contrainte globale n°5). */}
-				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
+				<div class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
 					{
 						projects.map((project) => (
 							<ProjectCard
@@ -116,17 +139,7 @@ const NOUNS = ['projet', 'projets'] as const;
 					}
 				</div>
 
-				{/* 6 · état vide */}
-				<div class="flex flex-col items-start gap-3" data-list-empty hidden>
-					<p class="text-sm text-muted" data-list-empty-text></p>
-					<button
-						type="button"
-						data-list-reset
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-					>
-						voir tous les projets
-					</button>
-				</div>
+				<ListEmpty icon="folder" text={emptyText} resetLabel="voir tous les projets →" />
 			</div>
 		</section>
 

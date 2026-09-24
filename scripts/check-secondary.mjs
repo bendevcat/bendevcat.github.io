@@ -27,11 +27,15 @@
  * lignes de stdout. Code de sortie 1 s'il y en a au moins une.
  *
  * R4 — une puce de tag est, dans tout `dist/**.html` :
- * - un `li` d'un `ul[aria-label="Tags"]` (cartes /prompts et /skills, onglet
- *   Infos des fiches, puce d'en-tête de /tags/<slug>) ;
+ * - un `li` d'un `ul[aria-label="Tags"]` (onglet Infos des fiches, puce
+ *   d'en-tête de /tags/<slug>) ;
  * - sur /tags, un lien vers `/tags/<slug>/` ;
- * - un `button[data-facet-key="tag"]` autre que `tous` (filtre de /skills) ;
+ * - un `button[data-facet-key="tag"]` autre que `tous` (aucun depuis le
+ *   plan 14 : le filtre tag de /skills est un menu déroulant dont les options
+ *   ne portent pas `data-tag`) ;
  * - tout autre élément portant `data-tag`.
+ * Plan 14 : les cartes de /prompts et /skills ne portent plus de puces de tag
+ * (d'où 192 puces sur 41 pages au lieu de 208 sur 43).
  * Chacune doit porter `data-tag` (= slug de son libellé) et `data-tone`
  * (= ton haché du slug, FNV-1a 32 bits mod 5 — même calcul que `tagTone` de
  * src/lib/tags.ts, épinglé par tags.test.ts), les trois utilitaires de ce ton,
@@ -60,9 +64,9 @@
  *   `rounded-inner` (carte dessinée à la main au lieu du patron).
  *
  * Le compte des puces ignore la copie masquée par le serveur de la carte à la
- * une (`[data-entry-id][hidden]` dans la grille de /prompts et /skills) : elle
- * duplique la carte visible (patron de liste, plan 7 / I3). Ces copies sont
- * tout de même vérifiées.
+ * une (`[data-entry-id][hidden]` dans une grille de liste — seule /projets en
+ * a une depuis le plan 14, sans puce de tag) : elle duplique la carte visible
+ * (patron de liste, plan 7 / I3). Ces copies sont tout de même vérifiées.
  *
  * Aucune dépendance : même petit tokeniseur que scripts/check-home.mjs, avec
  * un lien enfant → parent pour remonter les ancêtres.

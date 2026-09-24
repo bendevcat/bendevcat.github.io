@@ -5,6 +5,7 @@ description: Superpowers is a complete software development methodology for your
 type: claude-code
 tags: [claude-code]
 version: 6.2.0
+license: MIT
 repoUrl: https://github.com/obra/superpowers
 installCmd: /plugin install superpowers@claude-plugins-official
 draft: false

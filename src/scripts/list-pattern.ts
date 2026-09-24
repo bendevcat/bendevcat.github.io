@@ -25,13 +25,29 @@
  * UNE fois au chargement ; une valeur proposée par un contrôle de la page est
  * pré-sélectionnée (méta et `aria-pressed` suivent), toute autre est ignorée.
  * L'URL n'est jamais réécrite ensuite.
+ *
+ * Plan 14, T3 (D93) — deux extensions, sans rien changer pour /blog :
+ * - une racine de menu `[data-dropdown][data-facet-key]` dans un groupe est un
+ *   contrôle de facette : valeur = `data-value`, `dropdown-change` → calcul,
+ *   remise à zéro → `setDropdownValue(racine, ALL)`, lien profond → valeur
+ *   posée sans événement ;
+ * - `data-list-empty-template` (sur `[data-list]`, à défaut n'importe où dans
+ *   la page) donne le gabarit de la phrase d'état vide, et
+ *   `data-facet-empty-prefix` sur un contrôle le préfixe de son emplacement
+ *   (voir listPattern.ts).
+ *
+ * Plan 14, F2 — après la remise à zéro, le focus passe au contrôle « Tous » /
+ * « Tout » du premier groupe (ou au déclencheur de son menu) : le bouton de
+ * remise à zéro disparaît avec l'état vide, et le focus tombait sur `<body>`.
  */
 import { ALL, type FacetSelection } from '../lib/facetFilters';
 import {
   computeListState,
   domOrder,
   facetsFromQuery,
+  resetFocusIndex,
   type FacetLabel,
+  type FocusCandidate,
   type ListEntry,
   type ListLabels,
   type SortOrder,
@@ -62,7 +78,11 @@ if (root && groups.length > 0 && grid) {
   const selects = groups.flatMap((group) =>
     Array.from(group.querySelectorAll<HTMLSelectElement>('select[data-facet-key]')),
   );
-  const controls = [...buttons, ...selects];
+  // Plan 14 : menus de facette (Dropdown.astro portant `data-facet-key`).
+  const facetDropdowns = groups.flatMap((group) =>
+    Array.from(group.querySelectorAll<HTMLElement>('[data-dropdown][data-facet-key]')),
+  );
+  const controls = [...buttons, ...selects, ...facetDropdowns];
 
   // Tri : `<select data-sort>` (base) ou racine de menu `[data-dropdown][data-sort]`
   // (plan 12). Cherché dans toute la page : la liste y est unique, et le menu
@@ -81,7 +101,7 @@ if (root && groups.length > 0 && grid) {
     singular,
     plural,
     // L'ordre d'affichage des facettes dans la ligne de méta suit l'ordre des
-    // contrôles dans la barre — pilules d'abord, puis dropdowns.
+    // contrôles dans la barre — pilules d'abord, puis `<select>`, puis menus.
     // Libellé de repos (plan 12, D75) : le premier `data-facet-all-label` non
     // vide porté par un contrôle de la facette.
     facets: controls
@@ -93,9 +113,25 @@ if (root && groups.length > 0 && grid) {
         const allLabel = controls.find(
           (el) => el.dataset.facetKey === facet.key && el.dataset.facetAllLabel,
         )?.dataset.facetAllLabel;
-        return allLabel ? { ...facet, allLabel } : facet;
+        // Plan 14 : préfixe d'emplacement du gabarit d'état vide — le premier
+        // `data-facet-empty-prefix` porté par un contrôle de la facette. Une
+        // chaîne vide est un préfixe valide (d'où `!== undefined`).
+        const emptyPrefix = controls.find(
+          (el) => el.dataset.facetKey === facet.key && el.dataset.facetEmptyPrefix !== undefined,
+        )?.dataset.facetEmptyPrefix;
+        return {
+          ...facet,
+          ...(allLabel ? { allLabel } : {}),
+          ...(emptyPrefix !== undefined ? { emptyPrefix } : {}),
+        };
       }),
   };
+  // Plan 14 : gabarit d'état vide déclaré par la page ; absent ou vide → phrase
+  // historique.
+  const emptyTemplate =
+    root.dataset.listEmptyTemplate ||
+    document.querySelector<HTMLElement>('[data-list-empty-template]')?.dataset.listEmptyTemplate;
+  if (emptyTemplate) labels.emptyTemplate = emptyTemplate;
 
   const entries: ListEntry[] = cards.map((card) => {
     let facets: Record<string, string[]> = {};
@@ -127,10 +163,25 @@ if (root && groups.length > 0 && grid) {
     const key = select.dataset.facetKey ?? '';
     if (key) (known[key] ??= []).push(...Array.from(select.options, (option) => option.value));
   }
+  for (const dropdown of facetDropdowns) {
+    const key = dropdown.dataset.facetKey ?? '';
+    if (key) {
+      (known[key] ??= []).push(
+        ...Array.from(
+          dropdown.querySelectorAll<HTMLElement>('[role="option"]'),
+          (option) => option.dataset.value ?? ALL,
+        ),
+      );
+    }
+  }
   Object.assign(selected, facetsFromQuery(window.location.search, known));
   for (const select of selects) {
     const key = select.dataset.facetKey ?? '';
     if (key && selected[key] !== ALL) select.value = selected[key];
+  }
+  for (const dropdown of facetDropdowns) {
+    const key = dropdown.dataset.facetKey ?? '';
+    if (key && selected[key] !== ALL) setDropdownValue(dropdown, selected[key]);
   }
 
   const apply = () => {
@@ -193,6 +244,16 @@ if (root && groups.length > 0 && grid) {
     });
   }
 
+  // Plan 14 : `data-value` est déjà à jour quand `dropdown-change` arrive
+  // (src/scripts/dropdown.ts) ; un menu sans valeur revient à la sentinelle.
+  for (const dropdown of facetDropdowns) {
+    dropdown.addEventListener(DROPDOWN_CHANGE, () => {
+      const key = dropdown.dataset.facetKey ?? '';
+      if (key) selected[key] = dropdown.dataset.value || ALL;
+      apply();
+    });
+  }
+
   sortSelect?.addEventListener('change', apply);
   // `dropdown-change` n'est émis que sur un vrai changement ; `data-value` est
   // déjà à jour quand il arrive (src/scripts/dropdown.ts).
@@ -203,11 +264,43 @@ if (root && groups.length > 0 && grid) {
   resetButton?.addEventListener('click', () => {
     for (const key of Object.keys(selected)) selected[key] = ALL;
     for (const select of selects) select.value = ALL;
+    for (const dropdown of facetDropdowns) setDropdownValue(dropdown, ALL);
     if (sortSelect) sortSelect.value = 'none';
     if (sortDropdown) setDropdownValue(sortDropdown, initialSort);
     apply();
     groups[0].scrollIntoView({ block: 'nearest' });
+    // F2 : le bouton vient d'être masqué avec l'état vide — sans cible, le
+    // focus tomberait sur `<body>`. Au clic souris, le focus programmatique ne
+    // dessine pas d'anneau (`:focus-visible` suit la modalité d'entrée).
+    resetFocusTarget()?.focus();
   });
+
+  // Contrôles du PREMIER groupe dans l'ordre du DOM ; resetFocusIndex() choisit
+  // (listPattern.ts, testé). Un menu est focalisé par son déclencheur.
+  function resetFocusTarget(): HTMLElement | null {
+    const firstControls = Array.from(
+      groups[0].querySelectorAll<HTMLElement>(
+        'button[data-facet-key], select[data-facet-key], [data-dropdown][data-facet-key]',
+      ),
+    );
+    const candidates = firstControls.map(
+      (el): FocusCandidate => ({
+        kind: el.hasAttribute('data-dropdown')
+          ? 'dropdown'
+          : el instanceof HTMLSelectElement
+            ? 'select'
+            : 'button',
+        key: el.dataset.facetKey ?? '',
+        value: el.dataset.facetValue,
+      }),
+    );
+    const index = resetFocusIndex(candidates);
+    if (index === null) return null;
+    const target = firstControls[index];
+    return target.hasAttribute('data-dropdown')
+      ? target.querySelector<HTMLElement>('[data-dropdown-trigger]')
+      : target;
+  }
 
   for (const group of groups) group.hidden = false;
   apply();

@@ -1,4 +1,18 @@
 ---
+/**
+ * ProjectCard.astro — carte de la grille /projets (plan 14, T4 ; inventaire
+ * §3, prototype 344–431, D92).
+ *
+ * Un `.card` (surface, rayon 20) posé sur le fond de page — plus de cadre
+ * englobant ni de `.card-inner` (D67 remplace D51 sur cette liste). Padding
+ * 8/8/22, écart 14 : vignette `tile` (120 px, rayon 14, `data-rail`, sans
+ * monogramme) avec la pilule de statut incrustée en bas à gauche (12 px) ;
+ * puis, en retrait de 14 px, titre h2 18 / 600, description 13 `muted`,
+ * technos (rayon 7, padding 3/8, `chip`, mono 10 `muted`).
+ *
+ * Le lien du titre est étiré sur toute la carte (`after:inset-0`) : une
+ * seule cible, aucun lien imbriqué. Survol : titre `accent`.
+ */
 import type { CollectionEntry } from 'astro:content';
 import { PROJECT_STATUS_META } from '../lib/projectStatus';
 import { projectFacets } from '../lib/projectFilters';
@@ -6,39 +20,30 @@ import Thumbnail from './Thumbnail.astro';
 
 interface Props {
   project: CollectionEntry<'projects'>;
-  /** Variante « à la une » : carte large, vignette en 16/7. */
-  featured?: boolean;
-  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
+  /** Masquée côté serveur — la même entrée est déjà rendue dans le héros. */
   hidden?: boolean;
   /**
    * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
-   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
-   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
+   * `pickFeaturedEntry()` (spec §6.1). Pilote `data-featured` (fix 3, revue
+   * finale de Plan 7).
    */
   isFeaturedEntry?: boolean;
 }
 
-const { project, featured = false, hidden = false, isFeaturedEntry = false } = Astro.props;
+const { project, hidden = false, isFeaturedEntry = false } = Astro.props;
 const { title, description, status, stack, cover, coverAlt } = project.data;
 const statusMeta = PROJECT_STATUS_META[status];
 const facets = JSON.stringify(projectFacets({ status, stack }));
 ---
 
 {/*
-  Contrat de carte commun aux quatre listes (Plan 7 / I4), lu par
+  Contrat de carte commun aux listes (Plan 7 / I4), lu par
   src/scripts/list-pattern.ts. `data-facet` est du JSON : aucune valeur de
-  facette ne peut casser le parsing, quel que soit son libellé. `data-featured`
-  reflète le choix RÉEL du serveur (`isFeaturedEntry`), pas la seule présence
-  de `project.data.featured` : sur /blog, /prompts et /skills aucune entrée ne
-  porte ce champ, et les deux côtés ne s'accordaient que par coïncidence
-  d'ordre — fix 3, revue finale de Plan 7.
+  facette ne peut casser le parsing. `data-featured` reflète le choix RÉEL du
+  serveur (`isFeaturedEntry`).
 */}
-<a
-  href={`/projets/${project.id}/`}
-  class:list={[
-    'group flex flex-col gap-3 card-inner p-4 transition-colors hover:border-accent/50',
-    featured && 'sm:col-span-2 lg:col-span-3',
-  ]}
+<article
+  class="card group relative flex flex-col gap-3.5 px-2 pt-2 pb-[22px]"
   data-entry-id={project.id}
   data-facet={facets}
   data-date={project.data.startDate?.getTime() ?? 0}
@@ -46,35 +51,31 @@ const facets = JSON.stringify(projectFacets({ status, stack }));
   data-featured={isFeaturedEntry ? '' : undefined}
   hidden={hidden}
 >
-  <Thumbnail
-    cover={cover}
-    coverAlt={coverAlt}
-    title={title}
-    derivedFrom={status}
-    size={featured ? 'featured' : 'card'}
-  />
+  <div class="relative">
+    <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={status} size="tile" />
+    <span
+      class={`absolute bottom-3 left-3 rounded-pill border px-[11px] py-[5px] font-mono text-[11px] leading-none ${statusMeta.chipClass}`}
+      data-card-status
+    >
+      {statusMeta.label}
+    </span>
+  </div>
 
-  <span
-    class={`w-fit rounded-pill border px-2 py-0.5 font-mono text-xs ${statusMeta.chipClass}`}
-  >
-    {statusMeta.label}
-  </span>
+  <h2 class="px-3.5 font-sans text-lg leading-snug font-semibold text-ink transition-colors group-hover:text-accent">
+    <a href={`/projets/${project.id}/`} class="after:absolute after:inset-0 after:rounded-card">{title}</a>
+  </h2>
 
-  <h3 class="font-sans text-lg font-semibold text-ink group-hover:text-accent">
-    {title}
-  </h3>
-
-  <p class="text-sm text-muted">{description}</p>
+  <p class="px-3.5 text-[13px] leading-normal text-muted">{description}</p>
 
   {
     stack.length > 0 && (
-      <ul class="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Technologies">
+      <ul class="flex flex-wrap gap-1.5 px-3.5" aria-label="Technologies">
         {stack.map((tech) => (
-          <li class="rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
+          <li class="rounded-small bg-chip px-2 py-[3px] font-mono text-[10px] text-muted" data-card-stack>
             {tech}
           </li>
         ))}
       </ul>
     )
   }
-</a>
+</article>

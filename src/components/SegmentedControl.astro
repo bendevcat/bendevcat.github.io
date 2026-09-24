@@ -1,0 +1,76 @@
+---
+/**
+ * SegmentedControl.astro (plan 14, T4 ; inventaire §0 « Segmented control »,
+ * prototype 351–355, D93) — la facette principale des listes /projets
+ * (statut), /prompts (format) et /skills (type).
+ *
+ * - Piste `[data-segmented]` `role="group"` : padding 5, fond `chip`,
+ *   bordure 1 px `line`, rayon 999, écart 4, sans retour à la ligne. Sous
+ *   640 px, elle passe à la ligne avec un rayon de 20 (précédent D77).
+ * - Segments : boutons portant `data-facet-key`, `data-facet-label`,
+ *   `data-facet-value` et `aria-pressed` — le contrat des pilules que lit
+ *   src/scripts/list-pattern.ts (qui tient `aria-pressed` à jour).
+ *   Padding 8/16, 14 px sans, écart 8.
+ *   Pressé : fond `card`, bordure `line`, `ink`, 500, badge sur `chip` ;
+ *   sinon transparent (bordure 1 px transparente, pour ne pas bouger au
+ *   clic), `muted`, badge sur `card`, survol `panel`.
+ * - Badge de compte `[data-segment-count]` : 20 × 20 au moins, padding 0/6,
+ *   rayon 999, mono 11 `muted`. Le texte du segment est `<libellé> <compte>`
+ *   (l'espace est un nœud texte, ignoré par la mise en page flex).
+ *
+ * Les comptes sont statiques (facetCounts, D93) : calculés par la page sur
+ * toutes les entrées publiées, ils ne bougent pas quand on filtre.
+ */
+import { ALL } from '../lib/facetFilters';
+
+export interface Segment {
+  value: string;
+  label: string;
+  count: number;
+}
+
+interface Props {
+  /** Clé de facette (`status`, `format`, `type`) — celle de `data-facet` des cartes. */
+  facetKey: string;
+  /** Libellé de la facette dans la méta (`statut`, `format`, `type`). */
+  facetLabel: string;
+  /** Nom accessible du groupe (`Filtrer par statut`). */
+  label: string;
+  segments: Segment[];
+  /** Valeur pressée au rendu ; `ALL` par défaut. */
+  selected?: string;
+  /** Préfixe de l'emplacement `{clé}` du gabarit d'état vide (`data-facet-empty-prefix`). */
+  emptyPrefix?: string;
+}
+
+const { facetKey, facetLabel, label, segments, selected = ALL, emptyPrefix } = Astro.props;
+---
+
+<div
+  data-segmented
+  role="group"
+  aria-label={label}
+  class="flex max-w-full flex-wrap gap-1 rounded-card border border-line bg-chip p-[5px] whitespace-nowrap sm:flex-nowrap sm:rounded-pill"
+>
+  {
+    segments.map((segment) => (
+      <button
+        type="button"
+        data-facet-key={facetKey}
+        data-facet-label={facetLabel}
+        data-facet-value={segment.value}
+        data-facet-empty-prefix={emptyPrefix}
+        aria-pressed={segment.value === selected ? 'true' : 'false'}
+        class="group inline-flex cursor-pointer items-center gap-2 rounded-pill border border-transparent px-4 py-2 font-sans text-sm text-muted transition-colors not-aria-pressed:hover:bg-panel aria-pressed:border-line aria-pressed:bg-card aria-pressed:font-medium aria-pressed:text-ink"
+      >
+        <span>{segment.label}</span>{' '}
+        <span
+          data-segment-count
+          class="inline-flex h-5 min-w-5 items-center justify-center rounded-pill bg-card px-1.5 font-mono text-[11px] leading-none text-muted group-aria-pressed:bg-chip"
+        >
+          {segment.count}
+        </span>
+      </button>
+    ))
+  }
+</div>

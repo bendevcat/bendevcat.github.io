@@ -56,8 +56,17 @@ const prompts = defineCollection({
     description: z.string(),
     format: z.enum(PROMPT_FORMATS).default('fiche'),
     prompt: z.string().optional(),
+    // Plan 14 (D94) : forme de l'inventaire §11, lue par la carte (`N variables`)
+    // et par la fiche prompt (plan 16). Vide tant qu'aucune source n'existe.
+    variables: z.array(z.object({
+      name: z.string(),
+      hint: z.string().optional(),
+      default: z.string().optional(),
+    })).optional(),
     tool: z.string().default('Claude'),
     model: z.string().optional(),
+    // Plan 14 (D94) : pastille `v<version>` de la carte, masquée sans valeur.
+    version: z.string().optional(),
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
     relatedSkills: z.array(reference('skills')).optional(),
@@ -76,6 +85,9 @@ const skills = defineCollection({
     type: z.string().default('claude-code'),
     tags: z.array(z.string()).default([]),
     version: z.string().optional(),
+    // Plan 14 (D95) : identifiant de licence tel qu'écrit dans le LICENSE du
+    // plugin (ex. `MIT`) — rempli uniquement depuis cette source.
+    license: z.string().optional(),
     repoUrl: z.string().url().optional(),
     installCmd: z.string().optional(),
     draft: z.boolean().default(false),

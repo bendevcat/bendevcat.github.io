@@ -117,6 +117,8 @@
   --radius-nested: 12px;  /* bloc de code, carte liée d'un rail */
   --radius-tile: 13px;    /* tuile 40×40 de la carte IA */
   --radius-hero: 16px;    /* image de couverture, carte IA */
+  /* rayon des listes (prototype 344–431, plan 14, D92) : */
+  --radius-feature: 24px; /* héros « à la une » de /projets */
 
   /* — coque (plan 12, prototype `max-width:1180px`) : utilitaire `max-w-shell`,
      porté par la rangée d'en-tête, l'enveloppe du contenu et le pied de page,

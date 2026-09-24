@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro:content';
-import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS } from '../content.config';
+import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS, collections } from '../content.config';
 
 /**
  * Charge la config réelle du CMS (public/admin/config.yml) telle qu'elle sera
@@ -11,6 +11,27 @@ import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS } from '../content.config'
  */
 export function loadCmsConfig(): any {
   return parse(readFileSync(new URL('../../public/admin/config.yml', import.meta.url), 'utf8'));
+}
+
+/**
+ * Champs attendus dans le CMS pour une collection, LUS dans le schéma Zod de
+ * `src/content.config.ts` (clés de son `z.object`) + `body` — jamais tapés à
+ * la main. Constat F1 (plan 14, vérification 1) : avec des listes écrites dans
+ * le test, retirer `license` (skills), `version` ou `variables` (prompts) du
+ * schéma laissait toute la suite verte, sans que CMS et schéma soient d'accord.
+ * `blog` et `projects` déclarent `schema: ({ image }) => z.object(...)` : on
+ * appelle la fonction avec un `image()` factice, seules les clés comptent ici.
+ */
+function schemaFieldNames(name: keyof typeof collections): string[] {
+  const raw: any = collections[name].schema;
+  const schema = typeof raw === 'function' ? raw({ image: () => z.string() }) : raw;
+  return [...Object.keys(schema.shape), 'body'].sort();
+}
+
+/** Noms des champs déclarés dans `public/admin/config.yml` pour une collection, triés. */
+function cmsFieldNames(name: string): string[] {
+  const coll = loadCmsConfig().collections.find((c: any) => c.name === name);
+  return coll.fields.map((f: any) => f.name).sort();
 }
 
 /**
@@ -166,10 +187,7 @@ describe('config CMS — collection blog', () => {
   });
 
   it('mappe tous les champs du schéma Zod', () => {
-    expect(fieldNames().sort()).toEqual([
-      'aiUsage', 'body', 'category', 'cover', 'coverAlt', 'description',
-      'draft', 'featured', 'pubDate', 'relatedProjects', 'tags', 'title', 'updatedDate',
-    ]);
+    expect(fieldNames().sort()).toEqual(schemaFieldNames('blog'));
   });
 
   it('rend obligatoires exactement les champs non-optionnels du Zod', () => {
@@ -237,10 +255,7 @@ describe('config CMS — collection projects', () => {
   });
 
   it('mappe tous les champs du schéma Zod', () => {
-    expect(fieldNames().sort()).toEqual([
-      'body', 'coverAlt', 'cover', 'demoUrl', 'description', 'featured',
-      'relatedPosts', 'repoUrl', 'stack', 'startDate', 'status', 'tags', 'title',
-    ].sort());
+    expect(fieldNames().sort()).toEqual(schemaFieldNames('projects'));
   });
 
   it('rend obligatoires exactement les champs non-optionnels du Zod', () => {
@@ -400,6 +415,14 @@ describe('config CMS — collection prompts', () => {
   });
 
   it('mappe TOUS les champs du schéma Zod, et rien de plus', () => {
+    // Liste attendue lue dans le schéma (F1) : retirer `version` ou
+    // `variables` du Zod fait échouer ce test.
+    expect(cmsFieldNames('prompts')).toEqual(schemaFieldNames('prompts'));
+  });
+
+  it('présente les champs dans l’ordre du formulaire', () => {
+    // Ordre d'affichage propre au CMS (le jeu de champs, lui, est vérifié
+    // contre le schéma ci-dessus).
     const cfg = loadCmsConfig();
     const coll = cfg.collections.find((c: any) => c.name === 'prompts');
     expect(coll.fields.map((f: any) => f.name)).toEqual([
@@ -407,8 +430,10 @@ describe('config CMS — collection prompts', () => {
       'description',
       'format',
       'prompt',
+      'variables',
       'tool',
       'model',
+      'version',
       'tags',
       'draft',
       'relatedSkills',
@@ -444,6 +469,8 @@ describe('config CMS — collection prompts', () => {
     expect(byName.prompt.widget).toBe('text');
     expect(byName.tool.widget).toBe('string');
     expect(byName.model.widget).toBe('string');
+    expect(byName.version.widget).toBe('string');
+    expect(byName.variables.widget).toBe('list');
     expect(byName.tags.widget).toBe('list');
     expect(byName.draft.widget).toBe('boolean');
     expect(byName.body.widget).toBe('markdown');
@@ -454,6 +481,22 @@ describe('config CMS — collection prompts', () => {
     const f = field(cfg, 'prompts', 'format');
     expect(f.options.map((o: any) => o.value)).toEqual([...PROMPT_FORMATS]);
     expect(f.default).toBe('fiche');
+  });
+
+  it('décrit chaque variable comme `{name, hint?, default?}`, comme le schéma Zod (plan 14, D94)', () => {
+    // Forme de l'inventaire §11, réutilisée par la fiche prompt (plan 16).
+    // `name` est le seul sous-champ requis : un sous-champ optionnel laissé
+    // vide est omis (`omit_empty_optional_fields`) et Zod l'accepte absent.
+    const f = field(loadCmsConfig(), 'prompts', 'variables');
+    expect(f.required).toBe(false);
+    const sub = Object.fromEntries(f.fields.map((x: any) => [x.name, x]));
+    expect(f.fields.map((x: any) => x.name)).toEqual(['name', 'hint', 'default']);
+    expect(sub.name.widget).toBe('string');
+    expect(sub.name.required).not.toBe(false);
+    expect(sub.hint.widget).toBe('string');
+    expect(sub.hint.required).toBe(false);
+    expect(sub.default.widget).toBe('string');
+    expect(sub.default.required).toBe(false);
   });
 
   it('garde le défaut `Claude` sur `tool`, comme le schéma Zod', () => {
@@ -486,6 +529,14 @@ describe('config CMS — collection skills', () => {
   });
 
   it('mappe TOUS les champs du schéma Zod, et rien de plus', () => {
+    // Liste attendue lue dans le schéma (F1) : retirer `license` du Zod fait
+    // échouer ce test.
+    expect(cmsFieldNames('skills')).toEqual(schemaFieldNames('skills'));
+  });
+
+  it('présente les champs dans l’ordre du formulaire', () => {
+    // Ordre d'affichage propre au CMS (le jeu de champs, lui, est vérifié
+    // contre le schéma ci-dessus).
     const cfg = loadCmsConfig();
     const coll = cfg.collections.find((c: any) => c.name === 'skills');
     expect(coll.fields.map((f: any) => f.name)).toEqual([
@@ -494,6 +545,7 @@ describe('config CMS — collection skills', () => {
       'description',
       'type',
       'version',
+      'license',
       'repoUrl',
       'installCmd',
       'tags',
@@ -522,6 +574,7 @@ describe('config CMS — collection skills', () => {
     expect(byName.description.widget).toBe('text');
     expect(byName.type.widget).toBe('string');
     expect(byName.version.widget).toBe('string');
+    expect(byName.license.widget).toBe('string');
     expect(byName.repoUrl.widget).toBe('string');
     expect(byName.installCmd.widget).toBe('string');
     expect(byName.tags.widget).toBe('list');

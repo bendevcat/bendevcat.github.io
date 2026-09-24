@@ -1,76 +1,67 @@
 ---
+/**
+ * SkillCard.astro — carte de la grille /skills (plan 14, T5 ; inventaire
+ * §7, prototype 738–793, D92–D95).
+ *
+ * Même cadre que PromptCard : un `.card` posé sur le fond de page, padding
+ * 22/22/18, écart 12, sans vignette, sans puces de tag, sans variante « à
+ * la une » (D92). Ligne du haut, mono 10 : pilule de type (`accentSoft` /
+ * `accent`), pilule de licence (`chip` / `muted`, seulement quand elle est
+ * déclarée), puis `v<version>` `muted` poussé à droite. Titre h2 18 / 600 ;
+ * description 13,5 `muted` ; commande d'installation mono 11 `accent`,
+ * coupée n'importe où (`break-all`) pour rester dans la carte ; pied (filet
+ * `line2`, mono 10,5 `muted`) : résumé `N prompt(s)` (`accent`, prompts liés
+ * publiés, omis à 0) puis `ouvrir la fiche →` à droite.
+ *
+ * Les chaînes viennent de skillCardData() (src/lib/listCards.ts, D94) ;
+ * `null` = emplacement absent. Chaque valeur affichée porte
+ * `data-card-field`, lu par scripts/check-lists.mjs — qui compare le texte
+ * de `install` à l'`installCmd` de l'entrée, d'où le texte brut, sans
+ * blanc autour.
+ *
+ * Le lien du titre est étiré sur toute la carte (`after:inset-0`) : une
+ * seule cible, aucun lien imbriqué. Survol : fond `cardHover`, titre `accent`.
+ */
 import type { CollectionEntry } from 'astro:content';
-import TagChip from './TagChip.astro';
-import Thumbnail from './Thumbnail.astro';
+import { skillCardData } from '../lib/listCards';
 
 interface Props {
   skill: CollectionEntry<'skills'>;
-  /** Variante « à la une » : carte large, vignette en 16/7. */
-  featured?: boolean;
-  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
-  hidden?: boolean;
-  /**
-   * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
-   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
-   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
-   */
-  isFeaturedEntry?: boolean;
+  /** Prompts liés, déjà résolus (assertEntriesResolved) par la page. */
+  relatedPrompts: CollectionEntry<'prompts'>[];
 }
 
-const { skill, featured = false, hidden = false, isFeaturedEntry = false } = Astro.props;
-const { title, description, type, version, tags } = skill.data;
+const { skill, relatedPrompts } = Astro.props;
+const { title, description, type, tags } = skill.data;
+const card = skillCardData(skill.data, relatedPrompts);
 
 // Même contrat que PromptCard.astro, lu par src/scripts/list-pattern.ts.
 const facets = JSON.stringify({ type: [type], tag: tags });
 ---
 
-{/*
-  `data-featured` reflète le choix RÉEL du serveur (`isFeaturedEntry`) : le
-  schéma `skills` n'a pas de champ `featured` (état mesuré du plan), donc sans
-  cet attribut explicite le client ne pouvait retrouver l'entrée à la une que
-  par coïncidence d'ordre — fix 3, revue finale de Plan 7.
-*/}
-<a
-  href={`/skills/${skill.id}/`}
-  class:list={[
-    'group flex flex-col gap-3 card-inner p-4 transition-colors hover:border-accent/50',
-    featured && 'sm:col-span-2 lg:col-span-3',
-  ]}
+<article
+  class="card group relative flex flex-col gap-3 px-[22px] pt-[22px] pb-[18px] transition-colors hover:bg-cardHover"
   data-entry-id={skill.id}
   data-facet={facets}
   data-date={0}
   data-minutes={0}
-  data-featured={isFeaturedEntry ? '' : undefined}
-  hidden={hidden}
 >
-  <Thumbnail title={title} derivedFrom={type} size={featured ? 'featured' : 'card'} />
-
-  <div class="flex flex-wrap items-center gap-2">
-    <span class="w-fit rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
-      {type}
-    </span>
-    {
-      version && (
-        <span class="w-fit rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
-          v{version}
-        </span>
-      )
-    }
+  <div class="flex items-center gap-2 font-mono text-[10px] leading-none">
+    <span class="rounded-pill bg-accentSoft px-2 py-1 text-accent" data-card-field="type">{card.type}</span>
+    {card.license && <span class="rounded-pill bg-chip px-2 py-1 text-muted" data-card-field="license">{card.license}</span>}
+    {card.version && <span class="ml-auto text-muted" data-card-field="version">{card.version}</span>}
   </div>
 
-  <h3 class="font-sans text-lg font-semibold text-ink group-hover:text-accent">
-    {title}
-  </h3>
+  <h2 class="font-sans text-lg leading-snug font-semibold text-ink transition-colors group-hover:text-accent">
+    <a href={`/skills/${skill.id}/`} class="after:absolute after:inset-0 after:rounded-card">{title}</a>
+  </h2>
 
-  <p class="text-sm text-muted">{description}</p>
+  <p class="flex-1 text-[13.5px] leading-normal text-muted">{description}</p>
 
-  {
-    tags.length > 0 && (
-      <ul class="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Tags">
-        {tags.map((tag) => (
-          <TagChip tag={tag} />
-        ))}
-      </ul>
-    )
-  }
-</a>
+  {card.install && <p class="font-mono text-[11px] leading-normal break-all text-accent" data-card-field="install">{card.install}</p>}
+
+  <div class="flex items-center gap-1.5 border-t border-line2 pt-3 font-mono text-[10.5px] text-muted">
+    {card.summary && <span class="text-accent" data-card-field="summary">{card.summary}</span>}
+    <span class="ml-auto whitespace-nowrap" aria-hidden="true">ouvrir la fiche →</span>
+  </div>
+</article>
