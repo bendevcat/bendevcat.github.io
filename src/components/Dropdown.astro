@@ -1,0 +1,149 @@
+---
+/**
+ * Dropdown.astro (plan 12, T3) — LE menu déroulant du site : tri de /blog
+ * (plan 12), facettes techno / outil / tag de /projets et /prompts (plan 14).
+ * Inventaire §0 « Dropdown », décision D75.
+ *
+ * - Déclencheur (prototype l. 197) : bouton transparent, padding 7/10,
+ *   rayon 10, écart 8, mono 11 `muted` ; au survol fond `chip` et texte
+ *   `ink` ; icône 14 + `label :` + valeur `ink`/500 + caret `muted` (le
+ *   prototype dessine `dim` : D71) ; `aria-haspopup="listbox"`,
+ *   `aria-expanded`.
+ * - Popover (prototype l. 199) : `role="listbox"`, colonne à écart 2,
+ *   `top: calc(100% + 10px)`, aligné à droite, largeur mini `minWidth` en
+ *   boîte de BORDURE (216 par défaut ; 250 pour le tri = les 236 px de
+ *   `min-width` du prototype, posés en boîte de contenu, + 2 × 6 de padding
+ *   + 2 × 1 de bordure — plan 12, F3) ; s'il
+ *   déborderait de la fenêtre, le script le glisse et plafonne sa largeur à
+ *   la fenêtre moins 2 × 8 px (placePopover, plan 12 F2) ; 300 px de haut
+ *   au plus puis défilement, padding 6, rayon 14, `surface`, bordure `line`,
+ *   ombre `var(--shadow)` posée par global.css — jamais l'utilitaire
+ *   `.shadow`, figé en clair au build. (Le prototype pose une ombre plus
+ *   légère, `0 6px 14px -12px rgba(16,24,34,.20), 0 1px 3px -3px
+ *   rgba(16,24,34,.10)`, hors token et sans variante sombre : on garde le
+ *   token `--shadow`.)
+ * - Options (prototype l. 200–203) : mono 11, padding 9/11, rayon 10, écart
+ *   9, survol `chip` ; icône facultative 14×14 en tête (`option.icon`, les
+ *   quatre options de tri en portent une). L'option choisie porte `✓`,
+ *   `accent`, fond `accent` à 8 %, graisse 600 et `aria-selected="true"` ;
+ *   le `✓` (D78) occupe la tête de l'option sans icône, la fin de l'option
+ *   qui en a une (l'icône garde la place que lui donne le prototype). Compte
+ *   facultatif à droite, mono 10 `muted` (le prototype dessine `dim`, qui
+ *   échoue AA : plan 12, « AA over the prototype »).
+ * - Comportement : src/scripts/dropdown.ts (glue) + src/lib/dropdown.ts
+ *   (clavier, testé). La racine garde `data-value` et émet `dropdown-change`.
+ * - Enhancement progressif : racine rendue `hidden`, révélée par le script —
+ *   sans JS, aucun contrôle mort.
+ *
+ * Tout attribut supplémentaire (`data-sort`, `data-facet-key`…) est posé sur
+ * la racine, pour que le moteur de liste la retrouve.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Icon, { type IconName } from './Icon.astro';
+import { indexOfValue, type DropdownOption } from '../lib/dropdown';
+
+interface Props extends Omit<HTMLAttributes<'div'>, 'hidden' | 'id'> {
+  /** Libellé du menu, affiché `label :` sur le déclencheur (ex. `tri`, `techno`). */
+  label: string;
+  options: DropdownOption<IconName>[];
+  /** Valeur choisie ; absente ou inconnue → première option. */
+  selected?: string;
+  /** Largeur minimale du popover, en px, boîte de bordure (216 ; 250 pour le tri). */
+  minWidth?: number;
+  icon?: 'sort' | 'filter';
+  /** Préfixe d'id, à fournir si deux menus de même libellé partagent une page. */
+  id?: string;
+}
+
+const {
+  label,
+  options,
+  selected,
+  minWidth = 216,
+  icon = 'sort',
+  id,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const slug = label
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '');
+const baseId = id ?? `dropdown-${slug || 'menu'}`;
+const listId = `${baseId}-listbox`;
+
+const current = options[indexOfValue(options.map((option) => option.value), selected)];
+---
+
+<div
+  data-dropdown
+  data-value={current?.value ?? ''}
+  hidden
+  class:list={['relative inline-block', className]}
+  {...rest}
+>
+  <button
+    type="button"
+    data-dropdown-trigger
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-controls={listId}
+    class="inline-flex cursor-pointer items-center gap-2 rounded-thumb bg-transparent px-2.5 py-[7px] font-mono text-[11px] whitespace-nowrap text-muted transition-colors hover:bg-chip hover:text-ink"
+  >
+    <Icon name={icon} size={14} />
+    <span>{label} :</span>
+    <span data-dropdown-value class="font-medium text-ink">{current?.label ?? ''}</span>
+    <Icon name="chevron-down" size={12} class="text-muted" />
+  </button>
+  <ul
+    id={listId}
+    role="listbox"
+    aria-label={label}
+    tabindex="-1"
+    hidden
+    data-dropdown-listbox
+    data-min-width={minWidth}
+    class="absolute top-[calc(100%+10px)] right-0 z-20 flex max-h-[300px] flex-col gap-0.5 max-w-[calc(100vw-16px)] overflow-auto rounded-inner border border-line bg-surface p-1.5"
+    style={`min-width: min(${minWidth}px, calc(100vw - 16px))`}
+  >
+    {
+      options.map((option) => {
+        const isSelected = option.value === current?.value;
+        return (
+          <li
+            role="option"
+            data-value={option.value}
+            data-label={option.label}
+            aria-selected={isSelected ? 'true' : 'false'}
+            tabindex="-1"
+            class="flex cursor-pointer items-center gap-[9px] rounded-thumb px-[11px] py-[9px] font-mono text-[11px] whitespace-nowrap text-body not-aria-selected:hover:bg-chip not-aria-selected:focus:bg-chip aria-selected:bg-accent/8 aria-selected:font-semibold aria-selected:text-accent"
+          >
+            <span
+              data-dropdown-check
+              aria-hidden="true"
+              class:list={[
+                'w-3 shrink-0 text-center',
+                option.icon && 'order-last',
+                option.icon && option.count === undefined && 'ml-auto',
+              ]}
+            >
+              {isSelected ? '✓' : ''}
+            </span>
+            {option.icon && <Icon name={option.icon} size={14} />}
+            <span>{option.label}</span>
+            {option.count !== undefined && (
+              <span class="ml-auto pl-3 font-mono text-[10px] font-normal text-muted">{option.count}</span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<script>
+  import '../scripts/dropdown.ts';
+</script>

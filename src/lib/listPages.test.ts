@@ -16,7 +16,10 @@ import { resolve } from 'node:path';
 
 const SRC = resolve(__dirname, '..');
 const LISTS = ['blog', 'projets', 'prompts', 'skills'] as const;
-const CARDS = ['ArticleCard', 'ProjectCard', 'PromptCard', 'SkillCard'] as const;
+// /blog n'a plus d'entrée à la une ni de cartes (plan 12, T5 : rail + lignes
+// compactes) — ses gardes sont dans le bloc « blog list (plan 12, T5) ».
+const FEATURED_LISTS = ['projets', 'prompts', 'skills'] as const;
+const CARDS = ['ProjectCard', 'PromptCard', 'SkillCard'] as const;
 
 const read = (path: string) => readFileSync(resolve(SRC, path), 'utf8');
 const listPage = (list: string) => read(`pages/${list}/index.astro`);
@@ -60,7 +63,7 @@ describe('list pages (plan 11, T3)', () => {
   });
 
   it('frames featured, grid and empty state in one .card on each list', () => {
-    for (const list of LISTS) {
+    for (const list of FEATURED_LISTS) {
       const source = listPage(list);
       const frames = openingTags(source, 'data-list-frame');
       expect(frames, `${list}: un seul cadre`).toHaveLength(1);
@@ -119,5 +122,55 @@ describe('list pages (plan 11, T3)', () => {
     expect(monogram, 'span du monogramme').toBeTruthy();
     expect(monogram![1].split(/\s+/)).toContain('text-muted');
     expect(monogram![1]).not.toMatch(/\btext-dim\b/);
+  });
+});
+
+// Plan 12, T5 (R11, D73–D75) : /blog = un seul `.card` qui contient le rail
+// (`BlogRail`, marqué `data-rail`) puis la colonne principale — barre d'outils,
+// lignes, état vide. Pas de bloc à la une ; les lignes ne sont pas des
+// `.card-inner` et ne peignent aucun fond (elles reposent sur `surface`).
+describe('blog list (plan 12, T5)', () => {
+  const page = () => listPage('blog');
+
+  it('frames the rail, the rows and the empty state in one .card, without featured block', () => {
+    const source = page();
+    const frames = openingTags(source, 'data-list-frame');
+    expect(frames).toHaveLength(1);
+    expect(classesOf(frames[0])).toContain('card');
+    const cards = openingTags(source, 'class').filter((tag) => classesOf(tag).includes('card'));
+    expect(cards, 'un seul .card').toHaveLength(1);
+
+    const frameAt = indexOfAttr(source, 'data-list-frame');
+    const railAt = source.search(/<BlogRail\b/);
+    const gridAt = indexOfAttr(source, 'data-list-grid');
+    const emptyAt = indexOfAttr(source, 'data-list-empty');
+    expect(railAt).toBeGreaterThan(frameAt);
+    expect(gridAt).toBeGreaterThan(railAt);
+    expect(emptyAt).toBeGreaterThan(gridAt);
+
+    expect(indexOfAttr(source, 'data-list-featured'), 'aucun bloc à la une').toBe(-1);
+    expect(source, 'plus de sélecteur de tag').not.toMatch(/<select\b/);
+    expect(source, 'plus de relais de puces').not.toMatch(/blog-filters/);
+    expect(source).toMatch(/<ArticleRow\b/);
+  });
+
+  it('marks the rail with data-rail and hides its category group server-side', () => {
+    const rail = read('components/blog/BlogRail.astro');
+    const [root] = openingTags(rail, 'data-rail');
+    expect(root, 'racine data-rail').toBeTruthy();
+    expect(classesOf(root)).toContain('bg-rail');
+    const [group] = openingTags(rail, 'data-list-filters');
+    expect(group, 'groupe de catégories').toBeTruthy();
+    expect(group).toMatch(/\shidden(?=[\s=>/])/);
+    expect(rail).toMatch(/data-facet-all-label=/);
+  });
+
+  it('draws blog rows as plain rows, never .card-inner nor a background', () => {
+    const [root] = openingTags(read('components/blog/ArticleRow.astro'), 'data-entry-id');
+    expect(root, 'racine data-entry-id').toBeTruthy();
+    const classes = classesOf(root);
+    expect(classes).not.toContain('card-inner');
+    expect(classes.filter((cls) => /^(hover:)?bg-/.test(cls)), 'aucun fond').toEqual([]);
+    expect(classes).toContain('border-line2');
   });
 });

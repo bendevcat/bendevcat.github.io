@@ -8,25 +8,67 @@
  * Remplace facet-filters.ts et project-filters.ts (Plan 7 / I4) : deux scripts
  * de glue, c'était deux comportements qui divergent — le premier thème de
  * douleur de la spec.
+ *
+ * Plan 12, T4 (D75) — trois extensions, sans rien changer pour /projets,
+ * /prompts et /skills :
+ * - plusieurs groupes `[data-list-filters]` (le rail et la barre de /blog),
+ *   chacun `hidden` côté serveur et révélé ici ; leurs contrôles forment UN
+ *   seul jeu de facettes ;
+ * - le tri `[data-sort]` est un `<select>` OU un menu `Dropdown.astro`
+ *   (`data-value`, événement `dropdown-change`) ;
+ * - sans `[data-list-featured]` sur la page, aucune entrée à la une : toutes
+ *   restent dans la liste (`{ featured: false }`).
+ * `data-facet-all-label` sur un contrôle de facette donne son libellé de repos
+ * (`catégorie : Tout` dans la méta, voir listPattern.ts).
  */
 import { ALL, type FacetSelection } from '../lib/facetFilters';
-import { computeListState, type ListEntry, type ListLabels, type SortOrder } from '../lib/listPattern';
+import {
+  computeListState,
+  domOrder,
+  type FacetLabel,
+  type ListEntry,
+  type ListLabels,
+  type SortOrder,
+} from '../lib/listPattern';
+import { DROPDOWN_CHANGE, setDropdownValue } from './dropdown';
 
 const root = document.querySelector<HTMLElement>('[data-list]');
-const toolbar = document.querySelector<HTMLElement>('[data-list-filters]');
+const groups = Array.from(document.querySelectorAll<HTMLElement>('[data-list-filters]'));
 const grid = document.querySelector<HTMLElement>('[data-list-grid]');
 
-if (root && toolbar && grid) {
+if (root && groups.length > 0 && grid) {
   const featuredBox = document.querySelector<HTMLElement>('[data-list-featured]');
   const metaBox = document.querySelector<HTMLElement>('[data-list-meta]');
   const emptyBox = document.querySelector<HTMLElement>('[data-list-empty]');
   const emptyText = document.querySelector<HTMLElement>('[data-list-empty-text]');
   const resetButton = document.querySelector<HTMLButtonElement>('[data-list-reset]');
 
-  const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-entry-id]'));
-  const buttons = Array.from(toolbar.querySelectorAll<HTMLButtonElement>('button[data-facet-key]'));
-  const selects = Array.from(toolbar.querySelectorAll<HTMLSelectElement>('select[data-facet-key]'));
-  const sortSelect = toolbar.querySelector<HTMLSelectElement>('select[data-sort]');
+  // Les entrées sont les enfants directs de la grille (racines des composants
+  // *Card / ArticleRow) : c'est ce qui permet de les déplacer (F4).
+  const cards = Array.from(grid.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.dataset.entryId !== undefined,
+  );
+  const canonicalIds = cards.map((card) => card.dataset.entryId ?? '');
+  const cardById = new Map(cards.map((card) => [card.dataset.entryId ?? '', card]));
+  const buttons = groups.flatMap((group) =>
+    Array.from(group.querySelectorAll<HTMLButtonElement>('button[data-facet-key]')),
+  );
+  const selects = groups.flatMap((group) =>
+    Array.from(group.querySelectorAll<HTMLSelectElement>('select[data-facet-key]')),
+  );
+  const controls = [...buttons, ...selects];
+
+  // Tri : `<select data-sort>` (base) ou racine de menu `[data-dropdown][data-sort]`
+  // (plan 12). Cherché dans toute la page : la liste y est unique, et le menu
+  // de /blog vit dans la barre d'outils, pas forcément dans un groupe.
+  const sortControl = document.querySelector<HTMLElement>('[data-sort]');
+  const sortSelect = sortControl instanceof HTMLSelectElement ? sortControl : null;
+  const sortDropdown = sortControl?.hasAttribute('data-dropdown') ? sortControl : null;
+  // Valeur de remise à zéro du menu : celle rendue par le serveur (`recent` sur
+  // /blog — le menu n'a pas d'option `none`).
+  const initialSort = sortDropdown?.dataset.value ?? 'none';
+  const readSort = (): SortOrder =>
+    (sortSelect?.value ?? sortDropdown?.dataset.value ?? 'none') as SortOrder;
 
   const [singular, plural] = (root.dataset.listNouns ?? 'élément|éléments').split('|');
   const labels: ListLabels = {
@@ -34,11 +76,19 @@ if (root && toolbar && grid) {
     plural,
     // L'ordre d'affichage des facettes dans la ligne de méta suit l'ordre des
     // contrôles dans la barre — pilules d'abord, puis dropdowns.
-    facets: [...buttons, ...selects]
+    // Libellé de repos (plan 12, D75) : le premier `data-facet-all-label` non
+    // vide porté par un contrôle de la facette.
+    facets: controls
       .map((el) => ({ key: el.dataset.facetKey ?? '', label: el.dataset.facetLabel ?? '' }))
       .filter((facet, index, all) =>
         facet.key !== '' && all.findIndex((other) => other.key === facet.key) === index,
-      ),
+      )
+      .map((facet): FacetLabel => {
+        const allLabel = controls.find(
+          (el) => el.dataset.facetKey === facet.key && el.dataset.facetAllLabel,
+        )?.dataset.facetAllLabel;
+        return allLabel ? { ...facet, allLabel } : facet;
+      }),
   };
 
   const entries: ListEntry[] = cards.map((card) => {
@@ -61,17 +111,21 @@ if (root && toolbar && grid) {
   for (const facet of labels.facets) selected[facet.key] = ALL;
 
   const apply = () => {
-    const order = (sortSelect?.value ?? 'none') as SortOrder;
-    const state = computeListState(entries, selected, order, labels);
+    const state = computeListState(entries, selected, readSort(), labels, {
+      featured: featuredBox !== null,
+    });
 
-    const position = new Map(state.visibleIds.map((id, index) => [id, index]));
-    for (const card of cards) {
-      const id = card.dataset.entryId ?? '';
-      card.hidden = !position.has(id);
-      // Le tri réordonne réellement le DOM : `order` CSS suffirait au visuel
-      // mais laisserait l'ordre de tabulation et de lecture d'écran inchangé.
-      if (position.has(id)) card.style.order = String(position.get(id));
-    }
+    const visible = new Set(state.visibleIds);
+    for (const card of cards) card.hidden = !visible.has(card.dataset.entryId ?? '');
+    // Le tri réordonne réellement le DOM (plan 12, F4) : les nœuds sont
+    // déplacés dans l'ordre de domOrder() — un `order` CSS suffirait au visuel
+    // mais laisserait l'ordre de tabulation et de lecture d'écran à l'ordre
+    // serveur. Rien n'est déplacé quand l'ordre est déjà le bon (/blog au
+    // chargement) ; sur /projets, /prompts et /skills, la copie masquée de
+    // l'entrée à la une part en queue de grille, sans effet visible.
+    const wanted = domOrder(canonicalIds, state.visibleIds).flatMap((id) => cardById.get(id) ?? []);
+    const current = Array.from(grid.children);
+    if (wanted.some((card, index) => current[index] !== card)) grid.append(...wanted);
     // Une grille sans carte visible reste un élément flex du cadre
     // (`flex flex-col gap-6`) et y prend une place de `gap` : l'état vide ne
     // serait plus centré (F2, plan 11). On la masque tant qu'elle est vide.
@@ -117,6 +171,9 @@ if (root && toolbar && grid) {
   }
 
   sortSelect?.addEventListener('change', apply);
+  // `dropdown-change` n'est émis que sur un vrai changement ; `data-value` est
+  // déjà à jour quand il arrive (src/scripts/dropdown.ts).
+  sortDropdown?.addEventListener(DROPDOWN_CHANGE, apply);
 
   // R6 : le bouton d'état vide ramène la liste complète — toutes les
   // sélections ET tous les contrôles, pas seulement l'état interne.
@@ -124,10 +181,11 @@ if (root && toolbar && grid) {
     for (const key of Object.keys(selected)) selected[key] = ALL;
     for (const select of selects) select.value = ALL;
     if (sortSelect) sortSelect.value = 'none';
+    if (sortDropdown) setDropdownValue(sortDropdown, initialSort);
     apply();
-    toolbar.scrollIntoView({ block: 'nearest' });
+    groups[0].scrollIntoView({ block: 'nearest' });
   });
 
-  toolbar.hidden = false;
+  for (const group of groups) group.hidden = false;
   apply();
 }

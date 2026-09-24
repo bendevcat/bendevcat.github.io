@@ -30,6 +30,8 @@ interface AuditLib {
   tokenVerdict(value: string, tokens: Record<string, Color>): string | null;
   enumerateTokenNames(sheets: unknown[]): string[];
   shortPath(el: FakeEl): string;
+  v2Jump(level: 'card' | 'rail', explicitRail: boolean): string | null;
+  isExplicitRail(el: unknown): boolean;
 }
 
 const SCRIPT = resolve(__dirname, '../../scripts/audit-rendered.js');
@@ -177,6 +179,20 @@ describe('audit-rendered.js', () => {
     expect(lib.equalsToken(lib.parseColor('rgb(24, 29, 36)') as Color, dark.card)).toBe(true);
     expect(lib.equalsToken(lib.parseColor('rgb(18, 22, 27)') as Color, dark.card)).toBe(false);
     expect(lib.equalsToken(lib.parseColor('rgba(24, 29, 36, 0.5)') as Color, dark.card)).toBe(false);
+  });
+
+  it('forbids card on bg and rail on surface, except for an explicit [data-rail] (V2, D74)', () => {
+    expect(lib.v2Jump('card', false)).toBe('bg');
+    expect(lib.v2Jump('rail', false)).toBe('surface');
+    // plan 12 : le rail de /blog (et une vignette dérivée de ligne) peint `rail` sur `surface`
+    expect(lib.v2Jump('rail', true)).toBeNull();
+    // l'exemption ne vaut que pour le niveau rail
+    expect(lib.v2Jump('card', true)).toBe('bg');
+    const el = (attrs: string[]) => ({ hasAttribute: (name: string) => attrs.includes(name) });
+    expect(lib.isExplicitRail(el(['data-rail']))).toBe(true);
+    expect(lib.isExplicitRail(el(['data-thumb-derived']))).toBe(false);
+    expect(lib.isExplicitRail(null)).toBe(false);
+    expect(source).toMatch(/v2Jump\(level, isExplicitRail\(el\)\)/);
   });
 
   it('enumerates contract names from the theme-override rule, not from Tailwind\'s palette', () => {

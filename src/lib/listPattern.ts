@@ -24,12 +24,30 @@ export interface ListEntry {
 export interface FacetLabel {
   key: string;
   label: string;
+  /**
+   * Libellé de repos (plan 12, D75 — `data-facet-all-label`, ex. `Tout`).
+   * Une facette qui le déclare s'écrit TOUJOURS `libellé : valeur` dans la
+   * ligne de méta, au repos compris (`catégorie : Tout`). Sans lui, la facette
+   * garde le format historique `libellé valeur`, et seulement quand elle est
+   * active.
+   */
+  allLabel?: string;
 }
 
 export interface ListLabels {
   singular: string;
   plural: string;
   facets: FacetLabel[];
+}
+
+/**
+ * Options du calcul (plan 12, T4). `featured: false` — la page ne rend aucun
+ * `[data-list-featured]` (/blog, D75) : aucune entrée n'est désignée, toutes
+ * restent dans la liste et suivent le tri. Par défaut `true` : /projets,
+ * /prompts et /skills gardent l'entrée à la une.
+ */
+export interface ListOptions {
+  featured?: boolean;
 }
 
 export interface ListState {
@@ -50,6 +68,24 @@ function activeFacets(selected: FacetSelection, labels: ListLabels): string[] {
   return labels.facets
     .filter((facet) => (selected[facet.key] ?? ALL) !== ALL)
     .map((facet) => `${facet.label} ${selected[facet.key]}`);
+}
+
+/**
+ * Les facettes de la ligne de méta (plan 12, D75), dans l'ordre déclaré : une
+ * facette à libellé de repos y figure toujours, en `libellé : valeur`
+ * (`catégorie : Tout`, puis `catégorie : DevOps`) ; les autres n'y figurent
+ * qu'actives, au format historique `libellé valeur`. L'état vide, lui, ne
+ * nomme que les facettes actives (activeFacets) — une phrase, pas une ligne
+ * de données.
+ */
+function metaFacets(selected: FacetSelection, labels: ListLabels): string[] {
+  return labels.facets.flatMap((facet) => {
+    const value = selected[facet.key] ?? ALL;
+    if (facet.allLabel !== undefined) {
+      return [`${facet.label} : ${value === ALL ? facet.allLabel : value}`];
+    }
+    return value === ALL ? [] : [`${facet.label} ${value}`];
+  });
 }
 
 /**
@@ -104,6 +140,7 @@ export function computeListState(
   selected: FacetSelection,
   order: SortOrder,
   labels: ListLabels,
+  options: ListOptions = {},
 ): ListState {
   const filtered = entries.filter((entry) => matchesFacets(entry.facets, selected));
 
@@ -123,7 +160,11 @@ export function computeListState(
   // suivante. Une entrée disparaîtrait de la page tout en restant comptée.
   // L'entrée à la une n'existant que sans facette active, `entries` et le
   // tableau filtré sont alors identiques : aucune information n'est perdue.
-  const featured = isAnyFacetActive(selected) ? null : pickFeaturedEntry(entries);
+  //
+  // Plan 12 (D75) : une page sans bloc « à la une » (`featured: false`) n'en
+  // désigne aucune — toutes ses entrées restent dans la liste et suivent le tri.
+  const featured =
+    options.featured === false || isAnyFacetActive(selected) ? null : pickFeaturedEntry(entries);
 
   const visibleIds = sorted.filter((entry) => entry.id !== featured?.id).map((entry) => entry.id);
 
@@ -136,7 +177,7 @@ export function computeListState(
   // zéro comme après un — « 0 prompt », jamais « 0 prompts ». P-13 avait déjà
   // corrigé « 1 projets » ; `count === 1` laissait passer le cas symétrique.
   const noun = count <= 1 ? labels.singular : labels.plural;
-  const meta = [`${count} ${noun}`, ...active].join(' · ');
+  const meta = [`${count} ${noun}`, ...metaFacets(selected, labels)].join(' · ');
 
   // R6 : contextualisé — le message nomme les facettes actives. Prose, donc
   // jamais en `font-mono` (contrainte globale n°7).
@@ -148,4 +189,20 @@ export function computeListState(
         : `Aucun ${labels.singular} à afficher.`;
 
   return { visibleIds, count, featuredId: featured?.id ?? null, meta, empty };
+}
+
+/**
+ * Ordre des entrées DANS le DOM de la grille (plan 12, F4) : les visibles dans
+ * l'ordre calculé (`visibleIds`), puis les masquées — l'entrée à la une,
+ * les entrées filtrées — dans l'ordre canonique reçu (`ids`, celui du rendu
+ * serveur). Le script déplace les nœuds selon cet ordre : un `order` CSS
+ * suffirait au visuel mais laisserait l'ordre de tabulation et de lecture
+ * d'écran à l'ordre serveur. Un id visible inconnu est ignoré ; aucun id n'est
+ * dupliqué ; les tableaux reçus ne sont pas mutés.
+ */
+export function domOrder(ids: readonly string[], visibleIds: readonly string[]): string[] {
+  const known = new Set(ids);
+  const visible = [...new Set(visibleIds.filter((id) => known.has(id)))];
+  const shown = new Set(visible);
+  return [...visible, ...ids.filter((id) => !shown.has(id))];
 }

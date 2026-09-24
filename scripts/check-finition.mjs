@@ -8,8 +8,8 @@
  * Imprime sur stdout, dans cet ordre :
  *
  *   live: <listes>                  (R6 — T3)
- *   lists: <n> × 1 .card · <e> .card-inner entries   (R7 — T3)
- *   v2: <a> card-level on bg · <b> rail off card level · <d> derived thumbnails   (R7 — T3)
+ *   lists: <n> × 1 .card · <e> .card-inner entries · <r> blog rows   (R7 — T3 ; plan 12)
+ *   v2: <a> card-level on bg · <b> rail off card level · <c> rail column · <d> derived thumbnails   (R7 — T3 ; plan 12)
  *   fallback: <n>/<total> data-pagefind-ignore   (R11 — T4)
  *   eager: / · /blog/                               (R12 — T4)
  *   tags: <n>/<total> named "<label> <count>"       (R15 — T4)
@@ -26,13 +26,20 @@
  * (le cadre), qui contient `[data-list-featured]`, `[data-list-grid]` et
  * `[data-list-empty]` ; chaque entrée (`[data-entry-id]`, copie masquée de la
  * carte à la une comprise) est un `.card-inner` DANS ce cadre.
+ * Plan 12 (/blog, prototype 163–227) : le cadre de /blog contient à la place
+ * `[data-rail]`, `[data-list-grid]` et `[data-list-empty]`, aucun
+ * `[data-list-featured]` ; ses entrées sont des lignes compactes DANS le cadre,
+ * jamais des `.card-inner` — comptées à part (`blog rows`).
  *
  * R7 (V2, statique) — sur chaque page de `dist/`, pour tout élément de niveau
  * `card` (`.card-inner`, `bg-card`) : son plus proche ancêtre PEINT est de
  * niveau `surface` ou `card` (`.card`, `.panel`, `bg-surface`, `.card-inner`,
  * `bg-card`) — sinon c'est un `card` posé sur `bg` ; pour tout élément de
  * niveau `rail` (`bg-rail`, `[data-thumb-derived]`) : son plus proche ancêtre
- * peint est de niveau `card` (`.card-inner`, `bg-card`). « Peint » = une
+ * peint est de niveau `card` (`.card-inner`, `bg-card`) — sauf s'il porte
+ * `data-rail` (rail explicite du prototype, D74) : il peut alors reposer sur
+ * `surface` (ou `card`), jamais sur `bg` ni `panel`. `rail column` compte ces
+ * rails explicites hors vignettes dérivées (le rail de /blog). « Peint » = une
  * classe de patron qui pose un fond (`card`, `card-inner`, `panel`, `pill`)
  * ou un utilitaire `bg-<token>` (avec ou sans `/NN`) nommant un token
  * `--color-*` de global.css ; les variantes (`hover:`, `dark:`, `backdrop:`…)
@@ -44,9 +51,9 @@
  * `data-pagefind-ignore` ; au moins un titre de repli existe.
  *
  * R12 — le ou les `<img>` de `[data-home="featured"]` (`dist/index.html`) et
- * de `[data-list-featured]` (`dist/blog/index.html`) portent
- * `loading="eager"` (au moins un par page) ; tout autre `<img>` de ces deux
- * pages porte `loading="lazy"`.
+ * de la première ligne de `[data-list-grid]` (`dist/blog/index.html`, plan 12 :
+ * plus de bloc à la une) portent `loading="eager"` (au moins un par page) ;
+ * tout autre `<img>` de ces deux pages porte `loading="lazy"`.
  *
  * R15 — sur `dist/tags/index.html`, chaque lien `/tags/<slug>/` porte
  * `aria-label` = son libellé, une espace, son compte — le texte du lien est
@@ -207,8 +214,11 @@ function paintedParent(el) {
 }
 
 const CARD_HOSTS = new Set(['surface', 'panel', 'card']);
+/** Hôtes admis pour un rail explicite `[data-rail]` (D74) : `surface`, ou `card` comme tout rail. */
+const EXPLICIT_RAIL_HOSTS = new Set(['surface', 'card']);
 let cardOnBg = 0;
 let railOffCard = 0;
+let railColumns = 0;
 let derived = 0;
 
 for (const file of htmlFiles(DIST)) {
@@ -218,6 +228,7 @@ for (const file of htmlFiles(DIST)) {
     const own = paints(el);
     const rail = own === 'rail' || has(el, 'data-thumb-derived');
     if (has(el, 'data-thumb-derived')) derived += 1;
+    if (has(el, 'data-rail') && !has(el, 'data-thumb-derived')) railColumns += 1;
     if (own === 'card') {
       const host = paintedParent(el);
       if (!CARD_HOSTS.has(host.level)) {
@@ -227,9 +238,13 @@ for (const file of htmlFiles(DIST)) {
     }
     if (rail) {
       const host = paintedParent(el);
-      if (host.level !== 'card') {
+      const explicit = has(el, 'data-rail');
+      const allowed = explicit ? EXPLICIT_RAIL_HOSTS.has(host.level) : host.level === 'card';
+      if (!allowed) {
         railOffCard += 1;
-        errors.push(`${page} ${describe(el)} : niveau rail posé sur ${host.level}${host.el ? ` (${describe(host.el)})` : ''} (attendu : card)`);
+        errors.push(
+          `${page} ${describe(el)} : niveau rail posé sur ${host.level}${host.el ? ` (${describe(host.el)})` : ''} (attendu : ${explicit ? 'surface ou card, [data-rail]' : 'card'})`,
+        );
       }
     }
   }
@@ -239,6 +254,9 @@ for (const file of htmlFiles(DIST)) {
 const live = [];
 const frameCounts = [];
 let entries = 0;
+let rows = 0;
+/** Listes en lignes compactes (plan 12) : rail au lieu du bloc à la une, entrées sans `.card-inner`. */
+const ROW_LISTS = new Set(['blog']);
 
 for (const list of LISTS) {
   const file = join(DIST, list, 'index.html');
@@ -271,15 +289,28 @@ for (const list of LISTS) {
   }
   const frame = frames[0];
   const inFrame = frame ? new Set(descendants(frame)) : new Set();
-  for (const part of ['data-list-featured', 'data-list-grid', 'data-list-empty']) {
-    const found = scope.filter((el) => has(el, part));
+  const rowList = ROW_LISTS.has(list);
+  const parts = rowList
+    ? ['data-rail', 'data-list-grid', 'data-list-empty']
+    : ['data-list-featured', 'data-list-grid', 'data-list-empty'];
+  for (const part of parts) {
+    const found = scope.filter((el) => has(el, part) && !(part === 'data-rail' && has(el, 'data-thumb-derived')));
     if (found.length !== 1) errors.push(`/${list}/ : ${found.length} [${part}] (attendu : 1)`);
     else if (!inFrame.has(found[0])) errors.push(`/${list}/ : [${part}] hors du .card`);
   }
+  if (rowList) {
+    const featured = elements.filter((el) => has(el, 'data-list-featured'));
+    if (featured.length > 0) errors.push(`/${list}/ : ${featured.length} [data-list-featured] (attendu : 0)`);
+  }
   for (const entry of scope.filter((el) => has(el, 'data-entry-id'))) {
-    entries += 1;
     const id = entry.attrs['data-entry-id'];
-    if (!classes(entry).includes('card-inner')) errors.push(`/${list}/ : l'entrée ${id} n'est pas un .card-inner`);
+    if (rowList) {
+      rows += 1;
+      if (classes(entry).includes('card-inner')) errors.push(`/${list}/ : la ligne ${id} est un .card-inner`);
+    } else {
+      entries += 1;
+      if (!classes(entry).includes('card-inner')) errors.push(`/${list}/ : l'entrée ${id} n'est pas un .card-inner`);
+    }
     if (!inFrame.has(entry)) errors.push(`/${list}/ : l'entrée ${id} est hors du .card`);
   }
   if (!scope.some((el) => has(el, 'data-entry-id'))) errors.push(`/${list}/ : aucune entrée [data-entry-id]`);
@@ -289,8 +320,10 @@ lines.push(`live: ${live.join(' ') || '(aucune)'}`);
 const frames = frameCounts.every((n) => n === 1)
   ? `${LISTS.length} × 1 .card`
   : LISTS.map((list, i) => `${list} ${frameCounts[i]} .card`).join(', ');
-lines.push(`lists: ${frames} · ${entries} .card-inner entries`);
-lines.push(`v2: ${cardOnBg} card-level on bg · ${railOffCard} rail off card level · ${derived} derived thumbnails`);
+lines.push(`lists: ${frames} · ${entries} .card-inner entries · ${rows} blog rows`);
+lines.push(
+  `v2: ${cardOnBg} card-level on bg · ${railOffCard} rail off card level · ${railColumns} rail column · ${derived} derived thumbnails`,
+);
 
 /** Éléments d'une page de `dist/` (tableau vide et erreur si elle manque). */
 function pageElements(file) {
@@ -320,16 +353,21 @@ lines.push(`fallback: ${ignored}/${fallbacks} data-pagefind-ignore`);
 
 // — R12 : couvertures à la une en eager, toutes les autres en lazy —
 const eagerPages = [];
-for (const [page, file, featuredAttr, featuredValue] of [
-  ['/', join(DIST, 'index.html'), 'data-home', 'featured'],
-  ['/blog/', join(DIST, 'blog', 'index.html'), 'data-list-featured', null],
+/** Accueil : le bloc à la une. */
+const homeFeatured = (elements) => elements.filter((el) => el.attrs['data-home'] === 'featured');
+/** /blog (plan 12) : la première ligne de la liste, dans l'ordre du rendu serveur. */
+const blogFirstRow = (elements) => {
+  const grid = elements.find((el) => has(el, 'data-list-grid'));
+  const first = grid ? descendants(grid).find((el) => has(el, 'data-entry-id')) : undefined;
+  return first ? [first] : [];
+};
+for (const [page, file, pick, label] of [
+  ['/', join(DIST, 'index.html'), homeFeatured, '[data-home="featured"]'],
+  ['/blog/', join(DIST, 'blog', 'index.html'), blogFirstRow, 'première ligne de [data-list-grid]'],
 ]) {
   const elements = pageElements(file);
   if (elements.length === 0) continue;
-  const boxes = elements.filter(
-    (el) => has(el, featuredAttr) && (featuredValue === null || el.attrs[featuredAttr] === featuredValue),
-  );
-  const label = featuredValue === null ? `[${featuredAttr}]` : `[${featuredAttr}="${featuredValue}"]`;
+  const boxes = pick(elements);
   if (boxes.length !== 1) {
     errors.push(`${page} : ${boxes.length} ${label} (attendu : 1)`);
     continue;

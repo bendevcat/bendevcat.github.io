@@ -1,37 +1,70 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ArticleCard from '../../components/ArticleCard.astro';
-import { getPublishedPosts } from '../../lib/posts';
-import { collectTagIndex } from '../../lib/tags';
+import ListHeader from '../../components/ListHeader.astro';
+import Dropdown from '../../components/Dropdown.astro';
+import type { IconName } from '../../components/Icon.astro';
+import BlogRail from '../../components/blog/BlogRail.astro';
+import ArticleRow from '../../components/blog/ArticleRow.astro';
+import { getPublishedPosts, estimateReadingMinutes } from '../../lib/posts';
 import { CATEGORIES } from '../../content.config';
 import { ALL } from '../../lib/facetFilters';
-import { pickFeaturedEntry } from '../../lib/listPattern';
+import { blogCategoryRows, blogTagCloud, ALL_CATEGORIES_LABEL } from '../../lib/blogList';
+import { computeListState, type ListLabels, type SortOrder } from '../../lib/listPattern';
+
+// Plan 12, T5 (inventaire §1, prototype 163–227 ; D73–D75) : un `.card` avec
+// le rail à gauche (Catégories filtrantes, nuage de tags) et la colonne des
+// lignes compactes sous une barre d'outils (méta + menu de tri). Pas d'entrée
+// à la une, pas de filtre par tag, pas de `tous les tags →`.
 
 const posts = await getPublishedPosts();
 // getPublishedPosts() filtre les drafts et trie déjà par pubDate desc
-// (src/lib/posts.ts) — pas de re-tri ici. C'est aussi CET ordre canonique
-// (et non un tableau trié) qui nourrit pickFeaturedEntry() ci-dessous.
+// (src/lib/posts.ts) : c'est l'ordre canonique ET celui du tri par défaut
+// `plus récents` — le serveur rend donc les lignes dans l'ordre que le script
+// calculera au chargement.
 
-// Seuls les tags PRÉSENTS dans les articles publiés : proposer un tag qui ne
-// filtre rien donnerait une liste vide sans que l'utilisateur comprenne.
-const blogTags = collectTagIndex({ blog: posts, projects: [], prompts: [], skills: [] });
-// Idem côté catégories : CATEGORIES en liste 7 valeurs possibles, toutes ne
-// sont pas forcément utilisées.
-const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.category === c));
+// Plan 12, F4 : la ligne de l'article que l'accueil met à la une porte
+// `data-featured` (scripts/check-home.mjs compare les deux). Même règle que
+// pickHomePosts() → pickFeaturedEntry() : le PREMIER `featured: true` de
+// l'ordre canonique ; aucun → aucune marque (l'accueil prend alors la
+// première ligne, que check-home.mjs lit à défaut).
+const featuredId = posts.find((post) => post.data.featured)?.id;
 
-// Même règle de dérivation que src/scripts/list-pattern.ts (spec §6.1,
-// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, sur l'ordre
-// CANONIQUE (`posts`, jamais un tableau trié), pour que la carte « à la une »
-// et sa copie masquée dans la grille pointent exactement vers la même entrée
-// que computeListState() désignerait — quel que soit le tri choisi côté
-// client (P-12 : avant `26757a9`, dériver du tableau trié faisait disparaître
-// un article dès qu'un tri autre que « par défaut » était actif).
-const featured = pickFeaturedEntry(posts.map((p) => ({ ...p, featured: p.data.featured })));
+const categories = blogCategoryRows(posts, CATEGORIES);
+const tags = blogTagCloud(posts);
 
-// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
-// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
-// jamais.
+// Source unique du vocabulaire : `data-list-nouns` ET la méta serveur.
 const NOUNS = ['article', 'articles'] as const;
+
+// Icônes et largeur du popover (250 px) : celles du prototype (plan 12, F3).
+const SORT_OPTIONS: { value: SortOrder; label: string; icon: IconName }[] = [
+	{ value: 'recent', label: 'plus récents', icon: 'sort-recent' },
+	{ value: 'oldest', label: 'plus anciens', icon: 'sort-oldest' },
+	{ value: 'shortest', label: 'lecture la plus courte', icon: 'sort-shortest' },
+	{ value: 'longest', label: 'lecture la plus longue', icon: 'sort-longest' },
+];
+const INITIAL_SORT: SortOrder = 'recent';
+
+// Méta serveur = premier texte calculé par le script (D57 : aucune réécriture
+// au chargement) — donc calculée par la MÊME fonction, avec les mêmes
+// libellés que ceux que list-pattern.ts lit dans le rail.
+const labels: ListLabels = {
+	singular: NOUNS[0],
+	plural: NOUNS[1],
+	facets: [{ key: 'category', label: 'catégorie', allLabel: ALL_CATEGORIES_LABEL }],
+};
+const { meta } = computeListState(
+	posts.map((post) => ({
+		id: post.id,
+		facets: { category: [post.data.category] },
+		featured: false,
+		date: post.data.pubDate.getTime(),
+		minutes: estimateReadingMinutes(post.body ?? ''),
+	})),
+	{ category: ALL },
+	INITIAL_SORT,
+	labels,
+	{ featured: false },
+);
 ---
 
 <BaseLayout
@@ -39,139 +72,48 @@ const NOUNS = ['article', 'articles'] as const;
 	description="Tous les articles du blog bencat_ : DevOps, IA et geekeries diverses."
 >
 	<main>
-		<section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-			<p class="font-mono text-sm text-accent">~/ blog</p>
-			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Blog</h1>
-		</section>
+		<ListHeader path="blog" title="Blog" />
 
-		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
-			{/* 1 · pilules de filtre + 2 · dropdowns — `hidden` côté serveur (contrainte n°5) */}
-			<div
-				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-				data-list-filters
-				hidden
-			>
-				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par catégorie">
-					<button
-						type="button"
-						data-facet-key="category"
-						data-facet-label="catégorie"
-						data-facet-value={ALL}
-						aria-pressed="true"
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-					>
-						toutes
-					</button>
-					{
-						usedCategories.map((cat) => (
-							<button
-								type="button"
-								data-facet-key="category"
-								data-facet-label="catégorie"
-								data-facet-value={cat}
-								aria-pressed="false"
-								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-							>
-								{cat}
-							</button>
-						))
-					}
-				</div>
+		<section class="mt-[26px]" data-list data-list-nouns={NOUNS.join('|')}>
+			{/* Cadre unique (V2, D51) : rail + colonne principale. `overflow-hidden`
+			     rogne le fond du rail sur le rayon du cadre. Sous 768 px, le rail
+			     s'empile au-dessus de la liste (D73). */}
+			<div class="card overflow-hidden md:grid md:grid-cols-[250px_minmax(0,1fr)]" data-list-frame>
+				<BlogRail categories={categories} tags={tags} selected={ALL} />
 
-				<div class="flex flex-wrap items-center gap-4">
-					{/* Dropdown 1 (R7) : tri — n'est PAS une facette, donc absent de
-					    la ligne de méta et de l'état vide (spec §6.1). */}
-					<label class="flex items-center gap-2 font-mono text-xs text-muted">
-						tri
-						<select data-sort class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body">
-							<option value="none">par défaut</option>
-							<option value="recent">plus récents</option>
-							<option value="oldest">plus anciens</option>
-							<option value="shortest">plus courts</option>
-							<option value="longest">plus longs</option>
-						</select>
-					</label>
+				<div class="flex min-w-0 flex-col px-5 pt-6 pb-[30px] sm:px-7">
+					{/* Barre d'outils : méta à gauche, tri à droite. Le menu est rendu
+					     `hidden` et révélé par son script (pas de contrôle mort sans JS). */}
+					<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line2 pb-4">
+						{/* Ligne de méta — région live polie et atomique (plan 11, R6) que
+						     list-pattern.ts réécrit à chaque filtre ; `muted`, jamais `dim`. */}
+						<p class="font-mono text-xs text-muted" data-list-meta aria-live="polite" aria-atomic="true">{meta}</p>
+						<Dropdown label="tri" options={SORT_OPTIONS} selected={INITIAL_SORT} minWidth={250} data-sort />
+					</div>
 
-					{/* Dropdown 2 : tag, conservé (décision I2) — passe de pilules à
-					    dropdown pour ne garder qu'UNE barre de pilules (R3). */}
-					{
-						blogTags.length > 0 && (
-							<label class="flex items-center gap-2 font-mono text-xs text-muted">
-								tag
-								<select
-									data-facet-key="tag"
-									data-facet-label="tag"
-									class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
-								>
-									<option value={ALL}>tous</option>
-									{blogTags.map((tag) => <option value={tag.slug}>{tag.label} ({tag.count})</option>)}
-								</select>
-							</label>
-						)
-					}
+					{/* Lignes — toutes rendues par le serveur, dans l'ordre canonique. */}
+					<div class="flex flex-col" data-list-grid>
+						{posts.map((post, index) => <ArticleRow post={post} eager={index === 0} featured={post.id === featuredId} />)}
+					</div>
+
+					{/* État vide — inatteignable tant que chaque ligne du rail compte au
+					     moins un article, gardé pour le contrat du moteur. */}
+					<div class="flex flex-col items-start gap-3 pt-6" data-list-empty hidden>
+						<p class="text-sm text-muted" data-list-empty-text></p>
+						<button
+							type="button"
+							data-list-reset
+							class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+						>
+							voir tous les articles
+						</button>
+					</div>
 				</div>
 			</div>
-
-			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7). Région
-			     live polie et atomique (plan 11, R6) : list-pattern.ts réécrit le texte
-			     de CE nœud à chaque filtre, le lecteur d'écran annonce le nouveau
-			     compte en entier. `muted` et non `dim` : `dim` sur `bg` = 4,19:1 en
-			     clair (R8). */}
-			<p class="mb-6 font-mono text-xs text-muted" data-list-meta aria-live="polite" aria-atomic="true">{posts.length} {posts.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
-
-			{/* Cadre des entrées (plan 11, D51 — V2) : à la une, grille et état vide
-			     dans UN `.card` (niveau `surface`), chaque carte d'entrée un
-			     `.card-inner` (niveau `card`) — un seul niveau d'écart, comme
-			     /tags/<tag> et la recherche. L'écart entre blocs est un `gap` : un
-			     bloc `hidden` (à la une filtrée, état vide) n'en laisse aucun. Une
-			     grille vide, elle, reste un élément flex et prendrait une place de
-			     `gap` (l'état vide ne serait plus centré) : le script la rend `hidden`
-			     dès qu'aucune carte n'y est visible (F2) ; le serveur jamais. */}
-			<div class="card flex flex-col gap-6 p-4 sm:p-6" data-list-frame>
-				{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
-				<div data-list-featured>
-					{featured && <ArticleCard post={featured} featured filterable isFeaturedEntry />}
-				</div>
-
-				{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une
-				     est rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page
-				     montre chaque entrée exactement une fois (contrainte globale n°5). */}
-				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
-					{
-						posts.map((post) => (
-							<ArticleCard
-								post={post}
-								filterable
-								hidden={post.id === featured?.id}
-								isFeaturedEntry={post.id === featured?.id}
-							/>
-						))
-					}
-				</div>
-
-				{/* 6 · état vide */}
-				<div class="flex flex-col items-start gap-3" data-list-empty hidden>
-					<p class="text-sm text-muted" data-list-empty-text></p>
-					<button
-						type="button"
-						data-list-reset
-						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-					>
-						voir tous les articles
-					</button>
-				</div>
-			</div>
-
-			<p class="mt-4">
-				<a href="/tags/" class="font-mono text-xs text-muted transition-colors hover:text-accent">
-					tous les tags →
-				</a>
-			</p>
 		</section>
 
 		<script>
 			import '../../scripts/list-pattern.ts';
-			import '../../scripts/blog-filters.ts';
 		</script>
 	</main>
 </BaseLayout>

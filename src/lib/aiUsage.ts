@@ -3,7 +3,8 @@
  * `aiUsage` dans le frontmatter blog, cf. content.config.ts).
  *
  * Réutilisé par :
- * - `ArticleCard.astro` (Plan 1 / C1) → puce compacte emoji + label sur les cartes.
+ * - `blog/ArticleRow.astro` (plan 12, T5 ; carte d'article au Plan 1 / C1) →
+ *   marqueur compact emoji + label sur les lignes de /blog.
  * - `AiBanner.astro` (Plan 1 / C3) → bannière détaillée sur la page article.
  *
  * Garder ce module comme unique endroit où les libellés/emoji/tons sont

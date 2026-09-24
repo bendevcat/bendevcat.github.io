@@ -1,0 +1,77 @@
+---
+/**
+ * ArticleRow.astro (plan 12, T5 ; inventaire §1 ; prototype 163–227) — une
+ * ligne compacte de /blog. Remplace l'ancienne carte d'article (supprimée).
+ *
+ * Grille `76px | 1fr`, gap 16, padding 20/0, séparateur bas `line2`, AUCUN
+ * fond : la ligne repose sur le `surface` du cadre (ce n'est plus un
+ * `.card-inner`). Vignette 76×64 rayon 10 (la `cover`, sinon le visuel dérivé).
+ * Méta mono 11 : pilule de catégorie · `date · N min` · marqueur IA
+ * `emoji libellé` (libellés du site, D75). Titre 19/600, lien étiré sur toute
+ * la ligne ; description 14 `muted`.
+ *
+ * Contrat lu par src/scripts/list-pattern.ts (inchangé depuis la carte) :
+ * `data-entry-id`, `data-facet` (JSON), `data-date` (ms), `data-minutes`. Les
+ * tags ne sont plus une facette de /blog (D73) : seul `category` est déclaré.
+ * `data-featured` (plan 12, F4) marque la ligne de l'article à la une de
+ * l'accueil (`featured: true`) : scripts/check-home.mjs compare l'accueil à
+ * cette ligne. /blog n'a pas de bloc à la une (`{ featured: false }`), la
+ * marque n'y change donc ni l'affichage ni le tri.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { AI_USAGE_META } from '../../lib/aiUsage';
+import { estimateReadingMinutes } from '../../lib/posts';
+import Thumbnail from '../Thumbnail.astro';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  /** Première ligne : image au-dessus de la ligne de flottaison, `loading="eager"`. */
+  eager?: boolean;
+  /** Article à la une de l'accueil (pickHomePosts) : porte `data-featured`. */
+  featured?: boolean;
+}
+
+const { post, eager = false, featured = false } = Astro.props;
+const { title, description, pubDate, category, cover, coverAlt, aiUsage } = post.data;
+
+const dateFr = pubDate.toLocaleDateString('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const readingMinutes = estimateReadingMinutes(post.body ?? '');
+const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
+---
+
+<article
+  class="group relative grid grid-cols-[76px_minmax(0,1fr)] gap-4 border-b border-line2 py-5"
+  data-entry-id={post.id}
+  data-facet={JSON.stringify({ category: [category] })}
+  data-date={pubDate.getTime()}
+  data-minutes={readingMinutes}
+  data-featured={featured ? '' : undefined}
+>
+  <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={category} size="row" eager={eager} />
+
+  <div class="flex min-w-0 flex-col gap-1.5">
+    <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted">
+      <span class="pill">{category}</span>
+      <span aria-hidden="true">·</span>
+      <span class="whitespace-nowrap"><time datetime={pubDate.toISOString()}>{dateFr}</time> · {readingMinutes} min</span>
+      {
+        usage && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span class="whitespace-nowrap" data-ai-marker>
+              {usage.emoji} {usage.label}
+            </span>
+          </>
+        )
+      }
+    </p>
+    <h2 class="font-sans text-[19px] leading-snug font-semibold text-ink transition-colors group-hover:text-accent">
+      <a href={`/blog/${post.id}/`} class="after:absolute after:inset-0">{title}</a>
+    </h2>
+    <p class="font-sans text-sm text-muted">{description}</p>
+  </div>
+</article>

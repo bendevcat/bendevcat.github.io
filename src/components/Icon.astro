@@ -1,17 +1,29 @@
 ---
 /*
-  Icon.astro (Plan 6 / T-C1) — les 8 glyphes du header, INLINÉS.
+  Icon.astro (Plan 6 / T-C1, plan 12 / T2) — les glyphes du header, INLINÉS.
   Aucune dépendance runtime n'est ajoutée au projet : les tracés ont été
   extraits une fois (cf. .superpowers/…/phase-C-glyphs.md) et vivent ici.
 
   Sources et licences :
   - 6 glyphes en TRAIT — Lucide (`lucide-static@1.45.0`), licence ISC :
     `newspaper`, `folder-git-2`, `terminal`, `sparkles`, `user`, `search`.
+  - 2 glyphes en TRAIT ajoutés au plan 12 (bouton de thème) — Lucide, licence
+    ISC : `sun`, `moon`.
+  - 2 glyphes en TRAIT ajoutés au plan 12 / T3 (menu déroulant) — Lucide,
+    licence ISC : `filter` (`list-filter`), `chevron-down` (le caret).
+    Recopiés du jeu Lucide, pas extraits d'un paquet : à recomparer à
+    `lucide-static` si un pixel diffère.
+  - 5 glyphes en TRAIT du menu de tri, plan 12 / F3 — dessins du PROTOTYPE
+    du site (`bencat_ Prototype cliquable`, lignes 197–203), œuvre du
+    propriétaire du site, recopiés tels quels : `sort` (déclencheur, remplace
+    l'`arrow-up-down` Lucide de T3), `sort-recent`, `sort-oldest`,
+    `sort-shortest`, `sort-longest` (une icône par option). Trait 1,8 comme
+    au prototype (`strokeWidth` du glyphe), au lieu du 1,75 de Lucide.
   - marque GitHub en APLAT — Simple Icons (`simple-icons@16.31.0`), licence
     CC0-1.0 (domaine public). Lucide a sorti les marques de son set :
     `github.svg` n'y existe plus, d'où cette seconde source.
-  - glyphe du logo (3 barres, R5) en APLAT — dessiné à la main, il n'existe
-    dans aucun set.
+  (Le glyphe `logo` du plan 6 a disparu au plan 12 : la marque du logo est
+  désormais une tuile 28×28 à trois barres en HTML, dans Header.astro.)
 
   POURQUOI LE MODE DE RENDU EST PORTÉ PAR GLYPHE ET NON PAR LE COMPOSANT :
   un tracé Lucide est un contour (`fill: none` + `stroke: currentColor` +
@@ -26,7 +38,7 @@
   de texte du parent, jamais par une valeur codée en dur (règle globale n°1).
 */
 
-type IconName =
+export type IconName =
   | 'blog'
   | 'projets'
   | 'prompts'
@@ -34,18 +46,27 @@ type IconName =
   | 'a-propos'
   | 'search'
   | 'github'
-  | 'logo';
+  | 'sun'
+  | 'moon'
+  | 'sort'
+  | 'sort-recent'
+  | 'sort-oldest'
+  | 'sort-shortest'
+  | 'sort-longest'
+  | 'filter'
+  | 'chevron-down';
 
 interface Props {
   name: IconName;
-  /** Côté du carré, en px. 14 = icône de pilule de nav ; 16 = bouton rond / logo. */
+  /** Côté du carré, en px. 15 = icône de la nav et des boutons ronds du header ; 14 = accueil. */
   size?: number;
   class?: string;
 }
 
 const { name, size = 14, class: className } = Astro.props;
 
-type Glyph = { mode: 'stroke' | 'fill'; paths: string };
+/** `strokeWidth` : épaisseur propre au glyphe (trait seulement), 1,75 par défaut (Lucide). */
+type Glyph = { mode: 'stroke' | 'fill'; paths: string; strokeWidth?: number };
 
 const GLYPHS: Record<IconName, Glyph> = {
   // — Lucide `newspaper` (ISC) —
@@ -95,12 +116,74 @@ const GLYPHS: Record<IconName, Glyph> = {
     mode: 'fill',
     paths: `<path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />`,
   },
-  // — Logo benCat (R5) : trois barres de largeurs décroissantes, APLAT —
-  logo: {
-    mode: 'fill',
-    paths: `<rect x="3" y="5" width="18" height="3" rx="1.5" />
-<rect x="3" y="10.5" width="13" height="3" rx="1.5" />
-<rect x="3" y="16" width="8" height="3" rx="1.5" />`,
+  // — Lucide `sun` (ISC) — thème clair —
+  sun: {
+    mode: 'stroke',
+    paths: `<circle cx="12" cy="12" r="4" />
+<path d="M12 2v2" />
+<path d="M12 20v2" />
+<path d="m4.93 4.93 1.41 1.41" />
+<path d="m17.66 17.66 1.41 1.41" />
+<path d="M2 12h2" />
+<path d="M20 12h2" />
+<path d="m6.34 17.66-1.41 1.41" />
+<path d="m19.07 4.93-1.41 1.41" />`,
+  },
+  // — Lucide `moon` (ISC) — thème sombre —
+  moon: {
+    mode: 'stroke',
+    paths: `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />`,
+  },
+  // — Prototype (ligne 197) — déclencheur du menu de tri —
+  sort: {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M4 6h13M4 12h9M4 18h5" />
+<path d="M17 14l3 3 3-3" />
+<path d="M20 17V9" />`,
+  },
+  // — Prototype (ligne 200) — option « plus récents » —
+  'sort-recent': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M12 8v5l3 2" />
+<circle cx="12" cy="12" r="9" />`,
+  },
+  // — Prototype (ligne 201) — option « plus anciens » —
+  'sort-oldest': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M3 3v6h6" />
+<path d="M3.5 9a9 9 0 1 0 3-6.2L3 6" />
+<path d="M12 8v5l4 2" />`,
+  },
+  // — Prototype (ligne 202) — option « lecture la plus courte » —
+  'sort-shortest': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M4 7h9M4 12h6M4 17h3" />
+<path d="M17 8v8" />
+<path d="M14 13l3 3 3-3" />`,
+  },
+  // — Prototype (ligne 203) — option « lecture la plus longue » —
+  'sort-longest': {
+    mode: 'stroke',
+    strokeWidth: 1.8,
+    paths: `<path d="M4 7h3M4 12h6M4 17h9" />
+<path d="M17 16V8" />
+<path d="M14 11l3-3 3 3" />`,
+  },
+  // — Lucide `list-filter` (ISC) — menu de facette (plan 14) —
+  filter: {
+    mode: 'stroke',
+    paths: `<path d="M2 5h20" />
+<path d="M6 12h12" />
+<path d="M9 19h6" />`,
+  },
+  // — Lucide `chevron-down` (ISC) — caret du menu déroulant —
+  'chevron-down': {
+    mode: 'stroke',
+    paths: `<path d="m6 9 6 6 6-6" />`,
   },
 };
 
@@ -115,7 +198,7 @@ const isStroke = glyph.mode === 'stroke';
   viewBox="0 0 24 24"
   fill={isStroke ? 'none' : 'currentColor'}
   stroke={isStroke ? 'currentColor' : undefined}
-  stroke-width={isStroke ? 1.75 : undefined}
+  stroke-width={isStroke ? (glyph.strokeWidth ?? 1.75) : undefined}
   stroke-linecap={isStroke ? 'round' : undefined}
   stroke-linejoin={isStroke ? 'round' : undefined}
   aria-hidden="true"

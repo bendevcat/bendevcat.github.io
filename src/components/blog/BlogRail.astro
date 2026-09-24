@@ -1,0 +1,92 @@
+---
+/**
+ * BlogRail.astro (plan 12, T5 ; inventaire §1 ; prototype 163–227) — le rail
+ * gauche de /blog, posé dans le `.card` de la liste.
+ *
+ * - Fond `rail` directement sur `surface` : `data-rail` le déclare comme rail
+ *   explicite, seule exemption de la règle V2 (D74).
+ * - « Catégories » : un groupe `[data-list-filters]` lu par
+ *   src/scripts/list-pattern.ts — rendu `hidden` et révélé par le script, pour
+ *   qu'aucun bouton mort ne s'affiche sans JavaScript (D73). Chaque ligne est
+ *   un `<button aria-pressed>` dont le nom accessible est `<libellé> <compte>`
+ *   (sans `aria-label`, le compte collerait au libellé : « Tout5 »).
+ *   `data-facet-all-label` donne le libellé de repos de la méta
+ *   (`catégorie : Tout`, D75).
+ * - « Tags » : puces de tag `shape="tag"` qui mènent à `/tags/<slug>/`,
+ *   comptées sur les articles publiés (D73). Visibles sans JavaScript.
+ *
+ * Libellés et comptes en `muted` (le prototype dessine `dim`, qui échoue AA
+ * sur `rail` en clair — D71). Sous 768 px, le rail s'empile au-dessus de la
+ * liste (bordure basse au lieu de la bordure droite).
+ */
+import TagChip from '../TagChip.astro';
+import { ALL_CATEGORIES_LABEL, type CategoryRow } from '../../lib/blogList';
+import type { TagSummary } from '../../lib/tags';
+
+interface Props {
+  categories: CategoryRow[];
+  tags: TagSummary[];
+  /** Valeur de facette active côté serveur (la ligne `Tout`). */
+  selected: string;
+}
+
+const { categories, tags, selected } = Astro.props;
+const LABEL = 'font-mono text-[10px] tracking-[.12em] text-muted uppercase';
+---
+
+<aside
+  data-rail
+  aria-label="Catégories et tags"
+  class="flex flex-col gap-[22px] border-b border-line2 bg-rail px-4 py-[22px] md:border-r md:border-b-0"
+>
+  <div
+    data-list-filters
+    hidden
+    role="group"
+    aria-labelledby="blog-rail-categories"
+    class="flex flex-col gap-2"
+  >
+    <p id="blog-rail-categories" class={LABEL}>Catégories</p>
+    <div class="flex flex-col gap-0.5">
+      {
+        categories.map((row) => (
+          <button
+            type="button"
+            data-facet-key="category"
+            data-facet-label="catégorie"
+            data-facet-value={row.value}
+            data-facet-all-label={ALL_CATEGORIES_LABEL}
+            aria-pressed={row.value === selected ? 'true' : 'false'}
+            aria-label={`${row.label} ${row.count}`}
+            class="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-thumb px-2.5 py-2 text-left font-sans text-sm text-body transition-colors not-aria-pressed:hover:bg-chip not-aria-pressed:hover:text-ink aria-pressed:bg-accentSoft aria-pressed:text-accent"
+          >
+            <span>{row.label}</span>
+            <span class="font-mono text-[11px] text-muted group-aria-pressed:text-accent">{row.count}</span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  {
+    tags.length > 0 && (
+      <div class="flex flex-col gap-2.5">
+        <p id="blog-rail-tags" class={LABEL}>Tags</p>
+        <ul class="flex flex-wrap gap-1.5" aria-labelledby="blog-rail-tags">
+          {tags.map((tag) => (
+            <li>
+              <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} label={`${tag.label} ${tag.count}`} shape="tag">
+                {/* Espace explicite : Astro retire celui du source, et le texte de la
+                    puce doit se lire `devops 3`, pas `devops3` (copie, lecture). Dans
+                    un conteneur flex, ce blanc ne s'affiche pas : l'écart visuel
+                    reste le `gap`. */}
+                {' '}
+                <span>{tag.count}</span>
+              </TagChip>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+</aside>

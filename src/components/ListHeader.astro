@@ -1,0 +1,25 @@
+---
+/**
+ * ListHeader.astro (plan 12, T5 ; inventaire §0 « List page header »,
+ * prototype 164–168) — en-tête des pages de liste : fil d'Ariane mono 13
+ * `accent` (`~/ blog`), puis h1 44 px / 700 / −.03em ; 56 px au-dessus,
+ * 14 px entre les deux. L'espace sous le h1 appartient à la page (26 px
+ * jusqu'au cadre sur /blog, 22 px jusqu'aux filtres sur les autres listes).
+ *
+ * Une `div` et pas un `<header>` : la page n'a qu'un `<header>`, celui du
+ * site (scripts/check-shell-blog.mjs, R2). Utilisé par /blog seulement
+ * (D75) ; le plan 14 l'adopte pour /projets, /prompts et /skills.
+ */
+interface Props {
+  /** Segment du fil d'Ariane, rendu `~/ <path>`. */
+  path: string;
+  title: string;
+}
+
+const { path, title } = Astro.props;
+---
+
+<div class="flex flex-col gap-3.5 pt-14" data-list-header>
+  <p class="font-mono text-[13px] text-accent">~/ {path}</p>
+  <h1 class="font-sans text-[44px] leading-[1.1] font-bold tracking-[-.03em] text-ink">{title}</h1>
+</div>

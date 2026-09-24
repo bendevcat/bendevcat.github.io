@@ -205,3 +205,54 @@ Choice: contract §5.1 (four identical lists) and §8.2 (thumbnail + featured ev
 
 ## D68 · Run 3 · cadrage — One publication at the end of the run (v1.5.0)
 Choice: a single `publication` escalation after plan 18 · Alternatives: per plan; two stages · Reversibility: cheap · Why: user's answer A at cadrage — production never shows a half-migrated site.
+
+## D69 · Plan 12 · authoring — Shell in `BaseLayout`, 1180 px token, responsive padding
+Choice: one `data-shell` wrapper in `BaseLayout` capped by a new `--container-shell: 1180px` token; side padding 24 px from 640 px, 16 px below; detail pages keep their inner column until plans 13/15–17 · Alternatives: a container per page; 24 px everywhere · Reversibility: cheap · Why: one source of truth for the width every later plan inherits; 16 px keeps the 375 px budget.
+
+## D70 · Plan 12 · authoring — Footer copy from the site's own description   ⚑ à relire
+Choice: left `bencat_ — site perso de Benoît Catillon` (home description), right `Astro · GitHub Pages · Sveltia CMS`, plain text · Alternatives: year / ©, links · Reversibility: cheap · Why: the prototype's left text is demo copy; no invented phrase. UX text with no precedent.
+
+## D71 · Plan 12 · authoring — `muted` replaces the prototype's `dim` on small meta text
+Choice: footer, rail labels and counts, dropdown counts use `muted` · Alternatives: keep `dim` · Reversibility: cheap · Why: `dim` measures 4.19:1 on `bg` and 3.93:1 on `rail` in light — below AA (V8).
+
+## D72 · Plan 12 · authoring — Header details: no `⌘K` hint, CSS-switched sun/moon, nav on its own row below 640 px
+Choice: the `⌘K` kbd goes (the shortcut stays); the theme icon swaps by CSS on `data-theme`; below 640 px the nav pill takes a full-width row · Alternatives: keep the hint; JS icon swap; scrolling pill or burger · Reversibility: cheap · Why: the prototype has no hint; no-JS parity; the prototype has no breakpoints.
+
+## D73 · Plan 12 · authoring — Blog rail: tags link to their pages; tag select, `tous les tags →` and card-chip filter removed   ⚑ à relire
+Choice: tag chips link to `/tags/<slug>/` with published-post counts; the tag `<select>`, the `tous les tags →` link and the row's category-pill filter (`blog-filters.ts`) are removed; below 768 px the rail stacks above the list; without JS the category rows and sort trigger are hidden · Alternatives: inert chips as in the prototype; keep the tag filter as a second dropdown · Reversibility: cheap · Why: the prototype has no tag filter on /blog; linking keeps tag pages reachable. Visible feature removal on an existing page.
+
+## D74 · Plan 12 · authoring — Surface rule V2: an explicit rail may sit on `surface`   ⚑ à relire
+Choice: an element marked `data-rail` may paint `rail` directly on `surface`, as the prototype's blog and article rails do; the audit scripts allow it · Alternatives: paint the rail as `surface`; insert a `card` layer · Reversibility: cheap · Why: D67 — the prototype outranks the contract; narrowed reading of V2 inherited by plans 13, 14, 18.
+
+## D75 · Plan 12 · authoring — Dropdown and list-engine details
+Choice: dropdown = button + listbox with focus on options, Tab closes, label `tri :`, default `plus récents`; meta line `5 articles · catégorie : Tout` at rest; site AI labels kept (`co-créé avec IA`); engine skips the featured entry when a page has none; `ListHeader.astro` used on /blog only (plan 14 adopts it); first row image eager · Alternatives: `aria-activedescendant`; prototype's shorter labels · Reversibility: cheap · Why: plan-author choices within the inventory; labels already validated on the site.
+
+## D76 · Plan 12 · T1 — Shell wrapper is a `div`; 404 and transparence-ia lose their own side padding
+Choice: `<div data-shell="main">` in `BaseLayout` (pages keep their `<main>`); `/404` and `/transparence-ia` keep `max-w-3xl` without `px-*`; `Header.astro` container widened in T1 · Alternatives: move `<main>` into the layout (touches every page); double padding · Reversibility: cheap · Why: minimal change that keeps `check-secondary`'s single-`<main>` assertion.
+
+## D77 · Plan 12 · T2 — Header details the inventory leaves open
+Choice: nav pill radius 20 px below 640 px (five items wrap to two rows; 999 would clip corners), 999 above; action icons 15 px like the nav; logo tile bars 3 px tall, 3 px gaps; actions pill on `nav` + `line` like the other two; unused `logo` glyph removed; theme button label unchanged · Alternatives: 999 at every width; 16 px icons; transparent actions container · Reversibility: cheap · Why: values the inventory does not fix; checked rendered at 1280 px against the prototype.
+
+## D78 · Plan 12 · T3 — Dropdown component details
+Choice: generic `Dropdown.astro` (label, options with counts, selected, minWidth, icon `sort|filter`, id) + `dropdown-change` event fired only on a real change; ✓ in a fixed left slot, rendered in the HTML; options in sans 13 px `body`, counts mono 10 `muted`; Lucide glyphs `sort`, `filter`, `chevron-down` typed in `Icon.astro`; id derived from the label slug (deterministic builds) · Alternatives: ✓ on the right or via CSS; random ids · Reversibility: cheap · Why: values the inventory leaves open; plan 14 reuses the component.
+
+## D79 · Plan 12 · T4 — Engine options
+Choice: `computeListState(..., { featured })` 5th argument; `[data-sort]` found page-wide (`<select>` or dropdown); reset returns a sort dropdown to its server value; the empty-state sentence keeps `label value`; an all-label facet keeps its declared position in the meta line; dropdown-driven facets deferred to plan 14 · Alternatives: flag on `ListLabels`; scope `[data-sort]` to `[data-list]` · Reversibility: cheap · Why: additive change, existing lists unchanged (check-finition identical to base).
+
+## D80 · Plan 12 · T5 — Blog list details
+Choice: `ListHeader` root is a `div` (one `<header>` per page); rail labels are `<p>` labelling their group; rows are h2 with a stretched link and declare only the `category` facet; chip text carries a real space (`devops 3`); `ArticleCard.astro` and `blog-filters.ts` deleted; open values (h1 lh 1.1, toolbar `pb-4`, rows gap 6 px, main `px-5` below 640 px) taken by the implementer; rendered at 1280 px dark and compared to the prototype by the orchestrator · Alternatives: keep dead code; h2 rail labels · Reversibility: cheap · Why: carries out D73.
+
+## D81 · Plan 12 · T6 — Instruments: row lists named, explicit rails on surface or card
+Choice: check-finition applies row rules to lists named in `ROW_LISTS` (`blog`; plan 14 adds its own); `rail column` counts non-thumbnail `data-rail` elements; an explicit rail may sit on `surface` or `card`, never on `bg`/`panel`; check-home fails on several `data-featured` rows · Alternatives: infer rows from `[data-rail]`; count every `data-rail` · Reversibility: cheap · Why: carries out D74 with the narrowest exemption.
+
+## D82 · Plan 12 · F1 — `box-content` shell and top-aligned 47 px header pills
+Choice: the three `[data-shell]` boxes are `box-content` (1180 content + padding outside, footer border spans 26–1254 at 1280 as in the prototype); header row `items-start`; nav items `flex` + `leading-[17px]` → nav pill 47 px. Measured at 1280: shells and card 50–1230 / 1180, pill tops 20/20/20; 375 px: scrollWidth 375 · Alternatives: padded outer wrapper; keep `items-center` · Reversibility: cheap · Why: reproduces the prototype's content-box wrapper exactly.
+
+## D83 · Plan 12 · F2 — Popover slides to stay 8 px inside the viewport
+Choice: pure `placePopover` (width capped at viewport − 16, right-aligned when it fits, otherwise slid just enough), re-run on open and resize. Measured: 375 → x 8–244, 0 clipped options; 1280 → right edges 1201/1201, gap 10.75, width 236 · Alternatives: left-align to the trigger; close on resize · Reversibility: cheap · Why: minimal movement keeps the popover near its trigger.
+
+## D84 · Plan 12 · F3 — Sort options in mono 11 with the prototype's icons; token shadow kept
+Choice: options JetBrains Mono 11 px with the prototype's 14 px stroke icons (✓ moves to the right end when an option has an icon); sort popover `minWidth` 250 = prototype's 236 content-box + padding + border (facet dropdowns in plan 14: 216 → 230 by the same sum); trigger icon redrawn from the prototype; shadow stays `var(--shadow)` (prototype colour is off-token, no dark variant). Measured: font JetBrains Mono 11px, width 250, 4 icons, right edges 1201/1201; 375 → x 8–258, 0 clipped · Alternatives: ✓ before the icon; a new shadow token · Reversibility: cheap · Why: fidelity within the token contract; the prototype's drawings are the site owner's own work.
+
+## D85 · Plan 12 · F4 — Sort moves nodes; hidden entries go last
+Choice: pure `domOrder(ids, visibleIds)` → visible entries in sort order, then hidden ones in server order, applied with `grid.append`; only direct grid children are entries; the first `featured: true` post's row carries `data-featured` (none today). Measured: after `plus anciens`, DOM order = visual order (docker → k9s → vpn → linux → comment) · Alternatives: leave hidden entries in place · Reversibility: cheap · Why: keyboard order must follow the visual order (WCAG 1.3.2).

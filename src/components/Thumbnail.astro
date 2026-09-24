@@ -8,7 +8,7 @@ interface Props {
   coverAlt?: string;
   /**
    * Repli du texte alternatif quand `coverAlt` est absent — `coverAlt` est
-   * `optional()` dans les deux schémas. `ProjectCard` et `ArticleCard`
+   * `optional()` dans les deux schémas. `ProjectCard` et l'ancienne carte d'article
    * faisaient déjà `alt={coverAlt ?? title}` AVANT ce plan : cette prop est ce
    * qui empêche de perdre ce repli en déménageant l'image ici. Requise, pour
    * que l'oubli soit impossible et non simplement improbable.
@@ -23,8 +23,13 @@ interface Props {
    * - `header` = image d'en-tête de la carte « à la une » de l'accueil, 196 px
    *   de haut, rayon 14 px (contrat §3.2 : « image d'en-tête ») ;
    * - `square` = vignette carrée 72 px des « Derniers articles », rayon 10 px.
+   * Ajout Plan 12 (T5) :
+   * - `row` = vignette 76×64, rayon 10 px, des lignes compactes de /blog
+   *   (prototype 163–227). Son visuel dérivé repose directement sur `surface`
+   *   (la ligne ne peint aucun fond) : il porte `data-rail`, l'exemption V2
+   *   des rails explicites (D74).
    */
-  size?: 'card' | 'featured' | 'header' | 'square';
+  size?: 'card' | 'featured' | 'header' | 'square' | 'row';
   /**
    * Couverture au-dessus de la ligne de flottaison (les deux entrées « à la
    * une » : accueil et /blog) : `loading="eager"`. Toutes les autres restent
@@ -49,6 +54,7 @@ const FRAME: Record<NonNullable<Props['size']>, { box: string; width: string; ra
   featured: { box: 'aspect-[16/7]', width: 'w-full', radius: 'rounded-thumb' },
   header: { box: 'h-[196px]', width: 'w-full', radius: 'rounded-inner' },
   square: { box: 'size-[72px]', width: 'shrink-0', radius: 'rounded-thumb' },
+  row: { box: 'h-16', width: 'w-[76px] shrink-0', radius: 'rounded-thumb' },
 };
 const { box, width: frameWidth, radius } = FRAME[size];
 // La vignette carrée s'affiche en 72×72 (object-cover) : on ne livre pas
@@ -57,10 +63,16 @@ const { box, width: frameWidth, radius } = FRAME[size];
 // image paysage ne laisserait que 72 px de haut, soit du 1×.
 const squareSide = 144;
 const landscape = cover ? cover.width >= cover.height : true;
-const width = size === 'square' && !landscape ? squareSide : undefined;
-const height = size === 'square' && landscape ? squareSide : undefined;
+// Vignette de ligne 76×64 : même raisonnement, cadre non carré — l'image est
+// servie en 2× (152×128) sur le côté qui contraint le recadrage.
+const ROW = { width: 152, height: 128 };
+const widerThanRow = cover ? cover.width / cover.height >= ROW.width / ROW.height : true;
+const width =
+  size === 'square' && !landscape ? squareSide : size === 'row' && !widerThanRow ? ROW.width : undefined;
+const height =
+  size === 'square' && landscape ? squareSide : size === 'row' && widerThanRow ? ROW.height : undefined;
 // Monogramme à l'échelle du cadre : `text-2xl` déborderait presque du carré 72 px.
-const monogramSize = size === 'square' ? 'text-base' : 'text-2xl';
+const monogramSize = size === 'square' || size === 'row' ? 'text-base' : 'text-2xl';
 ---
 
 {
@@ -85,6 +97,7 @@ const monogramSize = size === 'square' ? 'text-base' : 'text-2xl';
       style="background-image: repeating-linear-gradient(135deg, var(--color-hatch) 0 1px, transparent 1px 9px);"
       aria-hidden="true"
       data-thumb-derived
+      data-rail={size === 'row' ? '' : undefined}
     >
       <span class={`font-mono ${monogramSize} font-medium tracking-[.06em] text-muted`}>{monogram}</span>
     </div>

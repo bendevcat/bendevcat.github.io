@@ -35,7 +35,10 @@
  * Chacune doit porter `data-tag` (= slug de son libellé) et `data-tone`
  * (= ton haché du slug, FNV-1a 32 bits mod 5 — même calcul que `tagTone` de
  * src/lib/tags.ts, épinglé par tags.test.ts), les trois utilitaires de ce ton,
- * `rounded-pill`, `border`, `font-mono`, et pas `text-muted`. Un slug ne peut
+ * `rounded-pill` ou `rounded-tag` (plan 12 : puces du rail de /blog),
+ * `border`, `font-mono`, et pas `text-muted`. Le slug attendu est celui du
+ * libellé, sauf pour un lien `/tags/<slug>/` (texte « libellé compte ») : celui
+ * de son href. Un slug ne peut
  * avoir qu'un ton dans tout `dist/`. Chaque /tags/<slug>/ porte exactement
  * une puce, celle de son slug.
  *
@@ -518,10 +521,13 @@ for (const file of htmlFiles(DIST)) {
     if (!tone) errors.push(`${where} : pas de data-tone`);
     if (!slug || !tone) continue;
 
-    // Le slug doit être celui du libellé (lien de /tags : celui de son href).
+    // Le slug doit être celui du libellé — sauf pour une puce-lien
+    // `/tags/<slug>/` (index /tags, rail de /blog au plan 12) : son texte porte
+    // aussi le compte (« vpn 1 »), le slug est donc lu dans son href.
+    const tagHref = chip.tag === 'a' ? (chip.attrs.href ?? '').match(/^\/tags\/([^/]+)\/$/) : null;
     const expectedSlug =
-      chip.tag === 'a' && path === '/tags/'
-        ? (chip.attrs.href ?? '').split('/')[2]
+      tagHref
+        ? tagHref[1]
         : chip.tag === 'button'
           ? tagSlug(chip.attrs['data-facet-value'] ?? '')
           : tagSlug(chip.text);
@@ -531,9 +537,11 @@ for (const file of htmlFiles(DIST)) {
     else if (tone !== hashedTone(slug)) errors.push(`${where} : data-tone="${tone}" (hash du slug : ${hashedTone(slug)})`);
 
     const cls = classes(chip);
-    const missing = [...(TONES.includes(tone) ? toneUtilities(tone) : []), 'rounded-pill', 'border', 'font-mono'].filter(
+    // Forme : `rounded-pill`, ou `rounded-tag` (radius 8, puces du rail de /blog — plan 12).
+    const missing = [...(TONES.includes(tone) ? toneUtilities(tone) : []), 'border', 'font-mono'].filter(
       (c) => !cls.includes(c),
     );
+    if (!cls.includes('rounded-pill') && !cls.includes('rounded-tag')) missing.push('rounded-pill ou rounded-tag');
     if (missing.length > 0) errors.push(`${where} : classe sans ${missing.join(', ')}`);
     if (cls.includes('text-muted')) errors.push(`${where} : garde text-muted`);
 

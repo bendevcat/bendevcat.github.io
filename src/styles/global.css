@@ -110,6 +110,12 @@
   --radius-thumb: 10px;   /* vignette, petite image */
   --radius-badge: 9px;    /* badge d'icône de section (28×28) */
   --radius-pill: 999px;   /* pilule : navigation, statut, catégorie, bouton rond */
+  --radius-tag: 8px;      /* puce de tag du rail /blog (prototype 163–227, plan 12) */
+
+  /* — coque (plan 12, prototype `max-width:1180px`) : utilitaire `max-w-shell`,
+     porté par la rangée d'en-tête, l'enveloppe du contenu et le pied de page,
+     toujours avec `box-content` : 1180 px de contenu, padding en plus (F1) — */
+  --container-shell: 1180px;
 }
 
 /* DARK : surcharge des mêmes custom properties (contrat §2, colonne « Sombre »).
@@ -394,8 +400,21 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 [data-list-grid][hidden],
 [data-list-empty][hidden],
 [data-entry-id][hidden],
-[data-search-open][hidden] {
+[data-search-open][hidden],
+[data-dropdown][hidden],
+[data-dropdown-listbox][hidden] {
   display: none !important;
+}
+
+/* Menu déroulant (plan 12, T3 — src/components/Dropdown.astro) : la racine
+   porte `inline-block`, d'où sa place dans la liste `hidden` ci-dessus (rendue
+   `hidden` par le serveur, révélée par src/scripts/dropdown.ts : pas de
+   contrôle mort sans JS). L'ombre du popover est `var(--shadow)` posée ici, en
+   CSS écrit à la main — jamais l'utilitaire `.shadow`, figé en clair au build
+   (cf. `.card-inner`). Sélecteur d'attribut hors `@layer components` : la
+   couche garde ses quatre classes de patron. */
+[data-dropdown-listbox] {
+  box-shadow: var(--shadow);
 }
 
 /* ==========================================================================

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL } from './facetFilters';
 import {
   computeListState,
+  domOrder,
   isAnyFacetActive,
   pickFeaturedEntry,
   type ListEntry,
@@ -195,5 +196,109 @@ describe('computeListState — tri (R7)', () => {
     const input = [...ENTRIES];
     computeListState(input, NONE, 'oldest', LABELS);
     expect(input.map((e) => e.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+// Plan 12, T4 (R9, D75) : /blog n'a plus de bloc « à la une » — la page ne
+// rend aucun `[data-list-featured]` et le script passe `{ featured: false }`.
+// Les trois autres listes gardent le comportement par défaut ci-dessus.
+describe('computeListState — sans bloc à la une (plan 12, R9)', () => {
+  it('sans bloc à la une, ne désigne aucune entrée et les garde toutes visibles', () => {
+    const state = computeListState(ENTRIES, NONE, 'none', LABELS, { featured: false });
+    expect(state.featuredId).toBeNull();
+    expect(state.visibleIds).toEqual(['a', 'b', 'c']);
+    expect(state.count).toBe(3);
+    expect(state.meta).toBe('3 projets');
+  });
+
+  it('trie toutes les entrées, y compris celle marquée featured', () => {
+    const state = computeListState(ENTRIES, NONE, 'recent', LABELS, { featured: false });
+    expect(state.featuredId).toBeNull();
+    expect(state.visibleIds).toEqual(['b', 'a', 'c']);
+  });
+
+  it('garde le mode à la une par défaut quand l’option est absente ou vraie', () => {
+    expect(computeListState(ENTRIES, NONE, 'none', LABELS, { featured: true }).featuredId).toBe('a');
+    expect(computeListState(ENTRIES, NONE, 'none', LABELS, {}).featuredId).toBe('a');
+  });
+});
+
+// Plan 12, T4 (R9, D75) : une facette qui déclare un libellé de repos
+// (`data-facet-all-label="Tout"`) s'écrit TOUJOURS `libellé : valeur` dans la
+// ligne de méta, même au repos ; les autres facettes gardent `libellé valeur`.
+describe('computeListState — facette à libellé de repos (plan 12, R9)', () => {
+  const BLOG_LABELS: ListLabels = {
+    singular: 'article',
+    plural: 'articles',
+    facets: [
+      { key: 'category', label: 'catégorie', allLabel: 'Tout' },
+      { key: 'tag', label: 'tag' },
+    ],
+  };
+  const POSTS: ListEntry[] = [
+    { id: 'p1', facets: { category: ['DevOps'], tag: ['k8s'] }, featured: false, date: 3, minutes: 4 },
+    { id: 'p2', facets: { category: ['DevOps'], tag: ['bash'] }, featured: false, date: 2, minutes: 6 },
+    { id: 'p3', facets: { category: ['Outils'], tag: ['k8s'] }, featured: false, date: 1, minutes: 2 },
+  ];
+
+  it('écrit une facette à libellé de repos « catégorie : Tout », puis « catégorie : DevOps »', () => {
+    const rest = computeListState(POSTS, { category: ALL, tag: ALL }, 'recent', BLOG_LABELS, { featured: false });
+    expect(rest.meta).toBe('3 articles · catégorie : Tout');
+    const devops = computeListState(POSTS, { category: 'DevOps', tag: ALL }, 'recent', BLOG_LABELS, {
+      featured: false,
+    });
+    expect(devops.meta).toBe('2 articles · catégorie : DevOps');
+    expect(devops.visibleIds).toEqual(['p1', 'p2']);
+  });
+
+  it('laisse les autres facettes au format « libellé valeur », après la facette de repos', () => {
+    const state = computeListState(POSTS, { category: ALL, tag: 'k8s' }, 'none', BLOG_LABELS, {
+      featured: false,
+    });
+    expect(state.meta).toBe('2 articles · catégorie : Tout · tag k8s');
+  });
+
+  it('ne nomme dans l’état vide que les facettes actives, au format « libellé valeur »', () => {
+    const state = computeListState(POSTS, { category: 'Outils', tag: 'bash' }, 'none', BLOG_LABELS, {
+      featured: false,
+    });
+    expect(state.meta).toBe('0 article · catégorie : Outils · tag bash');
+    expect(state.empty).toBe('Aucun article pour catégorie Outils et tag bash.');
+  });
+});
+
+describe('domOrder — le tri réordonne le DOM (plan 12, F4)', () => {
+  it('place les entrées visibles dans l’ordre du tri, en tête', () => {
+    expect(domOrder(['a', 'b', 'c', 'd'], ['d', 'b', 'a', 'c'])).toEqual(['d', 'b', 'a', 'c']);
+  });
+
+  it('renvoie les entrées masquées après les visibles, dans l’ordre canonique', () => {
+    expect(domOrder(['a', 'b', 'c', 'd', 'e'], ['e', 'c'])).toEqual(['e', 'c', 'a', 'b', 'd']);
+  });
+
+  it('garde l’entrée à la une (absente de visibleIds) dans la grille, masquée en queue', () => {
+    const state = computeListState(ENTRIES, NONE, 'oldest', LABELS);
+    expect(state.visibleIds).toEqual(['c', 'b']);
+    expect(domOrder(['a', 'b', 'c'], state.visibleIds)).toEqual(['c', 'b', 'a']);
+  });
+
+  it('suit « plus anciens » puis revient à « plus récents » sans perdre d’entrée', () => {
+    const canonical = ['b', 'a', 'c'];
+    const oldest = computeListState(ENTRIES, NONE, 'oldest', LABELS, { featured: false });
+    expect(domOrder(canonical, oldest.visibleIds)).toEqual(['c', 'a', 'b']);
+    const recent = computeListState(ENTRIES, NONE, 'recent', LABELS, { featured: false });
+    expect(domOrder(canonical, recent.visibleIds)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('ignore un id visible inconnu et ne duplique rien', () => {
+    expect(domOrder(['a', 'b'], ['b', 'zz', 'b'])).toEqual(['b', 'a']);
+  });
+
+  it('ne mute pas les tableaux reçus', () => {
+    const ids = ['a', 'b', 'c'];
+    const visible = ['c', 'a'];
+    domOrder(ids, visible);
+    expect(ids).toEqual(['a', 'b', 'c']);
+    expect(visible).toEqual(['c', 'a']);
   });
 });
