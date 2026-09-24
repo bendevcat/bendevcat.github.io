@@ -32,3 +32,12 @@ export function matchesFilters(
     { status: selected.status, stack: selected.stack },
   );
 }
+
+/**
+ * Sérialise les facettes d'un projet pour le contrat `data-facet` commun aux
+ * quatre listes (Plan 7 / I4). `matchesFilters` ci-dessus reste l'API publique
+ * historique et sa suite reste la preuve de non-régression du Plan 3.
+ */
+export function projectFacets(entry: ProjectFilterEntry): Record<string, string[]> {
+  return { status: [entry.status], stack: entry.stack };
+}

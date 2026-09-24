@@ -1,38 +1,58 @@
 ---
-import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { PROJECT_STATUS_META } from '../lib/projectStatus';
+import { projectFacets } from '../lib/projectFilters';
+import Thumbnail from './Thumbnail.astro';
 
 interface Props {
   project: CollectionEntry<'projects'>;
+  /** Variante « à la une » : carte large, vignette en 16/7. */
+  featured?: boolean;
+  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
+  hidden?: boolean;
+  /**
+   * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
+   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
+   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
+   */
+  isFeaturedEntry?: boolean;
 }
 
-const { project } = Astro.props;
+const { project, featured = false, hidden = false, isFeaturedEntry = false } = Astro.props;
 const { title, description, status, stack, cover, coverAlt } = project.data;
 const statusMeta = PROJECT_STATUS_META[status];
+const facets = JSON.stringify(projectFacets({ status, stack }));
 ---
 
 {/*
-  `data-status` et `data-stack` sont lus par src/scripts/project-filters.ts
-  (T-B2). `data-stack` est du JSON : aucune techno ne peut casser le parsing,
-  quel que soit son libellé.
+  Contrat de carte commun aux quatre listes (Plan 7 / I4), lu par
+  src/scripts/list-pattern.ts. `data-facet` est du JSON : aucune valeur de
+  facette ne peut casser le parsing, quel que soit son libellé. `data-featured`
+  reflète le choix RÉEL du serveur (`isFeaturedEntry`), pas la seule présence
+  de `project.data.featured` : sur /blog, /prompts et /skills aucune entrée ne
+  porte ce champ, et les deux côtés ne s'accordaient que par coïncidence
+  d'ordre — fix 3, revue finale de Plan 7.
 */}
 <a
   href={`/projets/${project.id}/`}
-  class="group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
-  data-project-card
-  data-status={status}
-  data-stack={JSON.stringify(stack)}
+  class:list={[
+    'group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50',
+    featured && 'sm:col-span-2 lg:col-span-3',
+  ]}
+  data-entry-id={project.id}
+  data-facet={facets}
+  data-date={project.data.startDate?.getTime() ?? 0}
+  data-minutes={0}
+  data-featured={isFeaturedEntry ? '' : undefined}
+  hidden={hidden}
 >
-  {
-    cover && (
-      <Image
-        src={cover}
-        alt={coverAlt ?? title}
-        class="aspect-video w-full rounded-inner object-cover"
-      />
-    )
-  }
+  <Thumbnail
+    cover={cover}
+    coverAlt={coverAlt}
+    title={title}
+    derivedFrom={status}
+    size={featured ? 'featured' : 'card'}
+  />
 
   <span
     class={`w-fit rounded-pill border px-2 py-0.5 font-mono text-xs ${statusMeta.chipClass}`}

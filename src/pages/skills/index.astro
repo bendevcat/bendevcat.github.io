@@ -3,91 +3,124 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SkillCard from '../../components/SkillCard.astro';
 import { getSortedSkills, collectTypes, collectSkillTags } from '../../lib/skills';
 import { ALL } from '../../lib/facetFilters';
+import { pickFeaturedEntry } from '../../lib/listPattern';
 
 // getSortedSkills() applique déjà l'ordre du plan (titre A→Z) et écarte les
 // `draft` — cf. src/lib/skills.ts. Pas de re-tri ici.
 const skills = await getSortedSkills();
 const types = collectTypes(skills);
 const tags = collectSkillTags(skills);
+
+// Même règle de dérivation que src/scripts/list-pattern.ts (spec §6.1,
+// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, pour que la
+// carte « à la une » et sa copie masquée dans la grille pointent exactement
+// vers la même entrée que computeListState() désignerait sans filtre. Ni
+// `prompts` ni `skills` n'ont de champ `featured` (état mesuré du plan) :
+// pickFeaturedEntry() retombe donc systématiquement sur la première entrée de
+// l'ordre canonique.
+const featured = pickFeaturedEntry(skills);
+
+// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
+// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
+// jamais.
+const NOUNS = ['skill', 'skills'] as const;
 ---
 
 <BaseLayout
-  title="Skills — bencat_"
-  description="Les skills Claude Code de bencat_ : instructions, installation et prompts liés."
+	title="Skills — bencat_"
+	description="Les skills Claude Code de bencat_ : instructions, installation et prompts liés."
 >
-  <main>
-    <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <p class="font-mono text-sm text-accent">~/ skills</p>
-      <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Skills</h1>
-    </section>
+	<main>
+		<section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+			<p class="font-mono text-sm text-accent">~/ skills</p>
+			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Skills</h1>
+		</section>
 
-    <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-      {/*
-        `hidden` côté serveur : révélé par src/scripts/facet-filters.ts.
-        Sans JS, aucun contrôle mort n'est affiché et toutes les cartes restent
-        visibles (enhancement progressif, spec §6.3).
-      */}
-      <div
-        class="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-        data-facet-filters
-        hidden
-      >
-        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par type">
-          <button
-            type="button"
-            data-facet-key="type"
-            data-facet-value={ALL}
-            aria-pressed="true"
-            class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-          >
-            tous
-          </button>
-          {
-            types.map((type) => (
-              <button
-                type="button"
-                data-facet-key="type"
-                data-facet-value={type}
-                aria-pressed="false"
-                class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-              >
-                {type}
-              </button>
-            ))
-          }
-        </div>
+		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
+			{/* 1 · pilules de filtre (tag) + 2 · dropdown (type) — `hidden` côté serveur (contrainte n°5) */}
+			<div
+				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+				data-list-filters
+				hidden
+			>
+				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par tag">
+					<button
+						type="button"
+						data-facet-key="tag"
+						data-facet-label="tag"
+						data-facet-value={ALL}
+						aria-pressed="true"
+						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+					>
+						tous
+					</button>
+					{
+						tags.map((tag) => (
+							<button
+								type="button"
+								data-facet-key="tag"
+								data-facet-label="tag"
+								data-facet-value={tag}
+								aria-pressed="false"
+								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
+							>
+								{tag}
+							</button>
+						))
+					}
+				</div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          {
-            tags.length > 0 && (
-              <label class="flex items-center gap-2 font-mono text-xs text-muted">
-                tag
-                <select
-                  data-facet-key="tag"
-                  class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
-                >
-                  <option value={ALL}>tous</option>
-                  {tags.map((tag) => (
-                    <option value={tag}>{tag}</option>
-                  ))}
-                </select>
-              </label>
-            )
-          }
-        </div>
-      </div>
+				<label class="flex items-center gap-2 font-mono text-xs text-muted">
+					type
+					<select
+						data-facet-key="type"
+						data-facet-label="type"
+						class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
+					>
+						<option value={ALL}>tous</option>
+						{types.map((type) => <option value={type}>{type}</option>)}
+					</select>
+				</label>
+			</div>
 
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {skills.map((skill) => <SkillCard skill={skill} />)}
-      </div>
+			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
+			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{skills.length} {skills.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
 
-      <p class="mt-8 text-sm text-muted" data-facet-empty hidden>
-        Aucun skill ne correspond à ce filtre.
-      </p>
-    </section>
+			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
+			<div class="mb-6" data-list-featured>
+				{featured && <SkillCard skill={featured} featured isFeaturedEntry />}
+			</div>
 
-    <script>
-      import '../../scripts/facet-filters.ts';
-    </script>
-  </main>
+			{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
+			     rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
+			     chaque entrée exactement une fois (contrainte globale n°5). */}
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
+				{
+					skills.map((skill) => (
+						<SkillCard
+							skill={skill}
+							hidden={skill.id === featured?.id}
+							isFeaturedEntry={skill.id === featured?.id}
+						/>
+					))
+				}
+			</div>
+
+			{/* 6 · état vide */}
+			<div class="mt-8 flex flex-col items-start gap-3" data-list-empty hidden>
+				<p class="text-sm text-muted" data-list-empty-text></p>
+				<button
+					type="button"
+					data-list-reset
+					class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+				>
+					voir tous les skills
+				</button>
+			</div>
+		</section>
+
+		<script>
+			import '../../scripts/list-pattern.ts';
+		</script>
+	</main>
 </BaseLayout>

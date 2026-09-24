@@ -5,10 +5,12 @@ import { getPublishedPosts } from '../../lib/posts';
 import { collectTagIndex } from '../../lib/tags';
 import { CATEGORIES } from '../../content.config';
 import { ALL } from '../../lib/facetFilters';
+import { pickFeaturedEntry } from '../../lib/listPattern';
 
 const posts = await getPublishedPosts();
 // getPublishedPosts() filtre les drafts et trie déjà par pubDate desc
-// (src/lib/posts.ts) — pas de re-tri ici, conformément au plan d'impl C2.
+// (src/lib/posts.ts) — pas de re-tri ici. C'est aussi CET ordre canonique
+// (et non un tableau trié) qui nourrit pickFeaturedEntry() ci-dessous.
 
 // Seuls les tags PRÉSENTS dans les articles publiés : proposer un tag qui ne
 // filtre rien donnerait une liste vide sans que l'utilisateur comprenne.
@@ -16,6 +18,20 @@ const blogTags = collectTagIndex({ blog: posts, projects: [], prompts: [], skill
 // Idem côté catégories : CATEGORIES en liste 7 valeurs possibles, toutes ne
 // sont pas forcément utilisées.
 const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.category === c));
+
+// Même règle de dérivation que src/scripts/list-pattern.ts (spec §6.1,
+// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, sur l'ordre
+// CANONIQUE (`posts`, jamais un tableau trié), pour que la carte « à la une »
+// et sa copie masquée dans la grille pointent exactement vers la même entrée
+// que computeListState() désignerait — quel que soit le tri choisi côté
+// client (P-12 : avant `26757a9`, dériver du tableau trié faisait disparaître
+// un article dès qu'un tri autre que « par défaut » était actif).
+const featured = pickFeaturedEntry(posts.map((p) => ({ ...p, featured: p.data.featured })));
+
+// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
+// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
+// jamais.
+const NOUNS = ['article', 'articles'] as const;
 ---
 
 <BaseLayout
@@ -28,21 +44,18 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Blog</h1>
 		</section>
 
-		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-			{/*
-				`hidden` côté serveur : révélé par src/scripts/facet-filters.ts.
-				Sans JS, aucun contrôle mort n'est affiché et toutes les cartes
-				restent visibles (enhancement progressif, spec §6.3).
-			*/}
+		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
+			{/* 1 · pilules de filtre + 2 · dropdowns — `hidden` côté serveur (contrainte n°5) */}
 			<div
-				class="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-				data-facet-filters
+				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+				data-list-filters
 				hidden
 			>
 				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par catégorie">
 					<button
 						type="button"
 						data-facet-key="category"
+						data-facet-label="catégorie"
 						data-facet-value={ALL}
 						aria-pressed="true"
 						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
@@ -54,6 +67,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 							<button
 								type="button"
 								data-facet-key="category"
+								data-facet-label="catégorie"
 								data-facet-value={cat}
 								aria-pressed="false"
 								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
@@ -64,43 +78,75 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 					}
 				</div>
 
+				<div class="flex flex-wrap items-center gap-4">
+					{/* Dropdown 1 (R7) : tri — n'est PAS une facette, donc absent de
+					    la ligne de méta et de l'état vide (spec §6.1). */}
+					<label class="flex items-center gap-2 font-mono text-xs text-muted">
+						tri
+						<select data-sort class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body">
+							<option value="none">par défaut</option>
+							<option value="recent">plus récents</option>
+							<option value="oldest">plus anciens</option>
+							<option value="shortest">plus courts</option>
+							<option value="longest">plus longs</option>
+						</select>
+					</label>
+
+					{/* Dropdown 2 : tag, conservé (décision I2) — passe de pilules à
+					    dropdown pour ne garder qu'UNE barre de pilules (R3). */}
+					{
+						blogTags.length > 0 && (
+							<label class="flex items-center gap-2 font-mono text-xs text-muted">
+								tag
+								<select
+									data-facet-key="tag"
+									data-facet-label="tag"
+									class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
+								>
+									<option value={ALL}>tous</option>
+									{blogTags.map((tag) => <option value={tag.slug}>{tag.label} ({tag.count})</option>)}
+								</select>
+							</label>
+						)
+					}
+				</div>
+			</div>
+
+			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
+			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{posts.length} {posts.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
+
+			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
+			<div class="mb-6" data-list-featured>
+				{featured && <ArticleCard post={featured} featured filterable isFeaturedEntry />}
+			</div>
+
+			{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une
+			     est rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page
+			     montre chaque entrée exactement une fois (contrainte globale n°5). */}
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
 				{
-					blogTags.length > 0 && (
-						<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par tag">
-							<button
-								type="button"
-								data-facet-key="tag"
-								data-facet-value={ALL}
-								aria-pressed="true"
-								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-							>
-								tous
-							</button>
-							{
-								blogTags.map((tag) => (
-									<button
-										type="button"
-										data-facet-key="tag"
-										data-facet-value={tag.slug}
-										aria-pressed="false"
-										class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
-									>
-										{tag.label} <span class="text-accent">{tag.count}</span>
-									</button>
-								))
-							}
-						</div>
-					)
+					posts.map((post) => (
+						<ArticleCard
+							post={post}
+							filterable
+							hidden={post.id === featured?.id}
+							isFeaturedEntry={post.id === featured?.id}
+						/>
+					))
 				}
 			</div>
 
-			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{posts.map((post) => <ArticleCard post={post} filterable />)}
+			{/* 6 · état vide */}
+			<div class="mt-8 flex flex-col items-start gap-3" data-list-empty hidden>
+				<p class="text-sm text-muted" data-list-empty-text></p>
+				<button
+					type="button"
+					data-list-reset
+					class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+				>
+					voir tous les articles
+				</button>
 			</div>
-
-			<p class="mt-8 text-sm text-muted" data-facet-empty hidden>
-				Aucun article ne correspond à ce filtre.
-			</p>
 
 			<p class="mt-4">
 				<a href="/tags/" class="font-mono text-xs text-muted transition-colors hover:text-accent">
@@ -110,7 +156,7 @@ const usedCategories = CATEGORIES.filter((c) => posts.some((p) => p.data.categor
 		</section>
 
 		<script>
-			import '../../scripts/facet-filters.ts';
+			import '../../scripts/list-pattern.ts';
 			import '../../scripts/blog-filters.ts';
 		</script>
 	</main>

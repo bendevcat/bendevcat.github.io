@@ -1,26 +1,53 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import Thumbnail from './Thumbnail.astro';
 
 interface Props {
   prompt: CollectionEntry<'prompts'>;
+  /** Variante « à la une » : carte large, vignette en 16/7. */
+  featured?: boolean;
+  /** Masquée côté serveur — la même entrée est déjà rendue dans le bloc à la une. */
+  hidden?: boolean;
+  /**
+   * Vrai sur l'entrée que le serveur a RÉELLEMENT désignée via
+   * `pickFeaturedEntry()` (spec §6.1) — indépendant de `featured`, qui ne
+   * pilote que la mise en page. Pilote `data-featured` (fix 3, revue finale).
+   */
+  isFeaturedEntry?: boolean;
 }
 
-const { prompt } = Astro.props;
+const { prompt, featured = false, hidden = false, isFeaturedEntry = false } = Astro.props;
 const { title, description, format, tool, tags } = prompt.data;
 
-// Contrat lu par src/scripts/facet-filters.ts (T-B2). Toutes les valeurs sont
-// des tableaux, même les facettes mono-valeur : le prédicat n'a alors qu'un
-// seul cas à traiter (`includes`). JSON.stringify garantit qu'aucun libellé,
-// si hostile soit-il, ne casse le parsing côté navigateur.
+// Contrat de carte commun aux quatre listes (Plan 7 / I4), lu par
+// src/scripts/list-pattern.ts. Toutes les valeurs sont des tableaux, même les
+// facettes mono-valeur : le prédicat n'a alors qu'un seul cas à traiter
+// (`includes`). JSON.stringify garantit qu'aucun libellé, si hostile soit-il,
+// ne casse le parsing côté navigateur.
 const facets = JSON.stringify({ format: [format], tool: [tool], tag: tags });
 ---
 
+{/*
+  `data-featured` reflète le choix RÉEL du serveur (`isFeaturedEntry`) : le
+  schéma `prompts` n'a pas de champ `featured` (état mesuré du plan), donc
+  sans cet attribut explicite le client ne pouvait retrouver l'entrée à la une
+  que par coïncidence d'ordre — fix 3, revue finale de Plan 7.
+*/}
 <a
   href={`/prompts/${prompt.id}/`}
-  class="group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50"
-  data-facet-card
+  class:list={[
+    'group flex flex-col gap-3 rounded-card border border-line bg-surface p-4 transition-colors hover:border-accent/50',
+    featured && 'sm:col-span-2 lg:col-span-3',
+  ]}
+  data-entry-id={prompt.id}
   data-facet={facets}
+  data-date={0}
+  data-minutes={0}
+  data-featured={isFeaturedEntry ? '' : undefined}
+  hidden={hidden}
 >
+  <Thumbnail title={title} derivedFrom={format} size={featured ? 'featured' : 'card'} />
+
   <div class="flex flex-wrap items-center gap-2">
     <span class="w-fit rounded-pill border border-line px-2 py-0.5 font-mono text-xs text-muted">
       {format}

@@ -3,12 +3,24 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProjectCard from '../../components/ProjectCard.astro';
 import { getSortedProjects, collectStacks } from '../../lib/projects';
 import { PROJECT_STATUSES } from '../../content.config';
-import { ALL } from '../../lib/projectFilters';
+import { ALL } from '../../lib/facetFilters';
+import { pickFeaturedEntry } from '../../lib/listPattern';
 
 // getSortedProjects() applique déjà l'ordre du plan (featured, startDate desc,
 // titre) — cf. src/lib/projects.ts. Pas de re-tri ici.
 const projects = await getSortedProjects();
 const stacks = collectStacks(projects);
+
+// Même règle de dérivation que src/scripts/list-pattern.ts (spec §6.1,
+// décision I3) : l'entrée à la une est désignée CÔTÉ SERVEUR, pour que la
+// carte « à la une » et sa copie masquée dans la grille pointent exactement
+// vers la même entrée que computeListState() désignerait sans filtre.
+const featured = pickFeaturedEntry(projects.map((p) => ({ ...p, featured: p.data.featured })));
+
+// Source unique du vocabulaire : sert `data-list-nouns` ET le repli SSR de la
+// ligne de méta (accord singulier/pluriel), pour que les deux ne divergent
+// jamais.
+const NOUNS = ['projet', 'projets'] as const;
 ---
 
 <BaseLayout
@@ -21,69 +33,91 @@ const stacks = collectStacks(projects);
 			<h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Projets</h1>
 		</section>
 
-		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-			{/*
-				`hidden` côté serveur : révélé par src/scripts/project-filters.ts.
-				Sans JS, aucun contrôle mort n'est affiché et toutes les cartes
-				restent visibles (enhancement progressif, spec §6.1).
-			*/}
+		<section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6" data-list data-list-nouns={NOUNS.join('|')}>
+			{/* 1 · pilules de filtre + 2 · dropdown — `hidden` côté serveur (contrainte n°5) */}
 			<div
-				class="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
-				data-project-filters
+				class="mb-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+				data-list-filters
 				hidden
 			>
-				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par statut">
+				<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par techno">
 					<button
 						type="button"
-						data-filter-status={ALL}
+						data-facet-key="stack"
+						data-facet-label="techno"
+						data-facet-value={ALL}
 						aria-pressed="true"
 						class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
 					>
-						tous
+						toutes
 					</button>
 					{
-						PROJECT_STATUSES.map((status) => (
+						stacks.map((tech) => (
 							<button
 								type="button"
-								data-filter-status={status}
+								data-facet-key="stack"
+								data-facet-label="techno"
+								data-facet-value={tech}
 								aria-pressed="false"
 								class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:text-accent"
 							>
-								{status}
+								{tech}
 							</button>
 						))
 					}
 				</div>
 
+				<label class="flex items-center gap-2 font-mono text-xs text-muted">
+					statut
+					<select
+						data-facet-key="status"
+						data-facet-label="statut"
+						class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
+					>
+						<option value={ALL}>tous</option>
+						{PROJECT_STATUSES.map((status) => <option value={status}>{status}</option>)}
+					</select>
+				</label>
+			</div>
+
+			{/* 3 · ligne de méta — donnée machine, donc mono (contrainte n°7) */}
+			<p class="mb-6 font-mono text-xs text-dim" data-list-meta>{projects.length} {projects.length <= 1 ? NOUNS[0] : NOUNS[1]}</p>
+
+			{/* 4 · entrée à la une — UNE seule carte, désignée côté serveur (décision I3) */}
+			<div class="mb-6" data-list-featured>
+				{featured && <ProjectCard project={featured} featured isFeaturedEntry />}
+			</div>
+
+			{/* 5 · grille — contient TOUTES les entrées ; celle qui est déjà à la une est
+			     rendue `hidden` PAR LE SERVEUR, pour que sans JavaScript la page montre
+			     chaque entrée exactement une fois (contrainte globale n°5). */}
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-list-grid>
 				{
-					stacks.length > 0 && (
-						<label class="flex items-center gap-2 font-mono text-xs text-muted">
-							techno
-							<select
-								data-filter-stack
-								class="rounded-pill border border-line bg-surface px-2 py-1 font-mono text-xs text-body"
-							>
-								<option value={ALL}>toutes</option>
-								{stacks.map((tech) => (
-									<option value={tech}>{tech}</option>
-								))}
-							</select>
-						</label>
-					)
+					projects.map((project) => (
+						<ProjectCard
+							project={project}
+							hidden={project.id === featured?.id}
+							isFeaturedEntry={project.id === featured?.id}
+						/>
+					))
 				}
 			</div>
 
-			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{projects.map((project) => <ProjectCard project={project} />)}
+			{/* 6 · état vide */}
+			<div class="mt-8 flex flex-col items-start gap-3" data-list-empty hidden>
+				<p class="text-sm text-muted" data-list-empty-text></p>
+				<button
+					type="button"
+					data-list-reset
+					class="rounded-pill border border-line px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+				>
+					voir tous les projets
+				</button>
 			</div>
-
-			<p class="mt-8 text-sm text-muted" data-projects-empty hidden>
-				Aucun projet ne correspond à ce filtre.
-			</p>
 		</section>
-	</main>
 
-	<script>
-		import '../../scripts/project-filters.ts';
-	</script>
+		<script>
+			import '../../scripts/list-pattern.ts';
+		</script>
+	</main>
 </BaseLayout>
