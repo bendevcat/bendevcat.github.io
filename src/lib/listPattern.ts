@@ -11,6 +11,22 @@
  */
 import { ALL, matchesFacets, type FacetSelection, type FacetValues } from './facetFilters';
 
+/**
+ * Paramètre d'URL du lien profond de catégorie (plan 13, D86) : les lignes
+ * Catégories du rail d'article mènent à `/blog/?categorie=<valeur>`
+ * (src/lib/article.ts, categoryHref), que /blog lit une fois au chargement.
+ */
+export const CATEGORY_QUERY_PARAM = 'categorie';
+
+/**
+ * Paramètres d'URL lus au chargement d'une liste : nom du paramètre → clé de
+ * facette. Seul `categorie` existe (plan 13) ; la facette `category` n'est
+ * portée que par /blog, les trois autres listes ignorent donc le paramètre.
+ */
+export const FACET_QUERY_PARAMS: Readonly<Record<string, string>> = {
+  [CATEGORY_QUERY_PARAM]: 'category',
+};
+
 export type SortOrder = 'none' | 'recent' | 'oldest' | 'shortest' | 'longest';
 
 export interface ListEntry {
@@ -205,4 +221,28 @@ export function domOrder(ids: readonly string[], visibleIds: readonly string[]):
   const visible = [...new Set(visibleIds.filter((id) => known.has(id)))];
   const shown = new Set(visible);
   return [...visible, ...ids.filter((id) => !shown.has(id))];
+}
+
+/**
+ * Sélection initiale lue dans la query de la page (plan 13, T1 — R4, D86).
+ * `search` est `location.search` (avec ou sans `?`) ; `known` donne, par clé
+ * de facette, les valeurs que la page propose réellement (celles de ses
+ * contrôles). Une valeur n'est retenue que si elle y figure exactement : une
+ * valeur inconnue, vide, d'une autre casse ou égale à la sentinelle `ALL` est
+ * ignorée, et la page se comporte comme sans query. Ne renvoie que les
+ * facettes retenues — à fusionner dans la sélection de repos.
+ */
+export function facetsFromQuery(
+  search: string,
+  known: Readonly<Record<string, readonly string[]>>,
+  params: Readonly<Record<string, string>> = FACET_QUERY_PARAMS,
+): FacetSelection {
+  const query = new URLSearchParams(search);
+  const selection: FacetSelection = {};
+  for (const [param, key] of Object.entries(params)) {
+    const value = query.get(param);
+    if (!value || value === ALL) continue;
+    if (known[key]?.includes(value)) selection[key] = value;
+  }
+  return selection;
 }

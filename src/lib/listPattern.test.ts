@@ -3,6 +3,7 @@ import { ALL } from './facetFilters';
 import {
   computeListState,
   domOrder,
+  facetsFromQuery,
   isAnyFacetActive,
   pickFeaturedEntry,
   type ListEntry,
@@ -300,5 +301,38 @@ describe('domOrder — le tri réordonne le DOM (plan 12, F4)', () => {
     domOrder(ids, visible);
     expect(ids).toEqual(['a', 'b', 'c']);
     expect(visible).toEqual(['c', 'a']);
+  });
+});
+
+describe('facetsFromQuery — lien profond de catégorie (plan 13, T1)', () => {
+  const KNOWN = { category: [ALL, 'DevOps', 'Outils', 'Sécurité & IA'] };
+
+  it('pre-selects a known category from ?categorie= and ignores an unknown or empty one', () => {
+    expect(facetsFromQuery('?categorie=DevOps', KNOWN)).toEqual({ category: 'DevOps' });
+    expect(facetsFromQuery('?categorie=S%C3%A9curit%C3%A9%20%26%20IA', KNOWN)).toEqual({
+      category: 'Sécurité & IA',
+    });
+    // Inconnue, vide, casse différente, sentinelle, absente : rien n'est sélectionné.
+    expect(facetsFromQuery('?categorie=Inconnu', KNOWN)).toEqual({});
+    expect(facetsFromQuery('?categorie=', KNOWN)).toEqual({});
+    expect(facetsFromQuery('?categorie=devops', KNOWN)).toEqual({});
+    expect(facetsFromQuery(`?categorie=${ALL}`, KNOWN)).toEqual({});
+    expect(facetsFromQuery('', KNOWN)).toEqual({});
+    // Une page sans facette `category` (/projets…) ignore le paramètre.
+    expect(facetsFromQuery('?categorie=DevOps', { stack: [ALL, 'DevOps'] })).toEqual({});
+    // Le résultat, appliqué, filtre et réécrit la méta comme un clic sur la ligne.
+    const labels: ListLabels = {
+      singular: 'article',
+      plural: 'articles',
+      facets: [{ key: 'category', label: 'catégorie', allLabel: 'Tout' }],
+    };
+    const entries: ListEntry[] = [
+      { id: 'x', facets: { category: ['DevOps'] }, featured: false, date: 2, minutes: 1 },
+      { id: 'y', facets: { category: ['Outils'] }, featured: false, date: 1, minutes: 1 },
+    ];
+    const selected = { category: ALL, ...facetsFromQuery('?categorie=DevOps', KNOWN) };
+    const state = computeListState(entries, selected, 'recent', labels, { featured: false });
+    expect(state.visibleIds).toEqual(['x']);
+    expect(state.meta).toBe('1 article · catégorie : DevOps');
   });
 });
