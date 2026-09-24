@@ -18,61 +18,128 @@
  * Libellés et comptes en `muted` (le prototype dessine `dim`, qui échoue AA
  * sur `rail` en clair — D71). Sous 768 px, le rail s'empile au-dessus de la
  * liste (bordure basse au lieu de la bordure droite).
+ *
+ * Variante `links` (plan 13, T3 ; prototype 242–276 ; D86) — le rail gauche
+ * d'un article :
+ * - « Catégories » : des `<a>` visibles sans JavaScript — `Tout` → `/blog/`,
+ *   une catégorie → `/blog/?categorie=<valeur encodée>` (categoryHref, lu par
+ *   /blog au chargement). Même boîte que les lignes de /blog (8/10, rayon 10,
+ *   14 px, compte mono 11), en `muted`, survol `chip` / `ink`, sans état
+ *   actif : l'article n'est pas une liste filtrée.
+ * - « Tags » : le même nuage que /blog.
+ * - Slot par défaut après les Tags : `<hr>`, « Articles liés » et
+ *   « Plus d'articles → » (posés par la page article).
+ * - `data-pagefind-ignore` : le rail n'entre pas dans l'index de recherche.
+ * - Bordure droite à partir de 1024 px (trois colonnes) ; en dessous, le rail
+ *   vient en dernier dans la pile et porte une bordure haute.
+ * La variante `filter` (défaut) rend le rail du plan 12, aux retraits près des
+ * libellés (8 px) et du nuage de tags (6 px) repris du prototype (plan 13, F2).
  */
 import TagChip from '../TagChip.astro';
 import { ALL_CATEGORIES_LABEL, type CategoryRow } from '../../lib/blogList';
+import { categoryHref } from '../../lib/article';
 import type { TagSummary } from '../../lib/tags';
 
 interface Props {
   categories: CategoryRow[];
   tags: TagSummary[];
-  /** Valeur de facette active côté serveur (la ligne `Tout`). */
-  selected: string;
+  /** Valeur de facette active côté serveur (la ligne `Tout`) — variante `filter`. */
+  selected?: string;
+  /** `filter` (défaut) : boutons de /blog ; `links` : liens de la page article. */
+  variant?: 'filter' | 'links';
+  /** Nom accessible du rail. */
+  label?: string;
+  /** Classes de placement ajoutées par l'appelant (colonne de grille). */
+  class?: string;
 }
 
-const { categories, tags, selected } = Astro.props;
-const LABEL = 'font-mono text-[10px] tracking-[.12em] text-muted uppercase';
+const {
+  categories,
+  tags,
+  selected,
+  variant = 'filter',
+  label = 'Catégories et tags',
+  class: extra,
+} = Astro.props;
+const links = variant === 'links';
+// Les classes de la racine restent des chaînes littérales dans `class:list`
+// (lues par les gardes de listPages.test.ts) ; celle de `filter` est celle du
+// plan 12, inchangée ; seuls les retraits des libellés et du nuage (F2)
+// changent le HTML de /blog.
+// Libellés « Catégories » / « Tags » : `padding:0 8px` du prototype (174, 244 ;
+// x = 24 dans le rail) ; le nuage de tags `padding:0 6px` (185, 255 ; puces à
+// x = 22). Les lignes de catégorie gardent leur boîte à x = 16 (plan 13, F2).
+const LABEL = 'px-2 font-mono text-[10px] tracking-[.12em] text-muted uppercase';
 ---
 
 <aside
   data-rail
-  aria-label="Catégories et tags"
-  class="flex flex-col gap-[22px] border-b border-line2 bg-rail px-4 py-[22px] md:border-r md:border-b-0"
+  data-pagefind-ignore={links ? '' : undefined}
+  aria-label={label}
+  class:list={[
+    links
+      ? 'flex flex-col gap-[22px] border-t border-line2 bg-rail px-4 py-[22px] lg:border-t-0 lg:border-r'
+      : 'flex flex-col gap-[22px] border-b border-line2 bg-rail px-4 py-[22px] md:border-r md:border-b-0',
+    extra,
+  ]}
 >
-  <div
-    data-list-filters
-    hidden
-    role="group"
-    aria-labelledby="blog-rail-categories"
-    class="flex flex-col gap-2"
-  >
-    <p id="blog-rail-categories" class={LABEL}>Catégories</p>
-    <div class="flex flex-col gap-0.5">
-      {
-        categories.map((row) => (
-          <button
-            type="button"
-            data-facet-key="category"
-            data-facet-label="catégorie"
-            data-facet-value={row.value}
-            data-facet-all-label={ALL_CATEGORIES_LABEL}
-            aria-pressed={row.value === selected ? 'true' : 'false'}
-            aria-label={`${row.label} ${row.count}`}
-            class="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-thumb px-2.5 py-2 text-left font-sans text-sm text-body transition-colors not-aria-pressed:hover:bg-chip not-aria-pressed:hover:text-ink aria-pressed:bg-accentSoft aria-pressed:text-accent"
-          >
-            <span>{row.label}</span>
-            <span class="font-mono text-[11px] text-muted group-aria-pressed:text-accent">{row.count}</span>
-          </button>
-        ))
-      }
-    </div>
-  </div>
+  {
+    links ? (
+      <nav aria-labelledby="blog-rail-categories" class="flex flex-col gap-2">
+        <p id="blog-rail-categories" class={LABEL}>Catégories</p>
+        <ul class="flex flex-col gap-0.5">
+          {categories.map((row) => (
+            <li>
+              <a
+                href={categoryHref(row.value)}
+                class="flex w-full items-center justify-between gap-3 rounded-thumb px-2.5 py-2 font-sans text-sm text-muted transition-colors hover:bg-chip hover:text-ink"
+              >
+                <span>{row.label}</span>
+                {/* Espace explicite : le nom du lien se lit `DevOps 2`, pas `DevOps2`. */}
+                {' '}
+                <span class="font-mono text-[11px]">{row.count}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    ) : (
+      <div
+        data-list-filters
+        hidden
+        role="group"
+        aria-labelledby="blog-rail-categories"
+        class="flex flex-col gap-2"
+      >
+        <p id="blog-rail-categories" class={LABEL}>Catégories</p>
+        <div class="flex flex-col gap-0.5">
+          {
+            categories.map((row) => (
+              <button
+                type="button"
+                data-facet-key="category"
+                data-facet-label="catégorie"
+                data-facet-value={row.value}
+                data-facet-all-label={ALL_CATEGORIES_LABEL}
+                aria-pressed={row.value === selected ? 'true' : 'false'}
+                aria-label={`${row.label} ${row.count}`}
+                class="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-thumb px-2.5 py-2 text-left font-sans text-sm text-body transition-colors not-aria-pressed:hover:bg-chip not-aria-pressed:hover:text-ink aria-pressed:bg-accentSoft aria-pressed:text-accent"
+              >
+                <span>{row.label}</span>
+                <span class="font-mono text-[11px] text-muted group-aria-pressed:text-accent">{row.count}</span>
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    )
+  }
 
   {
     tags.length > 0 && (
       <div class="flex flex-col gap-2.5">
         <p id="blog-rail-tags" class={LABEL}>Tags</p>
-        <ul class="flex flex-wrap gap-1.5" aria-labelledby="blog-rail-tags">
+        <ul class="flex flex-wrap gap-1.5 px-1.5" aria-labelledby="blog-rail-tags">
           {tags.map((tag) => (
             <li>
               <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} label={`${tag.label} ${tag.count}`} shape="tag">
@@ -89,4 +156,6 @@ const LABEL = 'font-mono text-[10px] tracking-[.12em] text-muted uppercase';
       </div>
     )
   }
+
+  {links && <slot />}
 </aside>

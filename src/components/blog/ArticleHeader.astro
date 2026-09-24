@@ -1,0 +1,65 @@
+---
+/**
+ * ArticleHeader.astro (plan 13, T4 ; inventaire §2 ; prototype 231–238) —
+ * l'en-tête d'un article, au-dessus du cadre.
+ *
+ * - 56 px sous le header du site, 14 px entre les lignes (comme ListHeader).
+ * - Fil d'Ariane mono 13 : `~/ blog` (`accent`, lien `/blog/`, souligné au
+ *   survol) puis `/ article` en `muted` ; hors index de recherche.
+ * - h1 40 px / 1.12 / 700 / −.03em, 860 px au plus, `text-pretty` ; 32 px
+ *   sous 640 px.
+ * - Ligne de méta mono 12 `muted`, écart 10 : pilule de catégorie (4/10),
+ *   `date · N min`, marqueur IA `emoji libellé` dans l'encre de son ton
+ *   (`data-ai-marker="<niveau>"`) — le niveau reste visible au-dessus de la
+ *   ligne de flottaison, la carte IA étant en fin d'article (D87).
+ *
+ * Une `div` et pas un `<header>` : la page n'a qu'un `<header>`, celui du
+ * site (scripts/check-shell-blog.mjs, R2).
+ */
+import type { CollectionEntry } from 'astro:content';
+import { AI_USAGE_META } from '../../lib/aiUsage';
+import { estimateReadingMinutes } from '../../lib/posts';
+import type { Tone } from '../../lib/tones';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+// Encre seule du ton (le marqueur n'a ni fond ni bordure) — classes écrites
+// en toutes lettres pour que Tailwind les génère (D41).
+const TONE_INK: Record<Tone, string> = {
+  green: 'text-tagGreenInk',
+  blue: 'text-tagBlueInk',
+  violet: 'text-tagVioletInk',
+  amber: 'text-tagAmberInk',
+  rose: 'text-tagRoseInk',
+};
+
+const { post } = Astro.props;
+const { title, category, pubDate, aiUsage } = post.data;
+const dateFr = pubDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const readingMinutes = estimateReadingMinutes(post.body ?? '');
+const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
+---
+
+<div class="flex flex-col gap-3.5 pt-14" data-article-header>
+  <p class="font-mono text-[13px] text-accent" data-article-crumb data-pagefind-ignore>
+    <a href="/blog/" class="hover:underline">~/ blog</a>{' '}<span class="text-muted">/ article</span>
+  </p>
+  <h1
+    class="max-w-[860px] font-sans text-[32px] leading-[1.12] font-bold tracking-[-.03em] text-pretty text-ink sm:text-[40px]"
+  >
+    {title}
+  </h1>
+  <div class="flex flex-wrap items-center gap-2.5 font-mono text-xs text-muted" data-article-meta>
+    <span class="pill px-2.5 py-1">{category}</span>
+    <span class="whitespace-nowrap"><time datetime={pubDate.toISOString()}>{dateFr}</time> · {readingMinutes} min</span>
+    {
+      usage && aiUsage && (
+        <span class:list={['whitespace-nowrap', TONE_INK[usage.tone]]} data-ai-marker={aiUsage}>
+          {usage.emoji} {usage.label}
+        </span>
+      )
+    }
+  </div>
+</div>

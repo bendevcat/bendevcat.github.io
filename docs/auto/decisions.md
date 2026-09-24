@@ -256,3 +256,21 @@ Choice: options JetBrains Mono 11 px with the prototype's 14 px stroke icons (�
 
 ## D85 · Plan 12 · F4 — Sort moves nodes; hidden entries go last
 Choice: pure `domOrder(ids, visibleIds)` → visible entries in sort order, then hidden ones in server order, applied with `grid.append`; only direct grid children are entries; the first `featured: true` post's row carries `data-featured` (none today). Measured: after `plus anciens`, DOM order = visual order (docker → k9s → vpn → linux → comment) · Alternatives: leave hidden entries in place · Reversibility: cheap · Why: keyboard order must follow the visual order (WCAG 1.3.2).
+
+## D86 · Plan 13 · authoring — Article layout choices
+Choice: previous/next without wrap (précédent = next-older); category rows link to `/blog/?categorie=<value>` read once by the list engine; DOM order centre → right rail → left rail, three columns from 1024 px, stacked below (article first on a phone); article rail shows the whole blog's categories and tag cloud with counts, rows muted without active state; cover 210 px `object-cover`; prototype prose / code-block / Copier values apply site-wide; radius tokens 7, 12, 13, 16 px; related-post dates `muted` (D71); `Articles liés` hidden when empty, right rail dropped when empty; Projets liés shows the full title · Alternatives: circular wrap; plain `/blog/` links; left-rail first on mobile; 16:9 cover · Reversibility: cheap · Why: plan-author choices within the inventory; the prototype has no breakpoints.
+
+## D87 · Plan 13 · authoring — The AI card replaces the top banner on articles   ⚑ à relire
+Choice: the article's AI-usage declaration moves from `AiBanner` at the top to the prototype's AI-marker card at the end of the post (site emoji and labels, link `ma règle sur l'IA →` to `/transparence-ia/`); the header meta row also shows the AI marker, so the level stays visible above the fold · Alternatives: keep the banner at the top as well · Reversibility: cheap · Why: prototype placement; transparency content, so to re-read.
+
+## D88 · Plan 13 · T4 — Cards may sit on an explicit rail   ⚑ à relire
+Choice: `check-finition` (T5) accepts a `.card-inner` on `rail` when inside a `[data-rail]` element — the prototype's related-post and related-project cards sit on the article rails · Alternatives: drop the card style from rail cards (departs from the prototype) · Reversibility: cheap · Why: D67; second narrowing of V2 after D74, to re-read together.
+
+## D89 · Plan 13 · T4 — Article page details
+Choice: tile titles turn `accent` on hover; below 640 px the AI card's link wraps under the text; the AI card keeps `role="note"` + label from `AiBanner`; prose starts 34 px under the cover; related-post dates in long fr-FR form; checker hooks `data-article-*` · Alternatives: no hover; one squeezed row · Reversibility: cheap · Why: implementer choices within the plan.
+
+## D90 · Plan 13 · verification 1 — R13 measured on article results only   ⚑ à relire
+Choice: R13's search check becomes "query `ma règle sur l'IA` → no `/blog/<slug>/` result" — the verifier found 3 results (2 prompts, 1 skill) matched on scattered words, none an article · Alternatives: keep "0 results" and strip those words from other pages (content change, out of scope) · Reversibility: cheap · Why: the criterion's intent is "rails not indexed"; its literal measure assumed the phrase existed nowhere else. Narrowed reading.
+
+## D91 · Plan 13 · F1–F2 — Audit exemption narrowed; rail insets from the prototype
+Choice: the audit exempts a card only when its painted parent paints `rail` inside a non-thumbnail `[data-rail]` (fails closed without a rail token); rail labels `px-2` (8 px) and tag cloud `px-1.5` (6 px) as prototype lines 174/184/185 and 244/254/255 — measured x 24 / 22 on `/blog` and an article; `/blog` HTML now differs from plan 12 by these two classes · Alternatives: arbitrary px values; leave `/blog` untouched · Reversibility: cheap · Why: verification 1 findings 1–2.

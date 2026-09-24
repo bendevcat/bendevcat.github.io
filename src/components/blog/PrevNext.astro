@@ -1,0 +1,51 @@
+---
+/**
+ * PrevNext.astro (plan 13, T4 ; inventaire §2 ; prototype 297–306 ; D86) —
+ * les tuiles précédent / suivant en bas de l'article.
+ *
+ * 24 px sous la carte IA, `padding-top` 22, bordure haute `line2` ; grille
+ * 2 × 1fr écart 12 (une colonne sous 640 px). `← précédent` = l'article
+ * immédiatement plus ancien (à gauche), `suivant →` = le plus récent (à
+ * droite, texte à droite) — adjacentPosts(), SANS bouclage : le plus ancien
+ * n'a pas de tuile précédent, le plus récent pas de tuile suivant, la case
+ * reste vide. Chaque tuile est un `.card-inner` (rayon 14) `<a>`, padding
+ * 16/18, libellé mono 10 `muted`, titre 14 / 500 `ink`.
+ *
+ * Hors index de recherche. `data-adjacent` est lu par
+ * scripts/check-article.mjs.
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  previous: CollectionEntry<'blog'> | null;
+  next: CollectionEntry<'blog'> | null;
+}
+
+const { previous, next } = Astro.props;
+const TILE = 'group card-inner flex flex-col gap-1.5 px-[18px] py-4';
+const LABEL = 'font-mono text-[10px] text-muted';
+const TITLE = 'font-sans text-sm font-medium text-ink transition-colors group-hover:text-accent';
+---
+
+{
+  (previous || next) && (
+    <nav
+      aria-label="Articles précédent et suivant"
+      class="mt-6 grid grid-cols-1 gap-3 border-t border-line2 pt-[22px] sm:grid-cols-2"
+      data-pagefind-ignore
+    >
+      {previous && (
+        <a href={`/blog/${previous.id}/`} class:list={[TILE, 'sm:col-start-1']} data-adjacent="previous">
+          <span class={LABEL}>← précédent</span>
+          <span class={TITLE}>{previous.data.title}</span>
+        </a>
+      )}
+      {next && (
+        <a href={`/blog/${next.id}/`} class:list={[TILE, 'text-right sm:col-start-2']} data-adjacent="next">
+          <span class={LABEL}>suivant →</span>
+          <span class={TITLE}>{next.data.title}</span>
+        </a>
+      )}
+    </nav>
+  )
+}

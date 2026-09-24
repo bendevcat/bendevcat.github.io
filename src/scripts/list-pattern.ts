@@ -20,11 +20,17 @@
  *   restent dans la liste (`{ featured: false }`).
  * `data-facet-all-label` sur un contrôle de facette donne son libellé de repos
  * (`catégorie : Tout` dans la méta, voir listPattern.ts).
+ *
+ * Plan 13, T1 (D86) — lien profond : la query (`?categorie=DevOps`) est lue
+ * UNE fois au chargement ; une valeur proposée par un contrôle de la page est
+ * pré-sélectionnée (méta et `aria-pressed` suivent), toute autre est ignorée.
+ * L'URL n'est jamais réécrite ensuite.
  */
 import { ALL, type FacetSelection } from '../lib/facetFilters';
 import {
   computeListState,
   domOrder,
+  facetsFromQuery,
   type FacetLabel,
   type ListEntry,
   type ListLabels,
@@ -109,6 +115,23 @@ if (root && groups.length > 0 && grid) {
 
   const selected: FacetSelection = {};
   for (const facet of labels.facets) selected[facet.key] = ALL;
+
+  // Lien profond (plan 13) : valeurs proposées par les contrôles de la page,
+  // par clé de facette — le seul vocabulaire qu'une query peut sélectionner.
+  const known: Record<string, string[]> = {};
+  for (const button of buttons) {
+    const key = button.dataset.facetKey ?? '';
+    if (key) (known[key] ??= []).push(button.dataset.facetValue ?? ALL);
+  }
+  for (const select of selects) {
+    const key = select.dataset.facetKey ?? '';
+    if (key) (known[key] ??= []).push(...Array.from(select.options, (option) => option.value));
+  }
+  Object.assign(selected, facetsFromQuery(window.location.search, known));
+  for (const select of selects) {
+    const key = select.dataset.facetKey ?? '';
+    if (key && selected[key] !== ALL) select.value = selected[key];
+  }
 
   const apply = () => {
     const state = computeListState(entries, selected, readSort(), labels, {

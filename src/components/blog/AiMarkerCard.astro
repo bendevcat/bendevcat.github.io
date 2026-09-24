@@ -1,0 +1,63 @@
+---
+/**
+ * AiMarkerCard.astro (plan 13, T4 ; inventaire §2 ; prototype 289–296 ;
+ * D87 ⚑) — la déclaration d'usage de l'IA en fin d'article. Remplace, sur la
+ * page article, la bannière `AiBanner` du haut (gardée pour /transparence-ia).
+ *
+ * `.card-inner` rayon 16, padding 16/17, écart 14 ; au survol la carte monte
+ * de 3 px et la tuile grossit (×1.06), l'ombre reste `var(--shadow)`. Tuile
+ * 40×40 rayon 13 : l'emoji du niveau dans les couleurs de son ton
+ * (`TONE_CLASSES`, D40), avec `data-ai-usage` + `data-tone` — lus par
+ * scripts/check-secondary.mjs (R7) et scripts/check-article.mjs. Libellé
+ * 15.5 / 600 `ink` et description 13.5 / 1.5 `muted` d'`AI_USAGE_META` ; lien
+ * `ma règle sur l'IA →` mono 11 `muted` (survol `ink`) vers /transparence-ia/.
+ * Sous 640 px, le lien passe sous le texte (aligné sur lui).
+ *
+ * Hors index de recherche (`data-pagefind-ignore`) : le texte est le même
+ * sur chaque article de même niveau.
+ */
+import type { AiUsage } from '../../lib/aiUsage';
+import { AI_USAGE_META } from '../../lib/aiUsage';
+
+interface Props {
+  usage: AiUsage;
+}
+
+const { usage } = Astro.props;
+const meta = AI_USAGE_META[usage];
+const EASE = 'duration-[220ms] ease-[cubic-bezier(.2,.8,.3,1)] motion-reduce:transition-none';
+---
+
+<div
+  class:list={[
+    'group card-inner mt-[34px] flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-hero px-[17px] py-4 transition-transform hover:-translate-y-[3px] sm:flex-nowrap',
+    EASE,
+  ]}
+  role="note"
+  aria-label="Transparence IA de cet article"
+  data-ai-card
+  data-pagefind-ignore
+>
+  <span
+    class:list={[
+      'inline-flex size-10 shrink-0 items-center justify-center rounded-tile text-[20px] leading-none transition-transform group-hover:scale-[1.06]',
+      EASE,
+      meta.bannerClass,
+    ]}
+    data-ai-usage={usage}
+    data-tone={meta.tone}
+    aria-hidden="true"
+  >
+    {meta.emoji}
+  </span>
+  <div class="min-w-0 flex-1">
+    <p class="font-sans text-[15.5px] font-semibold text-ink">{meta.label}</p>
+    <p class="mt-[3px] font-sans text-[13.5px] leading-[1.5] text-pretty text-muted">{meta.description}</p>
+  </div>
+  <a
+    href="/transparence-ia/"
+    class="w-full shrink-0 pl-[54px] font-mono text-[11px] text-muted transition-colors hover:text-ink sm:w-auto sm:pl-0"
+  >
+    ma règle sur l'IA →
+  </a>
+</div>
