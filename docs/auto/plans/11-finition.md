@@ -100,3 +100,30 @@ Measurement rules (authoring choices, logged as decisions):
 - Covers: finding of attempt 1 — with no result, the zero-height grid still takes a `gap-6` slot, so the empty block sits 40 px below the frame top but 16 px above its bottom (`/projets/`, status `archivé`, 375)
 - Acceptance: on each list with a filter that empties it, the grid is not rendered as a flex item (`display: none` or `hidden`) and the empty block's distance to the frame's top and bottom inner edges are equal (±1 px); with results again, the grid is back; no-JS rendering unchanged; `check-finition.mjs` exit 0
 - Depends on: —
+
+## Evidence
+Verifier attempt 1 (tip `53f98f1`): R0–R13, R15–R18 proven; **R14 failed** (the 9 header controls computed an `ink` ring) → F1; empty-state spacing defect → F2 (D61). Verifier attempt 2 (tip `6b1aab7`, base `05ceeff`): every criterion proven; no smoke step. The audit instrument was trusted only after it caught planted defects (1.55:1 text, off-token red, `bg-card` on `bg`, 600 px overflow) and known base defects (D59).
+
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | walk from `/` by real clicks (Projets pill, `Go` filter, `archivé` → centred empty state, theme toggle, ⌘K) + every Reachability path fetched (200; unknown URL → 404); audit on the 68 states of **S** (34 × 2 themes): 0 overflow, 0 contrast failure, 0 off-token colour, 0 V2 jump; 43 routes and assets → 200 |
+| R1 | proven | named test passes; mutations (light `muted` → `#9AA6B4`, dark `accentSoft` alpha .60) → red |
+| R2 | proven | named test passes, grep empty; mutations (`text-amber-500`, `backdrop:bg-black/60`, inline `#ffffff`, `text-[#9aa6b4]`) → red |
+| R3 | proven | both named tests pass; mutations (wip blue, wip amber literals, actif neutral) → red |
+| R4 | proven | backdrop `oklab(… / 0.85)` → sRGB [241,244,247] light / [10,12,15] dark = `bg`, alpha 0.85, blur; 3 marks `accent` on `accentSoft`, 5.62:1 light, 7.58:1 dark |
+| R5 | proven | both named tests pass; inline-hex grep on `dist/blog/*` → 0; `var(--color-` ×316 on the linux article; mutations (`#6A737D`, `dim` comments) → red; 138 comments at 7.91:1 dark |
+| R6 | proven | named test passes; `live: blog projets prompts skills`; each list's filter rewrites the same `[data-list-meta]` node, `aria-live="polite"` and `aria-atomic="true"` kept; mutations → red |
+| R7 | proven | `lists: 4 × 1 .card · 16 .card-inner entries`, `v2: 0 card-level on bg · 0 rail off card level · 10 derived thumbnails`; 0 rendered V2 jump on the 34 dark states (base: `rail` on `surface` on `/projets`) |
+| R8 | proven | 0 contrast failure on 68 states; list meta 5.74:1 light (base 4.19), 7.91:1 dark; monogram 5.38 / 7.60 |
+| R9 | proven | 0 off-token colour on 68 states, 37 tokens probed per state |
+| R10 | proven | 0 overflow at 375 on 68 states and on the 30 `/tags/<slug>/` pages × 2 themes; 14 routes at 768 / 1180 (orchestrator) |
+| R11 | proven | `fallback: 15/15 data-pagefind-ignore` (plan text corrected from 16, D58); tabpanel-rule grep 0; `global.css:N` grep empty; `check-detail-tabs` 7 rows; with JS each of 15 tabs shows only its panel; sandbox no-JS: all panels and 15/15 headings visible |
+| R12 | proven | `eager: / · /blog/`; `/` 1 eager + 3 lazy, `/blog/` 1 eager + 5 lazy |
+| R13 | proven | `ai-markers: 7 on /`; at 375, both themes, each marker has one client rect |
+| R14 | proven | real Tab keys from a fresh page, both themes: every stop on `/` solid 2 px `accent` (≥ 5.11:1 light, ≥ 10.19:1 dark), header included after F1; on `/projets/gha-svu/` tabs and their panel keep `ink` (15.56–18.02:1); search input, results and close button `accent`; `outline-none` grep empty; `outline-ink` in Header → 0 |
+| R15 | proven | `tags: 30/30 named "<label> <count>"` |
+| R16 | proven | `check-home` 7 lines, `check-secondary` 12 lines, exit 0; 4 pattern classes; no `--color-` line changed |
+| R17 | proven | frozen-path diff vs `05ceeff` → empty |
+| R18 | proven | 222 passed; 0 type errors; `matchesFilters` 1; `package.json` / lock unchanged |
+
+Outside the criteria (none blocking): the focus ring fades in over ~150 ms because `transition-colors` also animates `outline-color` (resting state is `accent`); the native search clear button (WebKit blue) is browser UI, as at base; in light the search dialog separates from its 85 % `bg` wash by border and shadow only; at 375 the list frame's nested padding narrows card content to ~279 px (D51).
