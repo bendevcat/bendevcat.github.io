@@ -51,7 +51,7 @@ blog sort: plus récents ✓ | plus anciens | lecture la plus courte | lecture l
 | R9 | Engine: no featured mode and meta format | `npx vitest run src/lib/listPattern.test.ts` → 0 failed, and "sans bloc à la une, ne désigne aucune entrée et les garde toutes visibles" and "écrit une facette à libellé de repos « catégorie : Tout », puis « catégorie : DevOps »" pass; `git diff 7160035 -- src/lib/listPattern.test.ts \| grep -c '^-[^-]'` → `0` | yes |
 | R10 | Dropdown keyboard logic | `npx vitest run src/lib/dropdown.test.ts` → "opens on Enter, Space, ArrowDown and ArrowUp with the selected option active", "moves with ArrowDown and ArrowUp and stops at the ends", "jumps to the first and last option with Home and End", "selects the active option on Enter and Space and closes", "closes without selecting on Escape and Tab" pass | yes |
 | R11 | Built `/blog` | `node scripts/check-shell-blog.mjs` → the 6 `blog` lines as above, exit 0; exit 1 if `dist/blog/index.html` has a `[data-list-featured]`, a tag `<select>`, a link to `/tags/` outside tag chips, ≠ 1 `.card` in `[data-list]`, a rail without `data-rail`, a row that is a `.card-inner` or paints a background, a row without thumbnail (`img` or `[data-thumb-derived]`) / `.pill` category / `<time>` / `N min` / AI marker / description, a row or chip href that does not resolve in `dist/`, a chip whose `aria-label` ≠ `<tag> <count>`, a category group or `[data-dropdown]` not `hidden` server-side, a first-row image not `eager` or another not `lazy` | no |
-| R12 | `/blog` layout | preview, 1280, both themes: breadcrumb mono 13 `accent`; h1 44 px / 700 / letter-spacing −1.32 px; breadcrumb top − header bottom = 56, h1 top − breadcrumb bottom = 14, card top − h1 bottom = 26 (± 2); card radius 20, `overflow: hidden`, rail width 250; rail bg `rail`, `border-right` 1 px `line2`, padding 22/16; category rows padding 8/10, radius 10, 14 px, count mono 11; tag chips radius 8, padding 4/9, mono 10, colours of `tagTone`; main padding 24/28/30; toolbar `border-bottom` `line2`; meta mono 12 `muted`; rows padding 20/0, `border-bottom` `line2`, gap 16; thumbnail 76×64, radius 10; row meta mono 11; title 19 px / 600; description 14 px `muted`, Nebula Sans. At 768 and 375: rail above main | no |
+| R12 | `/blog` layout | preview, 1280, both themes: breadcrumb mono 13 `accent`; h1 44 px / 700 / letter-spacing −1.32 px; breadcrumb top − header bottom = 56, h1 top − breadcrumb bottom = 14, card top − h1 bottom = 26 (± 2); card radius 20, `overflow: hidden`, rail width 250; rail bg `rail`, `border-right` 1 px `line2`, padding 22/16; category rows padding 8/10, radius 10, 14 px, count mono 11; tag chips radius 8, padding 4/9, mono 10, colours of `tagTone`; main padding 24/28/30; toolbar `border-bottom` `line2`; meta mono 12 `muted`; rows padding 20/0, `border-bottom` `line2`, gap 16; thumbnail 76×64, radius 10; row meta mono 11; title 19 px / 600; description 14 px `muted`, Nebula Sans. Below 768 (measured at 375): rail above main; at 768 and above: rail beside main | no |
 | R13 | Rail filters | preview, both themes: click `DevOps 2` → visible rows `comment-jutilise-github-actions-au-quotidien`, `linux-commandes-essentielles`; the same `[data-list-meta]` node reads `2 articles · catégorie : DevOps`; `DevOps` has `aria-pressed="true"`, colour `accent` on `accentSoft`; `Outils 3` → 3 rows, `Outils`; `Tout 5` → 5 rows, `5 articles · catégorie : Tout`; each row reachable by Tab and Enter | no |
 | R14 | Sort dropdown | preview, both themes: trigger text reads `tri : plus récents`; click → `aria-expanded="true"`, popover top − trigger bottom = 10 ± 1, right edges equal ± 1, width ≥ 236, radius 14, bg `surface`; 4 options in the R-listed order, `✓` and `aria-selected="true"` only on the current one, colour `accent`, weight 600; choosing each option closes the popover, updates the trigger value and orders visible rows by `data-date` desc / asc, `data-minutes` asc / desc; Escape closes and focus returns to the trigger; a click outside closes; keyboard only (Tab, Enter, ArrowDown, Enter) selects `plus anciens`; at 375 the open popover lies within the viewport | no |
 | R15 | Without JavaScript | the `/blog` page loaded in a `sandbox` iframe without scripts: 5 rows in canonical order, meta `5 articles · catégorie : Tout`, the tag cloud with working links; no category row, no dropdown trigger, no search button visible (no dead control) | no |
@@ -106,6 +106,59 @@ blog sort: plus récents ✓ | plus anciens | lecture la plus courte | lecture l
 - Acceptance: `npm run build` then the four scripts of R19 → the stated lines, exit 0; `npx vitest run` → 0 failed; `grep -c 'data-rail' scripts/audit-rendered.js scripts/check-finition.mjs` → ≥ 1 each
 - Depends on: T5
 
+### F1 — Shell caps the content box at 1180 px; header pills top-aligned at 20 px
+- Files: `src/layouts/BaseLayout.astro`, `src/components/Header.astro`, `src/components/Footer.astro`, `src/styles/global.css`, `src/lib/shell.test.ts`, `scripts/check-shell-blog.mjs`
+- Covers: R5, R16 (difference 1)
+- Acceptance (verifier failure): at 1280, both themes, every `[data-shell]` **content box** is 1180 wide at x 50–1230 (card 50/1180, logo pill left 50, actions pill right 1230, footer texts 50–1230), as in the prototype (`max-width:1180px` content-box + 24 px padding); the logo, nav and actions pills' tops are each 20 ± 1 px from the page top (today the logo sits at 22: the nav pill is 50 px tall vs the prototype's 47); 375 px unchanged (no overflow); `check-shell-blog.mjs` and `shell.test.ts` still pass
+- Depends on: —
+
+### F2 — Dropdown stays inside the viewport at 375 px
+- Files: `src/components/Dropdown.astro`, `src/scripts/dropdown.ts`, `src/lib/dropdown.ts` (+ test if the placement rule is pure)
+- Covers: R14
+- Acceptance (verifier failure): at 375, both themes, on `/blog` with the sort popover open, the popover's bounding rect satisfies `left >= 0` and `right <= innerWidth` (today it spans x −35.8 → 200.2 and clips "plus récents"); every option text is fully visible; at 1280 the popover stays right-aligned to its trigger (right edges equal ± 1) with the 10 ± 1 px gap
+- Depends on: —
+
+### F3 — Sort options drawn like the prototype
+- Files: `src/components/Dropdown.astro`, `src/components/Icon.astro`, `src/pages/blog/index.astro`
+- Covers: R16 (difference 2)
+- Acceptance (verifier failure): read the prototype's sort popover markup (lines ~163–227 and the dropdown logic ~1283 of `bencat_ Prototype cliquable.dc.html`, `claude-design` MCP `read_file`); the site's options use the prototype's font (JetBrains Mono 11 px), the prototype's per-option icons and its popover width (250 px for sort), in both themes; ✓ and `aria-selected` behaviour unchanged; `dropdown.test.ts` still passes
+- Depends on: F2
+
+### F4 — Sort reorders the DOM; check-home honours `featured`; stale comments
+- Files: `src/scripts/list-pattern.ts`, `src/components/blog/ArticleRow.astro`, `src/pages/blog/index.astro`, `scripts/check-home.mjs`, `src/components/Thumbnail.astro`, `src/lib/aiUsage.ts`, `src/lib/posts.ts`
+- Covers: findings outside criteria (verification 1)
+- Acceptance: after choosing `plus anciens` on `/blog`, the first row in DOM order is the first row on screen (keyboard Tab reaches `docker-kubernetes-devops` … before `comment-jutilise…` per the sort) — the sort moves nodes instead of setting `style.order`, on all four lists; a `/blog` row whose post has `featured: true` carries `data-featured` so `check-home.mjs` compares the right post; `grep -rn ArticleCard src` → empty; `npx vitest run` 0 failed; the five check scripts exit 0
+- Depends on: —
+
 ## Out of scope
 - List header, segmented control and facet dropdowns on `/projets`, `/prompts`, `/skills` (plan 14 reuses `ListHeader` and `Dropdown`); inner layouts of the detail pages (13, 15–17); home and about gaps (18).
 - Hover states' contrast; a tag filter on `/blog`; any content, schema or CMS change; token value changes; version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-24)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | Walkthrough clean in both themes (`/` › Blog › DevOps 2 › sort › row › tag chip › `/tags/kubernetes/` › `/tags/`; all 200/304, no 5xx); fails through R5, R12, R14, R16 |
+| R1 | proven | `shell.test.ts` passes; red on token 1024px, Footer `max-w-5xl`, missing `data-shell="main"` |
+| R2 | proven | `check-shell-blog.mjs` first 5 lines exact, exit 0; exit 1 on 5 injected defects |
+| R3 | proven | named tests pass; red on Skills/Prompts swap, neutral active, ternary removed |
+| R4 | proven | test red on `prototype cliquable` inserted; `dist` clean |
+| R5 | failed | shell 1180 at left 50 on 14 routes × 2 themes, no header border, footer ok; **logo pill top 22 px, not 20 ± 1** (nav pill 50 px tall vs prototype 47) |
+| R6 | proven | every pill/item/button value measured on 14 routes × 2 themes; 375 px two rows within 0–375 |
+| R7 | proven | footer last in body, mono 11 `muted`, edges ± 1 |
+| R8 | proven | 3 tests pass; red on zero-count filter removed and drafts kept |
+| R9 | proven | 30 tests; 0 deleted lines; red on featured flag and label format mutations |
+| R10 | proven | 5 named tests, each red under a targeted mutation |
+| R11 | proven | 6 blog lines exact; exit 1 on 12 injected defects |
+| R12 | failed | all 1280 values hold, 375 stacks; **at 768 the rail is beside main** — plan text self-contradictory (D73: stacks below 768); measure text corrected |
+| R13 | proven | DevOps 2 → 2 rows + meta `2 articles · catégorie : DevOps`; Outils 3 → 3; Tout 5 → 5; keyboard Tab/Enter works |
+| R14 | failed | 1280 behaviour all correct (open, gap 10.7, width 236, ✓, sorts, Escape, outside click, keyboard); **375: popover spans x −35.8 → 200.2, text clipped** |
+| R15 | proven | no-JS iframe: 5 rows, meta, 20 chip links, no dead control |
+| R16 | failed | blocks and order match the prototype in both themes; **content 1132 px at x 74–1206 vs prototype 1180 at 50–1230** (max-width on border-box); **sort options sans 13 no icons 236 px vs prototype mono 11 with icons 250 px** |
+| R17 | proven | `audit-rendered.js` 84 runs + 18 open-state runs: 0 overflow / contrast / off-token / V2 |
+| R18 | proven | radii {999, 9, 20, 10, 8, 14}; mono only on machine data |
+| R19 | proven | 4 earlier scripts identical to base except the amended lines; pattern classes 4; `--color-` diff 0 |
+| R20 | proven | frozen diff empty; 251 tests; 0 errors; `matchesFilters` 1 |
+
+Findings outside criteria → F4: sort sets `style.order` (keyboard order ≠ visual order); `check-home` ignores `featured`; stale `ArticleCard` comments; `max-w-[calc(100vw-2rem)]` overridden by inline `min-width`.
