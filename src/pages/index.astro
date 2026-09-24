@@ -2,8 +2,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import FeaturedPost from '../components/home/FeaturedPost.astro';
 import LatestPosts from '../components/home/LatestPosts.astro';
+import SectionPanel from '../components/home/SectionPanel.astro';
+import SectionEntry, { type SectionItem } from '../components/home/SectionEntry.astro';
+import AiTransparencyBanner from '../components/home/AiTransparencyBanner.astro';
 import { getPublishedPosts } from '../lib/posts';
-import { pickHomePosts } from '../lib/home';
+import { getSortedProjects } from '../lib/projects';
+import { getSortedPrompts } from '../lib/prompts';
+import { getSortedSkills } from '../lib/skills';
+import { pickHomePosts, takeSectionEntries } from '../lib/home';
 
 // Plan 9 — accueil du prototype (contrat E3) : plus de hero (D27, Hero.astro
 // gardé inutilisé pour le plan 10, D33).
@@ -15,6 +21,26 @@ import { pickHomePosts } from '../lib/home';
 // fait par identité d'objet : ne jamais recréer les enveloppes entre les deux.
 const entries = (await getPublishedPosts()).map((post) => ({ post, featured: post.data.featured }));
 const { featured, latest } = pickHomePosts(entries);
+
+// Rangée 2 : les 2 premières entrées de chaque section, dans l'ordre des pages
+// de liste (getSorted*(), D29). Un seul SectionPanel pour les trois (règle T3).
+const sections: { section: 'projets' | 'prompts' | 'skills'; title: string; items: SectionItem[] }[] = [
+	{
+		section: 'projets',
+		title: 'Projets',
+		items: takeSectionEntries(await getSortedProjects()).map((entry) => ({ kind: 'project', entry })),
+	},
+	{
+		section: 'prompts',
+		title: 'Prompts',
+		items: takeSectionEntries(await getSortedPrompts()).map((entry) => ({ kind: 'prompt', entry })),
+	},
+	{
+		section: 'skills',
+		title: 'Skills',
+		items: takeSectionEntries(await getSortedSkills()).map((entry) => ({ kind: 'skill', entry })),
+	},
+];
 ---
 
 <BaseLayout
@@ -30,5 +56,23 @@ const { featured, latest } = pickHomePosts(entries);
 			{featured && <FeaturedPost post={featured.post} />}
 			{latest.length > 0 && <LatestPosts posts={latest.map((entry) => entry.post)} />}
 		</div>
+
+		{/* Rangée 2 : empilée en étroit, trois colonnes égales en large (prototype repeat(3, 1fr)). */}
+		<div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+			{
+				sections
+					.filter(({ items }) => items.length > 0)
+					.map(({ section, title, items }) => (
+						<SectionPanel section={section} title={title}>
+							{items.map((item) => (
+								<SectionEntry {...item} />
+							))}
+						</SectionPanel>
+					))
+			}
+		</div>
+
+		{/* Rangée 3 : bandeau de transparence IA (D31). */}
+		<AiTransparencyBanner />
 	</main>
 </BaseLayout>

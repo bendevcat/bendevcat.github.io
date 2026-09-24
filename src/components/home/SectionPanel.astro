@@ -1,0 +1,36 @@
+---
+/*
+  Accueil, rangée 2 — patron « panneau de section » (contrat §5.3 ; Plan 9,
+  Home map). UN seul composant pour Projets, Prompts et Skills (règle de T3) :
+  fond `panel`, bordure `panelLine` (classe `.panel`), titre cliquable vers la
+  page de liste, badge 28×28 `badgeBg`/`badgeInk` portant le glyphe de la
+  section dans le header (D30), puis les entrées `.card-inner` passées en slot.
+  Titre à gauche, badge à droite : même disposition que « Derniers articles ».
+  Balisage `data-home*` : convention lue par scripts/check-home.mjs (R2).
+*/
+import Icon from '../Icon.astro';
+
+interface Props {
+  /** Clé du bloc, glyphe du badge et segment d'URL de la page de liste. */
+  section: 'projets' | 'prompts' | 'skills';
+  title: string;
+}
+
+const { section, title } = Astro.props;
+const titleId = `home-${section}-title`;
+---
+
+<section class="panel flex min-w-0 flex-col gap-3 p-4 sm:p-5" data-home={section} aria-labelledby={titleId}>
+  <div class="flex items-center justify-between gap-3">
+    <h2 id={titleId} class="text-[17px] font-semibold tracking-[-.01em] text-ink">
+      <a href={`/${section}/`} class="transition-colors hover:text-accent" data-home-title>{title}</a>
+    </h2>
+    <span class="grid size-7 shrink-0 place-items-center rounded-badge bg-badgeBg text-badgeInk" aria-hidden="true">
+      <Icon name={section} size={14} />
+    </span>
+  </div>
+
+  <div class="flex flex-col gap-3">
+    <slot />
+  </div>
+</section>

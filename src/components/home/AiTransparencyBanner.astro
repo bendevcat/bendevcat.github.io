@@ -1,0 +1,32 @@
+---
+/*
+  Accueil, rangée 3 — bandeau de transparence IA (Plan 9, Home map ; D31).
+  Fond `accentSoft`, sans classe de patron (R12). La phrase reprend celle de
+  /transparence-ia ; les trois paires `emoji label` sont LUES dans
+  AI_USAGE_META, dans son ordre de déclaration, jamais recopiées ici (R4) —
+  un libellé changé là-bas change ici. La liste est jointe par
+  Intl.ListFormat (disjonction française : « a, b ou c »).
+  Balisage `data-home` : convention lue par scripts/check-home.mjs (R2, R4).
+*/
+import { AI_USAGE_META } from '../../lib/aiUsage';
+
+const pairs = Object.values(AI_USAGE_META).map(({ emoji, label }) => `${emoji} ${label}`);
+const levels = new Intl.ListFormat('fr', { type: 'disjunction' }).format(pairs);
+---
+
+<section
+  class="flex flex-col gap-3 rounded-card bg-accentSoft px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+  data-home="banner"
+  aria-label="Transparence IA"
+>
+  {/* Prose → Nebula Sans (R8). */}
+  <p class="text-[15px] leading-[1.6] text-body">
+    Chaque article déclare son niveau de contribution IA&nbsp;: {levels}.
+  </p>
+  <a
+    href="/transparence-ia/"
+    class="w-fit shrink-0 rounded-pill border border-accent px-3 py-1 font-mono text-[12px] text-accent transition-colors hover:bg-accent hover:text-accentInk"
+  >
+    transparence IA →
+  </a>
+</section>

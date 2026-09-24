@@ -26,7 +26,13 @@
  * - derniers articles : chaque entrée porte `data-home-item`, son lien de
  *   titre `data-home-title` ;
  * - section : le lien du titre porte `data-home-title`, chaque entrée est un
- *   élément `.card-inner` (un <a>, ou contenant un <a>) ;
+ *   élément `.card-inner` (un <a>, ou contenant un <a>) qui vise une fiche de
+ *   la section (`/<section>/<id>/`) et porte ses champs
+ *   `data-home-field="title"`, `"description"` et `"meta"` non vides (R3) ;
+ * - bannière : aucune classe de patron (`card`, `card-inner`, `panel`,
+ *   `pill`) sur le bloc ; son texte contient les paires `emoji label` de
+ *   AI_USAGE_META dans l'ordre de src/lib/aiUsage.ts (R4 — lues dans le
+ *   source, jamais recopiées ici) ;
  * - vignette : un <img>, ou le visuel dérivé de Thumbnail.astro
  *   (`data-thumb-derived`).
  *
@@ -37,6 +43,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIST = 'dist';
+const AI_USAGE_SOURCE = join('src', 'lib', 'aiUsage.ts');
 const HOME = join(DIST, 'index.html');
 const BLOG = join(DIST, 'blog', 'index.html');
 
@@ -233,6 +240,16 @@ for (const [key, listHref] of Object.entries(SECTIONS)) {
   lines.push(`section ${title?.text ?? '(pas de titre)'} ${title?.attrs.href ?? '(pas de lien)'}: ${hrefs.join(' | ')}`);
   if (!classes(section).includes('panel')) errors.push(`section ${key} : pas un .panel`);
   if (entries.length === 0) errors.push(`section ${key} : aucune entrée .card-inner`);
+  entries.forEach((entry, index) => {
+    const href = hrefs[index];
+    if (!href.startsWith(listHref) || href === listHref) {
+      errors.push(`section ${key} : l'entrée ${index + 1} vise ${href} (attendu une fiche ${listHref}<id>/)`);
+    }
+    for (const field of ['title', 'description', 'meta']) {
+      const el = find(entry, (d) => d.attrs['data-home-field'] === field);
+      if (!el?.text) errors.push(`section ${key} : l'entrée ${index + 1} n'a pas de champ ${field} (data-home-field)`);
+    }
+  });
   if (title?.attrs.href !== listHref) {
     errors.push(`section ${key} : le titre vise ${title?.attrs.href ?? '(rien)'} (attendu ${listHref})`);
   }
@@ -244,6 +261,23 @@ if (banner) {
   const links = findAll(banner, (el) => el.tag === 'a');
   lines.push(`banner: ${links.map((el) => el.attrs.href).join(' | ') || '(aucun lien)'}`);
   if (links.length === 0) errors.push('bannière : aucun lien');
+  const patterns = classes(banner).filter((c) => ['card', 'card-inner', 'panel', 'pill'].includes(c));
+  if (patterns.length > 0) errors.push(`bannière : porte la classe de patron ${patterns.join(', ')}`);
+
+  // R4 : les paires `emoji label` sont lues dans le source de AI_USAGE_META,
+  // dans l'ordre de déclaration — ce script ne recopie aucun libellé.
+  const source = readFileSync(AI_USAGE_SOURCE, 'utf8');
+  const pairs = [...source.matchAll(/emoji:\s*'([^']+)',\s*label:\s*'([^']+)'/g)].map((m) => `${m[1]} ${m[2]}`);
+  if (pairs.length === 0) errors.push(`${AI_USAGE_SOURCE} : aucune paire emoji/label trouvée`);
+  let from = 0;
+  for (const pair of pairs) {
+    const at = banner.text.indexOf(pair, from);
+    if (at === -1) {
+      errors.push(`bannière : « ${pair} » absent ou hors d'ordre`);
+      break;
+    }
+    from = at + pair.length;
+  }
 }
 
 // — Page entière —
