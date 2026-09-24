@@ -190,3 +190,6 @@ Choice: `list-pattern.ts` sets `grid.hidden` whenever no card is visible, and `[
 
 ## D63 · Plan 10 · after the run — `/a-propos` confirmed by the user
 Choice: D42 and D48 are re-read and kept — the user confirmed on 2026-09-24 that `/a-propos` matches what the prototype asked for · Alternatives: — · Reversibility: cheap · Why: user's review of the ⚑ decisions.
+
+## D64 · Run · E1 — Publish wave 2 as v1.4.0
+Choice: fast-forward `main` to the integration branch, annotated tag `v1.4.0`, push `main`, `v1.4.0`, `milestone-plan-9`, `milestone-plan-10`, `milestone-plan-11`, then a production check · Alternatives: wait · Reversibility: expensive (a published tag and a production deploy) · Why: user's answer "A" to escalation E1.
