@@ -115,3 +115,21 @@ Choice: badge right of the panel title (as `Derniers articles`); three columns f
 
 ## D38 · Plan 9 · T4 — Rendered measurements by the orchestrator; lazy images unmeasurable in a hidden pane
 Choice: T4's measures ran in the built-in browser (both themes, 375 / 768 / 1180); the only defect found (glued `·` in the featured meta) is fixed in `4552221` with a guard in `check-home.mjs`; image decoding could not be observed because the browser pane was hidden (`visibilityState: hidden` keeps lazy images unloaded — `/blog` behaves the same), so image presence is proven by the build check and a 200 `image/webp` on the `src` · Alternatives: force `loading="eager"` on the home · Reversibility: cheap · Why: D20 precedent; the environment, not the page, blocks decoding.
+
+## D39 · Plan 10 · authoring — What counts as a tag chip
+Choice: tag chips = `/tags` links, the header chip of each `/tags/<tag>` (new, makes "same tone everywhere" visible), `/skills` tag filter pills (`tous` stays neutral; pressed = ring in the tone's colour), tag lists on `/prompts` and `/skills` cards and in the Infos tabs; `<option>`s of the `/blog` and `/prompts` tag selects are not chips · Alternatives: neutral filter pills; no header chip on `/tags/<tag>` · Reversibility: cheap · Why: every element that looks like a tag pill gets its tone; a native `<option>` cannot be styled consistently.
+
+## D40 · Plan 10 · authoring — AI levels drawn with tag tones
+Choice: `none` green, `partial` amber, `full` blue, from the §2.3 tone tokens (the prototype's marker colours); the compact AI marker on article cards and the home stays emoji + label text · Alternatives: new AI-specific tokens outside the contract; colour the compact marker too (changes lists and home) · Reversibility: cheap · Why: settles P6 D02 inside the contract's palette; the tones already hold the three hues.
+
+## D41 · Plan 10 · authoring — Tone tokens and classes
+Choice: tokens `--color-tag<Tone><Bg|Ink|Line>` in `@theme static` (dark overrides under `[data-theme="dark"]`), literal utility strings in `src/lib/tones.ts`; one committed check script `scripts/check-secondary.mjs` for all secondary pages · Alternatives: CSS rules keyed on `data-tone`; one script per page · Reversibility: cheap · Why: utilities keep the pattern-class count at 4 (R15); literal strings survive Tailwind's class scanning.
+
+## D42 · Plan 10 · authoring — About page composition from existing facts   ⚑ à relire
+Choice: row 2 = `Qui je suis` + `Pourquoi ce site` cards (current author text; the prototype's `On parle ?` has no real contact channel); links `github.com/bendevcat` and `rss.xml` in row 1; AI panel titled with the author's heading « L'IA : une aide, pas un ghostwriter », markers described by `AI_USAGE_META`; terminal lines derived: `rôle` « ingénieur DevOps depuis 2019 », `lieu` « France », `terrain` = the 3 most used tags, `écrit` = published counts, `stack` = union of project stacks, `règle` « une aide, pas un ghostwriter »; a line with no source is dropped · Alternatives: an `Où me trouver` card repeating the links; drop `terrain` and `écrit`; the prototype's title « Ma règle sur l'IA » · Reversibility: cheap · Why: D26 — author text or derivation only.
+
+## D43 · Plan 10 · authoring — Stack logos copied from Simple Icons (CC0)   ⚑ à relire
+Choice: 7 SVG paths copied once from `simple-icons@16.31.0` into `src/lib/stackLogos.ts` (source and licence noted), drawn in `currentColor`, never brand colours; Sveltia CMS and SVU show as text; no dependency added · Alternatives: add `simple-icons` as a dependency; text-only toolbox · Reversibility: cheap · Why: D26 (self-hosted, no CDN); the files are CC0 but the logos are third-party trademarks (Astro, TypeScript, Go, GitHub…) — nominative use on a personal stack list, to re-read.
+
+## D44 · Plan 10 · authoring — `Hero.astro` deleted; contract checks scoped to touched pages
+Choice: `Hero.astro` is deleted once its text moves to `/a-propos` (D33's horizon); AA measured here only for the new tone and AI-level pairs, V2–V6 on the touched pages; the rest stays with plan 11 · Alternatives: keep `Hero.astro` unused; measure every pair now · Reversibility: cheap · Why: no dead component; plan 11 owns the site-wide sweep.
