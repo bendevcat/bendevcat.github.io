@@ -8,7 +8,7 @@
   class="card relative m-auto w-[min(40rem,92vw)] p-0 text-body backdrop:bg-black/60"
   aria-label="Recherche sur le site"
 >
-  <div class="flex items-center gap-2 border-b border-line px-4 py-3 pr-14">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3 pr-16">
     <span class="font-mono text-sm text-accent" aria-hidden="true">/</span>
     <input
       id="search-input"
@@ -35,11 +35,13 @@
       chemin de tabulation entre le champ et les résultats — sinon un
       utilisateur clavier qui tape Tab depuis l'input pour atteindre le
       premier résultat atterrit sur ce bouton et perd sa recherche. Positionné
-      visuellement en haut à droite malgré sa place dans le DOM. */}
+      visuellement en haut à droite malgré sa place dans le DOM.
+      Patron `.pill` du contrat §4 (R8) : rayon, padding, fond et texte
+      d'accent, mono — le reste (position, taille) en utilitaires. */}
   <button
     type="button"
     data-search-close
-    class="absolute right-4 top-3 rounded-pill border border-line px-2 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
+    class="pill absolute right-4 top-3 cursor-pointer text-xs transition-shadow hover:ring-1 hover:ring-accent"
     aria-label="Fermer la recherche"
   >esc</button>
 </dialog>

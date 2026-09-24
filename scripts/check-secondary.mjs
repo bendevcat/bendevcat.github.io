@@ -29,6 +29,23 @@
  * avoir qu'un ton dans tout `dist/`. Chaque /tags/<slug>/ porte exactement
  * une puce, celle de son slug.
  *
+ * R7 (T3) — niveaux IA et patrons du contrat (§4) :
+ * - toute bannière IA de `dist/` (`[data-ai-usage]`, AiBanner.astro) porte
+ *   `data-tone` = le ton de son niveau (D40 : none green, partial amber,
+ *   full blue) et les trois utilitaires de ce ton ;
+ * - /transparence-ia : exactement 3 bannières, dans l'ordre none, partial,
+ *   full, chacune dans son propre `.card-inner`, les trois dans un même
+ *   `.card` — d'où la ligne `ai-banner:` ;
+ * - /tags : un même `.card` autour de tous les liens `/tags/<slug>/` ;
+ * - chaque /tags/<slug>/ (dont /tags/devops/) : ≥ 1 groupe
+ *   (`[data-tag-group]`), chaque groupe est un `.card` et chacun de ses liens
+ *   un `.card-inner` ;
+ * - /404 : un `.card` qui contient des liens `.pill` vers `/`, `/blog` et
+ *   `/tags` (barre finale facultative) ;
+ * - dans le `<main>` de /a-propos, /transparence-ia, /tags, /tags/<slug>/ et
+ *   /404 : aucun élément ne combine `border-line` et `rounded-card` ou
+ *   `rounded-inner` (carte dessinée à la main au lieu du patron).
+ *
  * Le compte des puces ignore la copie masquée par le serveur de la carte à la
  * une (`[data-entry-id][hidden]` dans la grille de /prompts et /skills) : elle
  * duplique la carte visible (patron de liste, plan 7 / I3). Ces copies sont
@@ -119,6 +136,10 @@ function ancestors(el) {
   return out;
 }
 
+function descendants(el) {
+  return el.children.flatMap((child) => [child, ...descendants(child)]);
+}
+
 const classes = (el) => (el.attrs.class ?? '').split(/\s+/).filter(Boolean);
 
 /** Même règle que `tagSlug` (src/lib/tags.ts). */
@@ -176,8 +197,120 @@ for (const key of ['nom', 'alias', 'rôle', 'lieu', 'terrain', 'écrit', 'stack'
 }
 errors.push('toolbox : absent (plan 10 / T4)');
 errors.push('ai-rule : absent (plan 10 / T4)');
-// — T3 : /transparence-ia (R7) — pas encore construit —
-errors.push('ai-banner : absent (plan 10 / T3)');
+// — T3 : niveaux IA et patrons des pages secondaires (R7) —
+const AI_TONES = { none: 'green', partial: 'amber', full: 'blue' }; // D40, src/lib/aiUsage.ts
+const hasClass = (el, name) => classes(el).includes(name);
+const closest = (el, name) => ancestors(el).find((a) => hasClass(a, name));
+
+/** Éléments d'une route de `dist/`, ou `null` (erreur notée) si la page manque. */
+function loadPage(path) {
+  const file = path.endsWith('/') ? join(DIST, path, 'index.html') : join(DIST, `${path}.html`);
+  if (!existsSync(file)) {
+    errors.push(`${path} : page absente de ${DIST}/`);
+    return null;
+  }
+  return collectElements(tokenize(readFileSync(file, 'utf8')));
+}
+
+// Toute bannière IA du site porte le ton de son niveau.
+for (const file of htmlFiles(DIST)) {
+  const { elements } = collectElements(tokenize(readFileSync(file, 'utf8')));
+  for (const banner of elements.filter((el) => 'data-ai-usage' in el.attrs)) {
+    const where = `${route(file)} bannière IA « ${banner.attrs['data-ai-usage']} »`;
+    const expected = AI_TONES[banner.attrs['data-ai-usage']];
+    if (!expected) {
+      errors.push(`${where} : niveau inconnu`);
+      continue;
+    }
+    if (banner.attrs['data-tone'] !== expected) {
+      errors.push(`${where} : data-tone="${banner.attrs['data-tone'] ?? ''}" (attendu : ${expected})`);
+    }
+    const missing = toneUtilities(expected).filter((c) => !hasClass(banner, c));
+    if (missing.length > 0) errors.push(`${where} : classe sans ${missing.join(', ')}`);
+  }
+}
+
+// /transparence-ia : un `.card` qui tient les 3 niveaux, chacun un `.card-inner` avec sa bannière.
+const transparence = loadPage('/transparence-ia/');
+if (transparence) {
+  const banners = transparence.elements.filter((el) => 'data-ai-usage' in el.attrs);
+  lines.push(`ai-banner: ${banners.map((b) => `${b.attrs['data-ai-usage']} ${b.attrs['data-tone'] ?? '?'}`).join(' | ')}`);
+  const order = banners.map((b) => b.attrs['data-ai-usage']).join(',');
+  if (order !== 'none,partial,full') errors.push(`/transparence-ia/ : bannières ${order || 'absentes'} (attendu : none,partial,full)`);
+  const levels = new Set(banners.map((b) => closest(b, 'card-inner')));
+  const cards = new Set([...levels].map((level) => level && closest(level, 'card')));
+  if (levels.has(undefined) || levels.size !== 3) {
+    errors.push('/transparence-ia/ : chaque niveau doit être son propre .card-inner (3 attendus)');
+  } else if (cards.has(undefined) || cards.size !== 1) {
+    errors.push('/transparence-ia/ : les 3 niveaux .card-inner ne sont pas dans un même .card');
+  }
+} else {
+  errors.push('ai-banner : absent');
+}
+
+// /tags : un même `.card` autour de toutes les puces.
+const tagsIndex = loadPage('/tags/');
+if (tagsIndex) {
+  const links = tagsIndex.elements.filter((el) => el.tag === 'a' && /^\/tags\/[^/]+\/$/.test(el.attrs.href ?? ''));
+  const cards = new Set(links.map((link) => closest(link, 'card')));
+  if (links.length === 0) errors.push('/tags/ : aucune puce de tag');
+  else if (cards.has(undefined) || cards.size !== 1) errors.push('/tags/ : les puces ne sont pas dans un même .card');
+}
+
+// /tags/<slug>/ : chaque groupe de collection est un `.card`, chaque lien d'entrée un `.card-inner`.
+const tagRoutes = existsSync(join(DIST, 'tags'))
+  ? readdirSync(join(DIST, 'tags'))
+      .filter((name) => existsSync(join(DIST, 'tags', name, 'index.html')))
+      .sort()
+      .map((name) => `/tags/${name}/`)
+  : [];
+if (!tagRoutes.includes('/tags/devops/')) errors.push('/tags/devops/ : page absente');
+for (const path of tagRoutes) {
+  const tagPage = loadPage(path);
+  if (!tagPage) continue;
+  const groups = tagPage.elements.filter((el) => 'data-tag-group' in el.attrs);
+  if (groups.length === 0) errors.push(`${path} : aucun groupe [data-tag-group]`);
+  for (const group of groups) {
+    const where = `${path} groupe « ${group.attrs['data-tag-group']} »`;
+    if (!hasClass(group, 'card')) errors.push(`${where} : pas un .card`);
+    const links = descendants(group).filter((el) => el.tag === 'a');
+    if (links.length === 0) errors.push(`${where} : aucun lien d'entrée`);
+    for (const link of links) {
+      if (!hasClass(link, 'card-inner')) errors.push(`${where} : lien ${link.attrs.href ?? '?'} pas un .card-inner`);
+    }
+  }
+}
+
+// /404 : un `.card` avec des liens `.pill` vers /, /blog et /tags.
+const notFound = loadPage('/404');
+if (notFound) {
+  const normalise = (href) => (href.length > 1 ? href.replace(/\/$/, '') : href);
+  const ok = notFound.elements
+    .filter((el) => hasClass(el, 'card'))
+    .some((card) => {
+      const hrefs = new Set(
+        descendants(card)
+          .filter((el) => el.tag === 'a' && hasClass(el, 'pill'))
+          .map((el) => normalise(el.attrs.href ?? '')),
+      );
+      return ['/', '/blog', '/tags'].every((href) => hrefs.has(href));
+    });
+  if (!ok) errors.push('/404 : aucun .card avec des liens .pill vers /, /blog et /tags');
+}
+
+// Aucune carte dessinée à la main dans le <main> des pages secondaires.
+for (const path of ['/a-propos/', '/transparence-ia/', '/tags/', ...tagRoutes, '/404']) {
+  const secondary = loadPage(path);
+  if (!secondary) continue;
+  for (const main of secondary.elements.filter((el) => el.tag === 'main')) {
+    for (const el of descendants(main)) {
+      const cls = classes(el);
+      if (cls.includes('border-line') && (cls.includes('rounded-card') || cls.includes('rounded-inner'))) {
+        errors.push(`${path} <${el.tag}> « ${el.text.slice(0, 40)} » : border-line + ${cls.includes('rounded-card') ? 'rounded-card' : 'rounded-inner'} (carte dessinée à la main)`);
+      }
+    }
+  }
+}
 
 // — R4 : puces de tag —
 const toneOfSlug = new Map(); // slug → Map(ton → première route)

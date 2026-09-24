@@ -14,19 +14,22 @@ const tags = collectTagIndex(await getTagBuckets());
     </section>
 
     <section class="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      {/* Un `.card` posé sur `bg` autour des puces (contrat §4, R7). */}
       {
         tags.length === 0 ? (
           <p class="text-sm text-muted">Aucun tag n'a encore été renseigné.</p>
         ) : (
-          <ul class="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <li>
-                <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} class="px-3 py-1">
-                  <span>{tag.count}</span>
-                </TagChip>
-              </li>
-            ))}
-          </ul>
+          <div class="card p-4 sm:p-6">
+            <ul class="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <li>
+                  <TagChip tag={tag.label} href={`/tags/${tag.slug}/`} class="px-3 py-1">
+                    <span>{tag.count}</span>
+                  </TagChip>
+                </li>
+              ))}
+            </ul>
+          </div>
         )
       }
     </section>
