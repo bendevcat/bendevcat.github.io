@@ -388,6 +388,16 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
      <html>. Sans lui, la rangée d'onglets — un contrôle mort — est cachée et
      tous les panneaux s'affichent, chacun sous son titre de repli. Avec lui,
      les titres de repli disparaissent (les onglets en tiennent lieu).
+   - Le serveur rend `hidden` sur les panneaux non sélectionnés (R8), donc le
+     repli sans JS doit battre le `[hidden] { display: none !important }` du
+     preflight. Une règle HORS couche ne le peut PAS : pour les déclarations
+     `!important`, l'ordre des couches s'inverse et une couche bat le CSS non
+     rangé, quelle que soit la spécificité (constat T4, fix round 1 : les
+     panneaux restaient `none` sans JS). La règle vit donc dans
+     `@layer base`, la couche même du preflight : à égalité de couche, c'est
+     la spécificité qui tranche, et (0,4,1) bat (0,1,0). Elle ne s'applique
+     qu'en l'absence de `data-js` : avec JS, le masquage par `hidden` reste
+     entier, sans flash (le script inline pose `data-js` avant le rendu).
    ========================================================================== */
 [data-detail-tabs] [role="tabpanel"][hidden] {
   display: none !important;
@@ -395,8 +405,10 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
 html:not([data-js]) [data-detail-tabs] [role="tablist"] {
   display: none !important;
 }
-html:not([data-js]) [data-detail-tabs] [role="tabpanel"][hidden] {
-  display: block !important;
+@layer base {
+  html:not([data-js]) [data-detail-tabs] [role="tabpanel"][hidden] {
+    display: block !important;
+  }
 }
 html[data-js] [data-detail-tabs] [data-tab-fallback-heading] {
   display: none !important;

@@ -19,6 +19,8 @@
  *   panneau sans `hidden`, tous les autres avec ;
  * - aucun panneau vide (texte, balises retirées, trimé) ;
  * - `<article>` garde `data-pagefind-body`.
+ * Code 1 aussi si, dans `dist/_astro/*.css`, le repli sans JS des panneaux
+ * (R9) n'est pas dans `@layer base` à côté du preflight `[hidden]`.
  *
  * Familles pas encore migrées (PENDING_FAMILIES) : une page sans rangée
  * d'onglets y est signalée, pas comptée en erreur. Une fois la famille
@@ -173,6 +175,43 @@ for (const family of FAMILIES) {
     for (const error of errors) console.error(`  ✗ ${family}/${slug} — ${error}`);
     if (errors.length > 0) failed = true;
   }
+}
+
+/**
+ * Repli sans JS (R9, D11) sur le CSS construit : la règle qui réaffiche les
+ * panneaux `hidden` doit vivre dans `@layer base`, la couche du preflight
+ * `[hidden] { display: none !important }`. Hors couche, un `!important` perd
+ * contre toute couche quelle que soit sa spécificité (constat T4, fix round 1).
+ * Contrôle structurel : le calcul réel du style reste mesuré au navigateur.
+ */
+function layerBlocks(css, name) {
+  const blocks = [];
+  const open = `@layer ${name}{`;
+  for (let at = css.indexOf(open); at !== -1; at = css.indexOf(open, at + 1)) {
+    let depth = 0;
+    for (let i = at + open.length - 1; i < css.length; i += 1) {
+      if (css[i] === '{') depth += 1;
+      else if (css[i] === '}' && (depth -= 1) === 0) {
+        blocks.push(css.slice(at + open.length, i));
+        break;
+      }
+    }
+  }
+  return blocks.join('');
+}
+
+const ASTRO = join(DIST, '_astro');
+const cssFiles = existsSync(ASTRO) ? readdirSync(ASTRO).filter((file) => file.endsWith('.css')) : [];
+const base = cssFiles.map((file) => layerBlocks(readFileSync(join(ASTRO, file), 'utf8'), 'base')).join('');
+const noJsRule =
+  /html:not\(\[data-js\]\) \[data-detail-tabs\] \[role="?tabpanel"?\]\[hidden\]\{display:block!important\}/;
+if (!base.includes('[hidden]:where(')) {
+  console.error('  ✗ CSS — preflight `[hidden]` introuvable dans @layer base');
+  failed = true;
+}
+if (!noJsRule.test(base)) {
+  console.error('  ✗ CSS — repli sans JS des panneaux absent de @layer base (R9) : le preflight [hidden] le masque');
+  failed = true;
 }
 
 if (pending > 0) {
