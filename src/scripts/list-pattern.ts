@@ -24,6 +24,7 @@
 import { ALL, type FacetSelection } from '../lib/facetFilters';
 import {
   computeListState,
+  domOrder,
   type FacetLabel,
   type ListEntry,
   type ListLabels,
@@ -42,7 +43,13 @@ if (root && groups.length > 0 && grid) {
   const emptyText = document.querySelector<HTMLElement>('[data-list-empty-text]');
   const resetButton = document.querySelector<HTMLButtonElement>('[data-list-reset]');
 
-  const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-entry-id]'));
+  // Les entrées sont les enfants directs de la grille (racines des composants
+  // *Card / ArticleRow) : c'est ce qui permet de les déplacer (F4).
+  const cards = Array.from(grid.children).filter(
+    (el): el is HTMLElement => el instanceof HTMLElement && el.dataset.entryId !== undefined,
+  );
+  const canonicalIds = cards.map((card) => card.dataset.entryId ?? '');
+  const cardById = new Map(cards.map((card) => [card.dataset.entryId ?? '', card]));
   const buttons = groups.flatMap((group) =>
     Array.from(group.querySelectorAll<HTMLButtonElement>('button[data-facet-key]')),
   );
@@ -108,14 +115,17 @@ if (root && groups.length > 0 && grid) {
       featured: featuredBox !== null,
     });
 
-    const position = new Map(state.visibleIds.map((id, index) => [id, index]));
-    for (const card of cards) {
-      const id = card.dataset.entryId ?? '';
-      card.hidden = !position.has(id);
-      // Le tri réordonne réellement le DOM : `order` CSS suffirait au visuel
-      // mais laisserait l'ordre de tabulation et de lecture d'écran inchangé.
-      if (position.has(id)) card.style.order = String(position.get(id));
-    }
+    const visible = new Set(state.visibleIds);
+    for (const card of cards) card.hidden = !visible.has(card.dataset.entryId ?? '');
+    // Le tri réordonne réellement le DOM (plan 12, F4) : les nœuds sont
+    // déplacés dans l'ordre de domOrder() — un `order` CSS suffirait au visuel
+    // mais laisserait l'ordre de tabulation et de lecture d'écran à l'ordre
+    // serveur. Rien n'est déplacé quand l'ordre est déjà le bon (/blog au
+    // chargement) ; sur /projets, /prompts et /skills, la copie masquée de
+    // l'entrée à la une part en queue de grille, sans effet visible.
+    const wanted = domOrder(canonicalIds, state.visibleIds).flatMap((id) => cardById.get(id) ?? []);
+    const current = Array.from(grid.children);
+    if (wanted.some((card, index) => current[index] !== card)) grid.append(...wanted);
     // Une grille sans carte visible reste un élément flex du cadre
     // (`flex flex-col gap-6`) et y prend une place de `gap` : l'état vide ne
     // serait plus centré (F2, plan 11). On la masque tant qu'elle est vide.

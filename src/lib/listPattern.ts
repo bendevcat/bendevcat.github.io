@@ -190,3 +190,19 @@ export function computeListState(
 
   return { visibleIds, count, featuredId: featured?.id ?? null, meta, empty };
 }
+
+/**
+ * Ordre des entrées DANS le DOM de la grille (plan 12, F4) : les visibles dans
+ * l'ordre calculé (`visibleIds`), puis les masquées — l'entrée à la une,
+ * les entrées filtrées — dans l'ordre canonique reçu (`ids`, celui du rendu
+ * serveur). Le script déplace les nœuds selon cet ordre : un `order` CSS
+ * suffirait au visuel mais laisserait l'ordre de tabulation et de lecture
+ * d'écran à l'ordre serveur. Un id visible inconnu est ignoré ; aucun id n'est
+ * dupliqué ; les tableaux reçus ne sont pas mutés.
+ */
+export function domOrder(ids: readonly string[], visibleIds: readonly string[]): string[] {
+  const known = new Set(ids);
+  const visible = [...new Set(visibleIds.filter((id) => known.has(id)))];
+  const shown = new Set(visible);
+  return [...visible, ...ids.filter((id) => !shown.has(id))];
+}

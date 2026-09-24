@@ -8,7 +8,7 @@ interface Props {
   coverAlt?: string;
   /**
    * Repli du texte alternatif quand `coverAlt` est absent — `coverAlt` est
-   * `optional()` dans les deux schémas. `ProjectCard` et `ArticleCard`
+   * `optional()` dans les deux schémas. `ProjectCard` et l'ancienne carte d'article
    * faisaient déjà `alt={coverAlt ?? title}` AVANT ce plan : cette prop est ce
    * qui empêche de perdre ce repli en déménageant l'image ici. Requise, pour
    * que l'oubli soit impossible et non simplement improbable.

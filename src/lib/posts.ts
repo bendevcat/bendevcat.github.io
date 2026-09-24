@@ -12,7 +12,7 @@ export async function getPublishedPosts() {
 
 /**
  * Estimation grossière (~200 mots/min, arrondi au supérieur, minimum 1 min).
- * Reprise verbatim d'ArticleCard.astro (Plan 1) : ce plan la déplace pour que
+ * Reprise verbatim de l'ancienne carte d'article (Plan 1) : ce plan la déplace pour que
  * le tri « court / long » (R7) et la carte lisent le MÊME nombre. Changer la
  * formule ici changerait un affichage livré — ce serait une déviation.
  */

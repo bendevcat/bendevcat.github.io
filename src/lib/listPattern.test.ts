@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL } from './facetFilters';
 import {
   computeListState,
+  domOrder,
   isAnyFacetActive,
   pickFeaturedEntry,
   type ListEntry,
@@ -263,5 +264,41 @@ describe('computeListState — facette à libellé de repos (plan 12, R9)', () =
     });
     expect(state.meta).toBe('0 article · catégorie : Outils · tag bash');
     expect(state.empty).toBe('Aucun article pour catégorie Outils et tag bash.');
+  });
+});
+
+describe('domOrder — le tri réordonne le DOM (plan 12, F4)', () => {
+  it('place les entrées visibles dans l’ordre du tri, en tête', () => {
+    expect(domOrder(['a', 'b', 'c', 'd'], ['d', 'b', 'a', 'c'])).toEqual(['d', 'b', 'a', 'c']);
+  });
+
+  it('renvoie les entrées masquées après les visibles, dans l’ordre canonique', () => {
+    expect(domOrder(['a', 'b', 'c', 'd', 'e'], ['e', 'c'])).toEqual(['e', 'c', 'a', 'b', 'd']);
+  });
+
+  it('garde l’entrée à la une (absente de visibleIds) dans la grille, masquée en queue', () => {
+    const state = computeListState(ENTRIES, NONE, 'oldest', LABELS);
+    expect(state.visibleIds).toEqual(['c', 'b']);
+    expect(domOrder(['a', 'b', 'c'], state.visibleIds)).toEqual(['c', 'b', 'a']);
+  });
+
+  it('suit « plus anciens » puis revient à « plus récents » sans perdre d’entrée', () => {
+    const canonical = ['b', 'a', 'c'];
+    const oldest = computeListState(ENTRIES, NONE, 'oldest', LABELS, { featured: false });
+    expect(domOrder(canonical, oldest.visibleIds)).toEqual(['c', 'a', 'b']);
+    const recent = computeListState(ENTRIES, NONE, 'recent', LABELS, { featured: false });
+    expect(domOrder(canonical, recent.visibleIds)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('ignore un id visible inconnu et ne duplique rien', () => {
+    expect(domOrder(['a', 'b'], ['b', 'zz', 'b'])).toEqual(['b', 'a']);
+  });
+
+  it('ne mute pas les tableaux reçus', () => {
+    const ids = ['a', 'b', 'c'];
+    const visible = ['c', 'a'];
+    domOrder(ids, visible);
+    expect(ids).toEqual(['a', 'b', 'c']);
+    expect(visible).toEqual(['c', 'a']);
   });
 });

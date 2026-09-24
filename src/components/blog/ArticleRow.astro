@@ -1,7 +1,7 @@
 ---
 /**
  * ArticleRow.astro (plan 12, T5 ; inventaire §1 ; prototype 163–227) — une
- * ligne compacte de /blog. Remplace ArticleCard.astro.
+ * ligne compacte de /blog. Remplace l'ancienne carte d'article (supprimée).
  *
  * Grille `76px | 1fr`, gap 16, padding 20/0, séparateur bas `line2`, AUCUN
  * fond : la ligne repose sur le `surface` du cadre (ce n'est plus un
@@ -13,6 +13,10 @@
  * Contrat lu par src/scripts/list-pattern.ts (inchangé depuis la carte) :
  * `data-entry-id`, `data-facet` (JSON), `data-date` (ms), `data-minutes`. Les
  * tags ne sont plus une facette de /blog (D73) : seul `category` est déclaré.
+ * `data-featured` (plan 12, F4) marque la ligne de l'article à la une de
+ * l'accueil (`featured: true`) : scripts/check-home.mjs compare l'accueil à
+ * cette ligne. /blog n'a pas de bloc à la une (`{ featured: false }`), la
+ * marque n'y change donc ni l'affichage ni le tri.
  */
 import type { CollectionEntry } from 'astro:content';
 import { AI_USAGE_META } from '../../lib/aiUsage';
@@ -23,9 +27,11 @@ interface Props {
   post: CollectionEntry<'blog'>;
   /** Première ligne : image au-dessus de la ligne de flottaison, `loading="eager"`. */
   eager?: boolean;
+  /** Article à la une de l'accueil (pickHomePosts) : porte `data-featured`. */
+  featured?: boolean;
 }
 
-const { post, eager = false } = Astro.props;
+const { post, eager = false, featured = false } = Astro.props;
 const { title, description, pubDate, category, cover, coverAlt, aiUsage } = post.data;
 
 const dateFr = pubDate.toLocaleDateString('fr-FR', {
@@ -43,6 +49,7 @@ const usage = aiUsage ? AI_USAGE_META[aiUsage] : null;
   data-facet={JSON.stringify({ category: [category] })}
   data-date={pubDate.getTime()}
   data-minutes={readingMinutes}
+  data-featured={featured ? '' : undefined}
 >
   <Thumbnail cover={cover} coverAlt={coverAlt} title={title} derivedFrom={category} size="row" eager={eager} />
 

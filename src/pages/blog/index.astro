@@ -22,6 +22,13 @@ const posts = await getPublishedPosts();
 // `plus récents` — le serveur rend donc les lignes dans l'ordre que le script
 // calculera au chargement.
 
+// Plan 12, F4 : la ligne de l'article que l'accueil met à la une porte
+// `data-featured` (scripts/check-home.mjs compare les deux). Même règle que
+// pickHomePosts() → pickFeaturedEntry() : le PREMIER `featured: true` de
+// l'ordre canonique ; aucun → aucune marque (l'accueil prend alors la
+// première ligne, que check-home.mjs lit à défaut).
+const featuredId = posts.find((post) => post.data.featured)?.id;
+
 const categories = blogCategoryRows(posts, CATEGORIES);
 const tags = blogTagCloud(posts);
 
@@ -86,7 +93,7 @@ const { meta } = computeListState(
 
 					{/* Lignes — toutes rendues par le serveur, dans l'ordre canonique. */}
 					<div class="flex flex-col" data-list-grid>
-						{posts.map((post, index) => <ArticleRow post={post} eager={index === 0} />)}
+						{posts.map((post, index) => <ArticleRow post={post} eager={index === 0} featured={post.id === featuredId} />)}
 					</div>
 
 					{/* État vide — inatteignable tant que chaque ligne du rail compte au
