@@ -271,3 +271,6 @@ Choice: tile titles turn `accent` on hover; below 640 px the AI card's link wrap
 
 ## D90 · Plan 13 · verification 1 — R13 measured on article results only   ⚑ à relire
 Choice: R13's search check becomes "query `ma règle sur l'IA` → no `/blog/<slug>/` result" — the verifier found 3 results (2 prompts, 1 skill) matched on scattered words, none an article · Alternatives: keep "0 results" and strip those words from other pages (content change, out of scope) · Reversibility: cheap · Why: the criterion's intent is "rails not indexed"; its literal measure assumed the phrase existed nowhere else. Narrowed reading.
+
+## D91 · Plan 13 · F1–F2 — Audit exemption narrowed; rail insets from the prototype
+Choice: the audit exempts a card only when its painted parent paints `rail` inside a non-thumbnail `[data-rail]` (fails closed without a rail token); rail labels `px-2` (8 px) and tag cloud `px-1.5` (6 px) as prototype lines 174/184/185 and 244/254/255 — measured x 24 / 22 on `/blog` and an article; `/blog` HTML now differs from plan 12 by these two classes · Alternatives: arbitrary px values; leave `/blog` untouched · Reversibility: cheap · Why: verification 1 findings 1–2.
