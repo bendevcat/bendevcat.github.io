@@ -62,7 +62,11 @@ Pour monter de version :
    « épingle @sveltia/cms à … exactement » la code en dur, il échoue sinon).
 3. `npx vitest run`, puis `npm run build && node scripts/check-admin.mjs`
    (la ligne `sveltia:` affiche la version embarquée), puis un tour sur
-   `/admin/?test-repo` (voir plus bas) avant de pousser.
+   `/admin/?test-repo` (voir plus bas) avant de pousser. Le réplica du
+   frontmatter (`src/lib/cmsFrontmatter.ts`, voir « Forme canonique Sveltia »)
+   décrit l'écriture de la 0.221 : ouvrir puis sauvegarder sans modification
+   quelques entrées sur le tableau de démonstration, et vérifier que le fichier
+   ne change pas.
 
 ### En production (publier / corriger un article)
 
@@ -185,6 +189,175 @@ une fois publiée — il marchera après la publication (et le déploiement). Ap
 vérifie que chaque entrée publiée a bien sa page à cette adresse et qu'aucun
 brouillon n'en a.
 
+### Créer une entrée : valeurs de départ
+
+Réglé dans `public/admin/config.yml`, gardé par `src/lib/cms-config.test.ts` :
+
+- **Nouvel article** (« New Article », ou un lien de création pré-rempli) :
+  **Date de publication** pré-remplie avec l'heure d'ouverture du formulaire
+  (`default: '{{now}}'`, au décalage horaire du navigateur), modifiable. C'est
+  l'heure de **création** : en publiant un brouillon plus tard, ajuster cette
+  date à la main si besoin (rien ne la change à la publication).
+- **Nouvel article, prompt ou skill** : case **Brouillon** cochée
+  (`draft: true` par défaut). Rien n'apparaît sur le site tant qu'elle n'est pas
+  décochée. Les projets n'ont pas de champ `draft` : un nouveau projet est
+  publié dès sa première sauvegarde.
+- **Dupliquer** (menu de l'entrée › « Duplicate ») fonctionne sur nos entrées
+  `<slug>/index.md` : donner un nouveau titre à la copie (son dossier en est
+  tiré) ; elle est rangée dans `<nouveau-slug>/index.md` à côté de l'original, avec une copie
+  des images de l'entrée (la couverture) ; l'original ne bouge pas. Sveltia
+  copie **toutes** les valeurs, y compris `draft` et `pubDate` : dupliquer un
+  article publié donne une copie **publiée** — cocher Brouillon et corriger la
+  date avant d'enregistrer si besoin. (Choix assumé : forcer `draft: true` à la
+  sauvegarde écraserait un auteur qui décoche volontairement la case.)
+
+**Pourquoi chaque fichier écrit `draft` en toutes lettres.** À l'ouverture d'une
+entrée existante, Sveltia remplit tout champ absent du fichier avec son défaut.
+Avec un défaut à `true`, un article publié sans ligne `draft` deviendrait
+brouillon à sa prochaine sauvegarde — et disparaîtrait du site. Chaque article,
+prompt et skill déclare donc `draft: false` ou `draft: true` ; le test
+« chaque article, prompt et skill déclare draft » de
+`src/lib/cmsFrontmatter.test.ts` échoue sinon (et la CI bloque le déploiement).
+Un fichier écrit à la main doit le déclarer aussi.
+
+### Dates de mise à jour (automatiques)
+
+À chaque sauvegarde d'une entrée **existante**, le hook `preSave`
+(`src/admin/hooks.ts`, règles dans `src/admin/dateRules.ts`) peut poser une date,
+au format des champs du CMS (`2026-09-25T14:03:07+02:00`, heure et décalage du
+navigateur) :
+
+- **Article** : `updatedDate` = maintenant **seulement** si l'article est
+  **publié** (Brouillon décoché avant **et** après la sauvegarde) **et** que son
+  **corps** a changé. Titre, description, tags, couverture… seuls : rien ne
+  bouge. Un brouillon, ou une première publication (Brouillon décoché à cette
+  sauvegarde), ne reçoit pas de `updatedDate`. Le corps est comparé après remise
+  des séparateurs en `---` : l'aller-retour `***` de l'éditeur ne compte pas
+  comme une modification. Une `updatedDate` saisie à la main dans une
+  sauvegarde qui change aussi le corps est remplacée par l'heure de la
+  sauvegarde.
+- **Prompt** : `updated` = maintenant quand la **version** change (nouvelle
+  valeur non vide, différente de la précédente). Version inchangée ou vidée :
+  rien.
+- **Jamais** sur une nouvelle entrée (création, lien pré-rempli, duplicata),
+  ni sur les projets et les skills.
+
+**D'où vient l'« avant ».** Sveltia ne donne au hook que les nouvelles valeurs
+(`src/admin/previousEntry.ts`) : l'état précédent est le **dernier fichier
+engagé** au chemin de l'entrée, lu comme Sveltia le lit, cherché dans cet
+ordre :
+
+1. la mémoire de l'onglet : ce que la sauvegarde précédente de cette entrée,
+   dans la même session, vient d'écrire ;
+2. sur le tableau de démonstration (`/admin/?test-repo`, dev seulement) : le
+   fichier de l'arbre de travail qui a amorcé le tableau ;
+3. partout ailleurs — en production, et en dev avec « Work with Local
+   Repository » (la comparaison se fait alors avec `main` sur GitHub, pas avec
+   le fichier local) : l'**API contents publique de GitHub**,
+   `https://api.github.com/repos/bendevcat/bendevcat.github.io/contents/<chemin>?ref=main`,
+   **sans jeton** (celui de l'auteur n'est jamais lu ni envoyé), sans cookie,
+   sans cache (`cache: 'no-store'`). Le dépôt est public ; GitHub autorise 60
+   requêtes par heure et par adresse IP sans authentification. La requête ne
+   part que si une règle peut s'appliquer (article publié, prompt versionné).
+
+**Dans le doute, rien ne bouge.** Si l'état précédent est **inconnu** (réseau
+coupé, quota GitHub épuisé, réponse illisible), les dates restent telles
+quelles et la console du navigateur affiche **un** avertissement
+(`dates : état précédent de <chemin> introuvable, dates inchangées`). Un
+fichier absent de GitHub (404) compte comme nouveau : pas de date non plus.
+Si l'avertissement apparaît alors que le corps a bien changé, poser
+`updatedDate` (ou `updated`) à la main et sauvegarder à nouveau.
+
+### Messages de commit
+
+En production, chaque sauvegarde est un commit sur `main` dont le message suit
+le format conventionnel du dépôt (`backend.commit_messages`) :
+
+| Action | Message |
+|---|---|
+| Créer | `content(Article): create "<slug>"` |
+| Modifier | `content(Article): update "<slug>"` |
+| Supprimer | `content(Article): delete "<slug>"` |
+| Téléverser un média | `content(media): upload "<chemin>"` |
+| Supprimer un média | `content(media): delete "<chemin>"` |
+
+Entre parenthèses, Sveltia met le **libellé singulier** de la collection —
+`Article`, `Projet`, `Prompt` ou `Skill` — et non son nom technique (`blog`…) :
+Sveltia n'offre aucune variable pour ce nom. Quand d'autres fichiers partent
+dans le même commit (une image jointe, par exemple), Sveltia ajoute ` +N` au
+message. Le tableau de démonstration ignore ces messages : seul un vrai commit
+GitHub les montre (voir « À vérifier une fois en production »).
+
+### Raccourcis de création : `/admin/raccourcis`
+
+La page <https://bendevcat.github.io/admin/raccourcis> (hors menu du site,
+`noindex`, sans script) regroupe des raccourcis qui ouvrent directement un
+formulaire « nouvelle entrée » **pré-rempli, en brouillon** — rien n'est
+enregistré avant **Save**.
+
+**Bookmarklets** (ordinateur) :
+
+- **💡 Idée d'article** : nouvel article ; titre = texte sélectionné sur la page
+  (sinon le titre de la page) ; description = `Source : <adresse de la page>` ;
+  Brouillon coché ; date de publication = maintenant.
+- **💬 Nouveau prompt** : nouveau prompt ; le texte sélectionné, sauts de ligne
+  compris, devient le texte du prompt ; Brouillon coché.
+
+Installer, une fois par navigateur : ouvrir la page, afficher la barre de
+favoris (Ctrl/⌘ + Maj + B dans Chrome), puis **glisser** chaque bouton dans la
+barre. Utiliser : sur n'importe quelle page, sélectionner du texte (facultatif),
+cliquer le favori ; le CMS **de production** s'ouvre dans un nouvel onglet, sur
+le formulaire pré-rempli. Il faut y être connecté (jeton, voir plus haut).
+Titre, description et prompt sont tronqués au-delà de 150, 2 000 et 20 000
+caractères (suivis de `…`). Les bookmarklets visent toujours
+`https://bendevcat.github.io/admin/`, même depuis la page servie en dev.
+
+**Liens simples** (mobile, où les bookmarklets sont malcommodes) : « Nouvel
+article » et « Nouveau prompt » ouvrent un formulaire vide, en brouillon
+(`/admin/#/collections/blog/new?draft=true`, idem `prompts`) sur l'origine qui
+sert la page. À garder en favori ou sur l'écran d'accueil.
+
+**Confidentialité.** Le texte sélectionné et l'adresse de la page voyagent dans
+le **fragment** de l'URL (après le `#`) : le navigateur ne l'envoie à **aucun**
+serveur, ni à GitHub Pages ni au site d'origine (l'onglet s'ouvre sans
+`opener` ni `Referer`). Ils restent en revanche dans l'historique local du
+navigateur, et n'entrent dans le dépôt — public — que si l'entrée est
+enregistrée : relire titre et description (l'adresse source peut porter des
+paramètres) avant **Save**.
+
+Contrôle après `npm run build` : `node scripts/check-admin.mjs`, ligne
+`raccourcis:` (page `noindex`, 0 script, 2 bookmarklets, 2 liens simples, rien
+de la mise en page du site). Construction des bookmarklets :
+`src/lib/bookmarklets.ts`, gardée par `src/lib/bookmarklets.test.ts`.
+
+### Lien ✏️ Éditer sur les pages du site
+
+Sur chaque page d'article, de projet, de prompt et de skill, un bouton
+**✏️ Éditer** (en bas à droite) ouvre l'entrée dans le CMS
+(`/admin/#/collections/<collection>/entries/<slug>/index`). Il n'apparaît que
+dans un navigateur qui a déjà ouvert `/admin/` : chaque chargement de `/admin/`
+pose le marqueur `localStorage['bencat:author'] = '1'` (même sans se
+connecter), et un petit script des pages de détail (`src/scripts/edit-link.ts`)
+révèle le lien s'il le trouve. Un visiteur ne le voit jamais ; sans JavaScript,
+il reste caché.
+
+**C'est une commodité, jamais une sécurité.** Le lien est dans le HTML public de
+chaque page (seulement masqué) et n'importe qui peut poser le marqueur. Ce qui
+protège le contenu, c'est la connexion GitHub du CMS : sans jeton valide, le
+lien mène à l'écran de connexion. Le marqueur est propre à chaque origine
+(`localhost` et `bendevcat.github.io` sont distincts). Pour le retirer d'un
+navigateur (ordinateur partagé, captures d'écran…), dans la console des outils
+de développement, sur une page du site :
+
+```js
+localStorage.removeItem('bencat:author')
+```
+
+puis recharger — le prochain passage par `/admin/` le reposera. Contrôle après
+`npm run build` : `node scripts/check-edit-link.mjs --base <dist de base>`
+(12 pages de détail, un lien caché chacune, bonne adresse, hors index
+Pagefind).
+
 ### Aperçu
 
 Le volet d'aperçu (à droite de l'éditeur ; « Show Preview » dans la barre
@@ -264,10 +437,13 @@ Sveltia écrirait un objet `{code, lang}` que le schéma Zod refuse) — et
 « édite prompt, snippet et excerpt avec le widget code, sortie texte seule »
 de `src/lib/cms-config.test.ts` garde ces réglages.
 
-- **Ouvrir une entrée n'écrit rien** : Sveltia désactive **Save** tant que
-  l'entrée n'est pas modifiée, un fichier non modifié ne peut donc pas être
-  réécrit — à condition qu'il soit dans la forme canonique de l'éditeur
-  (voir plus bas), sinon l'éditeur le « modifie » dès l'ouverture.
+- **Ouvrir une entrée n'écrit rien de différent** : chaque fichier de
+  `src/content/` est dans la forme exacte qu'écrit Sveltia (voir « Forme
+  canonique Sveltia » plus bas). **Save** peut pourtant s'activer sans qu'on ait
+  rien touché : Sveltia marque l'entrée modifiée quand un widget liste (`tags`,
+  `stack`…) se monte, ou quand le corps contient un `---`. Une sauvegarde sans
+  modification réécrit alors **le même fichier, octet pour octet** : elle ne
+  change rien au contenu.
 - **Une vraie modification réécrit tout le frontmatter** : à la sauvegarde,
   Sveltia re-sérialise l'ensemble du frontmatter (ordre, guillemets, style des
   blocs, champs par défaut comme `featured: false`), pas seulement le champ
@@ -296,7 +472,40 @@ la ligne signalée par `---`.
 
 ### Forme canonique Sveltia : écrire ce que l'éditeur écrit
 
-À l'ouverture d'une entrée, les éditeurs de Sveltia (Markdown et `code`)
+**Frontmatter.** À chaque sauvegarde, Sveltia 0.221 re-sérialise **tout** le
+frontmatter à sa façon. Chaque `src/content/**/index.md` est donc écrit
+directement dans cette forme (syntaxe seulement, valeurs inchangées) :
+
+- YAML de Sveltia : indentation de 2, listes en blocs (`- a`, jamais
+  `[a, b]`), guillemets simples seulement quand il en faut, pas de retour à la
+  ligne automatique ;
+- clés dans l'ordre des champs de `public/admin/config.yml` (sous-champs d'une
+  liste dans leur ordre à eux), clés inconnues en dernier ;
+- défauts explicites : un champ que Sveltia remplirait à l'ouverture est écrit
+  (`featured: false`, `draft: false`…) ; un champ optionnel vide est omis ;
+- `---`, le frontmatter, `---`, **une ligne vide**, le corps, un saut de ligne
+  final.
+
+Le test `src/lib/cmsFrontmatter.test.ts` (lancé par la CI) le garde : il
+compare chaque fichier à ce que Sveltia écrirait pour lui (« chaque fichier =
+ce que Sveltia 0.221 écrit pour lui ») et vérifie que chaque article, prompt et
+skill déclare `draft` (voir « Créer une entrée » plus haut). Le script
+`scripts/canonicalize-content.mjs` fait le même calcul — frontmatter, plus
+`normalizeBody` sur le corps et `normalizeCodeField` sur les champs `code` :
+
+```sh
+node scripts/canonicalize-content.mjs --check   # canonical: 13/13 entries (code 1 + détail sinon)
+node scripts/canonicalize-content.mjs --write   # réécrit les entrées hors forme
+```
+
+Après avoir écrit ou retouché une entrée **à la main**, lancer `--write`, relire
+le diff, puis `npx vitest run`. `--root <dossier>` fait travailler le script sur
+une copie du contenu. Le réplica suit `yaml` 2.9.1, la version que Sveltia
+embarque (épinglée exactement dans `package.json`) : à revoir en montant de
+version de Sveltia.
+
+**Corps et champs de code.** À l'ouverture d'une entrée, les éditeurs de
+Sveltia (Markdown et `code`)
 relisent chaque valeur et la réécrivent dans **leur** forme Markdown. Si le
 fichier n'est pas déjà dans cette forme, **Save** s'active sans qu'on ait rien
 touché, et la sauvegarde suivante publie la forme réécrite — parfois fausse :
@@ -328,15 +537,29 @@ Sveltia écrit). Les `---` sont hors de ce garde-fou : l'éditeur les ouvre en `
 (Save s'active donc sur un article qui en contient) et le hook `preSave` les
 rétablit à l'écriture.
 
-### Images de couverture : deux pièges
+### Images téléversées : WebP, et deux pièges
+
+**Conversion automatique.** Toute image matricielle téléversée depuis le CMS
+(PNG, JPEG, GIF, AVIF, HEIC, WebP) est convertie **dans le navigateur, avant
+tout envoi** (`media_libraries.default.config` de `public/admin/config.yml`) :
+format **WebP**, **1600 px de large au plus** (jamais agrandie), **qualité 80**.
+Le fichier atterrit en `<nom>.webp` dans le dossier de l'entrée, à côté de
+`index.md` (`cover: ./<nom>.webp`). Si le fichier **converti** dépasse
+**1 Mio** (`max_file_size: 1048576`), Sveltia le refuse avec un avis et
+n'écrit rien : recadrer ou réduire l'image, puis recommencer. Un SVG n'est pas
+touché ; un GIF animé devient une image fixe. Le test « images : WebP, 1600 px,
+qualité 80, plafond de taille » de `src/lib/cms-config.test.ts` garde ces
+réglages.
 
 **Garde les couvertures légères — de l'ordre de 30 à 100 Ko.** Sveltia envoie le
 commit par l'API GraphQL de GitHub, avec le fichier encodé en base64 **à
 l'intérieur de la requête**. Une image lourde produit une requête que GitHub
 rejette par un **502**, et le navigateur affiche alors un message trompeur parlant
 de CORS — la cause est le 502, pas une histoire de CORS. Une affiche pleine
-résolution échoue ; 40 Ko passe sans problème. Redimensionne avant de téléverser :
-Astro se charge ensuite de l'optimisation et de la conversion en `.webp`.
+résolution échoue ; 40 Ko passe sans problème. La conversion WebP réduit déjà
+beaucoup le poids, mais le plafond de 1 Mio n'est qu'un garde-fou : une image
+proche de ce plafond peut encore se heurter au 502. Astro se charge ensuite de
+l'optimisation des images pour le site.
 
 **Si une sauvegarde échoue, va voir l'onglet Actions avant de réessayer.**
 L'article et son image partent dans **deux commits séparés**. Si le premier passe
@@ -387,6 +610,28 @@ modifier n'importe quelle entrée depuis le CMS ne bloque jamais le déploiement
 tant que l'entrée modifiée respecte ces règles (monter la version d'un skill,
 par exemple, demande d'ajouter la ligne correspondante au journal).
 
+### À vérifier une fois en production
+
+Le tableau de démonstration exerce tout le reste, mais ces comportements
+n'existent qu'avec le vrai backend GitHub. À vérifier une fois, sur
+<https://bendevcat.github.io/admin/>, après le prochain déploiement :
+
+1. **Message de commit** : modifier un article publié et sauvegarder ; dans
+   l'historique de `main`, le commit s'intitule
+   `content(Article): update "<slug>"`.
+2. **Règle de date via GitHub** : dans cette même sauvegarde, avec un
+   changement du **corps**, l'article reçoit `updatedDate` = l'heure de la
+   sauvegarde ; titre seul changé → pas de `updatedDate`. Aucun avertissement
+   `dates :` dans la console.
+3. **Image WebP dans le dépôt** : téléverser une couverture (PNG ou JPEG) sur un
+   brouillon et sauvegarder ; le dépôt contient `src/content/blog/<slug>/<nom>.webp`
+   (1600 px de large au plus), le frontmatter porte `cover: ./<nom>.webp`, et
+   le déploiement passe.
+4. **Duplicate sur disque** : dupliquer un article, lui donner un nouveau titre,
+   sauvegarder ; le dépôt contient `src/content/blog/<nouveau-slug>/index.md`
+   et une copie de la couverture dans ce dossier, l'original est inchangé.
+   Supprimer ensuite la copie depuis le CMS.
+
 ### Où atterrissent les fichiers
 
 | Élément | Emplacement |
@@ -395,11 +640,14 @@ par exemple, demande d'ajouter la ligne correspondante au journal).
 | Projet | `src/content/projects/<slug>/index.md` |
 | Prompt | `src/content/prompts/<slug>/index.md` |
 | Skill | `src/content/skills/<slug>/index.md` |
-| Images d'un article | dans le dossier de l'article, à côté de `index.md` |
+| Images d'un article | dans le dossier de l'article, à côté de `index.md`, en `.webp` si téléversées depuis le CMS |
+| Raccourcis de création | `src/pages/admin/raccourcis.astro` + `src/lib/bookmarklets.ts` |
+| Lien ✏️ Éditer | `src/components/EditLink.astro` + `src/scripts/edit-link.ts` + `src/lib/editLink.ts` |
+| Remise en forme du contenu | `scripts/canonicalize-content.mjs` |
 | Schéma de référence | `src/content.config.ts` (collections `blog`, `projects`, `prompts`, `skills`) |
 | Configuration du CMS | `public/admin/config.yml` |
 | Logo du CMS | `public/admin/logo.svg` |
-| Page admin | `src/pages/admin/index.astro` + `src/admin/` (initialisation, aperçu, hook de sauvegarde, tableau de démonstration) |
+| Page admin | `src/pages/admin/index.astro` + `src/admin/` (initialisation, aperçu, hooks de sauvegarde et règles de date, tableau de démonstration) |
 
 Les champs du CMS sont alignés sur le schéma Zod ; `src/lib/cms-config.test.ts`
 échoue si les deux divergent.
