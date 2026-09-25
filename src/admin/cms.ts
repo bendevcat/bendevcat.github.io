@@ -6,7 +6,16 @@
  * Importé en module, le paquet npm ne s'initialise pas seul (il ne le fait que
  * pour un `<script src=".../sveltia-cms.js">` classique) : on appelle `init()`.
  * La config est lue dans `public/admin/config.yml` (lien `cms-config-url`).
+ *
+ * Aperçu : le CSS du site (`global.css`, compilé par Tailwind) est importé en
+ * chaîne (`?inline` — pas de `<link>` ajouté à la page admin) et enregistré
+ * comme feuille brute de l'aperçu, URL de polices rendues absolues
+ * (`previewStyle.ts`). Enregistré avant `init()`.
  */
 import CMS from '@sveltia/cms';
+import siteCss from '../styles/global.css?inline';
+import { registerSiteStyle } from './previewStyle';
+
+registerSiteStyle(CMS, siteCss, location.origin);
 
 CMS.init();

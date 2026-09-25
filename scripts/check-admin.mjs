@@ -17,7 +17,11 @@
  *   sveltia: … — le graphe JS de la page admin embarque `@sveltia/cms` à la
  *     version épinglée dans package.json, et la page n'a aucune balise
  *     `<script>` vers un CDN (http(s):// ou //) (T2) ;
- *   preview css: … — (T3) ;
+ *   preview css: … — un chunk du graphe JS de la page admin embarque le CSS
+ *     compilé du site (`global.css?inline`) : une règle `.prose{`, la variable
+ *     `--color-bg:` et un `@font-face` Nebula Sans ; chaque `url(/_astro/…)`
+ *     de ce CSS désigne un fichier présent dans `dist/_astro/` (sinon la
+ *     ligne signale les cibles absentes) (T3) ;
  *   dev-only: … — (T5) ;
  *   isolation: … — seules les pages dont le graphe JS touche un chunk du
  *     graphe admin sont comptées : 1 (la page admin) sur toutes les pages (T2) ;
@@ -126,7 +130,40 @@ const adminChunks = adminExists ? jsClosure(admin) : new Set();
   lines.push(`sveltia: @sveltia/cms ${bundled} · ${cdn} CDN script tag`);
 }
 
-// --- preview css (T3) : à venir. dev-only (T5) : à venir. -------------------
+// --- preview css (T3) -------------------------------------------------------
+{
+  const markers = [
+    ['.prose', /\.prose\{/],
+    ['--color-bg', /--color-bg:/],
+    ['@font-face Nebula Sans', /@font-face\{[^}]*font-family:\s*\\?["']?Nebula Sans/],
+  ];
+  let best = { name: null, found: [] };
+  for (const name of adminChunks) {
+    const js = readFileSync(join(ASTRO, name), 'utf8');
+    const found = markers.filter(([, re]) => re.test(js)).map(([label]) => label);
+    if (found.length > best.found.length) best = { name, found, js };
+    if (found.length === markers.length) break;
+  }
+  let line;
+  if (best.found.length === markers.length) {
+    // Les polices du CSS inliné doivent exister dans le build (sinon 404 en aperçu).
+    const targets = new Set(
+      [...best.js.matchAll(/url\(\s*\\?["']?\/_astro\/([^"'()\s\\]+)/g)].map((m) => m[1]),
+    );
+    const missing = [...targets].filter((t) => !existsSync(join(ASTRO, t)));
+    line = `preview css: site CSS inlined in the admin bundle (${best.found.join(', ')})`;
+    if (missing.length) {
+      line += ` · ${missing.length} missing url() target`;
+      notes.push(`preview css url() targets absent from dist/_astro: ${missing.join(', ')}`);
+    }
+  } else {
+    const absent = markers.map(([label]) => label).filter((l) => !best.found.includes(l));
+    line = `preview css: site CSS NOT in the admin bundle (missing ${absent.join(', ')})`;
+  }
+  lines.push(line);
+}
+
+// --- dev-only (T5) : à venir. -----------------------------------------------
 
 // --- isolation (T2) ---------------------------------------------------------
 {
@@ -157,6 +194,7 @@ const pageCount = htmlFiles(DIST).length;
 const EXPECTED = [
   'admin page: /admin/index.html · noindex · cms-config-url /admin/config.yml · 1 module script · 0 stylesheet link · 0 site chrome',
   `sveltia: @sveltia/cms ${pinned} bundled · 0 CDN script tag`,
+  'preview css: site CSS inlined in the admin bundle (.prose, --color-bg, @font-face Nebula Sans)',
   `isolation: admin bundle referenced by 1/${pageCount} pages`,
   'config: dist/admin/config.yml = public/admin/config.yml',
 ];
