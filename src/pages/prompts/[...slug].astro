@@ -23,6 +23,7 @@
  */
 import { getCollection, getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import EditLink from '../../components/EditLink.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
 import PromptHeader from '../../components/prompt/PromptHeader.astro';
 import PromptWindow from '../../components/prompt/PromptWindow.astro';
@@ -184,6 +185,7 @@ const DECRYPTAGE =
         </aside>
       </div>
     </article>
+    <EditLink collection={prompt.collection} id={prompt.id} />
   </main>
 
   <script>

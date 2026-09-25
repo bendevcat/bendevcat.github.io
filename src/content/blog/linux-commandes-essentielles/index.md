@@ -1,11 +1,8 @@
 ---
-title: "Commandes Linux : du basique au one-liner surpuissant"
-description: "Les commandes Linux que j'utilise en prod, du niveau basique au one-liner avancé, pour debugger et administrer efficacement."
+title: 'Commandes Linux : du basique au one-liner surpuissant'
+description: Les commandes Linux que j'utilise en prod, du niveau basique au one-liner avancé, pour debugger et administrer efficacement.
 pubDate: 2025-10-26T20:41:00.000+01:00
-draft: false
-category: "DevOps"
-cover: "./cover.jpg"
-coverAlt: "Illustration terminal Linux"
+category: DevOps
 tags:
   - linux
   - terminal
@@ -13,8 +10,13 @@ tags:
   - bash
   - sysadmin
   - automation
-aiUsage: "full"
+cover: ./cover.jpg
+coverAlt: Illustration terminal Linux
+aiUsage: full
+draft: false
+featured: false
 ---
+
 En tant que DevOps, la ligne de commande Linux est votre couteau suisse quotidien. 
 
 Voici les commandes que j'utilise en production, avec des exemples progressifs du simple au complexe pour débloquer leur vraie puissance.

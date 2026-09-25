@@ -3,40 +3,35 @@ title: SuperPowers
 name: superpowers
 description: Superpowers is a complete software development methodology for your coding agents, built on top of a set of composable skills and some initial instructions that make sure your agent uses them.
 type: claude-code
-tags: [claude-code]
 version: 6.4.1
 license: MIT
 repoUrl: https://github.com/obra/superpowers
 installCmd: /plugin install superpowers@claude-plugins-official
-draft: false
-relatedPrompts:
-  - macos-clone
+installNote: Install the plugin from Anthropic's official marketplace
 skillCount: 15
-installNote: "Install the plugin from Anthropic's official marketplace"
 highlights:
-  - "Test-Driven Development - Write tests first, always"
-  - "Systematic over ad-hoc - Process over guessing"
-  - "Complexity reduction - Simplicity as primary goal"
-  - "Evidence over claims - Verify before declaring success"
+  - Test-Driven Development - Write tests first, always
+  - Systematic over ad-hoc - Process over guessing
+  - Complexity reduction - Simplicity as primary goal
+  - Evidence over claims - Verify before declaring success
 triggers:
-  - "brainstorming - Activates before writing code."
-  - "using-git-worktrees - Activates after design approval."
-  - "writing-plans - Activates with approved design."
-  - "subagent-driven-development or executing-plans - Activates with plan."
-  - "test-driven-development - Activates during implementation."
-  - "requesting-code-review - Activates between tasks."
-  - "finishing-a-development-branch - Activates when tasks complete."
+  - brainstorming - Activates before writing code.
+  - using-git-worktrees - Activates after design approval.
+  - writing-plans - Activates with approved design.
+  - subagent-driven-development or executing-plans - Activates with plan.
+  - test-driven-development - Activates during implementation.
+  - requesting-code-review - Activates between tasks.
+  - finishing-a-development-branch - Activates when tasks complete.
 changelog:
-  - version: "6.4.1"
+  - version: 6.4.1
     date: 2026-09-18
-    text: "The new diagnosing-superpowers skill figures out what went wrong in a session."
-  - version: "6.3.0"
+    text: The new diagnosing-superpowers skill figures out what went wrong in a session.
+  - version: 6.3.0
     date: 2026-08-12
-    text: "Worktree removal no longer destroys untracked files."
-  - version: "6.2.0"
+    text: Worktree removal no longer destroys untracked files.
+  - version: 6.2.0
     date: 2026-07-23
-    text: "Two structural changes to how SDD tracks progress and closes out review findings, both developed against live eval campaigns."
-filesSource: "6.4.1"
+    text: Two structural changes to how SDD tracks progress and closes out review findings, both developed against live eval campaigns.
 files:
   - path: .claude-plugin/plugin.json
     lines: 20
@@ -236,6 +231,12 @@ files:
       ## Step 1: Verify Tests
 
       Run the project's full test suite (`npm test` / `cargo test` / `pytest` / `go test ./...`).
+filesSource: 6.4.1
+tags:
+  - claude-code
+draft: false
+relatedPrompts:
+  - macos-clone
 ---
 
 SuperPowers est un plugin de Jesse Vincent et de l'équipe de Prime Radiant,

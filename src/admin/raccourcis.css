@@ -1,0 +1,18 @@
+/*
+ * Feuille de style de /admin/raccourcis (plan 22, T4) : le CSS du site, plus
+ * une règle propre à la page.
+ *
+ * Pourquoi un fichier d'entrée à part plutôt qu'un import direct de
+ * `global.css` depuis la page : partagé par deux pages, le chunk CSS du site
+ * quittait son nom `BaseLayout.<hash>.css` pour `global.<hash>.css`, et le
+ * `<link>` des 52 pages du site changeait. La règle ci-dessous n'est pas
+ * décorative seulement : un fichier au contenu IDENTIQUE à celui du site est
+ * dédoublonné par Rollup sous le nom de la page (`raccourcis.<hash>.css`),
+ * avec le même effet. Contenu distinct → deux fichiers, HTML du site inchangé.
+ */
+@import "../styles/global.css";
+
+/* Un bookmarklet se glisse dans la barre de favoris. */
+a[data-bookmarklet] {
+  cursor: grab;
+}

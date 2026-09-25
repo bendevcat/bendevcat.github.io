@@ -1,11 +1,8 @@
 ---
-title: "Les 5 meilleurs VPN en 2025 : comparatif complet et benchmarks"
-description: "Mon comparatif 2025 des meilleurs VPN, benchmarks de vitesse et de sécurité à l'appui, pour t'aider à choisir le bon."
+title: 'Les 5 meilleurs VPN en 2025 : comparatif complet et benchmarks'
+description: Mon comparatif 2025 des meilleurs VPN, benchmarks de vitesse et de sécurité à l'appui, pour t'aider à choisir le bon.
 pubDate: 2025-10-26T11:00:00+02:00
-draft: false
-category: "Outils"
-cover: "./cover.jpg"
-coverAlt: "Illustration sécurité et confidentialité réseau"
+category: Outils
 tags:
   - vpn
   - privacy
@@ -13,8 +10,13 @@ tags:
   - tools
   - no-log
   - wireguard
-aiUsage: "full"
+cover: ./cover.jpg
+coverAlt: Illustration sécurité et confidentialité réseau
+aiUsage: full
+draft: false
+featured: false
 ---
+
 Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec benchmarks de vitesse, audits de sécurité et tests de fuite, voici mon comparatif détaillé des meilleurs VPN.
 
 ## TL;DR - L'essentiel ⚡

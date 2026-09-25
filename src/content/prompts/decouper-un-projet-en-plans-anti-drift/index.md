@@ -1,10 +1,15 @@
 ---
-title: "Découper un projet multi-sessions en plans anti-drift"
-description: "Comment passer d'une vision trop grosse pour une session à N plans verticaux qui livrent chacun un résultat observable — et pourquoi c'est ça qui empêche le périmètre de fondre."
+title: Découper un projet multi-sessions en plans anti-drift
+description: Comment passer d'une vision trop grosse pour une session à N plans verticaux qui livrent chacun un résultat observable — et pourquoi c'est ça qui empêche le périmètre de fondre.
 format: guide
 tool: Claude Code
-tags: [anti-drift, méthodologie, claude-code]
-relatedSkills: [anti-drift-planning]
+tags:
+  - anti-drift
+  - méthodologie
+  - claude-code
+draft: false
+relatedSkills:
+  - anti-drift-planning
 ---
 
 Une vision de projet tient rarement dans une session. Et quand elle déborde, ce

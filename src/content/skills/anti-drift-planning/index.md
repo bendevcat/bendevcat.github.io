@@ -1,44 +1,41 @@
 ---
-title: "Anti-Drift Planning"
+title: Anti-Drift Planning
 name: anti-drift-planning
-description: "Méthodologie de planification multi-sessions résistante à la dérive : specs binaires, anti-arbitrage silencieux, scope ledger, phase de vérification, lint mécanique."
+description: 'Méthodologie de planification multi-sessions résistante à la dérive : specs binaires, anti-arbitrage silencieux, scope ledger, phase de vérification, lint mécanique.'
 type: claude-code
-version: "0.4.0"
+version: 0.4.0
 license: MIT
-installCmd: "claude plugin marketplace add ~/workspace/anti-drift-planning && claude plugin install anti-drift-planning@anti-drift-marketplace"
-tags: [anti-drift, planification, claude-code, méthodologie]
-relatedPrompts: [bootstrap-session-anti-drift, decouper-un-projet-en-plans-anti-drift]
+installCmd: claude plugin marketplace add ~/workspace/anti-drift-planning && claude plugin install anti-drift-planning@anti-drift-marketplace
+installNote: La commande d'installation de cette fiche n'est pas exécutable en l'état.
 skillCount: 1
 commandCount: 7
-installNote: "La commande d'installation de cette fiche n'est pas exécutable en l'état."
 highlights:
-  - "Specs binaires. Chaque spec a une table de critères de succès avec une mesure pass/fail par exigence"
-  - "Anti-arbitrage silencieux. Toute déviation est loggée avant d'être exécutée"
-  - "Scope ledger. Un fichier par plan suit chaque exigence"
-  - "Phase de vérification. La dernière phase de chaque plan est /anti-drift-planning:verify <N>"
-  - "Invariants mécaniques. Ce qui est comptable est compté par du code"
+  - Specs binaires. Chaque spec a une table de critères de succès avec une mesure pass/fail par exigence
+  - Anti-arbitrage silencieux. Toute déviation est loggée avant d'être exécutée
+  - Scope ledger. Un fichier par plan suit chaque exigence
+  - Phase de vérification. La dernière phase de chaque plan est /anti-drift-planning:verify <N>
+  - Invariants mécaniques. Ce qui est comptable est compté par du code
 triggers:
-  - "roadmap"
-  - "split into plans"
-  - "multi-phase feature"
-  - "avoid drift"
-  - "session per plan"
-  - "ne rien perdre entre les sessions"
-  - "decompose into specs"
+  - roadmap
+  - split into plans
+  - multi-phase feature
+  - avoid drift
+  - session per plan
+  - ne rien perdre entre les sessions
+  - decompose into specs
 changelog:
-  - version: "0.4.0"
+  - version: 0.4.0
     date: 2026-07-31
-    text: "Lock 5 — mechanical invariants"
-  - version: "0.3.0"
+    text: Lock 5 — mechanical invariants
+  - version: 0.3.0
     date: 2026-06-27
-    text: "Session chaining: /anti-drift-planning:verify N on a PASS verdict now emits the next actionable step automatically"
-  - version: "0.2.0"
+    text: 'Session chaining: /anti-drift-planning:verify N on a PASS verdict now emits the next actionable step automatically'
+  - version: 0.2.0
     date: 2026-06-11
-    text: "Binary deviation test in the bootstrap prompt"
-  - version: "0.1.0"
+    text: Binary deviation test in the bootstrap prompt
+  - version: 0.1.0
     date: 2026-05-10
-    text: "Initial scaffold: plugin manifest, anti-drift-planning skill, 4 commands"
-filesSource: "3dc3336"
+    text: 'Initial scaffold: plugin manifest, anti-drift-planning skill, 4 commands'
 files:
   - path: .claude-plugin/plugin.json
     lines: 20
@@ -199,6 +196,16 @@ files:
       - The project's vision is significantly larger than one session can ship (multiple features, multiple subsystems)
       - The user is recovering from a previous cycle where work was lost silently
       - The user will run 2+ plan execution sessions sequentially and each must know what came before
+filesSource: 3dc3336
+tags:
+  - anti-drift
+  - planification
+  - claude-code
+  - méthodologie
+draft: false
+relatedPrompts:
+  - bootstrap-session-anti-drift
+  - decouper-un-projet-en-plans-anti-drift
 ---
 
 Un plugin Claude Code — une skill et sept commandes — pour livrer un projet en

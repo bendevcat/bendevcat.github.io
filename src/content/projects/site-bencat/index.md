@@ -1,15 +1,28 @@
 ---
-title: "bencat_ — ce site"
-description: "Le site que tu es en train de lire : blog, projets, prompts et skills, en Astro, éditable depuis un CMS git sans backend."
+title: bencat_ — ce site
+description: 'Le site que tu es en train de lire : blog, projets, prompts et skills, en Astro, éditable depuis un CMS git sans backend.'
 status: wip
 startDate: 2026-07-30
-stack: [Astro, Tailwind CSS, TypeScript, Sveltia CMS, GitHub Pages]
+stack:
+  - Astro
+  - Tailwind CSS
+  - TypeScript
+  - Sveltia CMS
+  - GitHub Pages
 stackRoles:
-  - { name: Astro, role: statique }
-  - { name: Tailwind CSS, role: thème }
-  - { name: Sveltia CMS, role: écrire sans toucher au code }
-  - { name: GitHub Pages, role: déploiement }
-tags: [astro, tailwind, cms, claude-code]
+  - name: Astro
+    role: statique
+  - name: Tailwind CSS
+    role: thème
+  - name: Sveltia CMS
+    role: écrire sans toucher au code
+  - name: GitHub Pages
+    role: déploiement
+tags:
+  - astro
+  - tailwind
+  - cms
+  - claude-code
 repoUrl: https://github.com/bendevcat/bendevcat.github.io
 demoUrl: https://bendevcat.github.io/
 snippetFile: .github/workflows/deploy.yml
@@ -50,7 +63,8 @@ snippet: |-
         - id: deployment
           uses: actions/deploy-pages@v4
 featured: true
-relatedPosts: [bienvenue-dans-mon-foutoir]
+relatedPosts:
+  - bienvenue-dans-mon-foutoir
 ---
 
 Ce site remplace mon ancien blog Hugo. Même contenu, autre socle : **Astro** en

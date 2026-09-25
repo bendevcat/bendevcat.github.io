@@ -39,13 +39,30 @@
  *     `preview_path` rempli (`{{slug}}` → nom du dossier, comme Sveltia avec
  *     `path: '{{slug}}/index'`) désigne `dist/<chemin>/index.html`. Une entrée
  *     publiée doit l'avoir, un brouillon (`draft: true`) ne doit PAS l'avoir.
- *     Comptes lus sur disque, jamais figés (plan 20, T4, R17).
+ *     Comptes lus sur disque, jamais figés (plan 20, T4, R17) ;
+ *   raccourcis: … — `dist/admin/raccourcis/index.html` (plan 22, T4, R12)
+ *     existe, porte `noindex`, n'a AUCUNE balise `<script>` ni élément du
+ *     chrome du site (mêmes marqueurs que la page admin, sauf `<style>` : la
+ *     page charge le CSS du site, Astro peut en inliner une partie), et
+ *     compte : les bookmarklets `a[data-bookmarklet]` dont le `href`
+ *     `javascript:`, décodé comme le fait le navigateur puis EXÉCUTÉ dans
+ *     `node:vm` (sélection, `document`, `location`, `open` factices), ouvre
+ *     `<site>/admin/#/collections/<blog|prompts>/new?…` avec les valeurs
+ *     attendues relues comme Sveltia (`URLSearchParams`) — `site` lu dans
+ *     astro.config.mjs ; les liens simples `a[data-quick-link]` vers
+ *     `/admin/#/collections/<blog|prompts>/new?draft=true`. Attendu : les deux
+ *     bookmarklets 💡 / 💬 et les deux liens, un par collection.
+ *
+ * Nouvelle page, changement délibéré de la ligne `isolation` : le total de
+ * pages passe de 52 à 53 (il est lu dans dist/, jamais figé) ; la page
+ * raccourcis n'ayant aucun script, le numérateur reste 1 (plan 22, T4).
  *
  * Toute ligne différente de l'attendu est signalée sur stderr APRÈS stdout ;
  * code de sortie 1 s'il y en a au moins une.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { runInNewContext } from 'node:vm';
 import { parse as parseYaml } from 'yaml';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -281,6 +298,107 @@ const entryTotals = { published: 0, drafts: 0 };
   );
 }
 
+// --- raccourcis (plan 22, T4, R12) -----------------------------------------
+{
+  const RACCOURCIS = join(DIST, 'admin', 'raccourcis', 'index.html');
+  const exists = existsSync(RACCOURCIS);
+  const html = exists ? readFileSync(RACCOURCIS, 'utf8') : '';
+  const decode = (text) =>
+    text
+      .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  const links = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map((m) => ({
+    attrs: m[1],
+    href: decode(m[1].match(/\bhref="([^"]*)"/)?.[1] ?? ''),
+    label: decode(m[2].replace(/<[^>]*>/g, '')).trim(),
+  }));
+
+  const config = readFileSync(join(ROOT, 'astro.config.mjs'), 'utf8');
+  const site = config.match(/^\s*site:\s*['"]([^'"]+)['"]/m)?.[1];
+  const admin = site ? new URL('/admin/', site).href : '(site absent d’astro.config.mjs)';
+  /** Relecture d'une URL comme Sveltia 0.221 (`parseLocation` + `trim`). */
+  const readAsSveltia = (href) => {
+    const { origin, pathname: page, hash } = new URL(href);
+    const { pathname, searchParams } = new URL(`${origin}${hash.substring(1)}`);
+    const values = {};
+    for (const key of new Set(searchParams.keys())) {
+      const value = searchParams.getAll(key).join(',').trim();
+      if (value) values[key] = value;
+    }
+    return { at: `${origin}${page}`, path: pathname, values };
+  };
+  const SELECTION = 'Sélection « test » & #1 + 2\nligne 2';
+  const PAGE = { title: 'Page de test', href: 'https://exemple.fr/billet?a=1&b=2#x' };
+  const wanted = {
+    idea: {
+      path: '/collections/blog/new',
+      values: { title: 'Sélection « test » & #1 + 2 ligne 2', description: `Source : ${PAGE.href}`, draft: 'true' },
+    },
+    prompt: { path: '/collections/prompts/new', values: { prompt: SELECTION, draft: 'true' } },
+  };
+  const bookmarklets = [];
+  for (const link of links) {
+    const id = link.attrs.match(/\bdata-bookmarklet="([^"]*)"/)?.[1];
+    if (id === undefined) continue;
+    const opened = [];
+    try {
+      if (!link.href.startsWith('javascript:')) throw new Error('href sans javascript:');
+      const context = {
+        document: { title: PAGE.title },
+        location: { href: PAGE.href },
+        getSelection: () => ({ toString: () => SELECTION }),
+        open: (url, target, features) => {
+          opened.push({ url, target, features });
+          return null;
+        },
+      };
+      context.window = context;
+      runInNewContext(decodeURIComponent(link.href.slice('javascript:'.length)), context, { timeout: 1000 });
+      const read = opened.length === 1 ? readAsSveltia(opened[0].url) : undefined;
+      const want = wanted[id];
+      const ok =
+        !!want &&
+        !!read &&
+        opened[0].target === '_blank' &&
+        /\bnoopener\b/.test(opened[0].features ?? '') &&
+        read.at === admin &&
+        read.path === want.path &&
+        JSON.stringify(read.values) === JSON.stringify(want.values);
+      if (ok) bookmarklets.push(link.label);
+      else notes.push(`raccourcis: bookmarklet ${id} (${link.label}) opened ${JSON.stringify(opened)}`);
+    } catch (error) {
+      notes.push(`raccourcis: bookmarklet ${id} (${link.label}) failed: ${error.message}`);
+    }
+  }
+  const quick = new Set();
+  for (const link of links) {
+    if (!/\bdata-quick-link\b/.test(link.attrs)) continue;
+    const m = link.href.match(/^\/admin\/#\/collections\/(blog|prompts)\/new\?draft=true$/);
+    if (m && !quick.has(m[1])) quick.add(m[1]);
+    else notes.push(`raccourcis: plain link ${link.href}`);
+  }
+  const scripts = [...html.matchAll(/<script\b/g)].length;
+  const chrome = [
+    /<header\b/g,
+    /<nav\b/g,
+    /<footer\b/g,
+    /<dialog\b/g,
+    /\bdata-shell=/g,
+    /\bdata-pagefind-body\b/g,
+    /localStorage\.getItem\('theme'\)/g,
+  ].reduce((n, re) => n + [...html.matchAll(re)].length, 0);
+  const where = exists ? '/admin/raccourcis/index.html' : 'MISSING /admin/raccourcis/index.html';
+  const noindex = /<meta\s+name="robots"\s+content="noindex"\s*\/?>/.test(html) ? 'noindex' : 'INDEXABLE';
+  lines.push(
+    `raccourcis: ${where} · ${noindex} · ${scripts} script · ` +
+      `${bookmarklets.length} bookmarklets (${bookmarklets.join(', ')}) · ${quick.size} plain links · ${chrome} site chrome`,
+  );
+}
+
 const pageCount = htmlFiles(DIST).length;
 const EXPECTED = [
   'admin page: /admin/index.html · noindex · cms-config-url /admin/config.yml · 1 module script · 0 stylesheet link · 0 site chrome',
@@ -292,6 +410,7 @@ const EXPECTED = [
   'logo: dist/admin/logo.svg = public/admin/logo.svg · config logo.src /admin/logo.svg',
   `view on site: ${entryTotals.published}/${entryTotals.published} published entries built at their preview_path · ` +
     `${entryTotals.drafts} draft(s) without page`,
+  "raccourcis: /admin/raccourcis/index.html · noindex · 0 script · 2 bookmarklets (💡 Idée d'article, 💬 Nouveau prompt) · 2 plain links · 0 site chrome",
 ];
 
 for (const line of lines) console.log(line);

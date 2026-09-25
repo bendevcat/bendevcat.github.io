@@ -24,6 +24,7 @@ import { adjacentPosts, relatedPosts, tocEntries } from '../../lib/article';
 import { blogCategoryRows, blogTagCloud } from '../../lib/blogList';
 import { CATEGORIES } from '../../content.config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import EditLink from '../../components/EditLink.astro';
 import ArticleHeader from '../../components/blog/ArticleHeader.astro';
 import ArticleAside from '../../components/blog/ArticleAside.astro';
 import AiMarkerCard from '../../components/blog/AiMarkerCard.astro';
@@ -126,6 +127,7 @@ const hasRightRail = tocEntries(headings).length > 0 || relatedProjects.length >
         </BlogRail>
       </div>
     </article>
+    <EditLink collection={post.collection} id={post.id} />
   </main>
 
   <script>
