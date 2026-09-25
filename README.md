@@ -185,13 +185,99 @@ une fois publiée — il marchera après la publication (et le déploiement). Ap
 vérifie que chaque entrée publiée a bien sa page à cette adresse et qu'aucun
 brouillon n'en a.
 
-### Aperçu : le style du site
+### Aperçu
 
-Le volet d'aperçu du CMS affiche les articles avec la typographie et les
-couleurs du site : `src/admin/cms.ts` y injecte le CSS du site
-(`src/styles/global.css`, compilé par Tailwind), via `registerPreviewStyle`
-et `src/admin/previewStyle.ts`, qui rend absolues les URL des polices. Aucune
-feuille de style du site n'est chargée par la page `/admin/` elle-même.
+Le volet d'aperçu (à droite de l'éditeur ; « Show Preview » dans la barre
+d'outils s'il est masqué) montre **la colonne centrale de la vraie page** de
+l'entrée, avec le texte et le style du site :
+
+| Collection | Ce que montre l'aperçu |
+|---|---|
+| Prompt | la fenêtre du prompt, toujours sombre (titres `##` à `######` colorés, `{variables}` surlignées, barre `<slug>.md · N l. · ~N tk` ; `nouveau.md` pour une entrée pas encore nommée), ses variables, puis son corps (décryptage) quand la fiche l'affiche |
+| Article | le chapô, la couverture, la prose (blocs de code colorés comme sur le site, titres ancrés) et la carte « transparence IA » |
+| Projet | l'en-tête statut/dates, la prose, la fenêtre de code numérotée de `snippet` et les tuiles de stack avec leurs rôles |
+| Skill | la fenêtre d'installation, « Ce que fait ce skill », « Quand il se déclenche », le fichier sur lequel la page s'ouvre (`defaultFile`) et « En détail » |
+
+Ne sont **pas** reproduits : rails latéraux, entrées liées, précédent/suivant,
+en-tête et fil d'Ariane des articles, bannière des projets, rangées d'onglets,
+boutons copier/télécharger, champs des variables ; ni le thème sombre (l'aperçu
+est en thème clair — les fenêtres de prompt, de code, d'installation et de
+fichier sont sombres dans les deux thèmes de toute façon).
+
+**Comment.** Un gabarit par collection, dans `src/admin/previews/`
+(`prompt.ts`, `article.ts`, `project.ts`, `skill.ts`) : chacun est une
+**fonction pure** `(data, h) => arbre`, sans `window` ni `document`, qui
+réutilise la logique de `src/lib/` des pages et pose sur chaque région les
+mêmes attributs `data-*` et les mêmes classes que la page (seulement des
+classes que le site compile déjà : le CSS du site ne bouge pas).
+`src/admin/previews/register.ts` les enregistre dans Sveltia
+(`registerPreviewTemplate`, appelé par `src/admin/cms.ts` avant `init()`),
+en composants `createClass` construits avec le `h` que Sveltia pose sur
+`window`. Le corps passe par **le pipeline Markdown du site** :
+`@astrojs/markdown-remark` tourne dans le navigateur avec l'objet
+`src/lib/markdownOptions.mjs` que lit aussi `astro.config.mjs` (thème Shiki
+`syntaxTheme`, `rehype-slug`, `rehype-autolink-headings`) — chargé à la
+demande, au premier corps à rendre. Les images (couverture, images du corps)
+ne reçoivent une `src` qu'une fois que Sveltia fournit une URL `blob:`
+(`src/admin/previews/images.ts`) : aucune requête relative, donc aucune 404.
+
+**Copie admin de `src/lib`.** Importer `src/lib/` depuis `src/admin/` faisait
+partager des chunks Rollup entre `/admin/` et les pages du site. Le plugin Vite
+`src/admin/viteAdminLib.mjs` (au build seulement) redirige tout import de
+`src/lib/` fait depuis `src/admin/` vers `<fichier>?admin` : l'admin a sa
+propre copie, les pages du site restent identiques octet pour octet et
+`node scripts/check-admin.mjs` garde son isolation `1/52`.
+
+**Style.** `src/admin/cms.ts` injecte aussi le CSS du site
+(`src/styles/global.css`, compilé par Tailwind) dans l'iframe d'aperçu, via
+`registerPreviewStyle` et `src/admin/previewStyle.ts`, qui rend absolues les
+URL des polices. Aucune feuille de style du site n'est chargée par la page
+`/admin/` elle-même.
+
+**Contrôle.** Après `npm run build` :
+
+```sh
+node scripts/check-previews.mjs
+```
+
+Pour chaque entrée sur disque, le script appelle le gabarit (chargé par Vite en
+SSR) et compare le texte de chaque région de l'aperçu avec la même région de la
+page construite dans `dist/`. Il affiche deux lignes — `previews: blog …/… ·
+projects …/… · prompts …/… · skills …/… published entries — centre-column
+text = page` et `drafts: … previewed without page` — et sort en code 1 s'il
+trouve au moins un écart (chacun détaillé sur stderr). Si une page change de
+structure, ce contrôle dit quel gabarit suivre.
+
+L'iframe d'aperçu garde le `sandbox` de Sveltia (`allow-scripts` +
+`allow-same-origin`) et l'avertissement qu'il produit dans la console : c'est
+interne à Sveltia, non modifiable sans le patcher.
+
+### Champs de code
+
+Trois champs s'éditent avec le widget **`code`** de Sveltia (éditeur
+monospace, coloration Shiki) au lieu d'un simple champ texte :
+`prompts.prompt` (langue `markdown`), `projects.snippet` (`yaml`) et
+`skills.files[].excerpt` (`markdown`). Dans `public/admin/config.yml`, chacun
+porte `output_code_only: true` — la valeur reste une **chaîne** (sans lui,
+Sveltia écrirait un objet `{code, lang}` que le schéma Zod refuse) — et
+`allow_language_selection: false` (langue fixe, pas de sélecteur). Le test
+« édite prompt, snippet et excerpt avec le widget code, sortie texte seule »
+de `src/lib/cms-config.test.ts` garde ces réglages.
+
+- **Ouvrir une entrée n'écrit rien** : Sveltia désactive **Save** tant que
+  l'entrée n'est pas modifiée, un fichier non modifié ne peut donc pas être
+  réécrit.
+- **Une vraie modification réécrit tout le frontmatter** : à la sauvegarde,
+  Sveltia re-sérialise l'ensemble du frontmatter (ordre, guillemets, style des
+  blocs, champs par défaut comme `featured: false`), pas seulement le champ
+  modifié. C'était déjà le cas avec le widget `text` ; le contenu des champs de
+  code, lui, reste le même texte.
+- **Shiki depuis unpkg** : le surligneur de l'éditeur de code de Sveltia
+  télécharge le moteur Shiki, ses grammaires et ses thèmes depuis
+  `https://unpkg.com` quand un éditeur de code s'affiche dans `/admin/`
+  (c'était déjà le cas pour les blocs de code de l'éditeur Markdown). Seul
+  `/admin/` est concerné, jamais le site. Sveltia permet de l'auto-héberger
+  plus tard (`setCodeHighlighterLoaders`).
 
 ### Séparateurs : toujours `---`
 
