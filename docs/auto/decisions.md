@@ -385,3 +385,9 @@ Choice: re-enable `delete` on the four collections because Sveltia 0.221's `dele
 
 ## D128 · Plan 19 · T2 — SRI dropped with the CDN; integrity rests on the npm lockfile   ⚑ à relire
 Choice: `@sveltia/cms` 0.221.0 exact in `dependencies`, bundled by Vite; no CDN script, hence no SRI attribute (Plan 2's `68e854a`) · Alternatives: none compatible with Architecture B · Reversibility: expensive (going back means the CDN architecture) · Why: user-chosen Architecture B; `package-lock.json` integrity hashes replace the SRI.
+
+## D129 · Plan 19 · T2 — Shared `svgo` raised to 4.1.0 by Sveltia's peer range
+Choice: accept the lockfile bump `svgo` 4.0.2 → 4.1.0 (with `css-select` 6, `css-what` 7, `sax` 1.6.1) pulled by `@sveltia/cms@0.221.0`; the 51 site pages are byte-identical to the base build · Alternatives: lockfile overrides against Sveltia's `^4.1.0` requirement · Reversibility: expensive · Why: Architecture B needs the npm package; no visible change on the site. The ~2.1 MB admin chunk warning is left as is (admin-only bundle, 1/52 pages).
+
+## D130 · Plan 19 · T4 — `preSave` returns the entry Map; Immutable.js comes from npm
+Choice: `normalizeBodyBeforeSave` returns `entry.setIn(['data','body'], …)` (Sveltia 0.221 `types/public.d.ts` `AppEventListener`: an Immutable `MapOf<ApiEntry>`; runtime replaces the default-locale content when a Map is returned) and the same entry when nothing changes · Alternatives: return `undefined` when unchanged · Reversibility: cheap · Why: plan 19 R13. The implementer's flag that hooks load Immutable.js from unpkg holds only for the CDN build (`dist/sveltia-cms.mjs`); the npm build we bundle resolves it with `import('immutable')` (orchestrator check of `npm/index.js`), so no third-party fetch at save time.
