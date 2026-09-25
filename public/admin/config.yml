@@ -59,6 +59,22 @@ output:
   # chaîne vide / null et casse la validation Zod côté Astro (spec R4).
   omit_empty_optional_fields: true
 
+# Plan 22 (F2 ; D151) : dossiers ASCII pour les nouvelles entrées. Le `{{slug}}`
+# d'une nouvelle entrée = son titre passé par `slugify` de Sveltia 0.221
+# (`common/slug/index.js`, options globales `slug`, schéma `SlugOptions`) :
+# `clean_accents` translittère (`@sindresorhus/transliterate` : é → e, œ → oe,
+# tirets → -), puis `encoding: ascii` change tout caractère hors
+# `[A-Za-z0-9_~-]` (apostrophe typographique, guillemets, emoji…) en
+# séparateur `-`, et `lowercase` met en minuscules (défaut, rendu explicite).
+# « Essai création à la une » → `essai-creation-a-la-une` (sans ces options :
+# `essai-création-à-la-une`). Les dossiers existants ne changent pas : seul le
+# slug d'une entrée créée ou dupliquée est calculé ainsi.
+# Garde : src/lib/cms-config.test.ts (slugify de Sveltia exécuté tel quel).
+slug:
+  encoding: ascii
+  clean_accents: true
+  lowercase: true
+
 # Listes des collections (plan 20, T3) — gardées par src/lib/cms-navigation.test.ts.
 # Comportements Sveltia 0.221 lus dans ses sources (npm/index.js.map) :
 # - `icon` : nom d'une icône Material Symbols Outlined (police livrée) (R4).

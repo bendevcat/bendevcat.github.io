@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'astro:content';
 import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS, collections } from '../content.config';
@@ -1037,5 +1040,102 @@ describe('config CMS — création rapide (plan 22, T2)', () => {
       'content(Article): update "k9s-kubernetes-terminal-ui" +1',
     );
     expect(render('uploadMedia', [{ path: 'src/assets/uploads/a.webp' }])).toBe('content(media): upload "src/assets/uploads/a.webp"');
+  });
+});
+
+/**
+ * `slugify` de Sveltia 0.221 (`services/common/slug/index.js`) et le
+ * `@sindresorhus/transliterate` 2.3.1 qu'il embarque, tirés TELS QUELS des
+ * `sourcesContent` de `npm/index.js.map` (jamais recopiés à la main), écrits
+ * dans un dossier temporaire et importés. Seuls les modules internes dont il
+ * dépend sont remplacés : `cmsConfig.current` = `{ slug: <options> }`,
+ * `generateUUID` (repli d'un slug vide), `truncate`, `getOrCreate`.
+ */
+async function sveltiaSlugify(slugOptions: unknown): Promise<(value: string, options?: object) => string> {
+  const map = JSON.parse(readFileSync(new URL('../../node_modules/@sveltia/cms/npm/index.js.map', import.meta.url), 'utf8'));
+  const source = (suffix: string): string => {
+    const matches = map.sources.map((s: string, i: number) => [s, i] as const).filter(([s]: readonly [string, number]) => s.endsWith(suffix));
+    if (matches.length !== 1) throw new Error(`${suffix} : ${matches.length} source(s) dans index.js.map`);
+    return map.sourcesContent[matches[0][1]];
+  };
+  const imports: Record<string, string> = {
+    '@sindresorhus/transliterate': './transliterate.mjs',
+    '@sveltia/utils/crypto': './stubs.mjs',
+    '@sveltia/utils/string': './stubs.mjs',
+    '$lib/services/common/slug/constants': './constants.mjs',
+    '$lib/services/config': './stubs.mjs',
+    '$lib/services/utils/cache': './stubs.mjs',
+    './replacements.js': './replacements.mjs',
+    './locale-replacements.js': './locale-replacements.mjs',
+  };
+  const rewrite = (code: string) =>
+    // Instructions `import … from '…'` en début de ligne seulement (pas les `@import` des JSDoc).
+    code.replace(/^(import\s[^;]*?\sfrom\s)'([^']+)'/gm, (_, head: string, spec: string) => {
+      if (!(spec in imports)) throw new Error(`import inattendu : ${spec}`);
+      return `${head}'${imports[spec]}'`;
+    });
+  const files: Record<string, string> = {
+    'slug.mjs': rewrite(source('src/lib/services/common/slug/index.js')),
+    'constants.mjs': rewrite(source('src/lib/services/common/slug/constants.js')),
+    'transliterate.mjs': rewrite(source('@sindresorhus/transliterate/index.js')),
+    'replacements.mjs': rewrite(source('@sindresorhus/transliterate/replacements.js')),
+    'locale-replacements.mjs': rewrite(source('@sindresorhus/transliterate/locale-replacements.js')),
+    'stubs.mjs': [
+      `export const cmsConfig = { current: ${JSON.stringify({ slug: slugOptions })} };`,
+      "export const generateUUID = () => 'repli-uuid';",
+      'export const truncate = (value, length) => value.slice(0, length);',
+      'export const getOrCreate = (map, key, create) => { if (!map.has(key)) map.set(key, create()); return map.get(key); };',
+    ].join('\n'),
+  };
+  const dir = mkdtempSync(join(tmpdir(), 'sveltia-slugify-'));
+  try {
+    for (const [name, code] of Object.entries(files)) writeFileSync(join(dir, name), code);
+    const module = await import(/* @vite-ignore */ pathToFileURL(join(dir, 'slug.mjs')).href);
+    return module.slugify;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+describe('config CMS — slugs ASCII (plan 22, F2)', () => {
+  // `{{slug}}` d'une nouvelle entrée = son `identifier_field` (le titre) passé
+  // par `slugify` (`common/template/replacers.js`, `{ locale, maxLength:
+  // Infinity, fallback: false }`) avec les options GLOBALES `slug` de la
+  // config. Sans elles (`encoding: unicode`, `clean_accents: false`), un titre
+  // français donne un dossier accentué (`essai-création/`), fréquent avec le
+  // bookmarklet 💡 (vérification 1, constat 3 ; D151).
+  const title = 'Essai création à la une';
+
+  it('options slug : clean_accents, encoding ascii, lowercase — clés du schéma SlugOptions de Sveltia', () => {
+    const cfg = loadCmsConfig();
+    expect(cfg.slug).toEqual({ encoding: 'ascii', clean_accents: true, lowercase: true });
+    const schema = JSON.parse(readFileSync(new URL('../../node_modules/@sveltia/cms/schema/sveltia-cms.json', import.meta.url), 'utf8'));
+    const { properties } = schema.definitions.SlugOptions;
+    for (const [key, value] of Object.entries(cfg.slug)) {
+      expect(Object.keys(properties), key).toContain(key);
+      if (properties[key].enum) expect(properties[key].enum, key).toContain(value);
+      else expect(typeof value, key).toBe(properties[key].type);
+    }
+  });
+
+  it('« Essai création à la une » → essai-creation-a-la-une (slugify de Sveltia 0.221, options de config.yml)', async () => {
+    const slugify = await sveltiaSlugify(loadCmsConfig().slug);
+    const asTemplate = (value: string) => slugify(value, { maxLength: Infinity, fallback: false });
+    expect(asTemplate(title)).toBe('essai-creation-a-la-une');
+    // Titres types du bookmarklet 💡 (titre de page, sélection) : dossier ASCII.
+    for (const t of [
+      'L’été : 10 astuces — Docker & K8s',
+      '« Cœur » du système, ça marche ?',
+      '💡 Idée : Noël à Zürich',
+      'Ça va… très bien !',
+    ]) {
+      expect(asTemplate(t), t).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    }
+    expect(asTemplate('« Cœur » du système, ça marche ?')).toBe('coeur-du-systeme-ca-marche');
+  });
+
+  it('sans ces options, Sveltia 0.221 garde les accents (constat 3 reproduit)', async () => {
+    const slugify = await sveltiaSlugify(undefined);
+    expect(slugify(title, { maxLength: Infinity, fallback: false })).toBe('essai-création-à-la-une');
   });
 });
