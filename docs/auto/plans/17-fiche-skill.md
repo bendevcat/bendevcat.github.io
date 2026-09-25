@@ -121,6 +121,46 @@ superpowers @ 6.4.1: version 6.4.1 = plugin.json · license MIT = plugin.json ·
 - Acceptance: every tag chip in the skill `infos` panel is a link to `/tags/<tagSlug>/` that resolves in `dist/`; `check-secondary` and `check-skill` exit 0 with their lines (update expected lines only if the chip count per page is unchanged and only markup differs — report any change); `npx vitest run` 0 failed
 - Depends on: —
 
+### F2 — Date helpers guarded in UTC on any machine
+- Files: `src/lib/skillDetail.test.ts`, `src/lib/projectDetail.test.ts`, `src/lib/listCards.test.ts`
+- Covers: R1 (guarantee), plan 14 / 15 carried findings
+- Acceptance (verifier failure): add boundary cases (e.g. `new Date('2026-07-23T23:30:00Z')` → `23 juil. 2026`; a month boundary such as `2026-08-01T00:00:00Z` → `août 2026`) so that removing `timeZone: 'UTC'` from `versionDate`, `updatedLabel`, `projectMetaRows` (depuis) or `featuredSince` turns a test red **in this machine's time zone and with `TZ=UTC`** — demonstrate each mutation red then restore; `npx vitest run` 0 failed
+- Depends on: —
+
+### F3 — Tab labels out of the search index; the sticky column fits the viewport
+- Files: `src/components/DetailTabs.astro`, `src/pages/skills/[...slug].astro` (and check scripts whose search lines change — report them)
+- Covers: R16, R14, verification 1 findings 1 and 3
+- Acceptance (verifier failure): the tab row (`[role=tablist]`, every variant) carries `data-pagefind-ignore`, so the search dialog query `Notes de version` returns no skill page and no fragment contains `déclencheurs versions infos`; the skill aside is sticky only while it fits: from 1024 px it gets `max-height: calc(100vh - 40px)` with internal scrolling (or equivalent), so at 1024×768 its bottom stays within the viewport; `check-skill`, `check-prompt`, `check-project`, `check-detail-tabs` exit 0 (stated line changes reported)
+- Depends on: —
+
+### F4 — English quotes marked `lang="en"`
+- Files: `src/content/skills/superpowers/index.md` (the 5 README blockquotes as `<blockquote lang="en">`, text unchanged), `src/components/skill/SkillHeader.astro` / `InstallWindow.astro` (apply `quoteLang` to the description and the install note)
+- Covers: verification 1 finding 2 (WCAG 3.1.2)
+- Acceptance: on `/skills/superpowers/`, the 5 blockquotes, the English install note and any English description carry `lang="en"`; `node scripts/check-skill-sources.mjs` still exits 0 with its two lines (blockquote text verbatim); `check-skill` exits 0
+- Depends on: F3
+
 ## Out of scope
 - An `updated` field; a `sortie`-like block; the prototype's in-session `/plugin marketplace add` form (the stored CLI command stays); translating quoted English; the `references/` templates, tests and scripts in the explorer; live file reading at build time (CI has no plugin paths); making the anti-drift install command runnable.
 - Removing the now-unused `pill` variant of `DetailTabs` (→ plan 18); any change to posts, projects, prompts content, `.github/workflows/**`, `docs/anti-drift/**`; version bump, tag, merge, push, deploy.
+
+## Evidence
+
+### Verification 1 (2026-09-25)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | walk `/` › Skills › each card, both themes: every block, 6 explorer clicks, sticky at 20, all links 200, prompt and tag links; fails only through R1 and R16 |
+| R1 | failed | named tests pass and 5 mutations go red, but removing `timeZone:'UTC'` from `versionDate` / `updatedLabel` stays green in Paris and with TZ=UTC (red only with TZ=America/New_York) |
+| R2–R5 | proven | named tests pass; each red under targeted mutations |
+| R6 | proven | both source lines, exit 0; exit 1 on 4 content mutations; verifier's own re-check of all 20 excerpts, versions, changelogs, bullets, blockquotes; no e-mail in `src/`, `dist/`, `public/` |
+| R7 | proven | CMS tests 0 failed; greps `8` / `8` / `1` |
+| R8 | proven | `check-skill` 12 lines exact; exit 1 on 8 injected defects |
+| R9 | proven | 7 rows; skills `déclencheurs \| versions \| infos`; other rows identical to base |
+| R10–R15 | proven | layout 818 + 22 + 340; windows identical both themes; Copier = `installCmd`; highlights and body; explorer clicks; sticky 20 at ≥ 1024, static below; roving keys; no-JS iframe shows every preview |
+| R16 | failed | `roadmap` → anti-drift only; **`Notes de version` → both skill pages** (tab labels indexed) |
+| R17 | smoke | design MCP refused; inventory §8 matches |
+| R18 | proven | audit 36 runs: 0 / 0 / 0 / 0 |
+| R19 | proven | radii {7, 9, 10, 14, 18, 999}; fonts as specified |
+| R20 | proven | other instruments identical except stated lines; project / prompt HTML differs only by script hashes and `v6.4.1` |
+| R21 | proven | frozen diff empty; 2 skill files; no `No content`; 375 tests; 0 errors |
+
+Findings → F3 (aside 754–789 px tall overflows a 1024×768 viewport; tab labels indexed), F4 (English quotes without `lang="en"`). Not taken: `En détail` h2 with body h2s at the same level; 15-line excerpts (verbatim, within the rule).
