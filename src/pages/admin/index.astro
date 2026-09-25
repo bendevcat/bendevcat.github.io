@@ -1,0 +1,24 @@
+---
+/**
+ * Page d'administration Sveltia CMS, servie en dev comme en production sur
+ * `/admin/` (plan 19). Page autonome : pas de `BaseLayout` (ni en-tête du
+ * site ni CSS global), pas de `data-pagefind-body` (non indexée), `noindex`.
+ * Sveltia vient de npm à version exacte (`package.json`) via `src/admin/cms.ts`.
+ */
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Admin — benCat</title>
+    <link rel="cms-config-url" type="application/yaml" href="/admin/config.yml" />
+  </head>
+  <body>
+    <script>
+      import '../../admin/cms';
+    </script>
+  </body>
+</html>

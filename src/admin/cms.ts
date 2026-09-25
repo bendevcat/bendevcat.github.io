@@ -1,0 +1,12 @@
+/**
+ * Point d'entrée de Sveltia CMS pour `/admin/` (src/pages/admin/index.astro).
+ *
+ * `@sveltia/cms` est épinglé à version exacte dans `package.json` (pas de CDN) :
+ * pour monter de version, `npm install --save-exact @sveltia/cms@<version>`.
+ * Importé en module, le paquet npm ne s'initialise pas seul (il ne le fait que
+ * pour un `<script src=".../sveltia-cms.js">` classique) : on appelle `init()`.
+ * La config est lue dans `public/admin/config.yml` (lien `cms-config-url`).
+ */
+import CMS from '@sveltia/cms';
+
+CMS.init();

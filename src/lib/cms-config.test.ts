@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro:content';
 import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS, collections } from '../content.config';
@@ -133,19 +133,49 @@ describe('config CMS — suppression désactivée (D08)', () => {
 });
 
 describe('page /admin', () => {
-  it('épingle la version du CDN Sveltia et interdit l’indexation', () => {
-    const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');
-    expect(html).toContain('https://unpkg.com/@sveltia/cms@0.175.1/dist/sveltia-cms.js');
-    expect(html).toMatch(/<meta\s+name="robots"\s+content="noindex"\s*\/?>/);
-    // Un tag flottant ferait sauter l’épinglage (spec §6.2).
-    expect(html).not.toContain('@sveltia/cms/dist');
-    expect(html).not.toContain('@latest');
+  const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+
+  it('sert /admin depuis une page Astro autonome, noindex, sans BaseLayout', () => {
+    const page = read('../pages/admin/index.astro');
+    expect(page).toMatch(/<html\s+lang="fr"\s*>/);
+    expect(page).toMatch(/<meta\s+name="robots"\s+content="noindex"\s*\/?>/);
+    // Sveltia lit sa config à côté de la page ; le lien la rend explicite.
+    expect(page).toMatch(
+      /<link\s+rel="cms-config-url"\s+type="application\/yaml"\s+href="\/admin\/config\.yml"\s*\/?>/,
+    );
+    // Page autonome : ni layout du site (en-tête, CSS global), ni indexation Pagefind.
+    expect(page).not.toMatch(/import\s+\w+\s+from\s+['"][^'"]*layouts\//);
+    expect(page).not.toMatch(/<[A-Z]\w*Layout\b/);
+    expect(page).not.toMatch(/<\w+\b[^>]*\sdata-pagefind-body\b/);
+    const scripts = [...page.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)];
+    expect(scripts).toHaveLength(1);
+    expect(scripts[0][1]).toMatch(/import\s+['"]\.\.\/\.\.\/admin\/cms['"]/);
   });
 
-  it('vérifie l’intégrité du script CDN via SRI (spec I4)', () => {
-    const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');
-    expect(html).toMatch(/integrity="sha384-/);
-    expect(html).toContain('crossorigin="anonymous"');
+  it('n’a plus de public/admin/index.html ; la config reste un YAML valide dans public/admin/', () => {
+    expect(existsSync(new URL('../../public/admin/index.html', import.meta.url))).toBe(false);
+    const cfg = loadCmsConfig();
+    expect(cfg.backend.name).toBe('github');
+    expect(cfg.collections).toHaveLength(4);
+  });
+
+  it('épingle @sveltia/cms à 0.221.0 exactement (package.json sans ^ ni ~, lock résolu)', () => {
+    const pkg = JSON.parse(read('../../package.json'));
+    expect(pkg.dependencies['@sveltia/cms']).toBe('0.221.0');
+    const lock = JSON.parse(read('../../package-lock.json'));
+    expect(lock.packages[''].dependencies['@sveltia/cms']).toBe('0.221.0');
+    expect(lock.packages['node_modules/@sveltia/cms'].version).toBe('0.221.0');
+  });
+
+  it('importe @sveltia/cms depuis npm, sans CDN', () => {
+    const cms = read('../admin/cms.ts');
+    expect(cms).toMatch(/^import\s+CMS\s+from\s+['"]@sveltia\/cms['"];?$/m);
+    // Le paquet npm ne s'initialise pas seul quand il est importé en module.
+    expect(cms).toMatch(/CMS\.init\(/);
+    for (const src of [cms, read('../pages/admin/index.astro')]) {
+      expect(src).not.toContain('unpkg');
+      expect(src).not.toMatch(/https?:\/\/[^'"\s]*sveltia/);
+    }
   });
 });
 
