@@ -3,10 +3,21 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import { adminLibCopy } from './src/admin/viteAdminLib.mjs';
 import { markdownOptions } from './src/lib/markdownOptions.mjs';
+import { provideSiteEntries } from './src/lib/blocks/siteEntries.mjs';
+import { readSiteEntries } from './src/lib/blocks/readSiteEntries.mjs';
+import { blocksBuildCheck } from './src/lib/blocks/buildCheck.mjs';
+
+// Blocs `:::carte` (plan 23, T1, D152) : au rendu du site, l'index des entrées
+// est relu sur le disque (`src/content/*/*/index.md`) à chaque corps qui porte
+// une carte ; une ref inconnue, ou un brouillon cité par une entrée publiée,
+// fait échouer le build en nommant le fichier et la ref (`blocksBuildCheck` :
+// le chargeur de contenu d'Astro journalise une erreur de rendu sans échouer).
+provideSiteEntries({ mode: 'site', entries: () => readSiteEntries() });
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://bendevcat.github.io',
+  integrations: [blocksBuildCheck(markdownOptions)],
   vite: {
     // `adminLibCopy` : `src/admin/` importe sa propre copie `?admin` de
     // `src/lib/` — aucun chunk partagé entre /admin/ et les pages du site
