@@ -99,8 +99,15 @@ describe('dépôt de test (dev) : correspondance des chemins', () => {
 
   it('couvre tout src/content : chaque fichier du disque, une fois, au même chemin', () => {
     const paths = contentFiles().map((f) => f.path);
-    expect([...paths].sort()).toEqual(contentOnDisk());
-    expect(paths.filter((p) => p.endsWith('/index.md')).length).toBe(13);
+    const onDisk = contentOnDisk();
+    expect([...paths].sort()).toEqual(onDisk);
+    // Les entrées (`index.md`) sont comptées sur disque au moment du test, pas
+    // figées : une création ou une suppression par le CMS ne doit pas rendre
+    // `npm test` rouge (plan 19, F2). Un glob qui manque une collection, lui,
+    // laisse des entrées du disque hors du dépôt de test et échoue ici.
+    const entries = onDisk.filter((p) => p.endsWith('/index.md'));
+    expect(entries.length).toBeGreaterThan(0);
+    expect(paths.filter((p) => p.endsWith('/index.md')).sort()).toEqual(entries);
   });
 
   it('charge le markdown tel quel (octet pour octet)', async () => {
