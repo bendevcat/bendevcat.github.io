@@ -41,7 +41,14 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content, headings } = await render(post);
+const { Content, headings, remarkPluginFrontmatter } = await render(post);
+
+// Plan 23, T2 : les scripts des blocs ne partent que sur les articles dont le
+// corps les utilise. `blocks` (comptes par bloc) n'existe que si le corps porte
+// au moins un bloc `:::` (src/lib/blocks/remarkBlocks.mjs).
+const blocks = remarkPluginFrontmatter.blocks as { terminal?: number; video?: number } | undefined;
+const hasVideo = (blocks?.video ?? 0) > 0;
+const hasTerminal = (blocks?.terminal ?? 0) > 0;
 
 // Toute la collection publiée, dans l'ordre canonique : rail gauche (mêmes
 // catégories et tags que /blog), articles liés, précédent / suivant.
@@ -133,4 +140,18 @@ const hasRightRail = tocEntries(headings).length > 0 || relatedProjects.length >
   <script>
     import '../../scripts/copy-code.ts';
   </script>
+  {
+    hasVideo && (
+      <script>
+        import '../../scripts/video-facade.ts';
+      </script>
+    )
+  }
+  {
+    hasTerminal && (
+      <script>
+        import '../../scripts/terminal-block.ts';
+      </script>
+    )
+  }
 </BaseLayout>
