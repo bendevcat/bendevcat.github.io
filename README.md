@@ -182,6 +182,20 @@ soit. Pour une suppression faite à la main, hors CMS : supprimer le dossier de
 l'entrée, retirer son slug des champs relation qui la citent, puis vérifier
 avec `npm run build` avant de pousser.
 
+La CI lance aussi `npm test` avant de déployer : un test rouge bloque la mise
+en ligne. Les tests de contenu (`src/lib/projectContent.test.ts`,
+`promptContent.test.ts`, `skillContent.test.ts`) ne vérifient plus que des
+**règles génériques**, vraies pour toute entrée — rôle d'une techno lu mot pour
+mot dans le texte du projet et présent dans sa `stack`, extrait de code
+recopié en lignes contiguës de son fichier quand ce fichier est dans ce dépôt,
+variable déclarée présente dans son prompt, corps jamais `No content`, journal
+des versions du plus récent au plus ancien et contenant la version déclarée,
+extraits de 16 lignes au plus et sans adresse e-mail, chemins de fichiers
+relatifs et uniques. Aucune valeur figée d'une entrée nommée : supprimer ou
+modifier n'importe quelle entrée depuis le CMS ne bloque jamais le déploiement,
+tant que l'entrée modifiée respecte ces règles (monter la version d'un skill,
+par exemple, demande d'ajouter la ligne correspondante au journal).
+
 ### Où atterrissent les fichiers
 
 | Élément | Emplacement |
