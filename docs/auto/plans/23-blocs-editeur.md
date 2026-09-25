@@ -161,3 +161,29 @@ Findings: the site iframe `sandbox` / narrowed asciinema `allow` (plan did not s
 - Files: `src/lib/blocks/remarkBlocks.mjs` (preview mode: an incomplete or invalid block renders a neutral placeholder « Bloc incomplet : … » instead of throwing — the site build still throws), `src/admin/previews/register.ts` if needed (no `console.error` for a block validation error in preview), `src/lib/videoEmbed.ts` (drop `allowfullscreen`; `allow` carries fullscreen), the weak « sans index fourni » test (assert the specific message)
 - Acceptance: tests (preview mode placeholder; site mode still throws; iframe has no `allowfullscreen`); verifier: inserting each block and typing shows 0 console error / warning until filled; facade click 0 warning
 - Depends on: F1
+
+### Verification attempt 2 (tip `c83483f`) — 21/21 + T4b proven
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | CMS walk by clicks (4 blocks via forms, saved, reopened, preview) and published `/blog/blocs-demo/` (200, facades); no 5xx |
+| R1, R2, R4 | proven | fresh run green; parser/site rendering unchanged (mutations carried) |
+| R3 | proven | preview forced on → 5 red incl. « site : les mêmes blocs lèvent toujours »; the « sans index fourni » test now red on a changed message |
+| R5 | proven | green incl. the placeholder passing DOMPurify unchanged |
+| R6 | proven | Carte select 13 options = 13 `index.md` |
+| R7 | proven | shape test expects `code:text` |
+| R8 | proven | terminal with ``` / ~~~ / trailing newline round-trips; back to `widget: code` → 9 red |
+| R9 | proven | 13/13 canonical; `fenceToggleIssues` removed → red |
+| R10 | proven | Insérer = Encadré, Terminal, Carte, Vidéo; saved `:::astuce`, `:::carte{ref="projects/gha-svu"}`, `:::video[Big Buck Bunny]{youtube="aqz-KE-bpKQ"}`; reopen shows values; unedited save byte-identical; raw-mode paste identical |
+| R11 | proven | preview: 9 blocks, 0 iframe; 0 non-localhost request in the CMS session |
+| R12 | proven | scratch build `Indexed 13 pages`, check-blocks 4 lines exit 0, check-previews `blog 6/6` |
+| R13 | proven | 0 third-party request before click; click → `youtube-nocookie.com/embed/aqz-KE-bpKQ?autoplay=1` focused; Enter → asciinema `…/iframe?autoplay=1` `allow="autoplay; fullscreen"`; no `allowfullscreen` (restoring it → 2 red) |
+| R14 | proven | tokens test incl. the placeholder; rendered audit carried |
+| R15 | proven | real content 0 blocks / 0 scripts; fixture: both scripts on `blocs-demo` only |
+| R16 | proven | both `@source not`; `.lowercase` in 0 tip CSS |
+| R17 | proven | 51 pages + Pagefind identical to ead7b81 |
+| R18 | proven | greps 4 / 0 / 1; text field + `fence-toggle` limit documented |
+| R19 | proven | 654 passed; 0 errors; 14 checks = base; check-edit-link vs 74bc756 exit 0; frozen diff empty |
+| R20 | proven | each block inserted empty and typed to completion: « Bloc incomplet : … » meanwhile, **0 console error / 0 warning**, no Lexical error on ```; facade click 0 message; remaining messages (sandbox notice, draft 404) identical on base |
+| T4b | proven | `echo x ``` y⏎```⏎fin⏎` kept by the form, saved inside a longer fence, reopened identical, unedited save byte-identical |
+
+Findings: the fence-toggle rewrite (odd ```-lines in terminal code followed by an indented list / `>` quote) can still be produced by typing in the form — caught by the vitest guard at deploy, not by `canonicalize-content --check` (which reported 1/1 on that file) — documented in README, not in the CMS; inserting a block at the start of a heading turns it into a paragraph (Sveltia, same for Image); placeholder « ref invalide «  » » double space (cosmetic).
