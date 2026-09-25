@@ -118,17 +118,61 @@ describe('config CMS — backend', () => {
   });
 });
 
-describe('config CMS — suppression désactivée (D08)', () => {
-  it('interdit la suppression sur blog et projects : le CMS ne nettoie pas les rétro-références', () => {
+/** Tous les champs `relation` de la config, où qu'ils soient imbriqués. */
+function relationFields(cfg: any): Array<{ collection: string; field: any }> {
+  const found: Array<{ collection: string; field: any }> = [];
+  const walk = (collection: string, fields: any[] = []) => {
+    for (const f of fields) {
+      if (f.widget === 'relation') found.push({ collection, field: f });
+      if (f.fields) walk(collection, f.fields);
+      if (f.field) walk(collection, [f.field]);
+      if (f.types) for (const t of f.types) walk(collection, t.fields);
+    }
+  };
+  for (const c of cfg.collections) walk(c.name, c.fields);
+  return found;
+}
+
+describe('config CMS — suppression (R15, D08 levé)', () => {
+  it('autorise la suppression sur les quatre collections : Sveltia 0.221 retire les rétro-références', () => {
+    // D08 (Plan 3) interdisait la suppression : l'ancien Sveltia laissait une
+    // référence morte sur l'entrée liée, et `assertEntriesResolved` cassait le
+    // build. Depuis 0.221, `deleteEntries` appelle `planCascadeDelete`, qui
+    // retire le slug supprimé de chaque champ relation qui le cite, dans le
+    // MÊME commit. On ancre ce constat dans le build npm effectivement
+    // embarqué : son garde-fou « bloquer si une relation requise se vide »
+    // n'existe que si la cascade existe.
     const cfg = loadCmsConfig();
-    // Défaut Sveltia = true. Sans `delete: false`, supprimer une entrée laisse
-    // une référence morte (`relatedPosts`/`relatedProjects`) sur l'autre
-    // collection : le commit suivant casse `assertEntriesResolved` et
-    // `astro build` ne produit plus aucune page (constat I1, revue T-C1).
-    expect(cfg.collections[0].name).toBe('blog');
-    expect(cfg.collections[0].delete).toBe(false);
-    expect(cfg.collections[1].name).toBe('projects');
-    expect(cfg.collections[1].delete).toBe(false);
+    expect(cfg.collections.map((c: any) => [c.name, c.delete])).toEqual([
+      ['blog', true],
+      ['projects', true],
+      ['prompts', true],
+      ['skills', true],
+    ]);
+    const sveltia = readFileSync(
+      new URL('../../node_modules/@sveltia/cms/npm/index.js', import.meta.url),
+      'utf8',
+    );
+    expect(sveltia).toContain('Cannot delete entries that other entries require');
+  });
+
+  it('garde les quatre relations optionnelles (sinon Sveltia bloque la suppression)', () => {
+    // `planCascadeDelete` revalide chaque champ qui perd une référence : s'il
+    // est `required` et se retrouve vide, ou compte moins de `min` éléments,
+    // la suppression est refusée. Toute nouvelle relation doit être examinée
+    // ici avant d'entrer dans la config.
+    const rels = relationFields(loadCmsConfig());
+    expect(rels.map(({ collection, field }) => `${collection}.${field.name}→${field.collection}`)).toEqual([
+      'blog.relatedProjects→projects',
+      'projects.relatedPosts→blog',
+      'prompts.relatedSkills→skills',
+      'skills.relatedPrompts→prompts',
+    ]);
+    for (const { field } of rels) {
+      expect(field.required).toBe(false);
+      expect(field.multiple).toBe(true);
+      expect(field.min).toBeUndefined();
+    }
   });
 });
 
@@ -491,14 +535,14 @@ function field(cfg: any, collection: string, name: string): any {
 }
 
 describe('config CMS — collection prompts', () => {
-  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+  it('pointe le bon dossier, en page bundle, suppression permise (R15)', () => {
     const cfg = loadCmsConfig();
     const coll = cfg.collections.find((c: any) => c.name === 'prompts');
     expect(coll.folder).toBe('src/content/prompts');
     expect(coll.path).toBe('{{slug}}/index');
     expect(coll.extension).toBe('md');
     expect(coll.format).toBe('yaml-frontmatter');
-    expect(coll.delete).toBe(false);
+    expect(coll.delete).toBe(true);
     expect(coll.media_folder).toBe('');
     expect(coll.public_folder).toBe('');
   });
@@ -606,7 +650,7 @@ describe('config CMS — collection prompts', () => {
 });
 
 describe('config CMS — collection skills', () => {
-  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+  it('pointe le bon dossier, en page bundle, suppression permise (R15)', () => {
     // Complété (I4, D10) : cette assertion omettait `extension`, `format`,
     // `media_folder` et `public_folder`, pourtant vérifiés sur `prompts` —
     // asymétrie du garde-fou entre les deux collections jumelles.
@@ -616,7 +660,7 @@ describe('config CMS — collection skills', () => {
     expect(coll.path).toBe('{{slug}}/index');
     expect(coll.extension).toBe('md');
     expect(coll.format).toBe('yaml-frontmatter');
-    expect(coll.delete).toBe(false);
+    expect(coll.delete).toBe(true);
     expect(coll.media_folder).toBe('');
     expect(coll.public_folder).toBe('');
   });
