@@ -54,7 +54,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 | **Surfshark** | ⭐⭐⭐⭐    | Audité (Cure53)      | ✅ 1.50€/mois | 2.50€     | ∞          |
 | **Wireguard** | ⭐⭐⭐⭐⭐   | Vous gérez           | ✅            | Gratuit   | ∞          |
 
-- - -
+---
 
 ## Top 5 des VPN en 2025 - Tests détaillés
 
@@ -104,7 +104,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 **Parfait pour** : Usage quotidien complet (vitesse + sécurité + streaming)
 
-- - -
+---
 
 ### 2. ProtonVPN - Le champion de la vie privée 🔒
 
@@ -161,7 +161,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 **Parfait pour** : Confidentialité maximale + transparence totale
 
-- - -
+---
 
 ### 3. Mullvad - L'anonymat absolu 👤
 
@@ -217,7 +217,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 **Parfait pour** : Anonymat total + P2P/Torrent sécurisé
 
-- - -
+---
 
 ### 4. Surfshark - Le meilleur rapport qualité/prix 💰
 
@@ -266,7 +266,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 **Parfait pour** : Familles nombreuses + petit budget
 
-- - -
+---
 
 ### 5. Wireguard (self-hosted) - Pour les experts 🛠️
 
@@ -432,7 +432,7 @@ docker run -d \
 
 **Gratuit = danger** : Les VPN gratuits revendent vos données. Si c'est gratuit, vous êtes le produit.
 
-- - -
+---
 
 ## VPN à éviter en 2025 ⚠️
 
@@ -483,7 +483,7 @@ Si vous voyez votre vraie IP ou celle de votre FAI, changez de VPN !
 * Rachats par des sociétés de tracking/pub
 * Incidents de sécurité non divulgués
 
-- - -
+---
 
 ## Mes recommandations personnelles 🎖️
 
@@ -536,7 +536,7 @@ Après 6 mois de tests intensifs en conditions réelles, voici mes usages :
 
 **Idéal pour** : Développeurs, sysadmins, site-to-site VPN
 
-- - -
+---
 
 ## FAQ - Questions fréquentes 💬
 
@@ -558,7 +558,7 @@ R : Mullvad, NordVPN, ProtonVPN. Vérifiez que le P2P est autorisé et que le ki
 **Q : Un VPN protège-t-il contre les virus ?**
 R : Non directement. Mais certains (NordVPN, Surfshark) ont des bloqueurs de malware intégrés. Utilisez un antivirus séparé.
 
-- - -
+---
 
 ## Conclusion : Quel VPN choisir ?
 
@@ -580,7 +580,7 @@ R : Non directement. Mais certains (NordVPN, Surfshark) ont des bloqueurs de mal
 
 **Pour les geeks** : Montez votre propre serveur Wireguard sur un VPS Hetzner (contrôle total + apprentissage).
 
-- - -
+---
 
 **Et vous, quel VPN utilisez-vous ? Partagez votre expérience en commentaire !**
 

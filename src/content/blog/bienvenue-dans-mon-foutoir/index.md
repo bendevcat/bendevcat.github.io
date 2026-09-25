@@ -29,7 +29,7 @@ Le but de ce blog sera essentiellement de décharger mon cerveau, centraliser de
 
 On va tenter d'être le plus pertinent possible hein, j'espère bien réussir à garder cet espace aussi clean que possible, une sorte de bdd fun à utiliser.
 
-***
+---
 
 ## IA : une aide, pas un _ghostwriter_
 
@@ -53,7 +53,7 @@ Je ferais bien évidemment un gros travail pour vérifier les infos crachés par
 Si vous aussi vous bossez dans la tech, vous savez à quel point elle peut être pertinente lorsque l'ont sait s'en servir.\
 D'ailleurs, ce blog a été créé from-scratch avec Claude Code sur Sonnet 4.5, en seulement quelques heures. J'en ferait un article dédié, il faut absolument que je partage cette experience, parfois magique, parfois incompréhensible, il y'a deux trois trucs à partager qui pourrait vous aider si vous utilisez cet outil ;)
 
-***
+---
 
 ## EXIT 0
 
