@@ -1,13 +1,22 @@
 ---
-title: "gha-svu — le versionnage sémantique dans GitHub Actions"
-description: "Une action composite qui calcule la prochaine version sémantique avec SVU v3, et pose le tag si tu lui demandes."
+title: gha-svu — le versionnage sémantique dans GitHub Actions
+description: Une action composite qui calcule la prochaine version sémantique avec SVU v3, et pose le tag si tu lui demandes.
 status: actif
 startDate: 2025-05-05
-stack: [GitHub Actions, Bash, Go, SVU]
+stack:
+  - GitHub Actions
+  - Bash
+  - Go
+  - SVU
 stackRoles:
-  - { name: GitHub Actions, role: action composite }
-  - { name: SVU, role: prochain numéro de version }
-tags: [github-actions, devops, versioning]
+  - name: GitHub Actions
+    role: action composite
+  - name: SVU
+    role: prochain numéro de version
+tags:
+  - github-actions
+  - devops
+  - versioning
 repoUrl: https://github.com/bencatlab/gha-svu
 snippetFile: .github/workflows/check-pr.yml
 snippet: |-
@@ -42,7 +51,8 @@ snippet: |-
             release=$(echo "${{ steps.semver.outputs.next }}" | cut -d. -f1)
             echo "release: $release"
 featured: false
-relatedPosts: [comment-jutilise-github-actions-au-quotidien]
+relatedPosts:
+  - comment-jutilise-github-actions-au-quotidien
 ---
 
 Décider du prochain numéro de version à la main, c'est le genre de tâche qu'on

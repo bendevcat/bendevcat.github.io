@@ -1,10 +1,7 @@
 ---
-title: "Prompt de bootstrap d'une session d'exécution anti-drift"
+title: Prompt de bootstrap d'une session d'exécution anti-drift
 description: "Le prompt collé en tête de chaque session d'exécution d'un plan : il porte les verrous anti-dérive (test de déviation, statuts, protocole de réversibilité) et interdit à l'agent de trancher en silence."
 format: fiche
-tool: Claude Code
-model: claude-opus-5
-tags: [anti-drift, claude-code, méthodologie, prompt-engineering]
 prompt: |-
   <!-- Transient / regenerable. Regénérer avec /anti-drift-planning:start-session 4 (émetteur canonique).
        Émis par la Phase Z du Plan 3 (verify 3 → PASS). -->
@@ -138,7 +135,7 @@ prompt: |-
 variables:
   - name: N
     hint: plan number
-    default: "4"
+    default: '4'
   - name: topic
     hint: topic extracted from the spec filename
     default: librairies-prompts-skills
@@ -148,7 +145,16 @@ variables:
   - name: LANGUAGE
     hint: the language the user is currently conversing in
     default: français
-relatedSkills: [anti-drift-planning]
+tool: Claude Code
+model: claude-opus-5
+tags:
+  - anti-drift
+  - claude-code
+  - méthodologie
+  - prompt-engineering
+draft: false
+relatedSkills:
+  - anti-drift-planning
 ---
 
 Ce prompt-là, tu ne l'écris pas à la main : il est généré par

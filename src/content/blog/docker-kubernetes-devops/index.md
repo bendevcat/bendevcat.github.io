@@ -1,11 +1,8 @@
 ---
-title: "Docker et Kubernetes : Guide complet du DevOps moderne"
-description: "Un guide complet sur Docker et Kubernetes : conteneurisation, orchestration, bonnes pratiques de production, sécurité et observabilité."
+title: 'Docker et Kubernetes : Guide complet du DevOps moderne'
+description: 'Un guide complet sur Docker et Kubernetes : conteneurisation, orchestration, bonnes pratiques de production, sécurité et observabilité.'
 pubDate: 2025-10-20T14:00:00+02:00
-draft: false
-category: "Outils"
-cover: "./cover.jpg"
-coverAlt: "Illustration conteneurs et orchestration"
+category: Outils
 tags:
   - docker
   - kubernetes
@@ -13,8 +10,13 @@ tags:
   - containers
   - orchestration
   - ci-cd
-aiUsage: "full"
+cover: ./cover.jpg
+coverAlt: Illustration conteneurs et orchestration
+aiUsage: full
+draft: false
+featured: false
 ---
+
 ## TL;DR
 
 Docker et Kubernetes ont transformé l'industrie du développement logiciel en permettant la conteneurisation et l'orchestration d'applications à grande échelle. Ce guide couvre :

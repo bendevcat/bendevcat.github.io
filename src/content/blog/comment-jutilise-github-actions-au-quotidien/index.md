@@ -7,7 +7,9 @@ cover: ./gha-chatgpt.png
 coverAlt: Logo GitHub Actions sur fond de schéma de workflow
 aiUsage: none
 draft: false
-relatedProjects: [gha-svu]
+featured: false
+relatedProjects:
+  - gha-svu
 ---
 
 Cet article n'a pas pour objectif de vous faire découvrir GitHub Actions.\

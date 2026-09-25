@@ -1,11 +1,8 @@
 ---
-title: "k9s : Gérez vos clusters Kubernetes like a boss"
-description: "Présentation de k9s, le terminal UI qui simplifie la gestion de tes clusters Kubernetes au clavier."
+title: 'k9s : Gérez vos clusters Kubernetes like a boss'
+description: Présentation de k9s, le terminal UI qui simplifie la gestion de tes clusters Kubernetes au clavier.
 pubDate: 2025-10-20T14:00:00+02:00
-draft: false
-category: "Outils"
-cover: "./k9s-header.png"
-coverAlt: "Logo k9s à côté de l'icône Kubernetes sur fond sombre"
+category: Outils
 tags:
   - kubernetes
   - k9s
@@ -13,8 +10,13 @@ tags:
   - terminal
   - cli
   - monitoring
-aiUsage: "partial"
+cover: ./k9s-header.png
+coverAlt: Logo k9s à côté de l'icône Kubernetes sur fond sombre
+aiUsage: partial
+draft: false
+featured: false
 ---
+
 Gérer un cluster Kubernetes avec `kubectl` peut vite devenir fastidieux. 
 
 **k9s** est un terminal UI qui révolutionne votre workflow DevOps !
