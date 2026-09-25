@@ -14,7 +14,7 @@
  *   <id> aside: <onglets> · <n> triggers · versions <v …|—> · prompts du skill <ids|—>
  *   counts: header summary = /skills/ card on <n>/<total>
  *   links: every internal href resolves in dist/
- *   search: <n> fragments · title, highlights, triggers and body indexed · install window, explorer, versions, infos and prompts card not indexed
+ *   search: <n> fragments · title, highlights, triggers and body indexed · tab row, install window, explorer, versions, infos and prompts card not indexed
  *
  * Les fiches sont lues dans l'ordre des noms de dossier de `dist/skills/`
  * (une par `<id>/index.html`) ; chaque carte `[data-entry-id]` de
@@ -35,8 +35,11 @@
  *   `figure[data-skill-explorer]` (avec `files`) ; la carte
  *   `[data-skill-notes]` (corps non blanc) ; un `<aside aria-label="Autour du
  *   skill">` collant à partir de 1024 px seulement (`lg:sticky lg:top-5`, sans
- *   `sticky` nu) avec sa racine d'onglets `data-tab-variant="track"` ; la
- *   carte `Prompts du skill` (avec un prompt lié publié) ;
+ *   `sticky` nu) et, à partir de 1024 px, haut au plus de la fenêtre moins
+ *   40 px avec défilement interne (`lg:max-h-[calc(100vh-40px)]`,
+ *   `lg:overflow-y-auto` — plan 17, F3), avec sa racine d'onglets
+ *   `data-tab-variant="track"` ; la carte `Prompts du skill` (avec un prompt
+ *   lié publié) ;
  * - les onglets ne sont pas ceux de la règle (déclencheurs si `triggers`,
  *   versions si `changelog`, infos), ou un panneau manque ;
  * - `Copier` n'est pas `hidden` dans le HTML, ou son `data-install-cmd` ≠
@@ -52,9 +55,10 @@
  * - le résumé de l'en-tête ≠ celui de la carte de la fiche sur `/skills/` ;
  * - les prompts de `Prompts du skill` ≠ les prompts liés publiés, triés par
  *   titre (fr) ;
- * - la fenêtre, l'explorateur, les panneaux versions et infos ou la carte
- *   Prompts du skill ne sont pas `data-pagefind-ignore`, ou les points forts,
- *   les déclencheurs ou le corps le sont ;
+ * - la rangée d'onglets (`role="tablist"`), la fenêtre, l'explorateur, les
+ *   panneaux versions et infos ou la carte Prompts du skill ne sont pas
+ *   `data-pagefind-ignore`, ou les points forts, les déclencheurs ou le corps
+ *   le sont ;
  * - `No content` apparaît dans un `dist/skills/**\/index.html` ;
  * - un `href` interne (requête retirée) ne résout pas dans `dist/`, ou une
  *   ancre `#id` de la page n'y existe pas ;
@@ -62,7 +66,8 @@
  *   JSON après `pagefind_dcd` — comme scripts/check-article.mjs) manque, ne
  *   contient pas le titre, le premier point fort, le premier déclencheur ou
  *   le début du corps, ou contient `Copier`, `Fiche technique`,
- *   `Notes de version`, `Prompts du skill` ou `fichiers ·`.
+ *   `Notes de version`, `Prompts du skill`, `fichiers ·` ou les libellés de
+ *   la rangée d'onglets mis bout à bout (`déclencheurs versions infos`).
  *
  * Balisage lu : src/pages/skills/[...slug].astro, src/components/skill/*,
  * src/components/DetailTabs.astro, src/components/prompt/RelatedPromptsCard.astro
@@ -569,7 +574,14 @@ for (const id of ids) {
     if (aside.attrs['aria-label'] !== ASIDE_LABEL) fail(`<aside> aria-label « ${aside.attrs['aria-label'] ?? '—'} » (attendu : « ${ASIDE_LABEL} »)`);
     const classes = (aside.attrs.class ?? '').split(/\s+/);
     const sticky = classes.includes('lg:sticky') && classes.includes('lg:top-5') && !classes.includes('sticky');
+    // Plan 17, F3 : collante, la colonne ne dépasse pas la fenêtre (20 px en
+    // haut, 20 en bas) et défile en interne — à partir de 1024 px seulement.
+    const fits =
+      classes.includes('lg:max-h-[calc(100vh-40px)]') &&
+      classes.includes('lg:overflow-y-auto') &&
+      !classes.some((c) => /^(max-h-|overflow-)/.test(c));
     if (!sticky) fail('<aside> pas collant à 20 px à partir de 1024 px seulement (lg:sticky lg:top-5)');
+    else if (!fits) fail('<aside> collant sans lg:max-h-[calc(100vh-40px)] lg:overflow-y-auto (ou avec un max-h / overflow hors lg)');
     else blocks.aside += 1;
     if (left[0] && elements.indexOf(left[0]) > elements.indexOf(aside)) fail('la colonne précède les blocs de gauche dans le DOM');
     const inAside = descendants(aside);
@@ -589,6 +601,11 @@ for (const id of ids) {
       if (present.map((p) => p.id).join('|') !== expectedIds.join('|')) fail(`panneaux « ${present.map((p) => p.id).join(', ')} » (attendu : ${expectedIds.join(', ')})`);
       if (shownIds.includes('apercu')) fail('onglet apercu');
       asideParts.push(tabs.length > 0 ? tabs.map((tab) => squash(tab.text)).join(' | ') : present.map((p) => p.label).join(' | ') || '—');
+      // Plan 17, F3 : les libellés d'onglets n'entrent pas dans l'index.
+      for (const tablist of inRoot.filter((el) => el.attrs.role === 'tablist')) {
+        if (!ignored(tablist)) fail('rangée d\'onglets (role="tablist") sans data-pagefind-ignore');
+      }
+      if (tabs.length > 0) info.tabRow = tabs.map((tab) => squash(tab.text)).join(' ');
 
       const triggerEls = find('data-trigger', inRoot);
       const shownTriggers = triggerEls.map((el) => squash(el.text));
@@ -730,7 +747,7 @@ for (const info of skills) {
     present = false;
     errors.push(`${info.route} : titre ou premier point fort absent du frontmatter`);
   }
-  for (const text of FORBIDDEN_IN_INDEX) {
+  for (const text of [...FORBIDDEN_IN_INDEX, info.tabRow].filter(Boolean)) {
     if (content.includes(text)) {
       clean = false;
       errors.push(`${info.route} : le fragment contient « ${text} »`);
@@ -738,7 +755,7 @@ for (const info of skills) {
   }
 }
 lines.push(
-  `search: ${indexed} fragments · ${present ? 'title, highlights, triggers and body indexed' : 'title, highlights, triggers or body missing'} · ${clean ? 'install window, explorer, versions, infos and prompts card not indexed' : 'install window, explorer, versions, infos or prompts card indexed'}`,
+  `search: ${indexed} fragments · ${present ? 'title, highlights, triggers and body indexed' : 'title, highlights, triggers or body missing'} · ${clean ? 'tab row, install window, explorer, versions, infos and prompts card not indexed' : 'tab row, install window, explorer, versions, infos or prompts card indexed'}`,
 );
 
 for (const line of lines) console.log(line);

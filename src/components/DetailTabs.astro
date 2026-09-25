@@ -16,10 +16,16 @@
  *   rangée est cachée et tous les panneaux s'affichent (règles
  *   `html:not([data-js])` de global.css), chacun précédé d'un titre de repli.
  * - Moins de deux onglets : pas de rangée, le panneau unique s'affiche nu (D13).
+ * - La rangée (`role="tablist"`) porte `data-pagefind-ignore`, quelle que soit
+ *   la variante (plan 17, F3) : des libellés d'onglets (« déclencheurs
+ *   versions infos », « Aperçu Stack 4 … ») n'ont rien à faire dans l'index
+ *   de recherche, comme les titres de repli. Le contenu des panneaux, lui,
+ *   reste indexé.
  *
  * Deux variantes (plan 15) :
- * - `pill` (défaut) : prompts et skills — balisage inchangé à l'octet près
- *   (R20) ; `Tab.count` n'y est jamais rendu.
+ * - `pill` (défaut) : plus utilisée par les pages depuis les plans 16 et 17 ;
+ *   balisage d'avant le plan 15, `data-pagefind-ignore` de la rangée en plus
+ *   (plan 17, F3) ; `Tab.count` n'y est jamais rendu.
  * - `underline` : fiche projet (inventaire §4) — pas d'enveloppe `.card`
  *   (la page la place dans sa carte principale), racine
  *   `data-tab-variant="underline"`, rangée soulignée `line2`, onglet actif
@@ -89,7 +95,7 @@ const panels = await Promise.all(
   {
     withRow ? (
       <>
-        <div role="tablist" aria-label={label} class={tablistClass}>
+        <div role="tablist" aria-label={label} class={tablistClass} data-pagefind-ignore>
           {tabs.map((tab, index) => (
             <button
               type="button"

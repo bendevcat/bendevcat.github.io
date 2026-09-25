@@ -13,7 +13,7 @@
  *   <id> aside: <onglets> · <n> inputs · vient du skill <id|—> · skills liés <ids|—> · prompts liés <ids|—>
  *   counts: header = window = /prompts/ card on <n>/<total>
  *   links: every internal href resolves in dist/
- *   search: <n> fragments · title and prompt text indexed · window bar, variables, infos and related cards not indexed
+ *   search: <n> fragments · title and prompt text indexed · tab row, window bar, variables, infos and related cards not indexed
  *
  * Les fiches sont lues dans l'ordre des noms de dossier de `dist/prompts/`
  * (une par `<id>/index.html`) ; chaque entrée `[data-entry-id]` de
@@ -33,8 +33,9 @@
  *   ceux qu'attend la règle (variables si déclarées, décryptage si la fenêtre
  *   montre le `prompt` et que le corps n'est pas blanc, infos) ;
  * - les boutons `.md` / `Copier` / `réinitialiser` ou un champ de variable ne
- *   sont pas `hidden` dans le HTML ; la barre, le panneau variables, le
- *   panneau infos ou une carte liée n'est pas `data-pagefind-ignore` ;
+ *   sont pas `hidden` dans le HTML ; la rangée d'onglets
+ *   (`role="tablist"`), la barre, le panneau variables, le panneau infos ou
+ *   une carte liée n'est pas `data-pagefind-ignore` ;
  * - la `value` d'un champ ≠ son `data-default`, le texte d'un `[data-var]` ≠
  *   le défaut de sa variable, une variable déclarée n'a pas de champ ;
  * - le texte du `<code>` ≠ le texte attendu (le `prompt` d'une fiche qui en a
@@ -50,7 +51,9 @@
  *   JSON après `pagefind_dcd` — comme scripts/check-article.mjs) manque, ne
  *   contient pas le titre ou la première ligne non vide de la fenêtre, ou
  *   contient `Copier`, `réinitialiser`, `Fiche technique`, `Skills liés`,
- *   `Prompts liés`, `Vient du skill` ou `Tous les prompts`.
+ *   `Prompts liés`, `Vient du skill`, `Tous les prompts` ou les libellés de
+ *   la rangée d'onglets mis bout à bout (`variables décryptage infos` —
+ *   plan 17, F3).
  *
  * Balisage lu : src/pages/prompts/[...slug].astro, src/components/prompt/*,
  * src/components/DetailTabs.astro et src/components/PromptCard.astro.
@@ -449,6 +452,11 @@ for (const id of ids) {
       if (tabs.length === 1) fail('un seul onglet rendu en rangée (D13 : panneau nu)');
       if (shownIds.includes('sortie') || shownIds.includes('pourquoi')) fail('onglet sortie ou pourquoi');
       info.tabs = tabs.length > 0 ? tabs.map((tab) => squash(tab.text)).join(' | ') : present.map((p) => p.label).join(' | ') || '—';
+      // Plan 17, F3 : les libellés d'onglets n'entrent pas dans l'index.
+      for (const tablist of inRoot.filter((el) => el.attrs.role === 'tablist')) {
+        if (!ignored(tablist)) fail('rangée d\'onglets (role="tablist") sans data-pagefind-ignore');
+      }
+      if (tabs.length > 0) info.tabRow = tabs.map((tab) => squash(tab.text)).join(' ');
 
       for (const hook of ['data-prompt-variables', 'data-prompt-infos']) {
         for (const el of find(hook, inRoot)) if (!ignored(el)) fail(`[${hook}] sans data-pagefind-ignore`);
@@ -574,7 +582,7 @@ for (const info of prompts) {
     titleAndText = false;
     errors.push(`${info.route} : le fragment ne contient pas la première ligne de la fenêtre « ${info.firstLine ?? '—'} »`);
   }
-  for (const text of FORBIDDEN_IN_INDEX) {
+  for (const text of [...FORBIDDEN_IN_INDEX, info.tabRow].filter(Boolean)) {
     if (content.includes(text)) {
       clean = false;
       errors.push(`${info.route} : le fragment contient « ${text} »`);
@@ -582,7 +590,7 @@ for (const info of prompts) {
   }
 }
 lines.push(
-  `search: ${indexed} fragments · ${titleAndText ? 'title and prompt text indexed' : 'title or prompt text missing'} · ${clean ? 'window bar, variables, infos and related cards not indexed' : 'window bar, variables, infos or related cards indexed'}`,
+  `search: ${indexed} fragments · ${titleAndText ? 'title and prompt text indexed' : 'title or prompt text missing'} · ${clean ? 'tab row, window bar, variables, infos and related cards not indexed' : 'tab row, window bar, variables, infos or related cards indexed'}`,
 );
 
 for (const line of lines) console.log(line);

@@ -12,7 +12,15 @@
  *   `highlights`) › explorateur (FileExplorer, omis sans `files`) ›
  *   `En détail` (SkillNotes : le corps, omis quand il est blanc).
  * - Colonne `<aside aria-label="Autour du skill">`, écart 12, collante à
- *   20 px du haut à partir de 1024 px seulement : onglets en piste
+ *   20 px du haut à partir de 1024 px seulement, et alors haute au plus de
+ *   la fenêtre moins 40 px, avec défilement interne (plan 17, F3 : à
+ *   1024×768 elle mesurait 754–789 px et dépassait le bas de l'écran). Le
+ *   défilement rogne ce qui déborde de la boîte : 8 px de marge intérieure
+ *   à gauche et à droite (compensés par une marge négative, le contenu
+ *   garde ses 340 px) et 20 en bas laissent place à l'anneau de focus des
+ *   panneaux (décalage 4 + trait 2) et à l'ombre `var(--shadow)` des cartes
+ *   (jusqu'à 18 px sous la dernière). En dessous de 1024 px, rien ne
+ *   change. Onglets en piste
  *   (DetailTabs `variant="track"`) déclencheurs · versions · infos — un
  *   onglet sans données est omis (skillPageTabs, src/lib/detailTabs.ts) ;
  *   puis `Prompts du skill` (RelatedPromptsCard), omise sans prompt lié.
@@ -112,7 +120,11 @@ const shown = new Set(tabs.map((tab) => tab.id));
           }
         </div>
 
-        <aside aria-label="Autour du skill" class="flex min-w-0 flex-col gap-3 lg:sticky lg:top-5" data-skill-aside>
+        <aside
+          aria-label="Autour du skill"
+          class="flex min-w-0 flex-col gap-3 lg:sticky lg:top-5 lg:-mx-2 lg:max-h-[calc(100vh-40px)] lg:overflow-y-auto lg:px-2 lg:pb-5"
+          data-skill-aside
+        >
           <DetailTabs tabs={tabs} label="Sections du skill" variant="track">
             {
               shown.has('declencheurs') && (

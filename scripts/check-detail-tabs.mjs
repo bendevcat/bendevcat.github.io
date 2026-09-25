@@ -11,7 +11,9 @@
  *   <famille>/<slug>: Label | Label        (ou `(panneau unique)`)
  *
  * Code de sortie 1 (erreurs détaillées sur stderr) si une page viole R2/R8 :
- * - exactement un `role="tablist"`, avec un `aria-label` non vide ;
+ * - exactement un `role="tablist"`, avec un `aria-label` non vide et
+ *   `data-pagefind-ignore` (plan 17, F3 : les libellés d'onglets n'ont rien
+ *   à faire dans l'index de recherche, quelle que soit la variante) ;
  * - chaque `role="tab"` est un <button> dont `aria-controls` nomme un
  *   `role="tabpanel"` existant, dont `aria-labelledby` nomme cet onglet ;
  * - autant d'onglets que de panneaux ;
@@ -139,7 +141,10 @@ function checkPage(family, html) {
   }
 
   if (tablists.length !== 1) errors.push(`${tablists.length} role="tablist" (attendu : 1)`);
-  else if (!tablists[0].attrs['aria-label']?.trim()) errors.push('role="tablist" sans aria-label');
+  else {
+    if (!tablists[0].attrs['aria-label']?.trim()) errors.push('role="tablist" sans aria-label');
+    if (!('data-pagefind-ignore' in tablists[0].attrs)) errors.push('role="tablist" sans data-pagefind-ignore');
+  }
 
   if (tabs.length !== panels.length) {
     errors.push(`${tabs.length} onglet(s) pour ${panels.length} panneau(x)`);
