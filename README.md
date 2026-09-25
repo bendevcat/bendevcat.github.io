@@ -501,7 +501,8 @@ fichier écrit à la main. Chaque bloc est précédé et suivi d'une ligne vide 
 - **Terminal** : `:::terminal[<titre>]`, une ligne vide, **un** bloc de code
   clôturé (langage facultatif), une ligne vide, `:::`. Formulaire : Titre (une
   ligne, sans `[` ni `]`), Langage (facultatif, par ex. `bash` — le terminal
-  n'est pas coloré), Code.
+  n'est pas coloré), Code (une zone de texte simple : le code est gardé tel
+  quel, ```` ``` ```` compris).
 
   ````md
   :::terminal[deploy.sh]
@@ -582,11 +583,15 @@ Markdown, `src/lib/markdownOptions.mjs` + `src/lib/blocks/remarkBlocks.mjs`) :
 - **Pas de bloc dans un bloc** (`allow_nested_components: false`), et dans un
   encadré **ni bloc de code clôturé, ni barré** (`~~`) : l'éditeur de
   l'encadré les réécrirait en `` \` `` et `\~`.
-- **Le code d'un terminal ne peut pas contenir ```` ``` ````** (trois
-  backticks à la suite, où que ce soit) : l'éditeur de code de Sveltia s'y
-  arrête et viderait tout le code à la prochaine ouverture. Le formulaire
-  refuse la sauvegarde avec un message ; le garde-fou canonique signale la
-  ligne (`fence-in-code`) dans un fichier écrit à la main.
+- **Le code d'un terminal est une zone de texte simple**, pas l'éditeur de
+  code de Sveltia, qui vidait ou tronquait le code dès qu'on y tapait
+  ```` ``` ```` (D158). Le code peut contenir ```` ``` ````, `~~~` ou `:::` :
+  l'éditeur allonge la clôture du bloc au-delà de toute suite de backticks du
+  code. Seule réserve : un nombre **impair** de lignes qui commencent par
+  ```` ``` ```` ou `~~~` dans le code trompe les passes que Sveltia applique
+  au corps à l'ouverture — une ligne du code en `  - x` ou `> `, ou une ligne
+  `>` vide d'une citation plus bas, serait réécrite. Le garde-fou canonique
+  signale ces lignes (`fence-toggle`).
 - **La liste de la Carte est figée au chargement** : l'index des entrées
   (module virtuel de `src/admin/viteSiteEntries.mjs`, lu sur le disque) est
   construit au build et au démarrage de `astro dev`. Une entrée créée depuis
@@ -610,7 +615,8 @@ Markdown, `src/lib/markdownOptions.mjs` + `src/lib/blocks/remarkBlocks.mjs`) :
 blocs : `block` (bloc hors de la forme qu'écrit l'éditeur — attribut sans
 guillemets, `:::` dans un encadré à la même longueur de clôture…),
 `block-gap` (pas de ligne vide autour), `block-content` (bloc de code ou `~~`
-dans un encadré), `fence-in-code` (```` ``` ```` dans le code d'un terminal).
+dans un encadré), `fence-toggle` (ligne ```` ``` ```` impaire dans du code,
+qui inverse les passes de Sveltia sur le corps).
 `node scripts/canonicalize-content.mjs --check` doit rester à
 `canonical: 13/13 entries`.
 

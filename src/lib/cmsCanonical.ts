@@ -67,8 +67,19 @@
  *   gras, italique, code, lien, listes ; ni composant, ni bloc de code, ni
  *   barré) — les règles du corps, plus `block-content` pour un bloc de code
  *   clôturé ou un `~~` (réécrits `` \` `` et `\~`).
- * - Code d'un terminal : relu par l'éditeur de code (`output_code_only`),
- *   les règles des champs `code` ci-dessous.
+ * - Code d'un terminal : un champ `text` (plan 23, F1 ; D158) — un
+ *   `<textarea>` qui rend la valeur telle quelle (`text-editor.svelte`), sans
+ *   éditeur Lexical : ```` ``` ```` et saut de ligne final y survivent. Seules
+ *   comptent les passes du corps qui le précèdent (`split-multiline`,
+ *   `fence-toggle`).
+ * - `fence-toggle` : `increaseListIndentation` et `padBlankBlockquoteLines`
+ *   (`markdown.js`) sautent les blocs de code, mais les repèrent en basculant
+ *   à CHAQUE ligne qui commence par ```` ``` ```` ou `~~~`, sans longueur ni
+ *   clôture. Une telle ligne dans du code (code d'un terminal, bloc à clôture
+ *   plus longue) inverse la bascule : une ligne de code prise pour du texte
+ *   est réécrite (retrait doublé devant `-`, `+`, `*` ou `1.` si le corps a
+ *   une ligne `^\s{2}(?:-|\+|\*|\d+\.)\s` ; `>` seul → `> ` s'il y en a
+ *   un), et une citation prise pour du code perd sa ligne `>` vide (→ `> >`).
  *
  * Champs `widget: code` (`prompt`, `snippet`, `excerpt`) — `code-editor.js`
  * `toCodeBlock` / `parseCodeBlock` autour du transformeur `CODE` :
@@ -112,6 +123,7 @@ export type CanonicalRule =
   | 'setext'
   | 'final-newline'
   | 'fence-in-code'
+  | 'fence-toggle'
   | 'block'
   | 'block-content';
 
@@ -274,6 +286,8 @@ export function canonicalTableRow(row: string, divider: boolean): string {
 interface Scan {
   lines: string[];
   issues: CanonicalIssue[];
+  /** Lignes de code (clôtures comprises) selon ce scan ; corps seulement. */
+  code?: boolean[];
 }
 
 function push(scan: Scan, index: number, rule: CanonicalRule): void {
@@ -357,6 +371,9 @@ function blockIssues(scan: Scan, start: number): number {
     push(scan, start, 'block');
     return start;
   }
+  // Un terminal est du code de l'ouverture à la clôture (ses autres lignes
+  // ne ressemblent ni à un élément de liste ni à `>`).
+  if (block.id === 'terminal' && scan.code) for (let k = start; k <= block.end; k++) scan.code[k] = true;
   if (!blank(start - 1)) push(scan, start, 'block-gap');
   if (!blank(block.end + 1)) push(scan, block.end, 'block-gap');
   if (block.text !== editorBlock(block.id, block.props)) {
@@ -376,10 +393,8 @@ function blockIssues(scan: Scan, start: number): number {
       } else if (!fence && /~~/.test(maskInline(line))) push(scan, start + 2 + k, 'block-content');
     });
   }
-  // Le code commence sous la clôture de code, elle-même deux lignes sous l'ouverture.
-  if (block.id === 'terminal' && block.props.code !== '') {
-    pushNested(scan, start + 3, findCodeFieldIssues(block.props.code));
-  }
+  // Code d'un terminal : champ `text`, rendu tel quel (F1, D158) — seules les
+  // passes du corps s'y appliquent (`split-multiline`, `fence-toggle`).
   return block.end;
 }
 
@@ -398,7 +413,7 @@ export function findBodyIssues(body: string): CanonicalIssue[] {
  */
 function scanBody(body: string, blocks: boolean): CanonicalIssue[] {
   const lines = body.split('\n');
-  const scan: Scan = { lines, issues: [] };
+  const scan: Scan = { lines, issues: [], code: lines.map(() => false) };
   splitMultilineIssues(body, scan);
 
   const blank = (i: number) => i < 0 || i >= lines.length || BLANK.test(lines[i]);
@@ -417,6 +432,7 @@ function scanBody(body: string, blocks: boolean): CanonicalIssue[] {
     const line = lines[i];
 
     if (fence) {
+      scan.code![i] = true;
       const close = /^(\s*)(`+|~+)\s*$/.exec(line);
       if (close && close[2][0] === fence.char && close[2].length >= fence.length) {
         fence = null;
@@ -445,6 +461,7 @@ function scanBody(body: string, blocks: boolean): CanonicalIssue[] {
     const open = FENCE.exec(line);
     if (open && !(open[2][0] === '`' && open[3].includes('`'))) {
       fence = { char: open[2][0], length: open[2].length };
+      scan.code![i] = true;
       if (open[2][0] === '~' || open[1] !== '' || !FENCE_INFO.test(open[3])) push(scan, i, 'fence');
       if (!blank(i - 1)) push(scan, i, 'block-gap');
       inList = false;
@@ -531,7 +548,51 @@ function scanBody(body: string, blocks: boolean): CanonicalIssue[] {
     paragraph = true;
   }
 
+  fenceToggleIssues(body, scan);
   return sorted(scan);
+}
+
+/**
+ * Lignes que `mapLinesOutsideCodeBlocks` (@sveltia/ui 0.77.0, `markdown.js`)
+ * tient pour du code : bascule à chaque ligne `^[ \t]*(`{3,}|~{3,})`, sans
+ * longueur ni clôture (la ligne de bascule est laissée telle quelle).
+ */
+function sveltiaCodeLines(lines: readonly string[]): boolean[] {
+  let inCode = false;
+  return lines.map((line) => {
+    if (/^[ \t]*(`{3,}|~{3,})/.test(line)) {
+      inCode = !inCode;
+      return true;
+    }
+    return inCode;
+  });
+}
+
+/**
+ * `fence-toggle` : lignes que `increaseListIndentation` /
+ * `padBlankBlockquoteLines` réécrivent (ou sautent) parce que leur bascule
+ * de code diffère des blocs de code réels (`scan.code`). Conditions et
+ * motifs recopiés de `markdown.js`.
+ */
+function fenceToggleIssues(body: string, scan: Scan): void {
+  const { lines, code } = scan;
+  if (!code) return;
+  const lists = /^\s{2}(?:-|\+|\*|\d+\.)\s/m.test(body);
+  const quotes = /^>$/m.test(body);
+  const sveltia = sveltiaCodeLines(lines);
+  lines.forEach((line, i) => {
+    if (code[i] === sveltia[i]) return;
+    // Code pris pour du texte : retrait d'élément doublé ; `> ` rogné en `>`
+    // par `trimBlankBlockquoteLines` à l'export (même bascule) — un `>` seul,
+    // complété à l'import puis rogné à l'export, revient tel quel. Texte pris
+    // pour du code : la ligne `>` vide n'est pas complétée et ressort `> >`
+    // (un élément de liste non doublé ressort, lui, inchangé). Relevé sur la
+    // réplique (`roundTrip.test.ts`).
+    const rewritten = code[i]
+      ? line === '> ' || (lists && /^(\s+)(-|\+|\*|\d+\.)/.test(line))
+      : quotes && line === '>';
+    if (rewritten) push(scan, i, 'fence-toggle');
+  });
 }
 
 /**

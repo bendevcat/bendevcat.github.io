@@ -9,8 +9,8 @@
  * publierait. Les composants d'éditeur (`registerEditorComponent`) y passent
  * comme dans Sveltia : motif → nœud (props = `fromBlock(match)`), ouverture
  * du formulaire (chaque champ relu par SON éditeur : le contenu markdown d'un
- * encadré par un éditeur Lexical imbriqué, le code d'un terminal par l'éditeur
- * de code), puis `toBlock(props)` à l'export.
+ * encadré par un éditeur Lexical imbriqué, le code d'un terminal par un
+ * champ `text`, rendu tel quel), puis `toBlock(props)` à l'export.
  *
  * Sources recopiées (licence MIT, Kohei Yoshino — `lexical/LICENSE-sveltia.txt`) :
  * - `lexical/sveltia-ui/*` : @sveltia/ui 0.77.0, `text-editor/{constants,
@@ -186,7 +186,9 @@ function exportValue({ editor, enabledTransformers }: ReplicaEditor, isCodeEdito
  * Valeur relue par l'éditeur d'un champ du formulaire d'un composant
  * (`FieldEditor`) : markdown → éditeur imbriqué ; code (`output_code_only`) →
  * éditeur de code ; chaîne, sélection, image → inchangée (une valeur absente
- * devient `''` pour une chaîne, comme `getStringInputValue`).
+ * devient `''` pour une chaîne, comme `getStringInputValue`). `text` :
+ * `text-editor.svelte` lie la chaîne à un `<textarea>` sans la transformer
+ * (sources vérifiées par `terminalCode.test.ts`).
  */
 function openField(field: ReplicaField, value: unknown, registry: ComponentRegistry, nested: NestedContext): unknown {
   const widget = field.widget ?? 'string';

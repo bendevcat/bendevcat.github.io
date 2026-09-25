@@ -138,7 +138,8 @@ describe('composants de l’éditeur : contrat Sveltia 0.221', () => {
     const defs = blockComponents(siteEntries);
     const shape = (id: string) => fieldsOf(byId(defs, id)).map((f) => `${f.name}:${f.widget ?? 'string'}`);
     expect(shape('encadre')).toEqual(['kind:select', 'content:markdown']);
-    expect(shape('terminal')).toEqual(['title:string', 'lang:string', 'code:code']);
+    // Code : champ `text` (F1, D158) — l'éditeur de code perdait les ```.
+    expect(shape('terminal')).toEqual(['title:string', 'lang:string', 'code:text']);
     expect(shape('carte')).toEqual(['ref:select']);
     expect(shape('video')).toEqual(['provider:select', 'id:string', 'title:string']);
 
@@ -150,8 +151,8 @@ describe('composants de l’éditeur : contrat Sveltia 0.221', () => {
 
     const [, lang, code] = fieldsOf(byId(defs, 'terminal'));
     expect(lang.required).toBe(false);
-    expect(code.output_code_only).toBe(true);
-    expect(code.allow_language_selection).toBe(false);
+    expect(code.required).toBeUndefined();
+    expect(code.use_emoji_autocomplete).toBe(false);
 
     const [provider] = fieldsOf(byId(defs, 'video'));
     expect((provider.options as { value: string }[]).map((o) => o.value)).toEqual([...VIDEO_PROVIDERS]);

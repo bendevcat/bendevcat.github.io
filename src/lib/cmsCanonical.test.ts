@@ -246,6 +246,12 @@ describe('blocs de l’éditeur dans la forme que Sveltia écrit (plan 23, T5, R
       terminal('deploy.sh', 'npm ci\n\n  echo "a:::b"\n:::\n$ ls *.md ~ _x_'),
       terminal('sortie', '', ''),
       terminal('t', '\n\nlead', 'yaml'),
+      // Code en champ `text` (F1, D158) : ```, ~~~ et saut de ligne final gardés.
+      terminal('t', 'a\n```\nb'),
+      terminal('t', 'x ```'),
+      terminal('t', 'fin\n'),
+      terminal('README.md', 'cat <<EOF\n```sh\nnpm ci\n```\n~~~\nx\n~~~\nEOF'),
+      `- a\n    - b\n\n${terminal('t', 'a\n```\nb')}\n\n- c\n    - d`,
       carte,
       video,
       BLOCKS.video.toBlock({ provider: 'asciinema', id: '335480', title: 'Session' }),
@@ -285,18 +291,19 @@ describe('blocs de l’éditeur dans la forme que Sveltia écrit (plan 23, T5, R
       [callout('~~barré~~'), ['block-content']],
       [callout('logger *avant*'), ['star']],
       [callout('- a\n\n- b'), ['loose-list']],
-      // Code d'un terminal relu par l'éditeur de code.
-      [terminal('t', 'a\n```\nb'), ['fence-in-code']],
-      [terminal('t', 'x ```'), ['fence-in-code']],
-      [terminal('t', 'fin\n'), ['final-newline']],
+      // Ligne ``` impaire dans le code : bascule des passes du corps inversée.
+      [terminal('t', 'a\n```\n  - x'), ['fence-toggle']],
+      [terminal('t', 'a\n```\n> '), ['fence-toggle']],
+      [`${terminal('t', 'a\n```\nb')}\n\n> q\n>\n> r`, ['fence-toggle']],
+      ['````md\n```\n  - x\n````', ['fence-toggle']],
     ];
     for (const [body, expected] of cases) expect([body, rules(findBodyIssues(body))]).toEqual([body, expected]);
     // Numéros de ligne : ceux du corps (contenu décalé sous l'ouverture).
     expect(findBodyIssues(`Intro\n\n${callout('a\n\n*b*')}`)).toEqual([
       { line: 7, rule: 'star', text: '*b*' },
     ]);
-    expect(findBodyIssues(`Intro\n\n${terminal('t', 'a\nb ```')}`)).toEqual([
-      { line: 7, rule: 'fence-in-code', text: 'b ```' },
+    expect(findBodyIssues(`Intro\n\n${terminal('t', '```\n  - b')}`)).toEqual([
+      { line: 7, rule: 'fence-toggle', text: '  - b' },
     ]);
   });
 

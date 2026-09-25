@@ -112,6 +112,12 @@ const SINGLE_BLOCKS: [string, string, BlockId][] = [
   ['terminal multiligne (:::, yaml, blancs)', MULTILINE_TERMINAL, 'terminal'],
   ['terminal qui cite ::: en fin de ligne', block.terminal('fin.sh', 'echo début\necho fin :::'), 'terminal'],
   ['terminal, lignes vides en tête', block.terminal('t', '\n\nlead'), 'terminal'],
+  [
+    'terminal qui contient ``` et ~~~',
+    block.terminal('README.md', 'cat <<EOF\n```sh\nnpm ci\n```\n~~~\nx\n~~~\nEOF\necho x ``` y ````'),
+    'terminal',
+  ],
+  ['terminal, saut de ligne final', block.terminal('t', 'fin\n'), 'terminal'],
   ['carte', block.carte('projects/gha-svu'), 'carte'],
   ['vidéo YouTube', block.video('youtube', 'aqz-KE-bpKQ', 'Big Buck Bunny'), 'video'],
   ['vidéo asciinema', block.video('asciinema', '335480', 'Une session « asciinema »'), 'video'],
@@ -187,15 +193,29 @@ describe('aller-retour Lexical des blocs (plan 23, R8)', () => {
     expect(saved(nested)).toBe(nested);
   });
 
-  it('le code d’un terminal passe par l’éditeur de code (constructions que le guard signale)', () => {
-    // Une ligne qui commence par ``` ferme le bloc de code : le reste sort du code.
+  it('le code d’un terminal passe par un champ text : ``` et saut de ligne final gardés (F1, D158)', () => {
+    for (const code of ['x ```', 'a\n```\nb', 'fin\n', '```sh\nls\n```']) {
+      const body = block.terminal('t', code);
+      expect(saved(body)).toBe(body);
+      expect(componentValues(body, blogBody, registry)).toEqual([{ type: 'x-terminal', values: { title: 't', lang: 'bash', code } }]);
+    }
+    // L'éditeur de code (widget `code`, abandonné) aurait perdu ces valeurs.
     expect(codeFieldRoundTrip('a\n```\nb')).toBe('a\n```\n\nb\n\n```plain');
-    // Une suite de ``` ailleurs : l'export Lexical allonge la clôture, que
-    // `parseCodeBlock` ne relit pas — le code est vidé.
     expect(codeFieldRoundTrip('x ```')).toBe('');
-    expect(saved(block.terminal('t', 'x ```'))).toBe(block.terminal('t', ''));
-    // Saut de ligne final retiré.
-    expect(saved(block.terminal('t', 'fin\n'))).toBe(block.terminal('t', 'fin'));
+    expect(codeFieldRoundTrip('fin\n')).toBe('fin');
+  });
+
+  it('une ligne ``` isolée dans le code inverse la bascule des passes du corps (fence-toggle)', () => {
+    // `increaseListIndentation` / `padBlankBlockquoteLines` basculent à chaque
+    // ligne ``` ou ~~~ : après une ligne impaire, le code est pris pour du texte…
+    // (retrait doublé quand une ligne du corps ressemble à un élément de liste indenté)…
+    const code = block.terminal('t', 'a\n```\n  - x\n  --flag');
+    expect(saved(code)).toBe(block.terminal('t', 'a\n```\n    - x\n    --flag'));
+    // … et la citation qui suit le bloc pour du code.
+    const quote = `${block.terminal('t', 'a\n```\nb')}\n\n> q\n>\n> r`;
+    expect(saved(quote)).toBe(`${block.terminal('t', 'a\n```\nb')}\n\n> q\n> >\n> r`);
+    // Sans liste ni citation autour, rien ne bouge.
+    expect(saved(block.terminal('t', 'a\n```\nb'))).toBe(block.terminal('t', 'a\n```\nb'));
   });
 
   it('garde et réplique d’accord : aucun écart signalé ⇔ corps identique après aller-retour', () => {
@@ -223,6 +243,17 @@ describe('aller-retour Lexical des blocs (plan 23, R8)', () => {
       block.terminal('t', 'a\n```\nb'),
       block.terminal('t', 'fin\n'),
       block.terminal('t', 'a **b\nc** d'),
+      // Bascule des passes du corps inversée par une ligne ``` du code.
+      block.terminal('t', 'a\n```\n  --flag'),
+      block.terminal('t', 'a\n```\n  --flag\n```\n  --ok'),
+      block.terminal('t', 'a\n```\n> '),
+      block.terminal('t', 'a\n```\n>'),
+      `${block.terminal('t', 'a\n```\nb')}\n\n> q\n>\n> r`,
+      `> q\n>\n> r\n\n${block.terminal('t', 'a\n```\nb')}`,
+      `- a\n    - b\n\n${block.terminal('t', 'a\n```\nb')}\n\n- c\n    - d`,
+      `- a\n    - b\n\n${block.terminal('t', 'a\n```\n  - x')}`,
+      '````md\n```\n  --x\n````\n\n- a\n    - b',
+      '````md\n```\n  - x\n````',
     ];
     const disagreements = samples
       .map((body) => ({ body, clean: findBodyIssues(body).length === 0, stable: saved(body) === body }))
