@@ -159,3 +159,10 @@ Findings outside criteria: (1) **Sveltia's markdown editor rewrites bodies on lo
 - Covers: R16, R17 (and R0); keeps R3–R11, R19 green
 - Acceptance: guard tests green, and red when a spanning `**…⏎…**`, a `*x*`, a `|---|` table or a code value ending in `\n` is planted; `git diff <base> -- src/content` shows only syntax lines (listed in the report with counts); all 51 built site pages identical to base after whitespace normalisation of text nodes (byte-identical where no emphasis moved), `node scripts/check-previews.mjs` exit 0, every other `scripts/check-*.mjs` = base; `npx vitest run` 0 failed. Rendered (verifier): after load and full scroll, Save stays disabled on all 13 entries; the same edit saves only the edited field and Sveltia's frontmatter re-formatting (no body or code-value change)
 - Depends on: F1
+
+### F3 — Last two non-canonical entries (D146)
+- Files: `src/content/prompts/decouper-un-projet-en-plans-anti-drift/index.md`, `src/content/blog/meilleurs-vpn-2025/index.md` (syntax only), `src/lib/cmsCanonical.test.ts` (`PENDING` emptied), README if it names them
+- Canonicalise both (decouper: its 2 spanning bold, `*encore*`, `|---|`; meilleurs-vpn: the loose nested list in Sveltia's tight form); word sequence unchanged; report the visible deltas (decouper window/card token count; meilleurs-vpn list HTML)
+- Covers: R16, R17 (with D146's reading of R16's Save clause)
+- Acceptance: guard green with an empty `PENDING`; the F2 Lexical replica returns every body and code value unchanged except `---` rules; `npx vitest run` 0 failed; build: site pages identical to the F2 build except decouper (`/prompts/decouper…`, `/prompts` card) and `/blog/meilleurs-vpn-2025`, each delta listed; all `scripts/check-*.mjs` exit 0
+- Depends on: F2
