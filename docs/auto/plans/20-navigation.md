@@ -144,3 +144,22 @@ Mutations: 28 planted defects (23 on the tests, 5 on check-admin), all red. Find
 - Covers: R19 (1)
 - Acceptance: unit test on the config transform (backend = `{ name: 'test-repo' }` only, every other key identical to `config.yml`); `npx vitest run` 0 failed; build + check-admin 8 lines exit 0; the orchestrator walks `/admin/?test-repo` in a fresh tab → 0 console warning/error from the config parser
 - Depends on: T5
+
+### Verification attempt 2 (tip `7684655`) — 21/21 proven
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | cold cache, fresh tabs on :4322 `/admin/?test-repo`: entrance `<h1>` « benCat · Studio », logo 28 px, one test-repo button → board → 4 collections → rows → Trier/Filtrer/Grouper → one entry per collection → « Afficher sur le site en ligne » → `/skills/anti-drift-planning` loads; no 5xx |
+| R1, R2, R4, R6, R8, R10, R12, R14, R16 | proven | tests re-run fresh (447 passed); attempt-1 mutations carried |
+| R3 | proven | `document.title` « Collection Articles – benCat · Studio »; favicon `/admin/logo.svg`; header `img.logo` 28 px; entrance `<h1>` |
+| R5 | proven (D136) | icon texts `article`, `rocket_launch`, `terminal`, `extension` drawn in Material Symbols Outlined, 24 px boxes |
+| R7 | proven | the 13 rows read exactly as planned |
+| R9 | proven | 6 article rows with a 512 px `<img>`; 0 on projects/prompts/skills (upload carried) |
+| R11 | proven | default sorts checked in the 4 Sort menus; row orders as planned |
+| R13 | proven | every filter alone gives the planned rows (blog, projects, prompts, skills) |
+| R15 | proven | Année `2025:6`; Catégorie `Actus 1 · DevOps 2 · Outils 3`; Statut `actif 1 · wip 1`; Outil `Claude 1 · Claude Code 2` |
+| R17 | proven | check-admin 8 lines exit 0; exit-1 mutations carried |
+| R18 | proven | 5 re-walked (4 published → 200 with `<h1>` = title; draft → 404), 8 carried |
+| R19 | proven (D136) | 3 fresh loads: no config-parser warning or error (`[debug] CMS configuration` only); `config.yml` fetched once; every request 200/304 except the draft's exempt liveness 404 |
+| R20 | proven | 447 passed; 0 errors; 51 site pages identical to base; 12 other checks identical; frozen diff = F1's files only (D137); README greps |
+
+F1 mutations: 7 planted defects (backend keeps `repo`, `load_config_file` dropped, placed beside `config`, plan-19 merge restored, key altered, config altered, non-200 accepted) each red; production `dist/_astro` byte-identical to base. Findings outside criteria: `src/admin/dev/testRepo.ts:89` seed-fetch `!res.ok` guard untested (plan-19 code); console warnings not from the config parser — iframe `allow-scripts` + `allow-same-origin` on each preview open and Svelte `derived_inert` ×3–9 per entry switch (plan 21 input); Sveltia rewrites `/admin/?test-repo` to `/admin/#/…`, so a reload takes the production path (dev convenience, plan 22 input).
