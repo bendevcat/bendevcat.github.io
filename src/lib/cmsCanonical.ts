@@ -51,13 +51,34 @@
  *   niveau (`increaseListIndentation` puis l'export des listes) ;
  *   `list-number` : liste numérotée renumérotée en suite.
  * - `setext` : `---` sous une ligne de texte devient un séparateur.
+ * - `block` (plan 23, T5, R9) : une ligne qui commence par `:::` doit ouvrir
+ *   un bloc de l'éditeur (`src/lib/blocks/syntax.mjs`) écrit exactement comme
+ *   son composant Sveltia l'écrit — `toBlock(fromBlock(match))`, titre, id et
+ *   langage élagués comme dans `src/admin/blocks/editorComponents.ts`. Le
+ *   motif est confronté au reste du document à partir de cette ligne, comme
+ *   le transformateur `multiline-element` de Sveltia (`components/
+ *   transformers.js`) ; sans correspondance (attribut sans guillemets, `:::`
+ *   dans un encadré à la même longueur de clôture, nom inconnu, indentation),
+ *   la ligne reste du texte dans l'éditeur ; avec une correspondance d'une
+ *   autre forme (ligne vide en trop ou en moins, blancs, clôture trop longue),
+ *   l'export la réécrit. `block-gap` : un bloc non précédé ou non suivi d'une
+ *   ligne vide.
+ * - Contenu d'un encadré : relu par l'éditeur imbriqué du formulaire (boutons
+ *   gras, italique, code, lien, listes ; ni composant, ni bloc de code, ni
+ *   barré) — les règles du corps, plus `block-content` pour un bloc de code
+ *   clôturé ou un `~~` (réécrits `` \` `` et `\~`).
+ * - Code d'un terminal : relu par l'éditeur de code (`output_code_only`),
+ *   les règles des champs `code` ci-dessous.
  *
  * Champs `widget: code` (`prompt`, `snippet`, `excerpt`) — `code-editor.js`
  * `toCodeBlock` / `parseCodeBlock` autour du transformeur `CODE` :
  * - `final-newline` : le ou les sauts de ligne finaux disparaissent (`|` →
  *   `|-` dans le YAML). Le site rend pareil avec ou sans : `codeWindowText`
  *   retire un saut final, `promptWindowSource` rogne ;
- * - `fence-in-code` : une ligne commençant par ```` ``` ```` ferme le bloc ;
+ * - `fence-in-code` : une suite de trois backticks ou plus, où qu'elle soit :
+ *   en tête de ligne elle ferme le bloc ; ailleurs l'export Lexical allonge
+ *   la clôture (```` ```` ````), que `parseCodeBlock` ne relit pas — la valeur
+ *   entière est VIDÉE (relevé au banc, plan 23, T5) ;
  * - `split-multiline`, comme pour les corps.
  *
  * Hors garde, volontairement : les séparateurs `---`, réécrits `***` à
@@ -70,6 +91,8 @@
  * contenu des blocs de code (sauf `split-multiline`), les portées de code en
  * ligne, les caractères échappés et les adresses de liens.
  */
+
+import { BLOCKS, type BlockId } from './blocks/syntax.mjs';
 
 export type CanonicalRule =
   | 'span'
@@ -88,7 +111,9 @@ export type CanonicalRule =
   | 'list-number'
   | 'setext'
   | 'final-newline'
-  | 'fence-in-code';
+  | 'fence-in-code'
+  | 'block'
+  | 'block-content';
 
 export interface CanonicalIssue {
   /** Numéro de ligne dans la valeur, à partir de 1. */
@@ -273,12 +298,105 @@ function markerFamily(marker: string): string {
   return /^\d/.test(marker) ? `ol${marker.slice(-1)}` : `ul${marker}`;
 }
 
+/** Ligne qui commence par `:::` (indentée ou non) : candidate à un bloc de l'éditeur. */
+const BLOCK_LINE = /^[ \t]*:{3,}/;
+
+/** Ids des composants, dans l'ordre de `editor_components` (public/admin/config.yml). */
+const BLOCK_IDS: readonly BlockId[] = ['encadre', 'terminal', 'carte', 'video'];
+
+interface BlockMatch {
+  id: BlockId;
+  /** Le texte reconnu, de la ligne d'ouverture à la clôture. */
+  text: string;
+  props: Record<string, string>;
+  /** Index de la dernière ligne du bloc. */
+  end: number;
+}
+
+/**
+ * Le bloc que Sveltia reconnaît à la ligne `start` : motif confronté au reste
+ * du document, retenu seulement s'il commence à cette ligne
+ * (`handleImportAfterStartMatch`, `components/transformers.js`).
+ */
+function matchBlock(lines: readonly string[], start: number): BlockMatch | null {
+  const rest = lines.slice(start).join('\n');
+  for (const id of BLOCK_IDS) {
+    const { pattern, fromBlock } = BLOCKS[id];
+    const match = rest.match(new RegExp(pattern.source, pattern.flags.replace('g', '')));
+    if (match && match.index === 0) {
+      return { id, text: match[0], props: fromBlock(match), end: start + match[0].split('\n').length - 1 };
+    }
+  }
+  return null;
+}
+
+/**
+ * Le bloc tel que son composant Sveltia l'écrit : `toBlock` de syntax.mjs,
+ * titre, id et langage élagués (`editorComponents.ts`).
+ */
+export function editorBlock(id: BlockId, props: Record<string, unknown>): string {
+  const trimmed = { ...props };
+  for (const key of ['title', 'id', 'lang']) if (typeof trimmed[key] === 'string') trimmed[key] = (trimmed[key] as string).trim();
+  return BLOCKS[id].toBlock(trimmed);
+}
+
+/** Décale les écarts d'une valeur imbriquée (lignes à partir de `offset`) dans le scan du corps. */
+function pushNested(scan: Scan, offset: number, issues: CanonicalIssue[]): void {
+  for (const issue of issues) push(scan, offset + issue.line - 1, issue.rule);
+}
+
+/**
+ * Écarts du bloc qui commence à la ligne `start` ; renvoie l'index de sa
+ * dernière ligne (`start` s'il n'est pas reconnu).
+ */
+function blockIssues(scan: Scan, start: number): number {
+  const { lines } = scan;
+  const blank = (i: number) => i < 0 || i >= lines.length || BLANK.test(lines[i]);
+  const block = matchBlock(lines, start);
+  if (!block) {
+    push(scan, start, 'block');
+    return start;
+  }
+  if (!blank(start - 1)) push(scan, start, 'block-gap');
+  if (!blank(block.end + 1)) push(scan, block.end, 'block-gap');
+  if (block.text !== editorBlock(block.id, block.props)) {
+    push(scan, start, 'block');
+    return block.end;
+  }
+  // Forme canonique : le contenu commence deux lignes sous l'ouverture (ligne vide entre).
+  if (block.id === 'encadre' && block.props.content !== '') {
+    const content = block.props.content;
+    pushNested(scan, start + 2, scanBody(content, false));
+    const contentLines = content.split('\n');
+    let fence = false;
+    contentLines.forEach((line, k) => {
+      if (FENCE.test(line)) {
+        push(scan, start + 2 + k, 'block-content');
+        fence = !fence;
+      } else if (!fence && /~~/.test(maskInline(line))) push(scan, start + 2 + k, 'block-content');
+    });
+  }
+  // Le code commence sous la clôture de code, elle-même deux lignes sous l'ouverture.
+  if (block.id === 'terminal' && block.props.code !== '') {
+    pushNested(scan, start + 3, findCodeFieldIssues(block.props.code));
+  }
+  return block.end;
+}
+
 /**
  * Les constructions d'un corps Markdown que l'éditeur riche de Sveltia
  * réécrit à l'ouverture. Liste vide = le corps relu est identique (au `---`
  * près, rétabli par le hook `preSave`).
  */
 export function findBodyIssues(body: string): CanonicalIssue[] {
+  return scanBody(body, true);
+}
+
+/**
+ * `blocks` : les lignes `:::` sont des blocs de l'éditeur (corps d'article) ;
+ * faux pour le contenu d'un encadré, dont l'éditeur n'a aucun composant.
+ */
+function scanBody(body: string, blocks: boolean): CanonicalIssue[] {
   const lines = body.split('\n');
   const scan: Scan = { lines, issues: [] };
   splitMultilineIssues(body, scan);
@@ -316,6 +434,13 @@ export function findBodyIssues(body: string): CanonicalIssue[] {
     }
     const afterBlank = blankRun > 0;
     blankRun = 0;
+
+    if (blocks && BLOCK_LINE.test(line)) {
+      i = blockIssues(scan, i);
+      inList = false;
+      paragraph = false;
+      continue;
+    }
 
     const open = FENCE.exec(line);
     if (open && !(open[2][0] === '`' && open[3].includes('`'))) {
@@ -418,7 +543,7 @@ export function findCodeFieldIssues(value: string): CanonicalIssue[] {
   const scan: Scan = { lines, issues: [] };
   splitMultilineIssues(value, scan);
   lines.forEach((line, i) => {
-    if (/^[ \t]*`{3,}/.test(line)) push(scan, i, 'fence-in-code');
+    if (/`{3,}/.test(line)) push(scan, i, 'fence-in-code');
   });
   if (value.endsWith('\n')) push(scan, lines.length - 1, 'final-newline');
   return sorted(scan);
@@ -475,7 +600,8 @@ function escapeTildes(line: string): string {
  * syntaxiques dont le rendu HTML du site ne change pas (au placement d'un
  * saut de ligne près) : paire `**` ouverte sur deux lignes (le saut passe
  * devant la paire), `*x*` → `_x_` hors d'un mot, `~` → `\~`, tableaux, bloc
- * sans langue → `plaintext`, lignes vides multiples. Laisse tel quel ce qui
+ * sans langue → `plaintext`, lignes vides multiples, bloc de l'éditeur dans
+ * la forme de `toBlock` (plan 23). Laisse tel quel ce qui
  * changerait le rendu — liste lâche, `*` dans un mot, alignement de tableau —
  * et `---` (D126).
  */
@@ -496,6 +622,20 @@ export function normalizeBody(body: string): string {
 
     if (BLANK.test(line)) {
       if (out.length === 0 || !BLANK.test(out[out.length - 1])) out.push(line);
+      continue;
+    }
+
+    // Bloc de l'éditeur reconnu : réécrit par `toBlock` (contenu d'encadré
+    // normalisé) — sans élaguer titre ni id, que le build refuse d'ailleurs.
+    // Une ligne `:::` non reconnue reste telle quelle.
+    if (BLOCK_LINE.test(line)) {
+      const block = matchBlock(lines, i);
+      if (block) {
+        const props =
+          block.id === 'encadre' ? { ...block.props, content: normalizeBody(block.props.content) } : block.props;
+        out.push(BLOCKS[block.id].toBlock(props));
+        i = block.end;
+      } else out.push(line);
       continue;
     }
 
