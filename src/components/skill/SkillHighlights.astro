@@ -1,0 +1,44 @@
+---
+/**
+ * SkillHighlights.astro (plan 17, T4 ; inventaire §8) — carte « Ce que fait
+ * ce skill » de la colonne de gauche ; la page l'omet sans `highlights`.
+ *
+ * `.card` rayon 18 (`--radius-aside`), padding 26/28, ombre `var(--shadow)`
+ * en style écrit (jamais l'utilitaire `.shadow`, figé en clair au build).
+ * h2 17 px / 600 `ink` ; `<ul>` écart 10, chaque point une icône `check`
+ * 15 px `accent` puis le texte 14.5 px `body`. Les citations anglaises
+ * portent `lang="en"` (quoteLang). Indexée par la recherche.
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-skill-highlights`,
+ * `data-highlight`.
+ */
+import Icon from '../Icon.astro';
+import { quoteLang } from '../../lib/skillDetail';
+
+interface Props {
+  highlights: string[];
+}
+
+const { highlights } = Astro.props;
+---
+
+<section
+  class="card rounded-aside px-7 py-[26px]"
+  style="box-shadow: var(--shadow);"
+  aria-labelledby="skill-highlights"
+  data-skill-highlights
+>
+  <h2 id="skill-highlights" class="font-sans text-[17px] leading-snug font-semibold text-ink">Ce que fait ce skill</h2>
+  <ul class="mt-4 flex flex-col gap-2.5">
+    {
+      highlights.map((text) => (
+        <li class="flex items-start gap-2.5" data-highlight>
+          <Icon name="check" size={15} class="mt-[3px] text-accent" />
+          <span lang={quoteLang(text) === 'en' ? 'en' : undefined} class="min-w-0 font-sans text-[14.5px] leading-[1.55] text-body">
+            {text}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</section>

@@ -64,3 +64,18 @@ export function updatedLabel(date: Date | null | undefined): string | null {
   if (!date) return null;
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
+
+/**
+ * Langue d'une phrase citée (déclencheurs, points forts) : le site est en
+ * français (`<html lang="fr">`), les citations viennent de la doc des plugins,
+ * en anglais ou en français (plan 17 : `lang="en"` sauf citation française,
+ * comme `ne rien perdre entre les sessions`). Règle : une lettre accentuée
+ * du français ou un mot-outil français → `fr` ; sinon `en`.
+ */
+const FRENCH_LETTER = /[àâçéèêëîïôûùüÿœæ]/i;
+const FRENCH_WORD =
+  /(?:^|[^\p{L}])(?:le|la|les|un|une|des|du|de|et|est|ne|pas|rien|entre|chaque|toute|tout|ce|qui|que|par|pour|avec|sans|dans|sur|son|sa|ses)(?=$|[^\p{L}])/iu;
+
+export function quoteLang(text: string): 'fr' | 'en' {
+  return FRENCH_LETTER.test(text) || FRENCH_WORD.test(text) ? 'fr' : 'en';
+}

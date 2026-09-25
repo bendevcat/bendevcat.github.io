@@ -6,9 +6,8 @@
  * unitaires — comme listPattern.ts pour le patron liste.
  *
  * Deux familles de fonctions :
- * - `projectTabs` / `promptPageTabs` / `skillPageTabs` (et `skillTabs`, retiré
- *   au plan 17 T4) décident, côté serveur, QUELS
- *   onglets existent : un onglet n'apparaît que si le contenu existant le
+ * - `projectTabs` / `promptPageTabs` / `skillPageTabs` décident, côté
+ *   serveur, QUELS onglets existent : un onglet n'apparaît que si le contenu existant le
  *   nourrit (D1). Les pages leur passent des faits bruts (corps, présence
  *   d'un extrait de code, tailles), jamais une entrée de collection.
  * - `computeTabState` / `nextTabIndex` décident, côté client, de l'état
@@ -45,10 +44,6 @@ export interface ProjectTabInput {
   stackCount: number;
   /** Articles liés APRÈS `sortAndFilter` : les brouillons sont déjà écartés. */
   relatedCount: number;
-}
-
-export interface BodyTabInput {
-  body: string | undefined;
 }
 
 export interface PromptPageTabInput {
@@ -120,14 +115,6 @@ export function skillPageTabs(input: SkillPageTabInput): Tab[] {
   if (input.triggerCount > 0) tabs.push({ id: 'declencheurs', label: 'déclencheurs' });
   if (input.changelogCount > 0) tabs.push({ id: 'versions', label: 'versions' });
   tabs.push({ id: 'infos', label: 'infos' });
-  return tabs;
-}
-
-/** Infos est toujours là : `type` a une valeur par défaut dans le schéma. Corps sous « Aperçu » (D2). */
-export function skillTabs(input: BodyTabInput): Tab[] {
-  const tabs: Tab[] = [];
-  if (!isBlank(input.body)) tabs.push({ id: 'apercu', label: 'Aperçu' });
-  tabs.push({ id: 'infos', label: 'Infos' });
   return tabs;
 }
 

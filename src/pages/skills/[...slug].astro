@@ -1,12 +1,46 @@
 ---
+/**
+ * Fiche skill (plan 17, T4 ; inventaire §8 ; prototype 795–923 ; D115–D117).
+ *
+ * `<main>` › `<article data-pagefind-body>`, 40 px sous le header du site :
+ * l'en-tête (SkillHeader, sans carte), puis, 28 px dessous, une grille — à
+ * partir de 1024 px `minmax(0,1fr) | 340px`, écart 22, `items-start` ; en
+ * dessous une colonne, blocs de gauche puis colonne latérale (ordre du DOM).
+ *
+ * - Gauche (écart 16) : fenêtre d'installation (InstallWindow, omise sans
+ *   `installCmd`) › `Ce que fait ce skill` (SkillHighlights, omise sans
+ *   `highlights`) › explorateur (FileExplorer, omis sans `files`) ›
+ *   `En détail` (SkillNotes : le corps, omis quand il est blanc).
+ * - Colonne `<aside aria-label="Autour du skill">`, écart 12, collante à
+ *   20 px du haut à partir de 1024 px seulement : onglets en piste
+ *   (DetailTabs `variant="track"`) déclencheurs · versions · infos — un
+ *   onglet sans données est omis (skillPageTabs, src/lib/detailTabs.ts) ;
+ *   puis `Prompts du skill` (RelatedPromptsCard), omise sans prompt lié.
+ * - Le résumé `N skill(s) · N commande(s) · N prompt(s)` est celui de la
+ *   carte de `/skills/` (skillCardData, src/lib/listCards.ts) ; `maj.` est la
+ *   date de la ligne du journal de la version affichée (skillUpdated).
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-skill-aside`,
+ * `data-skill-left` et ceux des composants de src/components/skill/.
+ */
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
-import TagChip from '../../components/TagChip.astro';
+import RelatedPromptsCard from '../../components/prompt/RelatedPromptsCard.astro';
+import SkillHeader from '../../components/skill/SkillHeader.astro';
+import InstallWindow from '../../components/skill/InstallWindow.astro';
+import SkillHighlights from '../../components/skill/SkillHighlights.astro';
+import FileExplorer from '../../components/skill/FileExplorer.astro';
+import SkillNotes from '../../components/skill/SkillNotes.astro';
+import SkillTriggers from '../../components/skill/SkillTriggers.astro';
+import SkillVersions from '../../components/skill/SkillVersions.astro';
+import SkillInfos from '../../components/skill/SkillInfos.astro';
 import { getSortedSkills } from '../../lib/skills';
 import { sortAndFilterPrompts } from '../../lib/prompts';
 import { assertEntriesResolved } from '../../lib/references';
-import { skillTabs } from '../../lib/detailTabs';
+import { skillPageTabs } from '../../lib/detailTabs';
+import { skillCardData } from '../../lib/listCards';
+import { installSteps, skillUpdated, toolLabel, updatedLabel } from '../../lib/skillDetail';
 
 export async function getStaticPaths() {
   const skills = await getSortedSkills();
@@ -15,188 +49,126 @@ export async function getStaticPaths() {
 
 const { skill } = Astro.props;
 const { Content } = await render(skill);
-const { title, name, description, type, version, repoUrl, installCmd, tags } = skill.data;
+const { title, name, description, type, version, repoUrl, installCmd, installNote, tags } = skill.data;
+const highlights = skill.data.highlights ?? [];
+const triggers = skill.data.triggers ?? [];
+const changelog = skill.data.changelog ?? [];
+const files = skill.data.files ?? [];
 
-// R7 : les références sont résolues en entrées réelles — on affiche un titre,
-// jamais un id ni `undefined`. `assertEntriesResolved` (D06, Plan 3) fait
-// échouer le build avec un message nommant le skill, la collection visée et
-// l'id manquant, au lieu d'un TypeError anonyme — appelé EN PREMIER, sinon
-// une référence cassée serait masquée.
-// `sortAndFilterPrompts` (src/lib/prompts.ts) est composé ENSUITE : il écarte
-// les prompts `draft` (ils existent bien — la référence n'est pas cassée —
-// mais n'ont pas de route publique, les lier produirait un 404) et trie A→Z.
-// D09 (fix round 1, T-C2) : réutilise le helper testé existant au lieu de
-// réécrire le filtre à la main, qui perdait le tri (cf. sortAndFilterSkills,
-// composé symétriquement côté prompt → skills).
-const relatedPrompts = skill.data.relatedPrompts?.length
-  ? sortAndFilterPrompts(
-      assertEntriesResolved(
-        skill.id,
-        skill.data.relatedPrompts,
-        await getEntries(skill.data.relatedPrompts),
-      ),
-    )
+// D06 : une référence cassée fait échouer le build en nommant le skill et
+// l'id manquant (assertEntriesResolved, appelé EN PREMIER) ; puis
+// sortAndFilterPrompts écarte les brouillons (pas de page) et trie A→Z.
+const resolved = skill.data.relatedPrompts?.length
+  ? assertEntriesResolved(skill.id, skill.data.relatedPrompts, await getEntries(skill.data.relatedPrompts))
   : [];
+const relatedPrompts = sortAndFilterPrompts(resolved);
 
-const hasInstallCmd = (installCmd ?? '').trim().length > 0;
+// En-tête et infos : les mêmes chaînes que la carte de /skills/.
+const card = skillCardData(skill.data, resolved);
+const updated = skillUpdated(version, changelog);
+const updatedText = updatedLabel(updated);
+const steps = installSteps(installCmd);
+const hasBody = (skill.body ?? '').trim() !== '';
 
-// Plan 8 : QUELS onglets existent se décide dans src/lib/detailTabs.ts —
-// jamais ici. Le corps nourrit « Aperçu » (D2) ; « Infos » est toujours là
-// (`type` a une valeur par défaut) et porte la version (D5, pas d'onglet
-// Versions) et la commande d'installation avec son « Copier » (D8).
-const tabs = skillTabs({ body: skill.body });
+// QUELS onglets existent se décide dans src/lib/detailTabs.ts.
+const tabs = skillPageTabs({ triggerCount: triggers.length, changelogCount: changelog.length });
 const shown = new Set(tabs.map((tab) => tab.id));
 ---
 
 <BaseLayout title={`${title} — bencat_`} description={description}>
-  <article class="mx-auto max-w-3xl py-10" data-pagefind-body>
-    <p class="font-mono text-sm text-accent">~/ skills</p>
+  <main>
+    <article data-pagefind-body class="pt-10">
+      <SkillHeader
+        id={skill.id}
+        title={title}
+        name={name}
+        description={description}
+        type={card.type}
+        version={card.version}
+        license={card.license}
+        summary={card.summary}
+        updated={updated}
+        updatedLabel={updatedText}
+      />
 
-    <h1 class="mt-4 font-sans text-4xl font-bold text-ink">{title}</h1>
+      <div class="mt-7 grid grid-cols-1 gap-[22px] lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div class="flex min-w-0 flex-col gap-4" data-skill-left>
+          {
+            installCmd && steps.length > 0 && (
+              <InstallWindow installCmd={installCmd} steps={steps} tool={toolLabel(type)} note={installNote} />
+            )
+          }
 
-    <p class="mt-4 text-muted">{description}</p>
+          {highlights.length > 0 && <SkillHighlights highlights={highlights} />}
 
-    {
-      repoUrl && (
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a
-            href={repoUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-            class="rounded-pill border border-line px-3 py-1.5 font-mono text-xs text-ink transition-colors hover:border-accent hover:text-accent"
-          >
-            code source ↗
-          </a>
+          {files.length > 0 && <FileExplorer files={files} source={skill.data.filesSource} name={name} />}
+
+          {
+            hasBody && (
+              <SkillNotes>
+                <Content />
+              </SkillNotes>
+            )
+          }
         </div>
-      )
-    }
 
-    {/*
-      Plan 8 (D7) : type, nom, version, tags et prompts liés quittent
-      l'en-tête pour le panneau « Infos » ; le lien « code source » reste dans
-      l'en-tête.
-    */}
-    <DetailTabs tabs={tabs} label="Sections du skill">
-      {
-        shown.has('apercu') && (
-          <div slot="apercu" class="prose">
-            <Content />
-          </div>
-        )
-      }
+        <aside aria-label="Autour du skill" class="flex min-w-0 flex-col gap-3 lg:sticky lg:top-5" data-skill-aside>
+          <DetailTabs tabs={tabs} label="Sections du skill" variant="track">
+            {
+              shown.has('declencheurs') && (
+                <div slot="declencheurs">
+                  <SkillTriggers triggers={triggers} />
+                </div>
+              )
+            }
 
-      {
-        shown.has('infos') && (
-          <dl slot="infos" class="grid gap-x-6 gap-y-2 font-mono text-xs sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-y-4">
-            <dt class="text-muted">type</dt>
-            <dd class="mb-2 sm:mb-0">
-              <span class="rounded-pill border border-line px-2 py-0.5 text-muted">{type}</span>
-            </dd>
+            {
+              shown.has('versions') && (
+                <div slot="versions">
+                  <SkillVersions changelog={changelog} />
+                </div>
+              )
+            }
 
-            {name && (
-              <>
-                <dt class="text-muted">nom</dt>
-                <dd class="mb-2 text-ink sm:mb-0">{name}</dd>
-              </>
-            )}
+            {
+              shown.has('infos') && (
+                <div slot="infos">
+                  <SkillInfos
+                    type={card.type}
+                    version={card.version}
+                    license={card.license}
+                    summary={card.summary}
+                    updated={updatedText}
+                    tags={tags}
+                    repoUrl={repoUrl}
+                  />
+                </div>
+              )
+            }
+          </DetailTabs>
 
-            {version && (
-              <>
-                <dt class="text-muted">version</dt>
-                <dd class="mb-2 sm:mb-0">
-                  <span class="rounded-pill border border-line px-2 py-0.5 text-muted">v{version}</span>
-                </dd>
-              </>
-            )}
-
-            {tags.length > 0 && (
-              <>
-                <dt class="text-muted">tags</dt>
-                <dd class="mb-2 sm:mb-0">
-                  <ul class="flex flex-wrap gap-2" aria-label="Tags">
-                    {tags.map((tag) => (
-                      <TagChip tag={tag} />
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-
-            {hasInstallCmd && (
-              <>
-                <dt class="text-muted">installation</dt>
-                <dd class="mb-2 min-w-0 sm:mb-0">
-                  {/*
-                    R6 : ce <pre> est DANS <article>, donc src/scripts/copy-code.ts
-                    (importé plus bas) lui accroche son bouton « Copier »/« Copié ! ».
-
-                    AMENDEMENT du 2026-08-02, AVANT exécution de T-C2 (donc pas une
-                    déviation) — forme établie et vérifiée en T-B3, voir D07 :
-                    le <pre> DOIT être enveloppé dans un conteneur `.prose`, sinon il
-                    ne reçoit RIEN du style de code-block du Plan 1. La règle
-                    `.prose :where(pre)` de src/styles/global.css porte
-                    overflow-x:auto, padding, bordure et rayon, et elle est SCOPÉE à
-                    `.prose`. Sans l'enveloppe, le bloc mesurait `overflow-x: visible`
-                    et provoquait 2 461 px de débordement horizontal à 375px — R9
-                    cassée, et spec §6.2 (« réutilisant le composant code-block du
-                    Plan 1 ») jamais honorée.
-                    Deux points établis en T-B3, à ne pas re-débattre :
-                    - le label (`<h2>`, `<dt>` depuis le Plan 8) reste HORS de
-                      `.prose` (sinon `.prose :where(h2)` écrase son style de
-                      label mono discret) ;
-                    - le <pre> ne porte AUCUNE classe : pas de `astro-code` (la
-                      règle `.astro-code` de global.css lui imposerait un fond
-                      `!important`, garde-fou du thème Shiki, et elle n'est pas
-                      nécessaire — le preflight Tailwind v4 met déjà `pre` en
-                      JetBrains Mono).
-                  */}
-                  {/*
-                    Plan 8 (D8, R10) : ce <pre> vit dans un panneau masqué au
-                    chargement (`hidden`, donc `display: none`). copy-code.ts
-                    lit `code.innerText` au chargement ; sur un élément non
-                    rendu, `innerText` renvoie `textContent` — la commande
-                    brute, sans le libellé du bouton, ajouté APRÈS la lecture.
-                    Le bouton « Copier » fonctionne donc dès que l'onglet
-                    « Infos » est affiché.
-                    `text-base` : la liste est en `text-xs`, le bloc garde la
-                    taille qu'il avait hors onglets. `[&_pre]:my-0!` annule la
-                    marge de `.prose :where(pre)` (1.5em) — ici c'est la
-                    grille qui espace les lignes ; `!` car les règles `.prose`
-                    sont hors couche et battraient un utilitaire normal.
-                  */}
-                  <div class="prose text-base [&_pre]:my-0!">
-                    <pre><code>{installCmd}</code></pre>
-                  </div>
-                </dd>
-              </>
-            )}
-
-            {relatedPrompts.length > 0 && (
-              <>
-                <dt class="text-muted">prompts liés</dt>
-                <dd class="min-w-0">
-                  <ul class="flex flex-col gap-2 font-sans text-base">
-                    {relatedPrompts.map((prompt) => (
-                      <li>
-                        <a
-                          href={`/prompts/${prompt.id}/`}
-                          class="text-body underline decoration-line underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-                        >
-                          {prompt.data.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-          </dl>
-        )
-      }
-    </DetailTabs>
-  </article>
+          {
+            relatedPrompts.length > 0 && (
+              <RelatedPromptsCard
+                label="Prompts du skill"
+                headingId="skill-related-prompts"
+                tool={false}
+                prompts={relatedPrompts.map((entry) => ({
+                  id: entry.id,
+                  title: entry.data.title,
+                  format: entry.data.format,
+                  tool: entry.data.tool,
+                }))}
+              />
+            )
+          }
+        </aside>
+      </div>
+    </article>
+  </main>
 
   <script>
+    import '../../scripts/skill-page.ts';
     import '../../scripts/copy-code.ts';
   </script>
 </BaseLayout>

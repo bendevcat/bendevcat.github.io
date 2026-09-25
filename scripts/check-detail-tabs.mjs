@@ -219,13 +219,20 @@ function layerBlocks(css, name) {
 const ASTRO = join(DIST, '_astro');
 const cssFiles = existsSync(ASTRO) ? readdirSync(ASTRO).filter((file) => file.endsWith('.css')) : [];
 const base = cssFiles.map((file) => layerBlocks(readFileSync(join(ASTRO, file), 'utf8'), 'base')).join('');
-const noJsRule =
-  /html:not\(\[data-js\]\) \[data-detail-tabs\] \[role="?tabpanel"?\]\[hidden\]\{display:block!important\}/;
+// Le minifieur regroupe les règles voisines aux déclarations identiques
+// (plan 17 : le repli de l'explorateur de la fiche skill a la même
+// déclaration) : le sélecteur est cherché dans la liste de chaque règle.
+const noJsSelector = /^html:not\(\[data-js\]\) \[data-detail-tabs\] \[role="?tabpanel"?\]\[hidden\]$/;
+const noJsRule = [...base.matchAll(/([^{}]+)\{([^{}]*)\}/g)].some(
+  ([, selectors, declarations]) =>
+    declarations.trim() === 'display:block!important' &&
+    selectors.split(',').some((selector) => noJsSelector.test(selector.trim())),
+);
 if (!base.includes('[hidden]:where(')) {
   console.error('  ✗ CSS — preflight `[hidden]` introuvable dans @layer base');
   failed = true;
 }
-if (!noJsRule.test(base)) {
+if (!noJsRule) {
   console.error('  ✗ CSS — repli sans JS des panneaux absent de @layer base (R9) : le preflight [hidden] le masque');
   failed = true;
 }

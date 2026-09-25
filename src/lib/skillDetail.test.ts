@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { installSteps, skillUpdated, toolLabel, updatedLabel, versionDate } from './skillDetail';
+import { installSteps, quoteLang, skillUpdated, toolLabel, updatedLabel, versionDate } from './skillDetail';
 
 // Les noms de tests cités par R1 (plan 17) sont repris MOT POUR MOT.
 
@@ -65,5 +65,22 @@ describe('skill page data (plan 17)', () => {
     expect(versionDate(new Date('2026-08-01'))).toBe('1 août 2026');
     expect(updatedLabel(new Date('2026-08-01'))).toBe('1 août 2026');
     expect(versionDate(new Date('2026-07-23T23:30:00-05:00'))).toBe('24 juil. 2026');
+  });
+});
+
+describe('quoteLang', () => {
+  it('marks the quoted French phrases fr and the English ones en', () => {
+    // Déclencheurs d'anti-drift-planning : un seul est en français.
+    expect(quoteLang('ne rien perdre entre les sessions')).toBe('fr');
+    for (const phrase of ['roadmap', 'split into plans', 'multi-phase feature', 'avoid drift', 'session per plan', 'decompose into specs']) {
+      expect(quoteLang(phrase)).toBe('en');
+    }
+    // Points forts : anti-drift cité du corps français, superpowers du README.
+    expect(quoteLang('Scope ledger. Un fichier par plan suit chaque exigence')).toBe('fr');
+    expect(quoteLang('Invariants mécaniques. Ce qui est comptable est compté par du code')).toBe('fr');
+    expect(quoteLang('Anti-arbitrage silencieux. Toute déviation est loggée avant d\'être exécutée')).toBe('fr');
+    expect(quoteLang('Test-Driven Development - Write tests first, always')).toBe('en');
+    expect(quoteLang('Evidence over claims - Verify before declaring success')).toBe('en');
+    expect(quoteLang('brainstorming - Activates before writing code.')).toBe('en');
   });
 });

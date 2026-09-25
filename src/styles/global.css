@@ -535,3 +535,20 @@ html:not([data-js]) [data-detail-tabs] [role="tablist"] {
 html[data-js] [data-detail-tabs] [data-tab-fallback-heading] {
   display: none !important;
 }
+
+/* Explorateur de la fiche skill (plan 17, FileExplorer.astro, D116) — même
+   repli sans JS que les onglets : sans `data-js`, l'arbre (des boutons morts)
+   est caché, la grille `236px | 1fr` retombe en une colonne et chaque aperçu
+   `hidden` s'affiche sous sa barre. Dans `@layer base` pour battre le
+   `[hidden] { display: none !important }` du preflight (cf. ci-dessus). */
+@layer base {
+  html:not([data-js]) [data-skill-explorer] {
+    display: block !important;
+  }
+  html:not([data-js]) [data-skill-explorer] [data-explorer-tree] {
+    display: none !important;
+  }
+  html:not([data-js]) [data-skill-explorer] [data-explorer-preview][hidden] {
+    display: block !important;
+  }
+}

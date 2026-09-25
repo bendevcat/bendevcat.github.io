@@ -1,0 +1,159 @@
+---
+/**
+ * FileExplorer.astro (plan 17, T4 ; inventaire §8 et §9 ; prototype
+ * 795–923 ; D116) — l'explorateur de fichiers du plugin, colonne de gauche
+ * de la fiche skill ; la page l'omet sans `files`.
+ *
+ * - TOUJOURS SOMBRE (tokens `--color-window*`, D114) : rayon 18, bordure
+ *   `windowLine`, hors index de recherche. À partir de 640 px, grille
+ *   `236px | 1fr` ; en dessous, l'arbre au-dessus de l'aperçu.
+ * - Arbre `windowHead`, padding 10 (`data-explorer-tree`) : en-tête mono 10
+ *   capitales `windowDim` `fichiers · <filesSource>` ; rangées de fileTree
+ *   (src/lib/skillExplorer.ts), 12 px d'indentation par niveau. Dossier :
+ *   `▸ nom/` `windowDim`, non interactif. Fichier : `<button aria-pressed
+ *   aria-controls>` `· nom` mono 12 `windowInk` ; le sélectionné sur
+ *   `windowLine`, son marqueur `windowAccent` (variantes `aria-pressed:`).
+ * - Aperçu `windowBg` : un par fichier, dans l'ordre de l'arbre, tous
+ *   `hidden` sauf celui du fichier sélectionné (defaultFile). Barre mono 11 :
+ *   chemin `windowInk` + ` · l. 1–K / N` ou ` · N l.` `windowDim`
+ *   (previewRange) ; `<pre>` mono 12.5 / 1.7, padding 16, lignes longues
+ *   repliées (`pre-wrap` + `overflow-wrap:anywhere`), texte = l'extrait
+ *   exactement, coloré par explorerLines.
+ * - Chaque segment est échappé HTML ; le build échoue si les segments ne
+ *   redonnent pas l'extrait (rebuildExcerpt).
+ * - Un clic sur un fichier échange `hidden` / `aria-pressed` :
+ *   src/scripts/skill-page.ts. Sans JS, l'arbre est caché et chaque aperçu
+ *   s'affiche sous sa barre (global.css, `@layer base`).
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-skill-explorer`,
+ * `data-explorer-tree`, `data-explorer-source`, `data-explorer-row`,
+ * `data-explorer-file`, `data-explorer-preview`.
+ */
+import {
+  defaultFile,
+  explorerLines,
+  fileTree,
+  previewRange,
+  rebuildExcerpt,
+  type ExplorerTone,
+} from '../../lib/skillExplorer';
+
+interface Props {
+  files: { path: string; lines: number; excerpt: string }[];
+  /** Révision des fichiers : commit ou version. */
+  source?: string;
+  /** `name` de la skill : sélectionne `skills/<name>/SKILL.md`. */
+  name?: string;
+}
+
+const { files, source, name } = Astro.props;
+const rows = fileTree(files.map((file) => file.path));
+const selected = defaultFile(
+  files.map((file) => file.path),
+  name,
+);
+const byPath = new Map(files.map((file) => [file.path, file]));
+const fileRows = rows.filter((row) => row.kind === 'file');
+const previewId = new Map(fileRows.map((row, index) => [row.path, `skill-file-${index + 1}`]));
+
+const escape = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// Classes écrites en toutes lettres pour que Tailwind les génère (D41).
+const TONE_CLASS: Record<ExplorerTone, string | null> = {
+  heading: 'font-semibold text-windowKey',
+  rule: 'text-windowDim',
+  key: 'text-windowKey',
+  value: 'text-windowValue',
+  plain: null,
+};
+
+const previews = fileRows.map((row) => {
+  const file = byPath.get(row.path)!;
+  const lines = explorerLines(file.excerpt, file.path);
+  if (rebuildExcerpt(lines) !== file.excerpt) {
+    throw new Error(`FileExplorer : les segments de « ${file.path} » ne redonnent pas l'extrait`);
+  }
+  const code = lines
+    .map((line) =>
+      line.segments
+        .map(({ kind, text }) => {
+          const cls = TONE_CLASS[kind];
+          return cls ? `<span class="${cls}" data-explorer-tone="${kind}">${escape(text)}</span>` : escape(text);
+        })
+        .join(''),
+    )
+    .join('\n');
+  return {
+    path: file.path,
+    id: previewId.get(file.path)!,
+    range: previewRange(file.excerpt, file.lines),
+    html: `<code class="text-windowInk">${code}</code>`,
+  };
+});
+
+const ROW = 'font-mono text-[12px] leading-[1.5]';
+---
+
+<figure
+  class="m-0 grid min-w-0 overflow-hidden rounded-aside border border-windowLine bg-windowBg sm:grid-cols-[236px_minmax(0,1fr)]"
+  aria-label="Fichiers du plugin"
+  data-skill-explorer
+  data-pagefind-ignore
+>
+  <div class="min-w-0 bg-windowHead p-2.5" data-explorer-tree>
+    <p class="px-2 pt-1 pb-2 font-mono text-[10px] tracking-[.08em] text-windowDim uppercase" data-explorer-source>
+      fichiers{source && ` · ${source}`}
+    </p>
+    <ul class="m-0 flex list-none flex-col gap-px p-0">
+      {
+        rows.map((row) =>
+          row.kind === 'dir' ? (
+            <li
+              class={`${ROW} px-2 py-[3px] [overflow-wrap:anywhere] text-windowDim`}
+              style={`margin-left: ${row.depth * 12}px`}
+              data-explorer-row="dir"
+            >
+              <span aria-hidden="true">▸ </span>
+              {row.label}
+            </li>
+          ) : (
+            <li style={`margin-left: ${row.depth * 12}px`} data-explorer-row="file">
+              <button
+                type="button"
+                aria-pressed={row.path === selected ? 'true' : 'false'}
+                aria-controls={previewId.get(row.path)}
+                class={`${ROW} group w-full cursor-pointer rounded-small px-2 py-[3px] text-left [overflow-wrap:anywhere] text-windowInk transition-colors hover:bg-windowLine focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-windowInk aria-pressed:bg-windowLine`}
+                data-explorer-file={row.path}
+              >
+                <span class="text-windowDim group-aria-pressed:text-windowAccent" aria-hidden="true">
+                  ·{' '}
+                </span>
+                {row.label}
+              </button>
+            </li>
+          ),
+        )
+      }
+    </ul>
+  </div>
+  <div class="min-w-0 bg-windowBg">
+    {
+      previews.map((preview) => (
+        <div id={preview.id} hidden={preview.path !== selected} data-explorer-preview={preview.path}>
+          <p class="border-b border-windowLine px-4 py-2.5 font-mono text-[11px] [overflow-wrap:anywhere] text-windowInk">
+            <span data-explorer-path>{preview.path}</span>
+            <span class="text-windowDim" data-explorer-range>
+              {' '}
+              · {preview.range}
+            </span>
+          </p>
+          <pre
+            class="m-0 bg-windowBg p-4 font-mono text-[12.5px] leading-[1.7] whitespace-pre-wrap [overflow-wrap:anywhere]"
+            set:html={preview.html}
+          ></pre>
+        </div>
+      ))
+    }
+  </div>
+</figure>

@@ -6,7 +6,6 @@ import {
   projectTabs,
   promptPageTabs,
   skillPageTabs,
-  skillTabs,
   type Tab,
 } from './detailTabs';
 
@@ -140,22 +139,6 @@ describe('skillPageTabs', () => {
         expect(ids(skillPageTabs({ triggerCount, changelogCount }))).not.toContain('apercu');
       }
     }
-  });
-});
-
-describe('skillTabs', () => {
-  it('lists Aperçu then Infos when the body is not blank', () => {
-    expect(labels(skillTabs({ body: 'Ce que fait la skill.' }))).toEqual(['Aperçu', 'Infos']);
-  });
-
-  it('omits Aperçu when the body is blank', () => {
-    expect(labels(skillTabs({ body: '\n\n' }))).toEqual(['Infos']);
-    expect(labels(skillTabs({ body: undefined }))).toEqual(['Infos']);
-  });
-
-  it('always lists Infos', () => {
-    expect(labels(skillTabs({ body: 'x' }))).toContain('Infos');
-    expect(labels(skillTabs({ body: '' }))).toContain('Infos');
   });
 });
 
