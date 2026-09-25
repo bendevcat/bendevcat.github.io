@@ -37,6 +37,7 @@
  */
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import EditLink from '../../components/EditLink.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
 import RelatedPromptsCard from '../../components/prompt/RelatedPromptsCard.astro';
 import SkillHeader from '../../components/skill/SkillHeader.astro';
@@ -181,6 +182,7 @@ const shown = new Set(tabs.map((tab) => tab.id));
         </aside>
       </div>
     </article>
+    <EditLink collection={skill.collection} id={skill.id} />
   </main>
 
   <script>

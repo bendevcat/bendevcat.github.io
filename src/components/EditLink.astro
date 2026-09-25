@@ -1,0 +1,45 @@
+---
+/**
+ * EditLink.astro (plan 22, T5 ; D150) — le lien ✏️ Éditer des pages de
+ * détail (article, projet, prompt, skill), vers l'entrée dans Sveltia :
+ * `/admin/#/collections/<collection>/entries/<id>/index` (`editHref`,
+ * src/lib/editLink.ts).
+ *
+ * - Placé dans `<main>` APRÈS `<article data-pagefind-body>` et porteur de
+ *   `data-pagefind-ignore` : son texte n'entre jamais dans l'index de recherche.
+ * - Rendu `hidden` : sans JS, ou sans le marqueur `localStorage['bencat:author']`
+ *   posé par /admin/, il reste caché. Aucun utilitaire `display` ni
+ *   `!important` : le `[hidden] { display: none !important }` du preflight
+ *   Tailwind (`@layer base`) le masque seul (piège du plan 8) ; `fixed` le
+ *   rend bloc une fois `hidden` retiré par src/scripts/edit-link.ts.
+ * - Commodité pour l'auteur, JAMAIS un contrôle d'accès : le lien est dans le
+ *   HTML public, l'édition reste derrière la connexion GitHub du CMS.
+ * - Fixe en bas à droite, tokens seulement : pilule `accent` / `accentInk`
+ *   (contraste ≥ 4.5:1 dans les deux thèmes), ombre `var(--shadow)` en style
+ *   (jamais l'utilitaire `.shadow`, figé en clair), anneau de focus `ink`
+ *   (distinct de l'aplat d'accent). Nom accessible « Éditer dans le CMS »,
+ *   l'emoji est décoratif.
+ */
+import { editHref, type EditCollection } from '../lib/editLink';
+
+interface Props {
+  collection: EditCollection;
+  id: string;
+}
+
+const { collection, id } = Astro.props;
+---
+
+<a
+  href={editHref(collection, id)}
+  data-edit-link
+  data-pagefind-ignore
+  hidden
+  aria-label="Éditer dans le CMS"
+  class="fixed right-4 bottom-4 z-30 rounded-pill bg-accent px-4 py-2.5 font-sans text-[13px] leading-none font-semibold text-accentInk hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+  style="box-shadow: var(--shadow);"><span aria-hidden="true">✏️</span> Éditer</a
+>
+
+<script>
+  import '../scripts/edit-link.ts';
+</script>

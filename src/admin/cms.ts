@@ -31,6 +31,12 @@
  * `preSave`, un seul `postSave`, enregistrés avant `init()` ; le lecteur est
  * choisi avant `init()`, donc avant toute sauvegarde.
  *
+ * Marqueur auteur (plan 22, T5, D150) : chaque chargement de `/admin/` pose
+ * `localStorage['bencat:author'] = '1'` (`markAuthor`, erreurs de stockage
+ * avalées), avant `init()`. Les pages de détail du site ne montrent leur lien
+ * ✏️ Éditer que dans un navigateur qui porte ce marqueur — commodité, jamais
+ * un contrôle d'accès (`src/lib/editLink.ts`, copie `?admin` ici, D138).
+ *
  * Dépôt de test (dev seulement) : `/admin/?test-repo` sous `astro dev` recopie
  * `src/content/**` dans l'OPFS (`dev/testRepo.ts`) puis passe à `init()` la
  * config de `config.yml` elle-même, backend remplacé par `test-repo` seul et
@@ -42,10 +48,13 @@
  */
 import CMS from '@sveltia/cms';
 import siteCss from '../styles/global.css?inline';
+import { markAuthor } from '../lib/editLink';
 import { createSaveHooks } from './hooks';
 import { createPreviousEntries, githubReader, type FileReader } from './previousEntry';
 import { registerSiteStyle } from './previewStyle';
 import { registerPreviews } from './previews/register';
+
+markAuthor(() => window.localStorage);
 
 registerSiteStyle(CMS, siteCss, location.origin);
 registerPreviews(CMS, window);

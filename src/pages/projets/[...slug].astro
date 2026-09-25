@@ -23,6 +23,7 @@
  */
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import EditLink from '../../components/EditLink.astro';
 import DetailTabs from '../../components/DetailTabs.astro';
 import Thumbnail from '../../components/Thumbnail.astro';
 import ProjectHeader from '../../components/project/ProjectHeader.astro';
@@ -137,6 +138,7 @@ const rows = projectMetaRows({ status, startDate, license });
 
       <ProjectAside rows={rows} repoUrl={repoUrl} demoUrl={demoUrl} posts={relatedPosts} />
     </article>
+    <EditLink collection={project.collection} id={project.id} />
   </main>
 
   <script>
