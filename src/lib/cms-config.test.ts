@@ -241,6 +241,14 @@ describe('page /admin', () => {
     // Un seul init() hors de ces deux branches : aucun.
     expect([...cms.matchAll(/CMS\.init\(/g)]).toHaveLength(2);
   });
+
+  it('pré-regroupe @sveltia/cms en dev (cache Vite froid : pas de 504 Outdated Optimize Dep)', async () => {
+    // Plan 19, F1 (R7) : sans `optimizeDeps.include`, Vite ne découvre Sveltia
+    // qu'à la première visite de /admin/, ré-optimise, recharge, et la barre
+    // d'outils Astro répond 504 jusqu'au redémarrage du serveur.
+    const { default: config } = await import('../../astro.config.mjs');
+    expect(config.vite?.optimizeDeps?.include).toContain('@sveltia/cms');
+  });
 });
 
 describe('config CMS — sortie', () => {
