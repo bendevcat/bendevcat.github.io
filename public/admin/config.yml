@@ -1,6 +1,15 @@
 # Configuration Sveltia CMS.
 # Source de vérité du schéma : src/content.config.ts (collections `blog`,
 # `projects`, `prompts`, `skills`).
+# Tableau de bord (plan 20, R2) : titre de l'app et de l'onglet, logo de la
+# page d'entrée, de l'en-tête (bouton « Visit Live Site ») et favicon.
+# `public/admin/logo.svg` redessine la tuile 28×28 du logo de l'en-tête du site
+# (src/components/Header.astro) aux couleurs accent/accentSoft de global.css.
+app_title: benCat · Studio
+logo:
+  src: /admin/logo.svg
+  show_in_header: true
+
 backend:
   name: github
   repo: bendevcat/bendevcat.github.io

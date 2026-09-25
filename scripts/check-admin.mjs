@@ -30,13 +30,17 @@
  *   isolation: … — seules les pages dont le graphe JS touche un chunk du
  *     graphe admin sont comptées : 1 (la page admin) sur toutes les pages (T2) ;
  *   config: … — `dist/admin/config.yml` identique octet pour octet à
- *     `public/admin/config.yml` (T2).
+ *     `public/admin/config.yml` (T2) ;
+ *   logo: … — `dist/admin/logo.svg` identique octet pour octet à
+ *     `public/admin/logo.svg`, et la clé `logo.src` de
+ *     `public/admin/config.yml` vaut `/admin/logo.svg` (plan 20, T2).
  *
  * Toute ligne différente de l'attendu est signalée sur stderr APRÈS stdout ;
  * code de sortie 1 s'il y en a au moins une.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DIST = join(ROOT, 'dist');
@@ -215,6 +219,22 @@ const adminChunks = adminExists ? jsClosure(admin) : new Set();
   lines.push(`config: ${rel}`);
 }
 
+// --- logo (plan 20, T2) -----------------------------------------------------
+{
+  const built = join(DIST, 'admin', 'logo.svg');
+  const src = join(ROOT, 'public', 'admin', 'logo.svg');
+  let rel = 'dist/admin/logo.svg missing';
+  if (!existsSync(src)) rel = 'public/admin/logo.svg missing';
+  else if (existsSync(built)) {
+    rel = readFileSync(built).equals(readFileSync(src))
+      ? 'dist/admin/logo.svg = public/admin/logo.svg'
+      : 'dist/admin/logo.svg ≠ public/admin/logo.svg';
+  }
+  const cfg = parseYaml(readFileSync(join(ROOT, 'public', 'admin', 'config.yml'), 'utf8'));
+  const logoSrc = cfg?.logo?.src ?? 'none';
+  lines.push(`logo: ${rel} · config logo.src ${logoSrc}`);
+}
+
 const pageCount = htmlFiles(DIST).length;
 const EXPECTED = [
   'admin page: /admin/index.html · noindex · cms-config-url /admin/config.yml · 1 module script · 0 stylesheet link · 0 site chrome',
@@ -223,6 +243,7 @@ const EXPECTED = [
   'dev-only: 0 test-repo seed marker · 0 /src/content/ key in dist/_astro',
   `isolation: admin bundle referenced by 1/${pageCount} pages`,
   'config: dist/admin/config.yml = public/admin/config.yml',
+  'logo: dist/admin/logo.svg = public/admin/logo.svg · config logo.src /admin/logo.svg',
 ];
 
 for (const line of lines) console.log(line);
