@@ -30,12 +30,8 @@ const COLLECTIONS = ['blog', 'projects', 'prompts', 'skills'] as const;
  * disparaître sans rougir la CI.
  */
 const PENDING: Record<string, readonly CanonicalRule[]> = {
-  // Liste numérotée « lâche » (ligne vide avant chaque sous-liste) : sous la
-  // forme serrée que Sveltia écrit, le site perdrait les <p> de ses éléments.
-  'blog/meilleurs-vpn-2025': ['loose-list', 'list-indent'],
-  // Guide : le corps EST la fenêtre du prompt, affiché et copié tel quel,
-  // compté en jetons — toute retouche de syntaxe s'y voit.
-  'prompts/decouper-un-projet-en-plans-anti-drift': ['span', 'star', 'table'],
+  // Vide depuis F3 (D146) : la liste lâche de `meilleurs-vpn-2025` et le guide
+  // `decouper-un-projet-en-plans-anti-drift` sont passés en forme canonique.
 };
 
 interface Entry {

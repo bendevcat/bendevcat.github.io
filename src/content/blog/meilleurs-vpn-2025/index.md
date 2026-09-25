@@ -374,20 +374,17 @@ docker run -d \
 **Protocoles en 2025** :
 
 1. **WireGuard** ⭐ (recommandé)
-
-   * Ultra rapide : 2x plus rapide qu'OpenVPN
-   * Code léger : 4000 lignes vs 400 000 pour OpenVPN
-   * Moins de batterie consommée sur mobile
-   * Intégré au kernel Linux depuis 2020
+    * Ultra rapide : 2x plus rapide qu'OpenVPN
+    * Code léger : 4000 lignes vs 400 000 pour OpenVPN
+    * Moins de batterie consommée sur mobile
+    * Intégré au kernel Linux depuis 2020
 2. **OpenVPN** (toujours valable)
-
-   * Mature et éprouvé
-   * Compatible partout
-   * Plus lent mais très sécurisé
+    * Mature et éprouvé
+    * Compatible partout
+    * Plus lent mais très sécurisé
 3. **IKEv2/IPSec** (mobile)
-
-   * Rapide reconnexion
-   * Idéal pour mobile (changement WiFi ↔ 4G/5G)
+    * Rapide reconnexion
+    * Idéal pour mobile (changement WiFi ↔ 4G/5G)
 
 **Performances attendues** :
 

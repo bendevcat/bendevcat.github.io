@@ -321,10 +321,10 @@ code) et échoue sur chaque ligne hors forme, avec la règle en cause
 `normalizeCodeField` (`src/lib/cmsCanonical.ts`) remettent en forme ce qui
 peut l'être sans changer le rendu. Une entrée sauvegardée depuis le CMS est
 toujours dans cette forme : le garde-fou ne vise que les fichiers écrits à la
-main. Deux écarts connus restent tolérés (`PENDING` dans le test) parce que les
-corriger changerait l'affichage : la liste lâche de `meilleurs-vpn-2025` et le
-corps du guide `decouper-un-projet-en-plans-anti-drift`, affiché tel quel dans
-sa fenêtre. Les `---` sont hors de ce garde-fou : l'éditeur les ouvre en `***`
+main. Aucun écart n'est toléré (`PENDING` vide dans le test) : tout
+`src/content/**` est dans la forme de l'éditeur, y compris le corps d'un guide
+de prompt, affiché tel quel dans sa fenêtre (sa syntaxe visible est celle que
+Sveltia écrit). Les `---` sont hors de ce garde-fou : l'éditeur les ouvre en `***`
 (Save s'active donc sur un article qui en contient) et le hook `preSave` les
 rétablit à l'écriture.
 

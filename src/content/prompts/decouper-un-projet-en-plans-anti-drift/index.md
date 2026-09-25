@@ -17,8 +17,8 @@ découpage, et surtout ce qui l'empêche de se déliter en route.
 
 ## Découper vertical, jamais en couches
 
-La règle tient en une phrase : **chaque tranche livre un résultat observable par
-l'utilisateur final**, de bout en bout. Pas « le back », puis « le front ». Pas
+La règle tient en une phrase :
+**chaque tranche livre un résultat observable par l'utilisateur final**, de bout en bout. Pas « le back », puis « le front ». Pas
 « les schémas », puis « les pages ».
 
 La raison est mécanique. Si une tranche verticale est ratée, la fonctionnalité
@@ -31,7 +31,7 @@ Vise **3 à 5 tranches**. Chacune devient un plan.
 ### Le découpage réel de ce site
 
 | Plan | Objectif utilisateur (binaire) |
-|---|---|
+| --- | --- |
 | P1 · socle-blog-deploye | « Le blog est en ligne (github.io) et lisible, en thème dark editorial-dev » |
 | P2 · cms-sveltia | « Je publie/édite les articles sans toucher au code (Sveltia CMS) » |
 | P3 · vitrine-projets | « On peut parcourir mes fiches projets » |
@@ -89,12 +89,12 @@ Le découpage tout seul ne suffit pas. Trois artefacts le tiennent.
 ### Le ledger de périmètre
 
 Un fichier par plan qui liste chaque exigence avec son état :
-`Done` / `In progress` / `Pending` / `Deferred` / `Cut`. Mis à jour **et
-committé après chaque tâche**, pas en fin de session — une mise à jour de fin de
+`Done` / `In progress` / `Pending` / `Deferred` / `Cut`. Mis à jour
+**et committé après chaque tâche**, pas en fin de session — une mise à jour de fin de
 session est une reconstruction de mémoire, pas un enregistrement.
 
 Son intérêt réel : tu lis l'avancement sans fouiller le `git log`, et surtout tu
-vois ce qui est *encore* `Pending` pendant qu'il est encore temps.
+vois ce qui est _encore_ `Pending` pendant qu'il est encore temps.
 
 ### Le log des déviations
 
