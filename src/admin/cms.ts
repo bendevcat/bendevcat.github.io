@@ -12,6 +12,13 @@
  * comme feuille brute de l'aperçu, URL de polices rendues absolues
  * (`previewStyle.ts`). Enregistré avant `init()`.
  *
+ * Gabarits d'aperçu (plan 21) : un par collection (`previews/register.ts`),
+ * la colonne centrale de la page du site rendue par un gabarit pur
+ * `(data, h)`. `h` et `createClass` sont le React que pose l'import de
+ * `@sveltia/cms` sur `window` (absents : `console.error`, aperçu par défaut
+ * gardé). Le pipeline Markdown du site n'est chargé (`import()`) qu'au premier
+ * corps à rendre. Enregistrés avant `init()`.
+ *
  * Sauvegarde : l'éditeur riche exporte les séparateurs en `***` ; le hook
  * `preSave` les réécrit en `---`, seule forme admise dans le contenu
  * (`hooks.ts`). Enregistré avant `init()`.
@@ -29,8 +36,10 @@ import CMS from '@sveltia/cms';
 import siteCss from '../styles/global.css?inline';
 import { normalizeBodyBeforeSave } from './hooks';
 import { registerSiteStyle } from './previewStyle';
+import { registerPreviews } from './previews/register';
 
 registerSiteStyle(CMS, siteCss, location.origin);
+registerPreviews(CMS, window);
 CMS.registerEventListener({ name: 'preSave', handler: normalizeBodyBeforeSave });
 
 if (import.meta.env.DEV && new URLSearchParams(location.search).has('test-repo')) {

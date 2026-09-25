@@ -140,17 +140,17 @@ k9s --context my-cluster
 
 ### Commandes de base (comme vim)
 
-| Touche | Action                        |
-| ------ | ----------------------------- |
-| `:`    | Entrer une commande/ressource |
-| `/`    | Rechercher/filtrer            |
-| `Esc`  | Retour/Annuler                |
-| `?`    | Aide contextuelle             |
-| `:q`   | Quitter k9s                   |
+| Touche | Action |
+| --- | --- |
+| `:` | Entrer une commande/ressource |
+| `/` | Rechercher/filtrer |
+| `Esc` | Retour/Annuler |
+| `?` | Aide contextuelle |
+| `:q` | Quitter k9s |
 
 ### Navigation entre ressources
 
-```
+```plaintext
 :pods       → Pods
 :svc        → Services
 :deploy     → Deployments
@@ -167,28 +167,28 @@ k9s --context my-cluster
 
 ### Actions sur les ressources
 
-| Touche   | Action                          |
-| -------- | ------------------------------- |
-| `Enter`  | Voir les détails                |
-| `d`      | Describe (kubectl describe)     |
-| `e`      | Edit (ouvre l'éditeur)          |
-| `l`      | Logs (pour les pods)            |
-| `s`      | Shell dans le pod               |
-| `y`      | Copier le YAML                  |
-| `Ctrl+d` | Supprimer                       |
-| `Ctrl+k` | Kill pod                        |
-| `p`      | Voir les pods précédents (logs) |
+| Touche | Action |
+| --- | --- |
+| `Enter` | Voir les détails |
+| `d` | Describe (kubectl describe) |
+| `e` | Edit (ouvre l'éditeur) |
+| `l` | Logs (pour les pods) |
+| `s` | Shell dans le pod |
+| `y` | Copier le YAML |
+| `Ctrl+d` | Supprimer |
+| `Ctrl+k` | Kill pod |
+| `p` | Voir les pods précédents (logs) |
 
 ### Navigation avancée
 
-| Touche    | Action               |
-| --------- | -------------------- |
-| `0-9`     | Changer de namespace |
-| `Ctrl+a`  | Tous les namespaces  |
-| `Shift+f` | Port-forward         |
-| `Shift+t` | Trier                |
-| `Ctrl+s`  | Sauvegarder          |
-| `Ctrl+r`  | Rafraîchir           |
+| Touche | Action |
+| --- | --- |
+| `0-9` | Changer de namespace |
+| `Ctrl+a` | Tous les namespaces |
+| `Shift+f` | Port-forward |
+| `Shift+t` | Trier |
+| `Ctrl+s` | Sauvegarder |
+| `Ctrl+r` | Rafraîchir |
 
 ## Fonctionnalités avancées
 
@@ -397,13 +397,13 @@ psql -h localhost -p 5432
 
 ## Comparaison avec les alternatives
 
-| Outil             | Type        | Avantages                      | Inconvénients              |
-| ----------------- | ----------- | ------------------------------ | -------------------------- |
-| **k9s**           | Terminal UI | Léger, rapide, keyboard-driven | Courbe d'apprentissage     |
-| **Lens**          | Desktop App | GUI complète, graphiques       | Lourd (Electron)           |
-| **kubectl**       | CLI         | Standard, scriptable           | Verbeux, pas de monitoring |
-| **K8s Dashboard** | Web UI      | Officiel, visuel               | Nécessite installation     |
-| **Octant**        | Web UI      | Plugins, moderne               | Plus maintenu              |
+| Outil | Type | Avantages | Inconvénients |
+| --- | --- | --- | --- |
+| **k9s** | Terminal UI | Léger, rapide, keyboard-driven | Courbe d'apprentissage |
+| **Lens** | Desktop App | GUI complète, graphiques | Lourd (Electron) |
+| **kubectl** | CLI | Standard, scriptable | Verbeux, pas de monitoring |
+| **K8s Dashboard** | Web UI | Officiel, visuel | Nécessite installation |
+| **Octant** | Web UI | Plugins, moderne | Plus maintenu |
 
 ## Astuces et bonnes pratiques
 

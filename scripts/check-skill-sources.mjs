@@ -22,8 +22,9 @@
  *     · N skill(s) · N command(s) · N/N excerpts verbatim, no e-mail[ · body: N/N blockquotes quoted]
  *
  * « Cité » (quoted) = sous-chaîne après normalisation : `**` et accents
- * graves retirés, blancs réduits à une espace, casse ignorée, un `.` / `:`
- * final de la valeur ignoré. Réservoirs :
+ * graves retirés, `*` lu comme `_` (`*x*` et `_x_` sont la même emphase ;
+ * plan 21 F2 : Sveltia écrit `_x_`), blancs réduits à une espace, casse
+ * ignorée, un `.` / `:` final de la valeur ignoré. Réservoirs :
  * - déclencheurs : descriptions des `skills/* /SKILL.md` + README ;
  * - points forts, note d'installation : README, description de `plugin.json`
  *   ou corps de la fiche elle-même ;
@@ -108,7 +109,13 @@ function openSource(source) {
 // — Normalisation et citations —
 
 function normalise(text) {
-  return String(text).replace(/\*\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  return String(text)
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '_')
+    .replace(/`/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
 }
 
 /** Valeur à chercher : normalisée, sans `.` / `:` final. */

@@ -33,8 +33,6 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 * ✅ IP dédiée disponible
 * ✅ Support P2P/Torrent
 
-
-
 ## Pourquoi utiliser un VPN en 2025 ?
 
 * **Confidentialité renforcée** : Masquez votre IP et empêchez le tracking
@@ -46,13 +44,13 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 ## Tableau comparatif rapide
 
-| VPN           | Vitesse | No-log               | IP dédiée    | Prix/mois | Connexions |
-| ------------- | ------- | -------------------- | ------------ | --------- | ---------- |
-| **NordVPN**   | ⭐⭐⭐⭐⭐   | Audité (PwC)         | ✅ 5.50€/mois | 4€        | 10         |
-| **ProtonVPN** | ⭐⭐⭐⭐    | Audité (SEC Consult) | ❌            | 5€        | 10         |
-| **Mullvad**   | ⭐⭐⭐⭐⭐   | Audité (Cure53)      | ❌            | 5€        | 5          |
-| **Surfshark** | ⭐⭐⭐⭐    | Audité (Cure53)      | ✅ 1.50€/mois | 2.50€     | ∞          |
-| **Wireguard** | ⭐⭐⭐⭐⭐   | Vous gérez           | ✅            | Gratuit   | ∞          |
+| VPN | Vitesse | No-log | IP dédiée | Prix/mois | Connexions |
+| --- | --- | --- | --- | --- | --- |
+| **NordVPN** | ⭐⭐⭐⭐⭐ | Audité (PwC) | ✅ 5.50€/mois | 4€ | 10 |
+| **ProtonVPN** | ⭐⭐⭐⭐ | Audité (SEC Consult) | ❌ | 5€ | 10 |
+| **Mullvad** | ⭐⭐⭐⭐⭐ | Audité (Cure53) | ❌ | 5€ | 5 |
+| **Surfshark** | ⭐⭐⭐⭐ | Audité (Cure53) | ✅ 1.50€/mois | 2.50€ | ∞ |
+| **Wireguard** | ⭐⭐⭐⭐⭐ | Vous gérez | ✅ | Gratuit | ∞ |
 
 ---
 
@@ -66,7 +64,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 * Connexion 1 Gbps → 820 Mbps avec WireGuard (NordLynx)
 * Latence : +15ms en moyenne
-* Perte de vitesse : ~18% (excellent)
+* Perte de vitesse : \~18% (excellent)
 
 **Sécurité** :
 
@@ -114,8 +112,8 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 * Connexion 1 Gbps → 680 Mbps avec WireGuard
 * Latence : +25ms
-* Perte de vitesse : ~32%
-* Plan gratuit : ~200 Mbps max
+* Perte de vitesse : \~32%
+* Plan gratuit : \~200 Mbps max
 
 **Sécurité** :
 
@@ -171,7 +169,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 * Connexion 1 Gbps → 850 Mbps avec WireGuard
 * Latence : +12ms
-* Perte de vitesse : ~15% (le plus rapide testé)
+* Perte de vitesse : \~15% (le plus rapide testé)
 
 **Sécurité** :
 
@@ -227,7 +225,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 * Connexion 1 Gbps → 720 Mbps avec WireGuard
 * Latence : +20ms
-* Perte de vitesse : ~28%
+* Perte de vitesse : \~28%
 
 **Sécurité** :
 
@@ -270,13 +268,13 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 ### 5. Wireguard (self-hosted) - Pour les experts 🛠️
 
-**Prix** : Gratuit (coût du serveur VPS : ~3-5€/mois)
+**Prix** : Gratuit (coût du serveur VPS : \~3-5€/mois)
 
 **Vitesse mesurée** :
 
 * Connexion 1 Gbps → 950 Mbps
 * Latence : +5ms seulement
-* Perte : ~5% (le plus rapide, normal car proche)
+* Perte : \~5% (le plus rapide, normal car proche)
 * Protocole ultra-léger : 4000 lignes de code vs 400 000 pour OpenVPN
 
 **Sécurité** :
@@ -289,7 +287,7 @@ Un VPN est devenu indispensable en 2025. Après 6 mois de tests intensifs avec b
 
 **Configuration requise** :
 
-* VPS chez Hetzner, DigitalOcean, Vultr (~5€/mois)
+* VPS chez Hetzner, DigitalOcean, Vultr (\~5€/mois)
 * Script d'installation : `wg-easy`, `pivpn`, ou `algo`
 * Connaissances Linux de base
 
@@ -376,20 +374,17 @@ docker run -d \
 **Protocoles en 2025** :
 
 1. **WireGuard** ⭐ (recommandé)
-
-   * Ultra rapide : 2x plus rapide qu'OpenVPN
-   * Code léger : 4000 lignes vs 400 000 pour OpenVPN
-   * Moins de batterie consommée sur mobile
-   * Intégré au kernel Linux depuis 2020
+    * Ultra rapide : 2x plus rapide qu'OpenVPN
+    * Code léger : 4000 lignes vs 400 000 pour OpenVPN
+    * Moins de batterie consommée sur mobile
+    * Intégré au kernel Linux depuis 2020
 2. **OpenVPN** (toujours valable)
-
-   * Mature et éprouvé
-   * Compatible partout
-   * Plus lent mais très sécurisé
+    * Mature et éprouvé
+    * Compatible partout
+    * Plus lent mais très sécurisé
 3. **IKEv2/IPSec** (mobile)
-
-   * Rapide reconnexion
-   * Idéal pour mobile (changement WiFi ↔ 4G/5G)
+    * Rapide reconnexion
+    * Idéal pour mobile (changement WiFi ↔ 4G/5G)
 
 **Performances attendues** :
 
@@ -564,13 +559,13 @@ R : Non directement. Mais certains (NordVPN, Surfshark) ont des bloqueurs de mal
 
 **Vous cherchez quoi ?**
 
-| Besoin                 | VPN recommandé | Prix       | Pourquoi                              |
-| ---------------------- | -------------- | ---------- | ------------------------------------- |
-| 🏆 Le meilleur global  | **NordVPN**    | 4€/mois    | Vitesse + sécurité + streaming        |
-| 🔒 Vie privée maximale | **ProtonVPN**  | 5€/mois    | Open source + Suisse + audits publics |
-| 👤 Anonymat absolu     | **Mullvad**    | 5€/mois    | Paiement cash + pas d'email           |
-| 💰 Petit budget        | **Surfshark**  | 2.50€/mois | Connexions illimitées                 |
-| 🛠️ Contrôle total     | **Wireguard**  | Gratuit    | Self-hosted + ultra rapide            |
+| Besoin | VPN recommandé | Prix | Pourquoi |
+| --- | --- | --- | --- |
+| 🏆 Le meilleur global | **NordVPN** | 4€/mois | Vitesse + sécurité + streaming |
+| 🔒 Vie privée maximale | **ProtonVPN** | 5€/mois | Open source + Suisse + audits publics |
+| 👤 Anonymat absolu | **Mullvad** | 5€/mois | Paiement cash + pas d'email |
+| 💰 Petit budget | **Surfshark** | 2.50€/mois | Connexions illimitées |
+| 🛠️ Contrôle total | **Wireguard** | Gratuit | Self-hosted + ultra rapide |
 
 **Mon choix perso** : **ProtonVPN** au quotidien (confiance + transparence) et **Mullvad** pour les tâches sensibles (anonymat total).
 
@@ -584,4 +579,4 @@ R : Non directement. Mais certains (NordVPN, Surfshark) ont des bloqueurs de mal
 
 **Et vous, quel VPN utilisez-vous ? Partagez votre expérience en commentaire !**
 
-*Article mis à jour en octobre 2025 - Tous les benchmarks sont réalisés sur connexion fibre 1 Gbps avec protocole WireGuard.*
+_Article mis à jour en octobre 2025 - Tous les benchmarks sont réalisés sur connexion fibre 1 Gbps avec protocole WireGuard._

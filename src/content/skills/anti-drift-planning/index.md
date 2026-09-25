@@ -217,8 +217,8 @@ laquelle ce site est construit, plan par plan.
 5. **Des faits comptables laissés à la relecture en prose** — une ligne de ledger
    supprimée, un log manquant, une entrée fantôme passent inaperçus.
 
-À chaque mode de panne, un verrou. Et **chaque verrou a exactement un artefact
-canonique** : ses règles détaillées ne sont jamais reformulées ailleurs, parce
+À chaque mode de panne, un verrou. Et
+**chaque verrou a exactement un artefact canonique** : ses règles détaillées ne sont jamais reformulées ailleurs, parce
 qu'une règle reformulée dérive.
 
 ## Les cinq verrous
@@ -230,7 +230,7 @@ démo. Verbes vagues interdits (`améliorer`, `supporter`, `gérer`, `peaufiner`
 
 **2 · Anti-arbitrage silencieux.** Toute déviation est loggée **avant** d'être
 exécutée, toujours avec le statut `pending-user` — le seul qu'un agent ait le
-droit d'écrire. Un défaut dans le texte du plan lui-même n'est *pas* une
+droit d'écrire. Un défaut dans le texte du plan lui-même n'est _pas_ une
 déviation : il se corrige sur place et se note au ledger. Au-delà de trois
 entrées en attente simultanément, c'est le plan qu'il faut refaire.
 
@@ -272,7 +272,7 @@ et le verrou 4 qui l'audite.
 ## Les commandes
 
 | Commande | Ce qu'elle fait |
-|---|---|
+| --- | --- |
 | `/anti-drift-planning:init` | Bootstrappe la méthodologie et l'arborescence dans le projet |
 | `/anti-drift-planning:new-plan <N> <topic>` | Écrit une spec de plan depuis le template |
 | `/anti-drift-planning:start-session <N>` | Génère le prompt de bootstrap d'une session d'exécution |
@@ -300,8 +300,8 @@ loggées dont 3 rejetées ; zéro entrée laissée `pending-user` à la sortie.
 ## Installation
 
 Le dépôt n'est pas accessible publiquement pour l'instant — c'est pourquoi tu ne
-trouveras pas de lien vers lui sur cette fiche. Conséquence directe : **la
-commande d'installation de cette fiche n'est pas exécutable en l'état**. Il lui
+trouveras pas de lien vers lui sur cette fiche. Conséquence directe :
+**la commande d'installation de cette fiche n'est pas exécutable en l'état**. Il lui
 manque l'étape qui la précède, le `git clone` du dépôt vers un chemin local —
 et c'est précisément cette étape-là que le 404 rend impossible.
 

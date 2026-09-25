@@ -227,7 +227,13 @@ collections:
       # Plan 15 (D103) : fenêtre de code de l'onglet Aperçu, un fichier réel
       # du dépôt du projet recopié tel quel.
       - { name: snippetFile, label: Fichier du code, widget: string, required: false, hint: 'Chemin du fichier dans le dépôt du projet (ex. .github/workflows/deploy.yml) ; affiché en tête de la fenêtre' }
-      - { name: snippet, label: Code, widget: text, required: false, hint: 'Contenu du fichier, recopié tel quel ; fenêtre masquée si vide' }
+      # Plan 21 (R15, R17 ; D139, D140) : widget `code` de Sveltia 0.221 — éditeur
+      # monospace coloré par Shiki. `output_code_only: true` : la valeur reste une
+      # chaîne, lue et réécrite telle quelle (sinon objet `{code, lang}`, refusé par
+      # Zod) ; langue fixe, sans sélecteur. Ouvrir une entrée n'écrit rien : Save
+      # reste désactivé tant que le brouillon n'est pas modifié (toolbar.svelte,
+      # `!modified`) ; une vraie modification réécrit tout le frontmatter (plan 19).
+      - { name: snippet, label: Code, widget: code, output_code_only: true, allow_language_selection: false, default_language: yaml, required: false, hint: 'Contenu du fichier, recopié tel quel ; fenêtre masquée si vide' }
       - { name: featured, label: Mis en avant, widget: boolean, required: false, default: false }
       - name: relatedPosts
         label: Articles liés
@@ -288,7 +294,13 @@ collections:
         options:
           - { label: 'Fiche — prompt copiable + notes', value: fiche }
           - { label: 'Guide — write-up long', value: guide }
-      - { name: prompt, label: Texte du prompt, widget: text, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide. Écrire {nom} là où le lecteur remplit une variable déclarée ci-dessous.' }
+      # Plan 21 (R15, R17 ; D139, D140) : widget `code` de Sveltia 0.221 — éditeur
+      # monospace coloré par Shiki. `output_code_only: true` : la valeur reste une
+      # chaîne, lue et réécrite telle quelle (sinon objet `{code, lang}`, refusé par
+      # Zod) ; langue fixe, sans sélecteur. Ouvrir une entrée n'écrit rien : Save
+      # reste désactivé tant que le brouillon n'est pas modifié (toolbar.svelte,
+      # `!modified`) ; une vraie modification réécrit tout le frontmatter (plan 19).
+      - { name: prompt, label: Texte du prompt, widget: code, output_code_only: true, allow_language_selection: false, default_language: markdown, required: false, hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide. Écrire {nom} là où le lecteur remplit une variable déclarée ci-dessous.' }
       # Plan 14 (D94) : forme `{name, hint?, default?}` de l'inventaire §11,
       # miroir de `variables` dans src/content.config.ts. Seul `name` est requis.
       - name: variables
@@ -405,7 +417,13 @@ collections:
         fields:
           - { name: path, label: Chemin (relatif à la racine du plugin), widget: string }
           - { name: lines, label: Nombre de lignes du fichier, widget: number, value_type: int, min: 1 }
-          - { name: excerpt, label: Extrait, widget: text }
+          # Plan 21 (R15, R17 ; D139, D140) : widget `code` de Sveltia 0.221 — éditeur
+          # monospace coloré par Shiki. `output_code_only: true` : la valeur reste une
+          # chaîne, lue et réécrite telle quelle (sinon objet `{code, lang}`, refusé par
+          # Zod) ; langue fixe, sans sélecteur. Ouvrir une entrée n'écrit rien : Save
+          # reste désactivé tant que le brouillon n'est pas modifié (toolbar.svelte,
+          # `!modified`) ; une vraie modification réécrit tout le frontmatter (plan 19).
+          - { name: excerpt, label: Extrait, widget: code, output_code_only: true, allow_language_selection: false, default_language: markdown }
       - { name: filesSource, label: Révision des fichiers, widget: string, required: false, hint: 'Commit ou version d’où viennent les fichiers (ex. 3dc3336, 6.4.1)' }
       - { name: tags, label: Tags, widget: list, required: false, default: [] }
       - { name: draft, label: Brouillon, widget: boolean, required: false, default: false }

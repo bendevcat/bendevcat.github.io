@@ -278,7 +278,7 @@ Cette configuration scale automatiquement votre application entre 3 et 10 pods e
 
 Voici une architecture typique d'une application moderne avec Kubernetes :
 
-```
+```plaintext
 ┌─────────────────────────────────────────────────────────┐
 │                    Ingress Controller                    │
 │            (nginx / traefik / istio)                     │

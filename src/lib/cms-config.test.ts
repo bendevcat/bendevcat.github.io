@@ -400,7 +400,8 @@ describe('config CMS — collection projects', () => {
     // Plan 15 (D102–D104) : champs de la fiche projet.
     expect(byName.license.widget).toBe('string');
     expect(byName.snippetFile.widget).toBe('string');
-    expect(byName.snippet.widget).toBe('text');
+    // Plan 21 (R15) : widget `code`, sortie texte seule — voir « champs de code ».
+    expect(byName.snippet.widget).toBe('code');
     expect(byName.stackRoles.widget).toBe('list');
   });
 
@@ -615,7 +616,7 @@ describe('config CMS — collection prompts', () => {
     expect(byName.title.widget).toBe('string');
     expect(byName.description.widget).toBe('text');
     expect(byName.format.widget).toBe('select');
-    expect(byName.prompt.widget).toBe('text');
+    expect(byName.prompt.widget).toBe('code'); // plan 21 (R15)
     expect(byName.tool.widget).toBe('string');
     expect(byName.model.widget).toBe('string');
     expect(byName.version.widget).toBe('string');
@@ -794,8 +795,9 @@ describe('config CMS — collection skills', () => {
     expect(sub.lines.widget).toBe('number');
     expect(sub.lines.value_type).toBe('int');
     expect(sub.lines.min).toBe(1);
-    // Multiligne : l'extrait garde ses sauts de ligne.
-    expect(sub.excerpt.widget).toBe('text');
+    // Multiligne : l'extrait garde ses sauts de ligne. Plan 21 (R15) : widget
+    // `code`, sortie texte seule — voir « champs de code ».
+    expect(sub.excerpt.widget).toBe('code');
   });
 
   it('garde le défaut `claude-code` sur `type`, comme le schéma Zod', () => {
@@ -871,6 +873,64 @@ describe('config CMS — motif repoUrl du skill vs Zod (D03, D10)', () => {
     for (const value of knownStricterCases) {
       expect(pattern.test(value), `${value} devrait être refusé par le motif`).toBe(false);
       expect(urlSchema.safeParse(value).success, `${value} devrait être accepté par Zod`).toBe(true);
+    }
+  });
+});
+
+describe('config CMS — champs de code (plan 21, R15)', () => {
+  // Trois champs multilignes recopiés tels quels : édités avec le widget `code`
+  // de Sveltia 0.221 (éditeur Lexical monospace, coloré par Shiki).
+  // `output_code_only: true` garde la valeur telle quelle — une chaîne, lue et
+  // réécrite sans changement (code-editor.svelte : `code = currentValue` /
+  // `currentValue = code`) ; à `false` (défaut) le widget enregistre un objet
+  // `{code, lang}`, que le schéma Zod refuse (z.string()).
+  // `allow_language_selection: false` : pas de sélecteur, la langue est fixée
+  // par `default_language`, un identifiant Shiki (`markdown`, `yaml`).
+  const expected = [
+    {
+      collection: 'prompts',
+      path: ['prompt'],
+      lang: 'markdown',
+      required: false,
+      hint: 'Le texte copiable en 1 clic. Requis en pratique pour une fiche ; inutile pour un guide. Écrire {nom} là où le lecteur remplit une variable déclarée ci-dessous.',
+    },
+    {
+      collection: 'projects',
+      path: ['snippet'],
+      lang: 'yaml',
+      required: false,
+      hint: 'Contenu du fichier, recopié tel quel ; fenêtre masquée si vide',
+    },
+    // Sous-champ d'une liste : requis (défaut Sveltia), sans aide propre — l'aide
+    // « Extrait = premières lignes… » est portée par la liste `files`.
+    { collection: 'skills', path: ['files', 'excerpt'], lang: 'markdown', required: undefined, hint: undefined },
+  ];
+
+  /** Champ désigné par un chemin `[champ, sous-champ?]` dans une collection. */
+  function fieldAt(cfg: any, collection: string, path: string[]): any {
+    const [head, ...rest] = path;
+    return rest.reduce(
+      (f: any, name: string) => f.fields.find((x: any) => x.name === name),
+      field(cfg, collection, head),
+    );
+  }
+
+  it('édite prompt, snippet et excerpt avec le widget code, sortie texte seule', () => {
+    const cfg = loadCmsConfig();
+    for (const { collection, path, lang, required, hint } of expected) {
+      const f = fieldAt(cfg, collection, path);
+      const where = `${collection}.${path.join('[].')}`;
+      expect(f.widget, where).toBe('code');
+      expect(f.output_code_only, where).toBe(true);
+      expect(f.allow_language_selection, where).toBe(false);
+      expect(f.default_language, where).toBe(lang);
+      expect(f.required, where).toBe(required);
+      expect(f.hint, where).toBe(hint);
+      // Rien d'autre : ni `keys` (sans effet en sortie texte seule) ni `default`.
+      expect(Object.keys(f).sort(), where).toEqual(
+        ['allow_language_selection', 'default_language', 'hint', 'label', 'name', 'output_code_only', 'required', 'widget']
+          .filter((k) => (k === 'hint' ? hint !== undefined : k === 'required' ? required !== undefined : true)),
+      );
     }
   });
 });

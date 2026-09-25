@@ -39,8 +39,10 @@
  * - une tuile n'a ni `svg` ni monogramme `[data-monogram]` ;
  * - la fenêtre de code manque alors que `snippet` est renseigné (ou
  *   l'inverse), sa puce ≠ `snippetFile`, les numéros de la gouttière ne sont
- *   pas 1…n (n = lignes du `<code>`), le texte du `<code>` + `\n` ≠ le
- *   `snippet` du frontmatter, ou elle n'a pas exactement un `Copier` ;
+ *   pas 1…n (n = lignes du `<code>`), le texte du `<code>` ≠ le `snippet` du
+ *   frontmatter moins UN saut de ligne final éventuel (`codeWindowText` ;
+ *   plan 21 F2 : l'éditeur de code de Sveltia n'en garde aucun), ou elle n'a
+ *   pas exactement un `Copier` ;
  * - la rangée d'onglets (`role="tablist"`), l'`<aside>`, la fenêtre de code
  *   ou un libellé de panneau (`[data-panel-label]`) n'est pas
  *   `data-pagefind-ignore` ;
@@ -461,8 +463,8 @@ for (const id of ids) {
         fail(`gouttière ≠ 1…${count} (${where})`);
       }
       if (gutters[0].attrs['aria-hidden'] !== 'true') fail('gouttière sans aria-hidden="true"');
-      const same = `${text}\n` === snippet;
-      if (!same) fail('texte du <code> + « \\n » ≠ snippet du frontmatter');
+      const same = text === (snippet.endsWith('\n') ? snippet.slice(0, -1) : snippet);
+      if (!same) fail('texte du <code> ≠ snippet du frontmatter (moins un saut de ligne final)');
       const lang = win.attrs['data-code-lang'] ?? '—';
       if (lang === 'yaml' && !inWin.some((el) => has(el, 'data-code-key'))) fail('fenêtre yaml sans clé colorée');
       info.window = `${file ?? '—'} · ${count} lines · ${lang} · ${copiers.length} Copier · ${same ? 'code = snippet' : 'code ≠ snippet'}`;

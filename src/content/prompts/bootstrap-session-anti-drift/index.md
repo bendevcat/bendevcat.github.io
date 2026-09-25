@@ -5,7 +5,7 @@ format: fiche
 tool: Claude Code
 model: claude-opus-5
 tags: [anti-drift, claude-code, méthodologie, prompt-engineering]
-prompt: |
+prompt: |-
   <!-- Transient / regenerable. Regénérer avec /anti-drift-planning:start-session 4 (émetteur canonique).
        Émis par la Phase Z du Plan 3 (verify 3 → PASS). -->
 
@@ -172,10 +172,10 @@ remonter au gate, plutôt que filer en silence jusqu'au tag.
 
 Trois blocs font le travail. Le **test de déviation** est binaire : trois
 conditions, et si l'une est vraie, c'est une déviation. Pas de « ça dépend ».
-Le **protocole** impose de logger *avant* d'exécuter, avec un seul statut
+Le **protocole** impose de logger _avant_ d'exécuter, avec un seul statut
 autorisé côté agent — `pending-user` — et une classification de réversibilité
-qui décide si l'agent continue ou s'arrête. Et la **table des
-rationalisations**, la partie la plus utile : sept phrases que les agents se
+qui décide si l'agent continue ou s'arrête. Et la
+**table des rationalisations**, la partie la plus utile : sept phrases que les agents se
 disent réellement pour contourner le protocole, chacune avec sa réfutation en
 face.
 
@@ -195,8 +195,8 @@ route se reprend avec `/anti-drift-planning:resume <N>`.
 Sur les trois premiers plans de ce site, il a produit **27 entrées de log** : 6
 au Plan 1, 12 au Plan 2, 9 au Plan 3. **Trois ont été rejetées** — trois choix
 qui, sans ce prompt, seraient partis en prod sans que personne ne les voie
-passer. Les trois plans se sont terminés avec **zéro entrée laissée
-`pending-user`**.
+passer. Les trois plans se sont terminés avec
+**zéro entrée laissée `pending-user`**.
 
 Ce n'est pas de la magie de formulation. C'est juste qu'un agent à qui on
 demande d'écrire une ligne de log avant de trancher trouve beaucoup moins
