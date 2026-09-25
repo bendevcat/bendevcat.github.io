@@ -158,10 +158,15 @@ const text = (value) => ({ type: 'text', value });
 /** @param {string} classes */
 const cls = (classes) => classes.split(' ');
 
-/** Glyphe lecture (triangle), couleur du texte. */
+/**
+ * Glyphe lecture (triangle), couleur du texte. Sans `focusable="false"`
+ * (utile au seul IE/Edge historique) : l'assainisseur de l'aperçu (DOMPurify,
+ * D143/D153, inchangé) le retire, et le HTML des blocs doit le traverser
+ * intact (plan 23, T4, R5).
+ */
 const PLAY_GLYPH = el(
   'svg',
-  { viewBox: '0 0 24 24', width: '24', height: '24', ariaHidden: 'true', focusable: 'false' },
+  { viewBox: '0 0 24 24', width: '24', height: '24', ariaHidden: 'true' },
   [el('path', { d: 'M8 5.5v13l10.5-6.5z', fill: 'currentColor' })],
 );
 

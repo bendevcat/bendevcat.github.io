@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createMarkdownProcessor, parseFrontmatter, type AstroMarkdownOptions } from '@astrojs/markdown-remark';
+import siteEntries from 'virtual:bencat-site-entries';
 import { guardProcess, previewMarkdownOptions, renderBody } from './markdown';
+import { provideSiteEntries, siteEntriesProvider } from '../../lib/blocks/siteEntries.mjs';
+import { provideAdminEntries } from '../blocks/editorComponents';
 
 /**
  * Corps de l'aperçu `/admin/` rendus par le pipeline du site (plan 21, T2, R7 ;
@@ -78,6 +81,39 @@ describe('corps de l’aperçu : pipeline markdown du site', () => {
     // ci-dessus ont bien été exercés.
     expect(headings).toBeGreaterThan(0);
     expect(codeBlocks).toBeGreaterThan(0);
+  });
+
+  it('le corps de la fixture est rendu comme par le pipeline du site', { timeout: 60_000 }, async () => {
+    // Fixture des blocs (plan 23, T1) : les quatre blocs, carte → projects/gha-svu.
+    const file = new URL('../../lib/blocks/fixtures/blocs-demo.md', import.meta.url);
+    const { frontmatter, content } = parseFrontmatter(readFileSync(file, 'utf8'));
+    const { default: config } = await import('../../../astro.config.mjs');
+    // Référence : le processeur du site avec SON fournisseur d'entrées
+    // (lecteur disque, mode site, posé par astro.config.mjs).
+    const siteProvider = siteEntriesProvider();
+    expect(siteProvider?.mode).toBe('site');
+    const site = await createMarkdownProcessor(config.markdown as AstroMarkdownOptions);
+    const expected = (await site.render(content, { fileURL: file, frontmatter })).code;
+    // Aperçu : l'index de /admin/ (module virtuel), comme `cms.ts` l'installe.
+    provideAdminEntries(siteEntries);
+    try {
+      expect(siteEntriesProvider()?.mode).toBe('preview');
+      const actual = await renderBody(content);
+      expect(actual).toBe(expected);
+      // Garde-fous hors options partagées : les blocs sont bien rendus (un
+      // `remarkBlocks` retiré de markdownOptions rougit ici).
+      for (const kind of ['note', 'astuce', 'attention', 'danger']) {
+        expect(actual, kind).toMatch(new RegExp(`<aside role="note"[^>]* data-callout="${kind}"`));
+      }
+      expect(actual).toMatch(/<figure[^>]* data-code-window[^>]* data-terminal/);
+      expect(actual).toContain('data-entry-card="projects/gha-svu"');
+      expect(actual).toContain('href="/projets/gha-svu/"');
+      expect(actual.match(/<figure[^>]* data-video/g)).toHaveLength(2);
+      expect(actual).not.toMatch(/:::/);
+      expect(actual).not.toMatch(/<iframe|<img/);
+    } finally {
+      if (siteProvider) provideSiteEntries(siteProvider);
+    }
   });
 
   it('un corps vide ou absent rend une chaîne vide', async () => {

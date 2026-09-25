@@ -1,9 +1,12 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { JSDOM } from 'jsdom';
+import { readFileSync } from 'node:fs';
+import { parseFrontmatter } from '@astrojs/markdown-remark';
 import { diskEntries } from './diskEntries';
 import { isTreeElement, treeH, type H, type TreeElement } from './html';
 import { bodyImagePaths } from './images';
+import { renderBody } from './markdown';
 import { PREVIEWS } from './register';
 import { SANITIZE_CONFIG, createSanitizer, sanitizingH, type Sanitize } from './sanitize';
 
@@ -138,6 +141,30 @@ describe('aperçus /admin/ : HTML des corps assaini', () => {
     // Les images du corps résolues en blob: gardent leur src après assainissement.
     expect(resolvedImages).toBeGreaterThan(0);
     expect(blobSrcs).toBe(resolvedImages);
+  });
+
+  it('le HTML des quatre blocs traverse l’assainisseur inchangé ; un <iframe> du contenu est retiré', async () => {
+    // Fixture des blocs (plan 23, T1) rendue par le pipeline de l'aperçu :
+    // aside role/aria-label, data-*, figure du terminal, bouton caché, svg de
+    // la façade vidéo, liens — rien ne doit tomber (D153 : DOMPurify inchangé).
+    const fixture = new URL('../../lib/blocks/fixtures/blocs-demo.md', import.meta.url);
+    const { content } = parseFrontmatter(readFileSync(fixture, 'utf8'));
+    const html = await renderBody(content);
+    expect(html.match(/<aside role="note"/g)).toHaveLength(4);
+    expect(html).toContain('data-terminal');
+    expect(html).toContain('data-entry-card="projects/gha-svu"');
+    expect(html.match(/data-video=""/g)).toHaveLength(2);
+    expect(sanitize(html)).toBe(reserialize(html));
+
+    // Un <iframe> écrit dans le contenu (HTML brut du markdown) est retiré ;
+    // les blocs autour restent intacts.
+    const planted = `${content}\n\n<iframe src="https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?autoplay=1"></iframe>\n`;
+    const withFrame = await renderBody(planted);
+    expect(withFrame).toContain('<iframe');
+    const clean = sanitize(withFrame);
+    expect(clean).not.toMatch(/<iframe/i);
+    expect(liveVectors(clean)).toEqual([]);
+    expect(clean).toBe(reserialize(withFrame.replace(/<iframe[^>]*><\/iframe>/, '')));
   });
 
   it('sanitizingH assainit tout dangerouslySetInnerHTML et laisse le reste intact', () => {

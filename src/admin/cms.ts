@@ -31,6 +31,15 @@
  * `preSave`, un seul `postSave`, enregistrés avant `init()` ; le lecteur est
  * choisi avant `init()`, donc avant toute sauvegarde.
  *
+ * Blocs de l'éditeur (plan 23, T4, D152) : l'index des entrées du site
+ * (module virtuel `virtual:bencat-site-entries`, lu sur le disque au build —
+ * `viteSiteEntries.mjs`) devient le fournisseur d'entrées de l'aperçu (mode
+ * `preview` : ref inconnue → carte d'erreur) et les options du bloc Carte ;
+ * les quatre composants (Encadré, Terminal, Carte, Vidéo — menu Insert,
+ * `blocks/editorComponents.ts`) sont enregistrés avant `init()`, dont
+ * l'analyseur de config lit leurs champs. `config.yml` ne les active que sur
+ * le corps des articles.
+ *
  * Marqueur auteur (plan 22, T5, D150) : chaque chargement de `/admin/` pose
  * `localStorage['bencat:author'] = '1'` (`markAuthor`, erreurs de stockage
  * avalées), avant `init()`. Les pages de détail du site ne montrent leur lien
@@ -53,11 +62,14 @@ import { createSaveHooks } from './hooks';
 import { createPreviousEntries, githubReader, type FileReader } from './previousEntry';
 import { registerSiteStyle } from './previewStyle';
 import { registerPreviews } from './previews/register';
+import { registerBlocks } from './blocks/editorComponents';
+import siteEntries from 'virtual:bencat-site-entries';
 
 markAuthor(() => window.localStorage);
 
 registerSiteStyle(CMS, siteCss, location.origin);
 registerPreviews(CMS, window);
+registerBlocks(CMS, siteEntries);
 
 let readCommitted: FileReader = githubReader();
 const saveHooks = createSaveHooks({ previous: createPreviousEntries((path) => readCommitted(path)) });
