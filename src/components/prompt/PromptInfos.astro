@@ -12,10 +12,17 @@
  * - Filet `line2`, puis `Vient du skill` → la première skill liée
  *   (relatedSkillIds), omis sans skill liée.
  *
+ * Plan 18, T4 : chaque puce de tag est un lien vers `/tags/<tagSlug>/`
+ * (TagChip `href`, forme `pill` inchangée), posé dans un `<li>` ; la liste est
+ * nommée par le `<dt>` `tags` (`aria-labelledby`), comme SkillInfos (plan 17,
+ * F1) — plus d'`aria-label="Tags"`, qui ferait compter le `<li>` comme une 2e
+ * puce à scripts/check-secondary.mjs.
+ *
  * Crochets lus par scripts/check-prompt.mjs : `data-prompt-infos`,
  * `data-prompt-origin`.
  */
 import TagChip from '../TagChip.astro';
+import { tagSlug } from '../../lib/tags';
 
 interface Props {
   format: string;
@@ -72,11 +79,13 @@ const VALUE = 'min-w-0 text-right font-mono text-[11px] [overflow-wrap:anywhere]
     {
       tags.length > 0 && (
         <div class={ROW}>
-          <dt class={LABEL}>tags</dt>
+          <dt id="prompt-infos-tags" class={LABEL}>tags</dt>
           <dd class="min-w-0">
-            <ul class="flex flex-wrap justify-end gap-1.5" aria-label="Tags">
+            <ul class="flex flex-wrap justify-end gap-1.5" aria-labelledby="prompt-infos-tags">
               {tags.map((tag) => (
-                <TagChip tag={tag} />
+                <li>
+                  <TagChip tag={tag} href={`/tags/${tagSlug(tag)}/`} />
+                </li>
               ))}
             </ul>
           </dd>

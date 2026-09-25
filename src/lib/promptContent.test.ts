@@ -135,6 +135,19 @@ describe('contenu des prompts — valeurs sourcées (D65, D109, D110)', () => {
     expect(data.variables).toBeUndefined();
   });
 
+  // Plan 18, T4 (R7) — garde bon marché d'un texte sourcé (constat du plan
+  // 16) : à l'intérieur de chaque ligne, une seule espace entre deux mots ;
+  // ni tabulation, ni blanc en fin de ligne. Le test précédent ne le voit pas
+  // (il réduit tous les blancs avant l'empreinte).
+  it('macos-clone has no tab, trailing space or double space inside a line', () => {
+    const { data } = readPrompt('macos-clone');
+    const lines: string[] = data.prompt.split('\n');
+    const where = (re: RegExp) => lines.flatMap((line, i) => (re.test(line) ? [`${i + 1}: ${JSON.stringify(line)}`] : []));
+    expect(where(/\t/), 'tabulation').toEqual([]);
+    expect(where(/\s$/), 'blanc en fin de ligne').toEqual([]);
+    expect(where(/\S\s{2,}\S/), 'double espace dans une ligne').toEqual([]);
+  });
+
   it('no prompt body is the literal No content', () => {
     for (const p of allPrompts()) {
       expect(p.body.includes('No content'), `${p.id}: corps « No content »`).toBe(false);
