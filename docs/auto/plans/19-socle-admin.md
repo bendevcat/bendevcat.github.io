@@ -101,8 +101,53 @@ Exit 1 if a line differs (e.g. a `<link rel="stylesheet">` or the site header in
 - Acceptance: R17 greps; `npx vitest run` → 0 failed, > 399; `npm run check` → `0 errors`; build + every `scripts/check-*.mjs` → base lines, `check-admin` 6 lines; R18 `git diff --stat` → empty
 - Depends on: T1–T6
 
+### F1 — Cold dep cache: pre-bundle Sveltia (fix for R7, R0)
+- Files: `astro.config.mjs` (`vite.optimizeDeps.include: ['@sveltia/cms']`, commented), `src/lib/cms-config.test.ts` (one test reading `astro.config.mjs`)
+- Covers: R7, R0
+- Acceptance: with `node_modules/.vite` removed, start the dev server, first visit `/admin/` then `/admin/?test-repo` → 0 request answered 4xx/5xx and 0 console error (walked by the orchestrator); `npx vitest run` green; the 51 site pages' built HTML identical to base
+- Depends on: T7
+
+### F2 — Test-board seed test must not pin the entry count (finding 1)
+- Files: `src/admin/dev/testRepo.test.ts` (the glob must cover exactly the `index.md` files found on disk, counted at test time — no literal `13`)
+- Covers: R18 (a CMS create/delete must not turn `npm test` red)
+- Acceptance: tests green at tip; in a scratch copy, adding `src/content/blog/nouvel-article/index.md` (valid frontmatter) and deleting `src/content/projects/gha-svu/` leaves `npx vitest run src/admin/dev/testRepo.test.ts` green
+- Depends on: F1
+
+### F3 — Content-pinning tests tolerate the author's CMS deletes and edits (finding 2)
+- Files: `src/lib/projectContent.test.ts`, `src/lib/promptContent.test.ts`, `src/lib/skillContent.test.ts`, `README.md` (« Supprimer une entrée »: CI runs `npm test`, and what the content tests still guard)
+- Keep every **generic** invariant (roles verbatim from the project's own text, variables occur in their prompt, no `No content` body, excerpt limits, changelog order, unique relative paths, no e-mail). Turn every **entry-specific snapshot** (exact values of `gha-svu`, `site-bencat`, `bootstrap-session-anti-drift`, `macos-clone`, `superpowers`…) into a check that runs only while that entry still holds the value sourced at wave 3 — or drop it when it only restates the source — so that deleting or editing an entry through the CMS never turns `npm test` red; each changed test says why in its comment (D131)
+- Covers: R16/R18 follow-up (CI stays green after a CMS delete or edit)
+- Acceptance: tests green at tip; in a scratch copy, deleting `src/content/projects/gha-svu/` and `src/content/prompts/bootstrap-session-anti-drift/` (and removing their references), then editing `macos-clone`'s prompt to one line → `npx vitest run` 0 failed; the generic invariants still go red on an injected defect (a variable absent from its prompt; a body `No content`)
+- Depends on: F2
+
 ## Out of scope
 - Title, logo, icons, summaries, filters, groups, `preview_path` (plan 20); preview templates, dark theme or `.prose` wrapper in the preview, Shiki with `syntaxTheme` (plan 21); defaults, date hook, WebP, commit messages, ✏️ button (plan 22); editor blocks (plan 23).
 - Cleaning links to a deleted entry inside prose bodies (not relation fields; they do not break the build).
 - `@types/react` (optional peer of Sveltia's types; `npm run check` must pass without it), any content change beyond the 25 rule lines, any schema change.
 - Version bump, tag, merge, push, deploy — the orchestrator's single end escalation.
+
+## Evidence
+### Verification attempt 1 (tip `deeaef5`, base `edd2791`) — 16/19 proven, R0 + R7 failed
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | every Reachability path reaches its screen (dev `/admin/`, dev `/admin/?test-repo` › board › article › preview, preview `/admin/`), but a cold Vite dep cache makes the first `/admin/` visit answer a 504 (see R7) |
+| R1 | proven | both named tests pass; red on a `BaseLayout` import, on `noindex` removed, on `public/admin/index.html` recreated |
+| R2 | proven | both tests pass; red on `"^0.221.0"` and on an unpkg import in `cms.ts` |
+| R3 | proven | `Indexed 12 pages`; check-admin 6 lines exit 0; exit 1 on one injected defect per line (stylesheet link, `<header>`, unpkg script, `.prose{` removed, seed marker, `/src/content/` key, admin chunk on `/`, config byte) and on a real rebuild without the DEV guard (`dev-only: 1 test-repo seed marker · 23 /src/content/ key`) |
+| R4 | proven | `curl /admin/` → `200` with `<meta name="robots" content="noindex">`; `/admin/config.yml` `cmp` identical |
+| R5 | proven | `/admin/` shows « Travailler avec un dépôt local », « Se connecter avec GitHub », « Se connecter avec un jeton d'accès »; `?test-repo` board Articles 6 · Projets 2 · Prompts 3 · Skills 2, titles = the 13 `index.md`; console `Parsed 13 entries (0 errors)` |
+| R6 | proven | preview: `/admin/` and `/admin/?test-repo` show the same 3 buttons, no test-repo button; OPFS `[]`; 0 failed request; 0 console error |
+| R7 | failed | warm dev and preview clean (67 requests, 0 4xx/5xx, 0 console error); cold dep cache: `GET /@id/astro/runtime/client/dev-toolbar/entrypoint.js → 504 (Outdated Optimize Dep)` after `optimized dependencies changed. reloading`, persisting until restart; reproduced twice; `vite.optimizeDeps.include: ['@sveltia/cms']` gives 200 in a scratch worktree |
+| R8 | proven | 3 tests pass; red on identity `absolutizeCssUrls`, `{ raw: false }`, `//` URLs prefixed |
+| R9 | proven | k9s preview iframe: `<html>` bg `rgb(241, 244, 247)`, `<p>` `rgb(40, 50, 61)`, font-family `"Nebula Sans", …`, Nebula Sans 400/700 `loaded` (200 from `/node_modules/@fontsource/…`); same on `meilleurs-vpn-2025` |
+| R10 | proven | k9s: 29 `<pre>`, 29 coloured (`<pre class="shiki github-dark" …>`) — **Sveltia colours code natively: yes**, with `github-dark`, not the site's `syntaxTheme` (input for plan 21) |
+| R11 | proven | 3 named tests pass; red on `***` in k9s, `- - -` in a prompt, indented `___` in a skill, `-`-only detector, fences not skipped |
+| R12 | proven | `25 +---`, `2 -***`, `23 -- - -`, 4 files; the 3 built articles byte-identical to base; `bienvenue-dans-mon-foutoir` is a draft (not built) — rendered-markdown equality shown at T1 |
+| R13 | proven | 4 tests pass; red on unchanged return, listener removed, `postSave`, no blank line |
+| R14 | proven | `bienvenue-dans-mon-foutoir` edited then saved: OPFS rule lines `[33,"---"],[57,"---"]`, 0 `***`/`___`; the save also added `featured: false` (plan 21 byte-for-byte input) |
+| R15 | proven | both tests pass; red on prompts `delete: false`, `required: true` and `min: 1` on `relatedSkills` |
+| R16 | proven | confirm dialog « The reference to it in another entry will be removed as well »; after each delete only the referencing file changes (gha-svu → `comment-jutilise…` loses `relatedProjects`; bienvenue → `site-bencat` loses `relatedPosts`; bootstrap → `anti-drift-planning.relatedPrompts = [decouper-un-projet-en-plans-anti-drift]`; anti-drift-planning → `decouper…` loses `relatedSkills`); an emptied list is **omitted**; rewritten files (SHA-256 = OPFS) in a scratch tip worktree with the 4 folders removed: `npm run build` exit 0, 0 error |
+| R17 | proven | greps 0 · 2 · 3 · 3 · 0 · 1; « Supprimer une entrée » states delete on with cascade; `---` section names hook and guard |
+| R18 | proven | 428 passed, 0 failed; `0 errors`; 51 site pages byte-identical to base; 12 other `check-*.mjs` identical; frozen `git diff --stat` empty |
+
+Findings outside criteria (attempt 1): (1) **high** `src/admin/dev/testRepo.test.ts:103` hard-codes `toBe(13)` — any CMS create/delete turns `npm test` red and CI blocks the deploy; (2) **medium** deleting `gha-svu` or `bootstrap-session-anti-drift` through the CMS turns 6 content-pinning tests red (`projectContent.test.ts` ×2, `promptContent.test.ts` ×4) — CI blocks the deploy although `npm run build` is green; the same pins block ordinary CMS edits of those entries; (3) low: `bienvenue-dans-mon-foutoir` body images requested at the site root in the preview (404 ×3) — plan 21 input; (4) low: a save rewrites the whole frontmatter — plan 21 input; (5) info: `dist/` 9.9 → 26 MB (admin-only chunks), Sveltia fetches `githubstatus.com` on load.
