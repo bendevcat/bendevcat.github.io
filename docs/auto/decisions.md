@@ -475,3 +475,6 @@ Choice: `@source not "../../public/admin"` and `@source not "../admin"` in `glob
 
 ## D158 · Plan 23 · verify — Terminal code via `text` widget; quiet preview for incomplete blocks
 Choice: the Terminal block's code field becomes a `text` widget (Sveltia's Lexical code editor empties or truncates the value as soon as ``` is typed, before any validation — D156's `pattern` cannot help); in the preview, an incomplete or invalid block renders a neutral « Bloc incomplet » placeholder with no console error (the site build still fails on it); the video iframe drops `allowfullscreen` (its `allow` already grants fullscreen) · Alternatives: keep the `code` widget and document the trap; keep console errors while typing · Reversibility: cheap · Why: plan 23 verification attempt 1 (T4b, R20). Supersedes D156's mechanism.
+
+## D159 · Run 4 · E3 — Publish wave 4 as v1.6.0
+Choice: fast-forward `main` to the integration branch, annotated tag `v1.6.0`, push `main`, `v1.6.0`, `milestone-plan-19` … `milestone-plan-23`, then a production check · Alternatives: wait · Reversibility: expensive (a published tag and a production deploy) · Why: user's answer "A" to escalation E3.
