@@ -94,6 +94,18 @@ export function contentFiles(): SeedFile[] {
 }
 
 /**
+ * État précédent des règles de date sur le tableau de test (plan 22, T3 ;
+ * D149) : le texte de `src/content/…` dans l'arbre de travail — le même glob
+ * que l'amorçage, donc exactement ce qui a été recopié dans l'OPFS au
+ * chargement (les sauvegardes de la session sont retenues par `postSave`) ;
+ * `null` si le fichier n'existe pas.
+ */
+export async function readWorkingTreeFile(path: string): Promise<string | null> {
+  const load = MARKDOWN[`/${path}`];
+  return load ? load() : null;
+}
+
+/**
  * Vide puis remplit `<storage>/sveltia-cms-test/` avec `files`. Le reste de
  * l'OPFS n'est pas touché. Renvoie le nombre de fichiers écrits.
  */

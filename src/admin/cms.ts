@@ -21,7 +21,15 @@
  *
  * Sauvegarde : l'éditeur riche exporte les séparateurs en `***` ; le hook
  * `preSave` les réécrit en `---`, seule forme admise dans le contenu
- * (`hooks.ts`). Enregistré avant `init()`.
+ * (`hooks.ts`), puis applique les règles de date (plan 22, `dateRules.ts`) :
+ * `updatedDate` d'un article publié dont le corps change, `updated` d'un
+ * prompt dont la version change. L'état précédent (`previousEntry.ts`) est la
+ * mémoire `postSave` de la session, sinon, sur le tableau de test, l'arbre de
+ * travail qui l'a amorcé (`readWorkingTreeFile` de `dev/testRepo.ts`, branche
+ * dev ci-dessous), sinon l'API contents publique de GitHub sans jeton (le
+ * backend réel, en production comme en dev sans `?test-repo`). Un seul
+ * `preSave`, un seul `postSave`, enregistrés avant `init()` ; le lecteur est
+ * choisi avant `init()`, donc avant toute sauvegarde.
  *
  * Dépôt de test (dev seulement) : `/admin/?test-repo` sous `astro dev` recopie
  * `src/content/**` dans l'OPFS (`dev/testRepo.ts`) puis passe à `init()` la
@@ -34,17 +42,23 @@
  */
 import CMS from '@sveltia/cms';
 import siteCss from '../styles/global.css?inline';
-import { normalizeBodyBeforeSave } from './hooks';
+import { createSaveHooks } from './hooks';
+import { createPreviousEntries, githubReader, type FileReader } from './previousEntry';
 import { registerSiteStyle } from './previewStyle';
 import { registerPreviews } from './previews/register';
 
 registerSiteStyle(CMS, siteCss, location.origin);
 registerPreviews(CMS, window);
-CMS.registerEventListener({ name: 'preSave', handler: normalizeBodyBeforeSave });
+
+let readCommitted: FileReader = githubReader();
+const saveHooks = createSaveHooks({ previous: createPreviousEntries((path) => readCommitted(path)) });
+CMS.registerEventListener({ name: 'preSave', handler: saveHooks.preSave });
+CMS.registerEventListener({ name: 'postSave', handler: saveHooks.postSave });
 
 if (import.meta.env.DEV && new URLSearchParams(location.search).has('test-repo')) {
   import('./dev/testRepo')
-    .then(async ({ seedTestRepo, loadTestRepoConfig }) => {
+    .then(async ({ seedTestRepo, loadTestRepoConfig, readWorkingTreeFile }) => {
+      readCommitted = readWorkingTreeFile;
       await seedTestRepo().catch((error) => console.error('test-repo : amorçage OPFS impossible', error));
       return loadTestRepoConfig();
     })
