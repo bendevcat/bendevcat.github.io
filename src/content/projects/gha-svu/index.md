@@ -10,7 +10,7 @@ stackRoles:
 tags: [github-actions, devops, versioning]
 repoUrl: https://github.com/bencatlab/gha-svu
 snippetFile: .github/workflows/check-pr.yml
-snippet: |
+snippet: |-
   name: Check PR
   on:
     pull_request:
@@ -48,8 +48,8 @@ relatedPosts: [comment-jutilise-github-actions-au-quotidien]
 Décider du prochain numéro de version à la main, c'est le genre de tâche qu'on
 finit toujours par bâcler. [SVU](https://github.com/caarlos0/svu) le fait très
 bien à partir des commits — encore faut-il l'installer et lui passer les bons
-arguments dans chaque workflow. `gha-svu` emballe tout ça dans une **action
-composite** : une étape, et tu as ta version.
+arguments dans chaque workflow. `gha-svu` emballe tout ça dans une
+**action composite** : une étape, et tu as ta version.
 
 ## Ce qu'elle fait
 

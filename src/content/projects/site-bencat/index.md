@@ -13,7 +13,7 @@ tags: [astro, tailwind, cms, claude-code]
 repoUrl: https://github.com/bendevcat/bendevcat.github.io
 demoUrl: https://bendevcat.github.io/
 snippetFile: .github/workflows/deploy.yml
-snippet: |
+snippet: |-
   name: Deploy to GitHub Pages
   on:
     push: { branches: [main] }
@@ -59,7 +59,7 @@ toucher au code.
 
 ## Ce qu'il y a sous le capot
 
-Le contenu vit en *page bundles* — un dossier par article, avec ses images à
+Le contenu vit en _page bundles_ — un dossier par article, avec ses images à
 côté — validés par des schémas Zod. Le CMS est une page statique servie sur
 `/admin` : le navigateur parle directement à l'API GitHub avec un jeton
 personnel, donc **aucun backend à héberger**. Chaque enregistrement produit un

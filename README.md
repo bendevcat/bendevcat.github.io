@@ -266,12 +266,14 @@ de `src/lib/cms-config.test.ts` garde ces réglages.
 
 - **Ouvrir une entrée n'écrit rien** : Sveltia désactive **Save** tant que
   l'entrée n'est pas modifiée, un fichier non modifié ne peut donc pas être
-  réécrit.
+  réécrit — à condition qu'il soit dans la forme canonique de l'éditeur
+  (voir plus bas), sinon l'éditeur le « modifie » dès l'ouverture.
 - **Une vraie modification réécrit tout le frontmatter** : à la sauvegarde,
   Sveltia re-sérialise l'ensemble du frontmatter (ordre, guillemets, style des
   blocs, champs par défaut comme `featured: false`), pas seulement le champ
   modifié. C'était déjà le cas avec le widget `text` ; le contenu des champs de
-  code, lui, reste le même texte.
+  code, lui, reste le même texte — sans saut de ligne final, que l'éditeur de
+  code ne garde jamais (voir « Forme canonique Sveltia » plus bas).
 - **Shiki depuis unpkg** : le surligneur de l'éditeur de code de Sveltia
   télécharge le moteur Shiki, ses grammaires et ses thèmes depuis
   `https://unpkg.com` quand un éditeur de code s'affiche dans `/admin/`
@@ -291,6 +293,40 @@ séparateur autre que `---` (`***`, `___`, `- - -`, `* * *`…) apparaît dans
 `src/content/**` — et comme la CI lance les tests avant de déployer, un tel
 séparateur bloque la publication. Si ce test casse après une édition, remplacer
 la ligne signalée par `---`.
+
+### Forme canonique Sveltia : écrire ce que l'éditeur écrit
+
+À l'ouverture d'une entrée, les éditeurs de Sveltia (Markdown et `code`)
+relisent chaque valeur et la réécrivent dans **leur** forme Markdown. Si le
+fichier n'est pas déjà dans cette forme, **Save** s'active sans qu'on ait rien
+touché, et la sauvegarde suivante publie la forme réécrite — parfois fausse :
+un gras coupé par un saut de ligne devant une ponctuation ressort en `\*\*`
+littéraux. Le contenu s'écrit donc directement dans la forme de l'éditeur
+(syntaxe seulement, le site rend la même chose) :
+
+| Écrire | Pas | Pourquoi |
+|---|---|---|
+| `**gras sur une ligne**` (le saut de ligne passe **devant** la paire) | `**gras⏎sur deux**` | l'éditeur lit ligne par ligne |
+| `_italique_` (`*x*` seulement dans un mot ou une cellule de tableau) | `*italique*` | l'éditeur écrit `_x_` |
+| `\~18 %`, `5 \* 3` | `~18 %`, `5 * 3` | un `~` ou `*` isolé est échappé |
+| `\| a \| b \|` puis `\| --- \| --- \|`, cellules sans alignement | `\|---\|---\|`, colonnes alignées, `:---:` | forme de `transformers/table.js` |
+| ```` ```plaintext ```` pour un bloc sans langue | ```` ``` ```` seul | l'éditeur ajouterait `plain` |
+| une seule ligne vide entre deux blocs, listes serrées, 4 espaces par niveau | lignes vides doublées, liste « lâche » | Lexical ne les garde pas |
+| `prompt: \|-`, `snippet: \|-`, `excerpt: \|-` : pas de saut de ligne final | `\|` (saut final) | l'éditeur de code le retire ; le site l'ignore (`codeWindowText`, `promptWindowSource`) |
+
+Le test `src/lib/cmsCanonical.test.ts` est le garde-fou, lancé par la CI comme
+celui des séparateurs : il lit tout `src/content/**` (corps et trois champs de
+code) et échoue sur chaque ligne hors forme, avec la règle en cause
+(`span`, `star`, `table`, `final-newline`…). `normalizeBody` et
+`normalizeCodeField` (`src/lib/cmsCanonical.ts`) remettent en forme ce qui
+peut l'être sans changer le rendu. Une entrée sauvegardée depuis le CMS est
+toujours dans cette forme : le garde-fou ne vise que les fichiers écrits à la
+main. Deux écarts connus restent tolérés (`PENDING` dans le test) parce que les
+corriger changerait l'affichage : la liste lâche de `meilleurs-vpn-2025` et le
+corps du guide `decouper-un-projet-en-plans-anti-drift`, affiché tel quel dans
+sa fenêtre. Les `---` sont hors de ce garde-fou : l'éditeur les ouvre en `***`
+(Save s'active donc sur un article qui en contient) et le hook `preSave` les
+rétablit à l'écriture.
 
 ### Images de couverture : deux pièges
 
