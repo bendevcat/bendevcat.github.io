@@ -24,6 +24,9 @@ const { featured, latest } = pickHomePosts(entries);
 
 // Rangée 2 : les 2 premières entrées de chaque section, dans l'ordre des pages
 // de liste (getSorted*(), D29). Un seul SectionPanel pour les trois (règle T3).
+//
+// Espacement (plan 18, inventaire §10) : `<main>` et les deux grilles à 16 px
+// (`gap-4`), le `gap:16px` du prototype sur les trois.
 const sections: { section: 'projets' | 'prompts' | 'skills'; title: string; items: SectionItem[] }[] = [
 	{
 		section: 'projets',
@@ -47,18 +50,18 @@ const sections: { section: 'projets' | 'prompts' | 'skills'; title: string; item
 	title="bencat_"
 	description="Site perso de Benoît Catillon — blog, projets, prompts et skills."
 >
-	<main class="flex flex-col gap-5 pt-6 pb-20 sm:pt-8">
+	<main class="flex flex-col gap-4 pt-6 pb-20 sm:pt-8">
 		{/* Un seul <h1> sur la page, le nom du site, masqué visuellement (D32). */}
 		<h1 class="sr-only">bencat_</h1>
 
 		{/* Rangée 1 : empilée en étroit, côte à côte en large (prototype 1.35fr / 1fr). */}
-		<div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.35fr_1fr]">
+		<div class="grid grid-cols-1 gap-4 lg:grid-cols-[1.35fr_1fr]">
 			{featured && <FeaturedPost post={featured.post} />}
 			{latest.length > 0 && <LatestPosts posts={latest.map((entry) => entry.post)} />}
 		</div>
 
 		{/* Rangée 2 : empilée en étroit, trois colonnes égales en large (prototype repeat(3, 1fr)). */}
-		<div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+		<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 			{
 				sections
 					.filter(({ items }) => items.length > 0)
