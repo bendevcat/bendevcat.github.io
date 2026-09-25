@@ -166,3 +166,26 @@ Findings outside criteria: (1) **Sveltia's markdown editor rewrites bodies on lo
 - Covers: R16, R17 (with D146's reading of R16's Save clause)
 - Acceptance: guard green with an empty `PENDING`; the F2 Lexical replica returns every body and code value unchanged except `---` rules; `npx vitest run` 0 failed; build: site pages identical to the F2 build except decouper (`/prompts/decouper…`, `/prompts` card) and `/blog/meilleurs-vpn-2025`, each delta listed; all `scripts/check-*.mjs` exit 0
 - Depends on: F2
+
+### Verification attempt 2 (tip after `00b9f7f`) — 19/21 proven; R16 failed → parked (D147); R0 failed only through R16
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | preview side re-proven (R9–R14); fails only through R16 |
+| R1 | proven | fresh run; re-mutated (`skills` dropped → 2 failed) |
+| R2–R6 | proven | fresh run green; attempt-1 mutations carried |
+| R7 | proven | re-mutated (autolink removed from `markdownOptions.mjs` → red) |
+| R8 | proven | `previews: blog 5/5 · projects 2/2 · prompts 3/3 · skills 2/2`, `drafts: 1 previewed without page`, exit 0 |
+| R9 | proven | 13/13 one `[data-preview]` child; 12/12 published match region by region (docker `column:eq(27736)`, bootstrap `window:eq(10527)`, decouper `window:eq(6419)`) |
+| R10 | proven | computed styles equal on the plan's selectors (5 entries); `[data-var]` bg `rgba(74, 222, 128, 0.16)` |
+| R11 | proven | k9s 29/29, docker 32/32 `pre.astro-code`, 0 `.github-dark`; Shiki spans 269/269 and 1971/1971, anchors 12/12 and 16/16 kept after sanitising |
+| R12 | proven | tests green; mutations carried |
+| R13 | proven | bienvenue cold: 4 `blob:` images (1600/1704/1504/1502); only ≥ 400 = D134 ping |
+| R14 | proven | lead follows the description on first poll; macos-clone bar `48 l. · ~607 tk` → `49 l. · ~609 tk` |
+| R15 | proven | re-mutated (`output_code_only: false` → red) |
+| R16 | failed → parked (D147) | code editors hold (24 editors, monospace, coloured); Save clause fails even under D146: Save on at load on 9 entries, after scroll on 2 (only comment-jutilise and macos-clone stay off); cause isolated with variant entries — any non-empty simple `list` widget (`tags`, `stack`) marks the draft modified when it mounts (Sveltia, also at base); a save without edit rewrites the frontmatter only (quotes, flow → block lists, key order, `featured: false` / `draft: false` added, a blank line after the closing `---` on 4 articles) — bodies and code values unchanged |
+| R17 | proven (D139/D146 reading) | (a) opening + scrolling all 13 writes nothing; (b) title-only edit on the 6 code-field entries: bodies byte-identical, 22 code values equal, still `|-`; differs from base only where base produced the E1 damage; (c) `src/content` changes = D145 syntax lines |
+| R18 | proven | tip walk: 0 console error / exception; warnings = iframe sandbox + Shiki `promql`/`rego`; 404s = D134 ping only |
+| R19 | proven (D145/D146) | 506 passed; 0 errors; site pages = base except the 6 expected (whitespace on gha-svu/bootstrap/anti-drift-planning; decouper + `/prompts` card `~1598 tk`; meilleurs-vpn 3 `<li>` without `<p>`); 14 checks exit 0 (only `~1597` → `~1598`); isolation 1/52; word sequence of the 9 changed content files unchanged |
+| R20 | proven | greps 1 · 1 |
+
+Security (F1) in the real preview iframe: « Modifier en Markdown » payloads (`<img onerror>`, `<svg onload>`, `javascript:` link, `<iframe src=javascript:>`, `<details ontoggle>`, absolute-src image with `onerror`) rendered inert, `__pwned…` undefined in iframe and parent; positive control (an unsanitised `<img onerror>` injected directly) did execute — the sanitiser is what stops it. F2 guard red on a spanning bold, `*x*`, `|---|`, `snippet: |`, `excerpt: |`. Findings: a save adds a blank line after the frontmatter on 4 articles; a raw relative `<img src="x">` makes the preview request `/x` (404, inert); `normalizeBody`/`normalizeCodeField` have no caller outside their test while the README presents them as tools; README wrongly states that a canonical entry never turns Save on.
