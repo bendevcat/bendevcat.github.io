@@ -22,6 +22,8 @@
   - 2 glyphes en TRAIT des badges 22×22 des rails d'article, plan 13 / T4 —
     dessins du PROTOTYPE (lignes 268 et 323), même statut que ceux du tri :
     `file-text` (« Articles liés ») et `folder` (« Projets liés »). Trait 1,8.
+  - 1 glyphe en TRAIT des puces « Ce que fait ce skill », plan 17 / T3 —
+    Lucide `check` (ISC), recopié du jeu Lucide : `check`.
   - marque GitHub en APLAT — Simple Icons (`simple-icons@16.31.0`), licence
     CC0-1.0 (domaine public). Lucide a sorti les marques de son set :
     `github.svg` n'y existe plus, d'où cette seconde source.
@@ -59,7 +61,8 @@ export type IconName =
   | 'filter'
   | 'chevron-down'
   | 'file-text'
-  | 'folder';
+  | 'folder'
+  | 'check';
 
 interface Props {
   name: IconName;
@@ -204,6 +207,11 @@ const GLYPHS: Record<IconName, Glyph> = {
     mode: 'stroke',
     strokeWidth: 1.8,
     paths: `<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />`,
+  },
+  // — Lucide `check` (ISC) — puces « Ce que fait ce skill » (plan 17) —
+  check: {
+    mode: 'stroke',
+    paths: `<path d="M20 6 9 17l-5-5" />`,
   },
 };
 
