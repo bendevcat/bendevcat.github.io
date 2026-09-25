@@ -10,10 +10,17 @@
  * `tags` (TagChip, gardés de la page d'avant ; omis sans tag). Puis, avec
  * `repoUrl`, `code source ↗` (nouvel onglet, `noopener noreferrer`).
  *
+ * Plan 17, F1 : chaque puce de tag est un lien vers `/tags/<tagSlug>/`
+ * (TagChip `href`, forme `pill` inchangée), posé dans un `<li>` comme sur le
+ * rail de /blog ; la liste est nommée par le `<dt>` `tags` (`aria-labelledby`)
+ * — plus d'`aria-label="Tags"`, qui ferait compter le `<li>` comme une 2e
+ * puce à scripts/check-secondary.mjs.
+ *
  * Crochets lus par scripts/check-skill.mjs : `data-skill-infos`,
  * `data-info-field`, `data-skill-repo`.
  */
 import TagChip from '../TagChip.astro';
+import { tagSlug } from '../../lib/tags';
 
 interface Props {
   type: string;
@@ -62,11 +69,13 @@ const rows = [
     {
       tags.length > 0 && (
         <div class={ROW}>
-          <dt class={LABEL}>tags</dt>
+          <dt id="skill-infos-tags" class={LABEL}>tags</dt>
           <dd class="min-w-0">
-            <ul class="flex flex-wrap justify-end gap-1.5" aria-label="Tags">
+            <ul class="flex flex-wrap justify-end gap-1.5" aria-labelledby="skill-infos-tags">
               {tags.map((tag) => (
-                <TagChip tag={tag} />
+                <li>
+                  <TagChip tag={tag} href={`/tags/${tagSlug(tag)}/`} />
+                </li>
               ))}
             </ul>
           </dd>
