@@ -115,3 +115,9 @@ Agent (dev): `npx astro dev --background` › fresh tab `/admin/?test-repo` › 
 - Demo content in `src/content/**` (frozen; no sourced use); blocks in the project, prompt and skill editors (the site renders them if hand-written; their scripts are wired on article pages only).
 - Nested blocks, code fences inside a callout; callout titles; a live entry list inside Sveltia (relation per collection); video thumbnails (third-party request); self-hosting Sveltia's Shiki (D142).
 - Version bump, tag, merge, push.
+
+### T4b — Terminal code field refuses ``` runs (D156)
+- Files: `src/admin/blocks/editorComponents.ts` (+ test), the replica test (`roundTrip.test.ts`) if useful
+- The Terminal component's `code` field gets a `pattern` refusing any run of 3+ backticks, with a French message; verify the pattern option is honoured for the `code` widget inside an editor component in Sveltia 0.221 (source); if it is not, use the `text` widget and prove the round trip still holds
+- Acceptance: tests (a code value with ``` is refused by the field validation used by Sveltia — test through the same validator code path, or prove from source); round-trip tests green
+- Depends on: T5
