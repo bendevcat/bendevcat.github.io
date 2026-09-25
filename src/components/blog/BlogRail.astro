@@ -34,6 +34,9 @@
  *   vient en dernier dans la pile et porte une bordure haute.
  * La variante `filter` (défaut) rend le rail du plan 12, aux retraits près des
  * libellés (8 px) et du nuage de tags (6 px) repris du prototype (plan 13, F2).
+ * Dans les deux variantes, le libellé « Catégories » se pose 10 px au-dessus
+ * de sa première ligne (`gap-2.5` ; prototype 174 `margin:0 0 10px` ; plan 18,
+ * T5).
  */
 import TagChip from '../TagChip.astro';
 import { ALL_CATEGORIES_LABEL, type CategoryRow } from '../../lib/blogList';
@@ -85,7 +88,7 @@ const LABEL = 'px-2 font-mono text-[10px] tracking-[.12em] text-muted uppercase'
 >
   {
     links ? (
-      <nav aria-labelledby="blog-rail-categories" class="flex flex-col gap-2">
+      <nav aria-labelledby="blog-rail-categories" class="flex flex-col gap-2.5">
         <p id="blog-rail-categories" class={LABEL}>Catégories</p>
         <ul class="flex flex-col gap-0.5">
           {categories.map((row) => (
@@ -109,7 +112,7 @@ const LABEL = 'px-2 font-mono text-[10px] tracking-[.12em] text-muted uppercase'
         hidden
         role="group"
         aria-labelledby="blog-rail-categories"
-        class="flex flex-col gap-2"
+        class="flex flex-col gap-2.5"
       >
         <p id="blog-rail-categories" class={LABEL}>Catégories</p>
         <div class="flex flex-col gap-0.5">

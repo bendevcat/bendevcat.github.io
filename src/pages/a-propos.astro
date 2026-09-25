@@ -46,7 +46,9 @@ const lines = whoamiLines({
     </div>
 
     {/* Rangée 2 : deux `.card` sur bg, textes de l'auteur (le « On parle ? »
-        du prototype n'a pas de canal réel ici, D42). */}
+        du prototype n'a pas de canal réel ici, D42). « Pourquoi ce site »
+        porte le filet gauche de 3 px `accent` du prototype (plan 18,
+        inventaire §10) ; ses trois autres côtés restent ceux de `.card`. */}
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-2" data-about="row2">
       <section class="card min-w-0 p-4 sm:p-5" aria-labelledby="about-who-title">
         <h2 id="about-who-title" class="text-[17px] font-semibold tracking-[-.01em] text-ink">Qui je suis</h2>
@@ -57,7 +59,7 @@ const lines = whoamiLines({
         </p>
       </section>
 
-      <section class="card min-w-0 p-4 sm:p-5" aria-labelledby="about-why-title">
+      <section class="card min-w-0 border-l-3 border-l-accent p-4 sm:p-5" aria-labelledby="about-why-title">
         <h2 id="about-why-title" class="text-[17px] font-semibold tracking-[-.01em] text-ink">Pourquoi ce site</h2>
         <p class="mt-2 text-[15px] leading-[1.6] text-body">
           Pour décharger mon cerveau : centraliser des idées, des réflexions, des snippets et des

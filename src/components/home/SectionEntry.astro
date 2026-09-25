@@ -10,12 +10,15 @@
     en mono (`type` seul sans `name`).
   Mono pour les données machine seulement ; titre et description en Nebula
   Sans (§3.1, R8).
+  Description anglaise : `lang="en"` (quoteLang ; plan 18, T2, WCAG 3.1.2) ;
+  française : pas d'attribut, comme SkillHeader.
   Balisage `data-home-field` : convention lue par scripts/check-home.mjs (R3).
 */
 import type { ProjectEntry } from '../../lib/projects';
 import type { PromptEntry } from '../../lib/prompts';
 import type { SkillEntry } from '../../lib/skills';
 import { PROJECT_STATUS_META } from '../../lib/projectStatus';
+import { quoteLang } from '../../lib/skillDetail';
 
 export type SectionItem =
   | { kind: 'project'; entry: ProjectEntry }
@@ -81,7 +84,13 @@ switch (item.kind) {
     {titleChip && <span class={titleChip.class}>{titleChip.label}</span>}
   </div>
 
-  <p class="text-[13px] leading-[1.5] break-words text-muted" data-home-field="description">{description}</p>
+  <p
+    lang={quoteLang(description) === 'en' ? 'en' : undefined}
+    class="text-[13px] leading-[1.5] break-words text-muted"
+    data-home-field="description"
+  >
+    {description}
+  </p>
 
   {meta && <p class="font-mono text-[11px] break-words text-dim" data-home-field="meta">{meta}</p>}
 </a>

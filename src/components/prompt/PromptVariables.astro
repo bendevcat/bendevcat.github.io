@@ -11,6 +11,12 @@
  *   `hidden` (sans JS, le texte de la fenêtre reste celui des défauts et
  *   aucun champ inerte n'est montré) ; indication 11.5 px `muted` en anglais
  *   (`lang="en"`, citée telle quelle, D109), omise sans indication.
+ * - Repli sans JS (plan 18, T3, D121) : une variable qui a un défaut montre
+ *   une ligne `défaut : <valeur>` (`data-var-static` ; libellé mono 11
+ *   `muted`, valeur mono 13 `ink`) sous son nom. La règle
+ *   `html[data-js] [data-var-static]` de global.css la masque dès que le JS
+ *   tourne — le champ, révélé par le script, en tient lieu. Sans défaut (ou
+ *   défaut vide) : pas de ligne.
  *
  * La saisie réécrit les segments `[data-var]` de la fenêtre :
  * src/scripts/prompt-window.ts.
@@ -44,6 +50,12 @@ const fieldId = (name: string) => `prompt-var-${name.replace(/[^A-Za-z0-9_-]/g, 
         return (
           <div class="flex flex-col gap-1.5" data-var-field={variable.name}>
             <label for={id} class="font-mono text-[11px] text-accent">{`{${variable.name}}`}</label>
+            {variable.default && (
+              <p data-var-static class="flex flex-wrap items-baseline gap-x-1.5">
+                <span class="font-mono text-[11px] text-muted">défaut :</span>{' '}
+                <span class="font-mono text-[13px] break-all text-ink">{variable.default}</span>
+              </p>
+            )}
             <input
               type="text"
               id={id}

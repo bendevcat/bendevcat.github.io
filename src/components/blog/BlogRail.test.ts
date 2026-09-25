@@ -119,3 +119,35 @@ describe('BlogRail, links variant (plan 13, T3)', () => {
     expect(classes.filter((cls) => /^md:border/.test(cls)), 'pas de bordure /blog').toEqual([]);
   });
 });
+
+// Plan 18, T5 (R8 ; prototype 174 `margin:0 0 10px` ; D121) : le libellé
+// « Catégories » se pose 10 px au-dessus de sa première ligne, dans les deux
+// variantes. L'écart est celui du conteneur flex (`gap-2.5`) ; ni le libellé
+// ni la liste de lignes n'y ajoutent de marge ou de retrait vertical.
+describe('BlogRail, Catégories label gap (plan 18, T5)', () => {
+  it('puts 10 px between the Catégories label and its first row, in both variants', async () => {
+    for (const variant of ['filter', 'links'] as const) {
+      const html = await render({ variant });
+      const labelAt = html.search(/<p\b[^>]*\sid="blog-rail-categories"/);
+      expect(labelAt, variant).toBeGreaterThan(-1);
+      // Conteneur : la dernière balise ouvrante `<nav>` / `<div>` avant le libellé.
+      const before = html.slice(0, labelAt);
+      const groupAt = Math.max(before.lastIndexOf('<nav'), before.lastIndexOf('<div'));
+      const group = html.slice(groupAt, html.indexOf('>', groupAt) + 1);
+      expect(group, variant).toMatch(/aria-labelledby="blog-rail-categories"/);
+      const groupClasses = classesOf(group);
+      expect(groupClasses, variant).toEqual(expect.arrayContaining(['flex', 'flex-col']));
+      expect(groupClasses.filter((cls) => /^gap(?:-[xy])?-/.test(cls)), variant).toEqual(['gap-2.5']);
+
+      const label = html.slice(labelAt, html.indexOf('>', labelAt) + 1);
+      expect(classesOf(label).filter((cls) => /^-?(?:m[by]?|p[by])-/.test(cls)), `${variant} libellé`).toEqual([]);
+
+      // Liste des lignes : la balise ouvrante qui suit la fermeture du libellé.
+      const afterLabel = html.indexOf('</p>', labelAt) + '</p>'.length;
+      const rowsAt = html.indexOf('<', afterLabel);
+      const rows = html.slice(rowsAt, html.indexOf('>', rowsAt) + 1);
+      expect(rows, variant).toMatch(/^<(ul|div)\b/);
+      expect(classesOf(rows).filter((cls) => /^-?(?:m[ty]?|p[ty])-/.test(cls)), `${variant} lignes`).toEqual([]);
+    }
+  });
+});

@@ -2,7 +2,8 @@
 /*
   Accueil, rangée 1 — « Derniers articles » (Plan 9, Home map ; D28).
   Une `.card` sur `bg`, pas un `.panel` : seule la rangée 2 est teintée.
-  Badge 28×28 à droite du titre, glyphe `blog` du header (D30). Chaque entrée :
+  Badge 28×28 au bord droit, titre aligné à droite juste à sa gauche, 10 px
+  entre les deux (prototype `row-reverse`, plan 18), glyphe `blog` du header (D30). Chaque entrée :
   vignette 72 px (Thumbnail `square`), catégorie en mono d'accent, titre
   17 px / 500, puis `date · temps de lecture · emoji label` en mono.
   Balisage `data-home*` : convention lue par scripts/check-home.mjs (R2).
@@ -32,8 +33,8 @@ const items = posts.map((post) => {
 ---
 
 <section class="card flex min-w-0 flex-col p-4 sm:p-5" data-home="latest" aria-labelledby="home-latest-title">
-  <div class="flex items-center justify-between gap-3">
-    <h2 id="home-latest-title" class="text-[17px] font-semibold tracking-[-.01em] text-ink">Derniers articles</h2>
+  <div class="flex items-center justify-end gap-2.5">
+    <h2 id="home-latest-title" class="min-w-0 flex-1 text-right text-[17px] font-semibold tracking-[-.01em] text-ink">Derniers articles</h2>
     <span class="grid size-7 shrink-0 place-items-center rounded-badge bg-badgeBg text-badgeInk" aria-hidden="true">
       <Icon name="blog" size={14} />
     </span>

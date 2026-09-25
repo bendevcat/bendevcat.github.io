@@ -131,4 +131,63 @@ describe('coque du site (plan 12)', () => {
     expect(header).not.toMatch(/<header[^>]*\bborder-b/);
     expect(read('components/ThemeToggle.astro')).toContain('id="theme-toggle"');
   });
+
+  // Plan 18, T3 (D121) : sans JS, la bascule de thème ne fait rien — elle est
+  // masquée comme la loupe. Pas de `hidden` dans le balisage (le bouton
+  // clignoterait à chaque chargement) : une règle HORS couche sur
+  // `html:not([data-js])`, à côté de `[data-search-open][hidden]`, et le script
+  // inline de BaseLayout pose `data-js` avant le rendu.
+  it('hides the theme toggle without JavaScript, like the search trigger', () => {
+    const css = read('styles/global.css');
+    const unlayered = stripLayers(css.replace(/\/\*[\s\S]*?\*\//g, ''));
+    const toggleRule = ruleBody(unlayered, 'html:not([data-js]) #theme-toggle');
+    expect(toggleRule, 'règle html:not([data-js]) #theme-toggle hors @layer').not.toBeNull();
+    expect(toggleRule).toMatch(/display:\s*none\s*!important/);
+    // la loupe garde sa règle, hors couche elle aussi
+    expect(ruleBody(unlayered, '[data-search-open][hidden]')).toMatch(/display:\s*none\s*!important/);
+
+    expect(read('layouts/BaseLayout.astro')).toMatch(/document\.documentElement\.dataset\.js\s*=/);
+    // aucun changement de balisage : le bouton n'est pas rendu `hidden`
+    const toggle = /<button\b[^>]*id="theme-toggle"[^>]*>/.exec(read('components/ThemeToggle.astro'));
+    expect(toggle).not.toBeNull();
+    expect(toggle![0]).not.toMatch(/\shidden\b/);
+  });
 });
+
+/** Corps de la première règle dont la liste de sélecteurs contient `selector`. */
+function ruleBody(css: string, selector: string): string | null {
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selectors = m[1].split(',').map((part) => part.trim().replace(/\s+/g, ' '));
+    if (selectors.includes(selector)) return m[2];
+  }
+  return null;
+}
+
+/** Le CSS sans le contenu de ses blocs `@layer … { … }` (accolades appariées). */
+function stripLayers(css: string): string {
+  let out = '';
+  let i = 0;
+  while (i < css.length) {
+    const at = css.indexOf('@layer', i);
+    if (at === -1) {
+      out += css.slice(i);
+      break;
+    }
+    out += css.slice(i, at);
+    const semi = css.indexOf(';', at);
+    const open = css.indexOf('{', at);
+    if (open === -1 || (semi !== -1 && semi < open)) {
+      // `@layer a, b;` : déclaration d'ordre, pas de bloc
+      i = semi === -1 ? css.length : semi + 1;
+      continue;
+    }
+    let depth = 0;
+    let j = open;
+    for (; j < css.length; j++) {
+      if (css[j] === '{') depth++;
+      else if (css[j] === '}' && --depth === 0) break;
+    }
+    i = j + 1;
+  }
+  return out;
+}

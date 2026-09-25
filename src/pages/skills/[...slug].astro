@@ -19,7 +19,11 @@
  *   à gauche et à droite (compensés par une marge négative, le contenu
  *   garde ses 340 px) et 20 en bas laissent place à l'anneau de focus des
  *   panneaux (décalage 4 + trait 2) et à l'ombre `var(--shadow)` des cartes
- *   (jusqu'à 18 px sous la dernière). En dessous de 1024 px, rien ne
+ *   (jusqu'à 18 px sous la dernière). Un `scroll-padding-bottom` de 8 px
+ *   (`lg:scroll-pb-2`, plan 18 T5) : quand le focus clavier fait défiler la
+ *   colonne jusqu'à son dernier lien, l'anneau (décalage 2 + trait 2) reste
+ *   dans la zone de défilement (plan 17 v2 : il la dépassait de 3,8 px à
+ *   1024×768 et 1280×800). En dessous de 1024 px, rien ne
  *   change. Onglets en piste
  *   (DetailTabs `variant="track"`) déclencheurs · versions · infos — un
  *   onglet sans données est omis (skillPageTabs, src/lib/detailTabs.ts) ;
@@ -122,7 +126,7 @@ const shown = new Set(tabs.map((tab) => tab.id));
 
         <aside
           aria-label="Autour du skill"
-          class="flex min-w-0 flex-col gap-3 lg:sticky lg:top-5 lg:-mx-2 lg:max-h-[calc(100vh-40px)] lg:overflow-y-auto lg:px-2 lg:pb-5"
+          class="flex min-w-0 flex-col gap-3 lg:sticky lg:top-5 lg:-mx-2 lg:max-h-[calc(100vh-40px)] lg:overflow-y-auto lg:scroll-pb-2 lg:px-2 lg:pb-5"
           data-skill-aside
         >
           <DetailTabs tabs={tabs} label="Sections du skill" variant="track">
