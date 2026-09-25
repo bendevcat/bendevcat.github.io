@@ -35,6 +35,13 @@
  * qui manque (corps différent du dernier demandé, image ni résolue ni en
  * cours).
  *
+ * Assainissement (F1, D143) : le `h` passé aux gabarits est enveloppé par
+ * `sanitizingH` — tout `dangerouslySetInnerHTML` (le corps rendu, images
+ * résolues) passe par DOMPurify (`sanitize.ts`) juste avant l'injection dans
+ * l'iframe, qui permet scripts et même origine. Sans assainisseur utilisable
+ * (pas de DOM), rien n'est enregistré : l'aperçu par défaut de Sveltia, lui
+ * assaini, reste.
+ *
  * Chargement paresseux : le pipeline Markdown (`markdown.ts` →
  * `@astrojs/markdown-remark`, Shiki, plugins rehype) n'est importé, par
  * `import()`, qu'au premier corps à rendre — pas au chargement de `/admin/`.
@@ -45,6 +52,7 @@ import { articlePreview } from './article';
 import { projectPreview } from './project';
 import { promptPreview } from './prompt';
 import { skillPreview } from './skill';
+import { createSanitizer, sanitizingH, type Sanitize } from './sanitize';
 
 /** Gabarit pur d'une collection. */
 type Template = (data: Record<string, unknown>, h: H) => unknown;
@@ -119,6 +127,8 @@ export type RenderBody = (md: string) => Promise<string>;
 export interface PreviewRuntime {
   h: H;
   createClass: CreateClass;
+  /** Assainit tout HTML injecté (`dangerouslySetInnerHTML`) ; F1. */
+  sanitize: Sanitize;
   /** Charge le rendu des corps ; par défaut `import('./markdown')`, au premier besoin. */
   loadRenderBody?: () => Promise<RenderBody>;
 }
@@ -167,7 +177,9 @@ export async function resolveAsset(
 
 /** Composant `createClass` de la collection : état asynchrone + gabarit pur. */
 export function previewComponent(name: string, preview: CollectionPreview, runtime: PreviewRuntime): unknown {
-  const { h, createClass } = runtime;
+  const { createClass } = runtime;
+  // Le HTML injecté par un gabarit passe par l'assainisseur, en dernier.
+  const h = sanitizingH(runtime.h, runtime.sanitize);
   const loadRenderBody = runtime.loadRenderBody ?? loadMarkdown;
   let renderer: Promise<RenderBody> | undefined;
   const renderBody = async (md: string): Promise<string> => {
@@ -260,12 +272,14 @@ type ReactScope = { h?: unknown; createClass?: unknown };
  * Enregistre un gabarit par collection (`PREVIEWS`) avec le React de Sveltia
  * (`scope.h`, `scope.createClass` — `scope` = `window` dans `cms.ts`). À appeler après l'import de
  * `@sveltia/cms` et avant `CMS.init()`. Renvoie `false`, sans rien
- * enregistrer, si ce React est absent (l'aperçu par défaut reste).
+ * enregistrer, si ce React est absent ou si DOMPurify ne peut pas travailler
+ * sur `scope` (l'aperçu par défaut, assaini, reste).
  */
 export function registerPreviews(
   cms: PreviewTemplateApi,
   scope: object = globalThis,
   loadRenderBody?: () => Promise<RenderBody>,
+  sanitize: Sanitize | null = createSanitizer(scope),
 ): boolean {
   const { h, createClass } = scope as ReactScope;
   if (typeof h !== 'function' || typeof createClass !== 'function') {
@@ -275,7 +289,19 @@ export function registerPreviews(
     );
     return false;
   }
-  const runtime: PreviewRuntime = { h: h as H, createClass: createClass as CreateClass, loadRenderBody };
+  if (!sanitize) {
+    console.error(
+      'Aperçus /admin/ non enregistrés : assainisseur HTML (DOMPurify) indisponible — ' +
+        'aperçu par défaut de Sveltia conservé.',
+    );
+    return false;
+  }
+  const runtime: PreviewRuntime = {
+    h: h as H,
+    createClass: createClass as CreateClass,
+    sanitize,
+    loadRenderBody,
+  };
   for (const [name, preview] of Object.entries(PREVIEWS)) {
     cms.registerPreviewTemplate(name, previewComponent(name, preview, runtime));
   }

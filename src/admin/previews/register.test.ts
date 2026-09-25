@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { JSDOM } from 'jsdom';
 import { parse } from 'yaml';
 import { diskEntries, type DiskEntry } from './diskEntries';
 import { renderToHtml, treeH, type H } from './html';
@@ -14,6 +15,7 @@ import {
   type PreviewProps,
   type RenderBody,
 } from './register';
+import { createSanitizer, sanitizingH, type Sanitize } from './sanitize';
 
 /**
  * Enregistrement des aperçus dans Sveltia (plan 21, R1). Sveltia 0.221 rend
@@ -24,6 +26,9 @@ import {
  * classes `createClass` (état, `setState`, cycle de vie) imitent ce contrat,
  * sans React.
  */
+/** Assainisseur de l'aperçu (même configuration), sur une fenêtre jsdom locale. */
+const sanitize = createSanitizer(new JSDOM('<!DOCTYPE html>').window) as Sanitize;
+
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const configCollections = (): string[] =>
@@ -120,7 +125,7 @@ describe('aperçus /admin/ : enregistrement dans Sveltia', () => {
     const cms = { registerPreviewTemplate: (name: string, component: unknown) => registered.push([name, component]) };
     const loader = vi.fn(async () => renderBody);
 
-    expect(registerPreviews(cms, { h: treeH, createClass: fakeCreateClass }, loader)).toBe(true);
+    expect(registerPreviews(cms, { h: treeH, createClass: fakeCreateClass }, loader, sanitize)).toBe(true);
 
     const names = registered.map(([name]) => name);
     expect([...names].sort()).toEqual([...configCollections()].sort());
@@ -150,13 +155,18 @@ describe('aperçus /admin/ : enregistrement dans Sveltia', () => {
       const component = previewComponent(collection, preview, {
         h,
         createClass: fakeCreateClass,
+        sanitize,
         loadRenderBody: async () => renderBody,
       });
       // Aucun asset connu : les images restent sans src.
       const view = mount(component, { entry: fakeEntry(cmsFields(entry), entry.id), getAsset: () => undefined });
       await flush(20);
 
-      const expected = preview.template({ ...cmsFields(entry), id: entry.id, bodyHtml: entry.data.bodyHtml, images: {} }, treeH);
+      // Le HTML injecté passe par l'assainisseur (sanitizingH) ; F1.
+      const expected = preview.template(
+        { ...cmsFields(entry), id: entry.id, bodyHtml: entry.data.bodyHtml, images: {} },
+        sanitizingH(treeH, sanitize),
+      );
       expect(view.tree, entry.name).toEqual(expected);
       expect(h, entry.name).toHaveBeenCalled();
       expect((view.tree as { props: Record<string, unknown> }).props['data-preview']).toBe(collection);
@@ -169,6 +179,7 @@ describe('aperçus /admin/ : enregistrement dans Sveltia', () => {
     const component = previewComponent('prompts', PREVIEWS.prompts, {
       h: treeH,
       createClass: fakeCreateClass,
+      sanitize,
       loadRenderBody: async () => render,
     });
     const props = (body: string, title = 'T'): PreviewProps => ({
@@ -219,6 +230,7 @@ describe('aperçus /admin/ : enregistrement dans Sveltia', () => {
     const component = previewComponent('blog', PREVIEWS.blog, {
       h: treeH,
       createClass: fakeCreateClass,
+      sanitize,
       loadRenderBody: async () => renderBody,
     });
     const body = 'Texte.\n\n![Capture](./screenshot-1.png)\n';
@@ -257,11 +269,64 @@ describe('aperçus /admin/ : enregistrement dans Sveltia', () => {
     expect(error).toHaveBeenCalledTimes(3);
   });
 
+  it('sans DOM pour l’assainisseur : console.error, rien d’enregistré (aperçu assaini de Sveltia)', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const registered: string[] = [];
+    const cms = { registerPreviewTemplate: (name: string) => registered.push(name) };
+    // Portée sans `document` : DOMPurify ne peut pas y travailler.
+    expect(registerPreviews(cms, { h: treeH, createClass: fakeCreateClass })).toBe(false);
+    expect(registered).toEqual([]);
+    expect(error).toHaveBeenCalledTimes(1);
+  });
+
+  it('assainit le corps injecté de chaque collection : <img onerror>, <svg onload>, javascript: inertes', async () => {
+    const body = [
+      'Texte.',
+      '',
+      '<img src="https://example.com/x.png" onerror="alert(1)">',
+      '',
+      '<svg onload="alert(2)"><circle r="1"/></svg>',
+      '',
+      '<a href="javascript:alert(3)">lien</a> <iframe src="https://evil.example/"></iframe>',
+      '',
+      '<script>alert(4)</script><style>@import "https://evil.example/x.css";</style>',
+      '',
+      '<math><mi xlink:href="javascript:alert(5)">x</mi></math>',
+      '',
+      '<form><button formaction="javascript:alert(6)">ok</button></form>',
+      '',
+    ].join('\n');
+    const fields: Record<string, Record<string, unknown>> = {
+      blog: { title: 'A', description: 'Chapô', body },
+      projects: { title: 'P', description: 'D', body },
+      prompts: { title: 'T', format: 'fiche', prompt: 'x', body },
+      skills: { name: 'S', body },
+    };
+    for (const [collection, preview] of Object.entries(PREVIEWS)) {
+      const component = previewComponent(collection, preview, {
+        h: treeH,
+        createClass: fakeCreateClass,
+        sanitize,
+        loadRenderBody: async () => renderBody,
+      });
+      const view = mount(component, { entry: fakeEntry(fields[collection], 'x'), getAsset: () => undefined });
+      await flush(20);
+      const html = renderToHtml(view.tree);
+      // Le corps est bien là…
+      expect(html, collection).toContain('Texte.');
+      expect(html, collection).toContain('<img src="https://example.com/x.png">');
+      // … sans rien d'exécutable.
+      expect(html, collection).not.toMatch(/\bon(?:error|load)=|javascript:|<script|<iframe|<style|<form|formaction/i);
+      view.unmount();
+    }
+  });
+
   it('charge le pipeline Markdown au premier corps à rendre, une fois, par import() dynamique', async () => {
     const loader = vi.fn(async () => renderBody);
     const component = previewComponent('skills', PREVIEWS.skills, {
       h: treeH,
       createClass: fakeCreateClass,
+      sanitize,
       loadRenderBody: loader,
     });
     const props = (body: string): PreviewProps => ({ entry: fakeEntry({ name: 'S', body }, 's'), getAsset: () => undefined });
