@@ -934,3 +934,108 @@ describe('config CMS — champs de code (plan 21, R15)', () => {
     }
   });
 });
+
+describe('config CMS — création rapide (plan 22, T2)', () => {
+  // Bundle npm effectivement embarqué : les constats ci-dessous (Built facts
+  // du plan 22) y sont ancrés, pas seulement recopiés.
+  const bundle = () => readFileSync(new URL('../../node_modules/@sveltia/cms/npm/index.js', import.meta.url), 'utf8');
+
+  it('pré-remplit pubDate avec {{now}}', () => {
+    // `draft/defaults.js` : une valeur `'{{now}}'` d'un champ datetime devient
+    // l'heure courante au format du champ, À LA CRÉATION seulement. Une entrée
+    // existante sans pubDate recevrait l'heure d'ouverture : la réplique de
+    // cmsFrontmatter.ts refuse ce cas (tout article déclare pubDate, requis).
+    const pubDate = field(loadCmsConfig(), 'blog', 'pubDate');
+    expect(pubDate.widget).toBe('datetime');
+    expect(pubDate.default).toBe('{{now}}');
+    expect(pubDate.format).toBe('YYYY-MM-DDTHH:mm:ssZ');
+    expect(pubDate.required).toBeUndefined();
+    expect(bundle()).toContain('===`{{now}}`');
+    // Aucune autre date n'est pré-remplie : updatedDate et updated suivent les
+    // règles de sauvegarde (T3), startDate et changelog.date restent saisis.
+    const cfg = loadCmsConfig();
+    const nowDefaults = cfg.collections.flatMap((c: any) =>
+      c.fields.filter((f: any) => f.default === '{{now}}').map((f: any) => `${c.name}.${f.name}`),
+    );
+    expect(nowDefaults).toEqual(['blog.pubDate']);
+  });
+
+  it('crée articles, prompts et skills en brouillon (draft default true)', () => {
+    // `populateDefaultValue` remplit aussi un champ ABSENT d'une entrée
+    // existante : le garde de cmsFrontmatter.test.ts (« chaque article,
+    // prompt et skill déclare draft ») empêche qu'un fichier sans `draft`
+    // devienne brouillon à sa prochaine sauvegarde.
+    const cfg = loadCmsConfig();
+    const drafts = cfg.collections.flatMap((c: any) =>
+      c.fields.filter((f: any) => f.name === 'draft').map((f: any) => [c.name, f.widget, f.required, f.default]),
+    );
+    expect(drafts).toEqual([
+      ['blog', 'boolean', false, true],
+      ['prompts', 'boolean', false, true],
+      ['skills', 'boolean', false, true],
+    ]);
+  });
+
+  it('images : WebP, 1600 px, qualité 80, plafond de taille', () => {
+    // `assets/process.js` `processFile` : transformation côté navigateur AVANT
+    // tout backend (`media_libraries.default.config`), puis
+    // `oversized = fichier transformé > max_file_size` → refusé.
+    const cfg = loadCmsConfig();
+    expect(cfg.media_libraries).toEqual({
+      default: {
+        config: {
+          max_file_size: 1048576,
+          transformations: { raster_image: { format: 'webp', quality: 80, width: 1600 } },
+        },
+      },
+    });
+    // L'ancienne clé `media_library` écraserait la lecture (`findLibraryOptions`).
+    expect(cfg.media_library).toBeUndefined();
+  });
+
+  it('messages de commit content(<collection>): <action> "<slug>"', () => {
+    const cfg = loadCmsConfig();
+    expect(cfg.backend.commit_messages).toEqual({
+      create: 'content({{collection}}): create "{{slug}}"',
+      update: 'content({{collection}}): update "{{slug}}"',
+      delete: 'content({{collection}}): delete "{{slug}}"',
+      uploadMedia: 'content(media): upload "{{path}}"',
+      deleteMedia: 'content(media): delete "{{path}}"',
+    });
+
+    // Substitution de `git/shared/commits.js` `createCommitMessage` :
+    // `{{collection}}` = libellé SINGULIER de la collection (aucun marqueur
+    // pour son nom), ` +N` quand N autres fichiers suivent. Ancrée dans le
+    // bundle livré.
+    const source = bundle();
+    expect(source).toContain('{useSingular:!0}');
+    expect(source).toContain('.replaceAll(`{{slug}}`,');
+    expect(source).toContain('.replaceAll(`{{collection}}`,');
+    const render = (
+      type: 'create' | 'update' | 'delete' | 'uploadMedia' | 'deleteMedia',
+      changes: Array<{ slug?: string; path: string }>,
+      collection?: string,
+    ) => {
+      const coll = cfg.collections.find((c: any) => c.name === collection);
+      const label = coll ? coll.label_singular || coll.label || coll.name : '';
+      const [firstSlug = ''] = changes.map((c) => c.slug).filter(Boolean);
+      const [firstPath, ...rest] = changes.map((c) => c.path);
+      let message: string = cfg.backend.commit_messages[type];
+      if (['create', 'update', 'delete'].includes(type)) {
+        message = message.replaceAll('{{slug}}', firstSlug).replaceAll('{{collection}}', label).replaceAll('{{path}}', firstPath);
+      } else {
+        message = message.replaceAll('{{path}}', firstPath);
+      }
+      return rest.length ? `${message} +${rest.length}` : message;
+    };
+    const k9s = { slug: 'k9s-kubernetes-terminal-ui', path: 'src/content/blog/k9s-kubernetes-terminal-ui/index.md' };
+    expect(render('update', [k9s], 'blog')).toBe('content(Article): update "k9s-kubernetes-terminal-ui"');
+    expect(render('create', [{ slug: 'essai', path: 'src/content/prompts/essai/index.md' }], 'prompts')).toBe(
+      'content(Prompt): create "essai"',
+    );
+    expect(render('update', [k9s, { path: 'src/content/blog/k9s-kubernetes-terminal-ui/a.webp' }], 'blog')).toBe(
+      'content(Article): update "k9s-kubernetes-terminal-ui" +1',
+    );
+    expect(render('uploadMedia', [{ path: 'src/assets/uploads/a.webp' }])).toBe('content(media): upload "src/assets/uploads/a.webp"');
+  });
+});

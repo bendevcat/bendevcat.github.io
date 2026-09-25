@@ -105,9 +105,11 @@ describe('réplique de la lecture et de l’écriture de Sveltia', () => {
     expect(parseEntryText('Sans frontmatter')).toEqual({ body: 'Sans frontmatter' });
   });
 
+  // Un `draft` absent reçoit le défaut de config.yml, `true` depuis le plan 22
+  // (T2) : c'est pourquoi chaque fichier du dépôt déclare `draft`.
   it('écrit ---, la tête, ---, une ligne vide, le corps, un saut final ; rien après --- sans corps', () => {
     const out = save(`---\n${blogHead.join('\n')}\n---\nCorps  \n`);
-    expect(out).toBe(`---\n${blogHead.join('\n')}\ndraft: false\nfeatured: false\n---\n\nCorps\n`);
+    expect(out).toBe(`---\n${blogHead.join('\n')}\ndraft: true\nfeatured: false\n---\n\nCorps\n`);
     const prompt = sveltiaSave('---\ntitle: P\ndescription: D\ndraft: true\n---\n', collection('prompts'), config.output);
     expect(prompt).toBe('---\ntitle: P\ndescription: D\nformat: fiche\ntool: Claude\ndraft: true\n---\n');
   });
@@ -148,7 +150,7 @@ describe('réplique de la lecture et de l’écriture de Sveltia', () => {
         "    default: '4'",
         '    extra: e',
         'tool: Claude',
-        'draft: false',
+        'draft: true',
         'alpha9: b',
         'alpha10: a',
         'zeta: 1',
@@ -168,7 +170,7 @@ describe('réplique de la lecture et de l’écriture de Sveltia', () => {
       collection('skills'),
       config.output,
     );
-    expect(skill).toBe("---\ntitle: S\ndescription: ''\ntype: claude-code\nversion: '2'\nskillCount: 3\ndraft: false\n---\n");
+    expect(skill).toBe("---\ntitle: S\ndescription: ''\ntype: claude-code\nversion: '2'\nskillCount: 3\ndraft: true\n---\n");
   });
 
   it('rejoue la réécriture des éditeurs quand on la lui passe (corps, champs code)', () => {
