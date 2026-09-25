@@ -474,6 +474,21 @@ html { font-family: var(--font-sans); background: var(--color-bg); color: var(--
   display: none !important;
 }
 
+/* Repli sans JS de la bascule de thème et des variables de prompt (plan 18,
+   T3, D121). Sans JS, `#theme-toggle` ne fait rien : il est masqué comme la
+   loupe, mais par l'absence de `data-js` (posé sur <html> par le script
+   inline de BaseLayout, avant le rendu) et non par `hidden` — un `hidden`
+   serveur retiré par le script ferait clignoter le bouton à chaque
+   chargement. Hors couche : un `!important` non rangé bat l'utilitaire
+   `grid` du bouton.
+   Les lignes `défaut : <valeur>` de PromptVariables.astro (`data-var-static`)
+   tiennent lieu des champs, rendus `hidden`, quand le JS ne tourne pas ; une
+   fois `data-js` posé, les champs sont révélés et ces lignes disparaissent. */
+html:not([data-js]) #theme-toggle,
+html[data-js] [data-var-static] {
+  display: none !important;
+}
+
 /* Menu déroulant (plan 12, T3 — src/components/Dropdown.astro) : la racine
    porte `inline-block`, d'où sa place dans la liste `hidden` ci-dessus (rendue
    `hidden` par le serveur, révélée par src/scripts/dropdown.ts : pas de
