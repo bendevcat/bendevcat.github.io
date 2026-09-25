@@ -85,5 +85,14 @@ describe('projectMetaRows', () => {
     expect(projectMetaRows({ status: 'wip', startDate: new Date('2026-07-01') })[1].value).toBe(
       'juillet 2026',
     );
+    // Instants de bord : sans `timeZone: 'UTC'`, 23:30Z le 31 passe en août
+    // dans un fuseau en avance (Paris, Tokyo) et 00:30Z le 1er retombe en
+    // juillet dans un fuseau en retard (New York).
+    expect(projectMetaRows({ status: 'wip', startDate: new Date('2026-07-31T23:30:00Z') })[1].value).toBe(
+      'juillet 2026',
+    );
+    expect(projectMetaRows({ status: 'wip', startDate: new Date('2026-08-01T00:30:00Z') })[1].value).toBe(
+      'août 2026',
+    );
   });
 });

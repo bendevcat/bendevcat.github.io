@@ -65,6 +65,13 @@ describe('skill page data (plan 17)', () => {
     expect(versionDate(new Date('2026-08-01'))).toBe('1 août 2026');
     expect(updatedLabel(new Date('2026-08-01'))).toBe('1 août 2026');
     expect(versionDate(new Date('2026-07-23T23:30:00-05:00'))).toBe('24 juil. 2026');
+    // Instants de bord : sans `timeZone: 'UTC'`, un fuseau en avance (Paris,
+    // Tokyo) pousse 23:30Z au lendemain, un fuseau en retard (New York)
+    // ramène 00:30Z la veille — un test rouge quel que soit le fuseau hors UTC.
+    expect(versionDate(new Date('2026-07-23T23:30:00Z'))).toBe('23 juil. 2026');
+    expect(versionDate(new Date('2026-08-01T00:30:00Z'))).toBe('1 août 2026');
+    expect(updatedLabel(new Date('2026-07-23T23:30:00Z'))).toBe('23 juillet 2026');
+    expect(updatedLabel(new Date('2026-08-01T00:30:00Z'))).toBe('1 août 2026');
   });
 });
 

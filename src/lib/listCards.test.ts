@@ -154,6 +154,11 @@ describe('featured project hero', () => {
     expect(featuredSince(new Date('2026-07-30'))).toBe('depuis juillet 2026');
     // Un 1er du mois reste dans son mois quel que soit le fuseau du build.
     expect(featuredSince(new Date('2026-08-01'))).toBe('depuis août 2026');
+    // Instants de bord : sans `timeZone: 'UTC'`, 23:30Z le 31 passe en août
+    // dans un fuseau en avance (Paris, Tokyo) et 00:30Z le 1er retombe en
+    // juillet dans un fuseau en retard (New York).
+    expect(featuredSince(new Date('2026-07-31T23:30:00Z'))).toBe('depuis juillet 2026');
+    expect(featuredSince(new Date('2026-08-01T00:30:00Z'))).toBe('depuis août 2026');
     expect(featuredSince(undefined)).toBeNull();
   });
 });
