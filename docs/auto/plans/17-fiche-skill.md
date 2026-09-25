@@ -164,3 +164,26 @@ superpowers @ 6.4.1: version 6.4.1 = plugin.json · license MIT = plugin.json ·
 | R21 | proven | frozen diff empty; 2 skill files; no `No content`; 375 tests; 0 errors |
 
 Findings → F3 (aside 754–789 px tall overflows a 1024×768 viewport; tab labels indexed), F4 (English quotes without `lang="en"`). Not taken: `En détail` h2 with body h2s at the same level; 15-line excerpts (verbatim, within the rule).
+
+### Verification 2 (2026-09-25, after F1–F4)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | walk `/` › Skills › each card, dark then light: all blocks, explorer clicks, Copier = `installCmd`, sticky top 20; 16 internal hrefs 200; charter pages 200 with 0 `No content` |
+| R1 | proven | named tests pass; UTC removal red under CEST, Paris, New York and Tokyo (no-op under UTC, per corrected text); F2 extras red too |
+| R2–R5 | proven | named tests pass; each red under targeted mutations |
+| R6 | proven | 2 exact lines; exit 1 on 3 content mutations; verifier re-check of sources; no e-mail |
+| R7 | proven | CMS tests pass; greps `8` / `8` / `1` |
+| R8 | proven | 12 lines, `search:` line with `tab row,` (F3) |
+| R9 | proven | 7 rows; other rows identical to base |
+| R10 | proven | grid 818 + 22 + 340 (tab row and panels 340; aside box 356 per F3) and header values both themes |
+| R11–R13 | proven | windows, Copier timing and failure path, highlights and body, explorer clicks and layouts |
+| R14 | proven | 1024×768 any tab / scroll: top 20, bottom ≤ 748, internal scroll; 1280×800 top 20; static below 1024 |
+| R15 | proven | roving keys; explorer keyboard; no-JS iframe at 1280 and 375 |
+| R16 | proven | `roadmap` → anti-drift; `Notes de version` → no skill page; tab labels not searchable |
+| R17 | smoke | design MCP refused; inventory §8 matches |
+| R18 | proven | audit 36 runs: 0 / 0 / 0 / 0 |
+| R19 | proven | radii and fonts as specified |
+| R20 | proven | other instruments identical except stated / F3 lines; greps `0` / `4` |
+| R21 | proven | frozen diff empty; 2 skill files; no `No content`; 379 tests; 0 errors |
+
+Carried to plan 18: focus ring of the last link clipped when the sticky column scrolls internally (needs `scroll-padding-bottom` ≥ 6 px); English superpowers description without `lang="en"` on the `/skills` card; unused `pill` tab variant.
