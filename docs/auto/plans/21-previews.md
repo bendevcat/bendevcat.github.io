@@ -117,3 +117,38 @@ Agent path (dev): `npx astro dev --background` (use the port it prints) › **fr
 - Preserving Sveltia's frontmatter formatting on a **real** edit (custom file format) — the whole-frontmatter rewrite stays (plan 19 finding 4).
 - Removing Sveltia's iframe sandbox warning or Svelte `derived_inert` warnings (Sveltia internals).
 - Defaults, date hook, WebP, commit messages, ✏️ button (plan 22); editor blocks (plan 23); any change to `src/content/**`, the schema, site pages or components; version bump, tag, merge, push.
+
+## Evidence
+### Verification attempt 1 (tip `20330d8`, base `9f61c41`) — 19/21 proven, R16 + R17(b) failed (both identical at base), R0 failed as a consequence
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | preview part holds (13/13 entries show their `[data-preview]` template, text and style = page); fails only because R16 and R17(b) do not hold |
+| R1 | proven | 6/6; red on `skills` dropped from `PREVIEWS`, registration after `init`, a render dropping entry data |
+| R2 | proven | red on `{ class: … }` and a keyless `data-var` span |
+| R3 | proven | red on `^# ` heading rule, last window line dropped, changed `data-var` |
+| R4 | proven | red on AI-card link text emptied, `coverAlt` replaced, lead from `title` |
+| R5 | proven | red on a dropped role and on a raw snippet with extra `\n` |
+| R6 | proven | red on `defaultFile` → `paths[0]` |
+| R7 | proven | red on 5 mutations (autolink dropped / `github-dark` in preview or shared options / `{...markdownOptions}` copy) |
+| R8 | proven | `previews: blog 5/5 · projects 2/2 · prompts 3/3 · skills 2/2`, `drafts: 1 previewed without page`, exit 0; exit 1 on a dropped role (`projects 1/2`), a dropped prompt line (`prompts 0/3`), AI link removed (`blog 0/5`) |
+| R9 | proven (caveat) | 13/13 iframe bodies have one `[data-preview]` child; 12/12 published match the page region by region (docker `column:eq(27736)`, bootstrap `window:eq(10527)`); caveat: after the markdown editor is scrolled into view, Sveltia's load-time rewrite (see failures) changes 3 drafts |
+| R10 | proven | computed `color`, `background-color`, `font-family`, `font-size` equal to the page for every listed selector; first `[data-var]` bg `rgba(74, 222, 128, 0.16)` |
+| R11 | proven | k9s 29/29 `pre.astro-code`, docker 32/32, no `.github-dark`, token colours = page |
+| R12 | proven | red on `displayableSrc` accepting anything, raw path kept, non-blob accepted |
+| R13 | proven | bienvenue cold: 3 body images + cover `blob:` (naturalWidth 1704/1504/1502/1600); no request to `/screenshot-…`; only ≥ 400 = the D134 ping |
+| R14 | proven | lead updates 55 ms after a description edit; macos-clone bar `48 l. · ~607 tk` → `49 l. · ~609 tk` with a new `## Essai`; 13 fast keys end with the last text |
+| R15 | proven | 78 passed; red on `output_code_only: false` and `excerpt` back to `text` |
+| R16 | failed (Save part) | editors are monospace Lexical code editors with coloured spans (22 editors, 6 entries); but Save is **enabled right after load** on bootstrap, gha-svu, site-bencat (and anti-drift-planning, superpowers once scrolled) — identical at base |
+| R17 | failed (b) | (a) opening all 13 entries writes nothing; (b) the same edit gives byte-identical files at base and tip for the 6 entries, but bootstrap `prompt`, gha-svu and site-bencat `snippet` lose their final `\n` (`|` → `|-`) — at base too; (c) `src/content` diff empty |
+| R18 | proven | same walk base vs tip: 38 sandbox warnings both, `derived_inert` 506 → **0**, same D134 404, + allowed Shiki `promql`/`rego`; no `console.error` at tip |
+| R19 | proven | 490 passed; 0 errors; 51 pages + 4 CSS byte-identical to base; 13 checks identical; frozen diff empty |
+| R20 | proven | greps 1 · 1; « Aperçu » and « Champs de code » complete |
+
+Findings outside criteria: (1) **Sveltia's markdown editor rewrites bodies on load** (base too): bold spanning a line break → escaped `\*\*…\*\*` (literal asterisks once saved and published), `*x*` → `_x_`, `|---|` → `| --- |`; affects bootstrap-session-anti-drift, anti-drift-planning, decouper-un-projet-en-plans-anti-drift (notes/bodies) → escalation E1 (scope: `src/content` frozen); (2) **security**: preview body HTML reaches `dangerouslySetInnerHTML` unsanitised — `<img onerror>` / `<svg onload>` survive `renderBody` and `resolveBodyImages`; Sveltia's default preview sanitised (`sanitize_preview` default true) → fix task F1; (3) D142's unpkg Shiki request not observed by the recorder (possibly from a worker); (4) no debug output.
+
+### F1 — Sanitise the preview body HTML (security finding 2)
+- Files: `src/admin/previews/sanitize.ts` (+ test), `src/admin/previews/register.ts` (or wherever the body HTML enters the tree), `package.json`/lock only if a sanitiser dependency is added (exact version)
+- Sanitise the rendered body HTML before it reaches `dangerouslySetInnerHTML`: no event-handler attributes, no `<script>`/`<iframe>`/`<object>`/`<embed>`/`<style>`, no `javascript:`/`vbscript:` URLs (href, src, xlink:href, formaction), SVG script vectors removed — while keeping everything the site pipeline emits (Shiki `style` colours on spans, `class`, `id`, heading anchors `href="#…"`, `lang`, `data-*`, image placeholders). Prefer a proven sanitiser (DOMPurify, which Sveltia already ships — check whether it is importable from the npm package, else add `dompurify` at an exact version) with a config tested against the site's real output.
+- Covers: security finding 2 (and keeps R7–R11, R13, R14, R8 green)
+- Acceptance: unit tests — every payload of a list (`<img src=x onerror>`, `<svg onload>`, `<a href="javascript:…">`, `<iframe>`, `<script>`, `<math><mi xlink:href="javascript:…">`, `<style>@import`, `<form><button formaction=javascript:…>`) comes out inert; for every real entry the sanitised body HTML equals the unsanitised one (the site output is untouched); `npx vitest run` 0 failed; `node scripts/check-previews.mjs` exit 0; build + check-admin isolation 1/52
+- Depends on: T9
