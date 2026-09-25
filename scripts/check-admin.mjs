@@ -33,7 +33,13 @@
  *     `public/admin/config.yml` (T2) ;
  *   logo: … — `dist/admin/logo.svg` identique octet pour octet à
  *     `public/admin/logo.svg`, et la clé `logo.src` de
- *     `public/admin/config.yml` vaut `/admin/logo.svg` (plan 20, T2).
+ *     `public/admin/config.yml` vaut `/admin/logo.svg` (plan 20, T2) ;
+ *   view on site: … — pour chaque collection de `public/admin/config.yml`,
+ *     chaque entrée `<folder>/<dossier>/index.md` sur disque : son
+ *     `preview_path` rempli (`{{slug}}` → nom du dossier, comme Sveltia avec
+ *     `path: '{{slug}}/index'`) désigne `dist/<chemin>/index.html`. Une entrée
+ *     publiée doit l'avoir, un brouillon (`draft: true`) ne doit PAS l'avoir.
+ *     Comptes lus sur disque, jamais figés (plan 20, T4, R17).
  *
  * Toute ligne différente de l'attendu est signalée sur stderr APRÈS stdout ;
  * code de sortie 1 s'il y en a au moins une.
@@ -235,6 +241,46 @@ const adminChunks = adminExists ? jsClosure(admin) : new Set();
   lines.push(`logo: ${rel} · config logo.src ${logoSrc}`);
 }
 
+// --- view on site (plan 20, T4) ---------------------------------------------
+/** Entrées publiées et brouillons comptés sur disque (attendu de la ligne). */
+const entryTotals = { published: 0, drafts: 0 };
+{
+  const cfg = parseYaml(readFileSync(join(ROOT, 'public', 'admin', 'config.yml'), 'utf8'));
+  let built = 0;
+  let draftsWithoutPage = 0;
+  for (const collection of cfg?.collections ?? []) {
+    if (!collection.folder) continue;
+    const folder = join(ROOT, collection.folder);
+    if (!existsSync(folder)) continue;
+    const template = collection.preview_path;
+    for (const name of readdirSync(folder).sort()) {
+      const file = join(folder, name, 'index.md');
+      if (!existsSync(file)) continue;
+      const fm = readFileSync(file, 'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
+      const draft = parseYaml(fm)?.draft === true;
+      const where = `${collection.name}/${name}`;
+      // Même remplissage que Sveltia pour notre gabarit : seul `{{slug}}` est connu ici.
+      const path = typeof template === 'string' ? template.replaceAll('{{slug}}', name) : undefined;
+      const page =
+        path && !path.includes('{{') ? join(DIST, path.replace(/^\/+|\/+$/g, ''), 'index.html') : undefined;
+      const hasPage = !!page && existsSync(page);
+      if (draft) {
+        entryTotals.drafts += 1;
+        if (!hasPage) draftsWithoutPage += 1;
+        else notes.push(`draft ${where} has a page at ${path}`);
+      } else {
+        entryTotals.published += 1;
+        if (hasPage) built += 1;
+        else notes.push(`published ${where}: no page at ${path ?? `(preview_path ${template ?? 'absent'})`}`);
+      }
+    }
+  }
+  lines.push(
+    `view on site: ${built}/${entryTotals.published} published entries built at their preview_path · ` +
+      `${draftsWithoutPage} draft(s) without page`,
+  );
+}
+
 const pageCount = htmlFiles(DIST).length;
 const EXPECTED = [
   'admin page: /admin/index.html · noindex · cms-config-url /admin/config.yml · 1 module script · 0 stylesheet link · 0 site chrome',
@@ -244,6 +290,8 @@ const EXPECTED = [
   `isolation: admin bundle referenced by 1/${pageCount} pages`,
   'config: dist/admin/config.yml = public/admin/config.yml',
   'logo: dist/admin/logo.svg = public/admin/logo.svg · config logo.src /admin/logo.svg',
+  `view on site: ${entryTotals.published}/${entryTotals.published} published entries built at their preview_path · ` +
+    `${entryTotals.drafts} draft(s) without page`,
 ];
 
 for (const line of lines) console.log(line);

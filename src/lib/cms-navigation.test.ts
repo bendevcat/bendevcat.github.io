@@ -448,3 +448,49 @@ describe('config du CMS — groupes (R14)', () => {
     }
   });
 });
+
+/* ------------------------------------------------------------------------- */
+/* « Afficher sur le site en ligne » (plan 20, T4). Sveltia 0.221 remplit      */
+/* `preview_path` (`getPreviewPath`, services/contents/entry/index.js) avec le */
+/* slug de l'entrée ; avec `path: '{{slug}}/index'`, `getSlug`                 */
+/* (services/contents/file/process.js) lit ce slug dans le chemin              */
+/* `<dossier>/index` : c'est le NOM DU DOSSIER, sans `/index`. Le lien vaut    */
+/* `<origine>/<preview_path>` (site_url absent → origine courante, D135).      */
+/* ------------------------------------------------------------------------- */
+
+/** Route du site (dossier de `src/pages/`) de chaque collection. */
+const SITE_ROUTES: Record<CollectionName, string> = {
+  blog: 'blog',
+  projects: 'projets',
+  prompts: 'prompts',
+  skills: 'skills',
+};
+
+describe('config du CMS — lien « voir sur le site » (R16)', () => {
+  it('preview_path mène à la route réelle de chaque collection', () => {
+    for (const name of COLLECTION_NAMES) {
+      const collection = cmsCollection(name) as CmsCollection & { preview_path?: string; path?: string; folder?: string };
+      const route = SITE_ROUTES[name];
+      expect(collection.preview_path, `${name} : preview_path`).toBe(`/${route}/{{slug}}`);
+
+      // `{{slug}}` = nom du dossier de l'entrée seulement si le chemin est `{{slug}}/index`.
+      expect(collection.path, `${name} : path`).toBe('{{slug}}/index');
+
+      // La route existe et publie chaque entrée sous son id (`params: { slug: <entrée>.id }`).
+      const page = `src/pages/${route}/[...slug].astro`;
+      expect(existsSync(new URL(`../../${page}`, import.meta.url)), `${page} existe`).toBe(true);
+      const source = readRepoFile(page);
+      const paths = source.match(/export async function getStaticPaths\(\)\s*\{([\s\S]*?)\n\}/)?.[1];
+      expect(paths, `${page} : getStaticPaths`).toBeDefined();
+      expect(paths!, `${page} : params.slug = id`).toMatch(/params:\s*\{\s*slug:\s*(\w+)\.id\s*\}/);
+
+      // L'id Astro d'une entrée `<dossier>/index.md` est le nom du dossier, sauf si son
+      // frontmatter porte `slug:` (glob loader, `generateIdDefault`) : aucune ne le fait.
+      const folder = collection.folder!.replace(/^src\/content\//, '');
+      expect(folder, `${name} : dossier`).toBe(name);
+      for (const { slug, data } of contentFrontmatter(folder)) {
+        expect(data.slug, `${name}/${slug} : slug de frontmatter`).toBeUndefined();
+      }
+    }
+  });
+});

@@ -45,6 +45,14 @@ output:
 #   Brouillons / Publiés ne vaut que pour articles, prompts et skills (D134).
 # - `view_groups` : avec `pattern`, groupe par le premier match de la regex sur
 #   la valeur brute ; sans, par la valeur (R14).
+# - `preview_path` (plan 20, T4, R16) : lien « Afficher sur le site en ligne ».
+#   Avec `path: '{{slug}}/index'`, `{{slug}}` vaut le NOM DU DOSSIER de l'entrée
+#   (`getSlug`), c.-à-d. son id Astro : le lien donne `/blog/<dossier>`, jamais
+#   `/blog/<dossier>/index`. Base = origine courante (pas de `site_url`, D135) :
+#   localhost en dev, bendevcat.github.io en prod. Sans barre finale : Astro
+#   (trailingSlash « ignore ») sert les deux formes en dev et en preview, GitHub
+#   Pages redirige vers `/<dossier>/`. Un brouillon n'a pas de page : son lien
+#   vise l'URL qu'il aura une fois publié, 404 d'ici là (D134).
 collections:
   - name: blog
     label: Articles
@@ -54,6 +62,8 @@ collections:
     icon: article
     folder: src/content/blog
     path: '{{slug}}/index'
+    # R16 : « Afficher sur le site en ligne » → <origine>/blog/<dossier> (voir plus haut).
+    preview_path: /blog/{{slug}}
     extension: md
     format: yaml-frontmatter
     create: true
@@ -128,6 +138,8 @@ collections:
     icon: rocket_launch
     folder: src/content/projects
     path: '{{slug}}/index'
+    # R16 : « Afficher sur le site en ligne » → <origine>/projets/<dossier> (voir plus haut).
+    preview_path: /projets/{{slug}}
     extension: md
     format: yaml-frontmatter
     create: true
@@ -236,6 +248,8 @@ collections:
     icon: terminal
     folder: src/content/prompts
     path: '{{slug}}/index'
+    # R16 : « Afficher sur le site en ligne » → <origine>/prompts/<dossier> (voir plus haut).
+    preview_path: /prompts/{{slug}}
     extension: md
     format: yaml-frontmatter
     create: true
@@ -314,6 +328,8 @@ collections:
     icon: extension
     folder: src/content/skills
     path: '{{slug}}/index'
+    # R16 : « Afficher sur le site en ligne » → <origine>/skills/<dossier> (voir plus haut).
+    preview_path: /skills/{{slug}}
     extension: md
     format: yaml-frontmatter
     create: true
