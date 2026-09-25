@@ -469,3 +469,6 @@ Choice: the @sveltia/ui 0.77.0 editor files needed by the Lexical round-trip rep
 
 ## D156 · Plan 23 · T5 — Terminal code may not contain a ``` run
 Choice: the Terminal block's `code` field keeps the `code` widget but refuses any run of three backticks through the field's `pattern` (clear French message), because Sveltia's code editor closes on such a line and empties the whole value on the next open (data loss found by the replica); the canonical guard's `fence-in-code` rule covers written content · Alternatives: `text` widget for the terminal code; a README warning only · Reversibility: cheap · Why: plan 23 T5 finding.
+
+## D157 · Plan 23 · T7 — All of `src/admin` excluded from the site's Tailwind sources
+Choice: `@source not "../../public/admin"` and `@source not "../admin"` in `global.css`; `src/lib/blocks` stays scanned. Proven: every class used by the preview templates and block editor code still has its rule (0 lost, oxide tokenizer), and the preview inline CSS equals the site CSS · Alternatives: keep `src/admin/previews` scanned · Reversibility: cheap · Why: plan 23 T7 (a stray `.lowercase` came from `config.yml`). Trade-off: a class used only in a preview template, and nowhere on the site or in `src/lib/blocks`, would get no CSS — the templates mirror site components, so this is the intended constraint.
