@@ -116,6 +116,75 @@ Ce mode n'existe qu'en développement : le code qui l'active est retiré du buil
 de production, où `/admin/?test-repo` affiche le même écran de connexion GitHub
 que `/admin/` (contrôle : `node scripts/check-admin.mjs`, ligne `dev-only`).
 
+### Tableau de bord
+
+Tout ce qui suit est réglé dans `public/admin/config.yml` ; les tests de
+`src/lib/cms-navigation.test.ts` le gardent (config validée contre le schéma
+JSON livré par `@sveltia/cms`, filtres liés aux enums Zod, résumés liés aux
+champs existants, `preview_path` liés aux vraies routes).
+
+**Titre et logo.** Le CMS s'appelle **benCat · Studio** : titre de la page
+d'entrée, de l'onglet du navigateur (`app_title`, et `<title>` de
+`src/pages/admin/index.astro`). Le logo `public/admin/logo.svg` redessine la
+tuile 28×28 du logo de l'en-tête du site (`src/components/Header.astro`) : fond
+`accentSoft`, trois barres `accent`, couleurs des thèmes clair et sombre de
+`src/styles/global.css` (suivant `prefers-color-scheme`). Il s'affiche sur la
+page d'entrée, dans l'en-tête du tableau (`logo.show_in_header`, bouton
+« Visiter le site en ligne ») et sert de favicon. Si les couleurs d'accent
+changent dans `global.css`, le test du logo casse : reporter les nouvelles
+valeurs dans le SVG.
+
+**Icônes des collections** (Material Symbols, police livrée avec Sveltia) :
+Articles `article`, Projets `rocket_launch`, Prompts `terminal`, Skills
+`extension`.
+
+**Résumé de chaque ligne** de liste — 📝 signale un brouillon (`draft`), ⭐
+une entrée mise en avant (`featured`) ; une partie dont le champ est vide
+n'apparaît pas :
+
+| Collection | Ligne | Vignette | Tri par défaut |
+|---|---|---|---|
+| Articles | titre · date (`AAAA-MM-JJ`) · catégorie, 📝, ⭐ | couverture | date de publication, plus récent d'abord |
+| Projets | titre · statut, ⭐ | couverture | date de début, plus récent d'abord |
+| Prompts | titre · format · outil, `v<version>`, 📝 | aucune | date de mise à jour, plus récente d'abord |
+| Skills | titre · `v<version>` · licence, 📝 | aucune | titre, A → Z |
+
+Le tri choisi à la main (menu « Trier » / « Sort ») est mémorisé par le
+navigateur et l'emporte ensuite sur ce tri par défaut.
+
+**Filtres prédéfinis** (menu « Filtrer » / « Filter » de la barre d'outils de
+la liste, un seul à la fois) :
+
+- Articles, Prompts, Skills : **Brouillons** (`draft` coché) et **Publiés**
+  (`draft` décoché ou absent).
+- Articles : **Mis en avant**, **Sans couverture**, **IA partielle**
+  (`aiUsage: partial`), **IA totale** (`aiUsage: full`).
+- Projets : un filtre par statut — **actif**, **wip**, **archivé** (les
+  valeurs de `PROJECT_STATUSES`). Pas de Brouillons / Publiés : les projets
+  n'ont pas de champ `draft`, et Sveltia refuse un filtre sur un champ que la
+  collection ne déclare pas.
+- Prompts : **Fiches** et **Guides** (les valeurs de `PROMPT_FORMATS`).
+
+Ajouter une valeur à `PROJECT_STATUSES` ou à `PROMPT_FORMATS`
+(`src/content.config.ts`) sans ajouter son filtre fait échouer
+`cms-navigation.test.ts`.
+
+**Groupes** (menu « Grouper » / « Group ») : Articles par **Année** (les 4
+premiers chiffres de `pubDate`) ou par **Catégorie** ; Projets par **Statut** ;
+Prompts par **Outil**. Pas de groupe pour les Skills.
+
+**« Afficher sur le site en ligne »** (« View on Live Site » en anglais), dans
+la barre d'outils d'une entrée, ouvre sa page du site dans un nouvel onglet :
+`/blog/<dossier>`, `/projets/<dossier>`, `/prompts/<dossier>`,
+`/skills/<dossier>` (`preview_path`). L'adresse part de l'origine courante (pas
+de `site_url`) : `localhost` en développement, `bendevcat.github.io` en
+production. **Le lien d'un brouillon mène à une 404** : le site ne construit
+aucune page pour une entrée `draft: true`, le lien vise l'adresse qu'elle aura
+une fois publiée — il marchera après la publication (et le déploiement). Après
+`npm run build`, `node scripts/check-admin.mjs` (ligne `view on site:`)
+vérifie que chaque entrée publiée a bien sa page à cette adresse et qu'aucun
+brouillon n'en a.
+
 ### Aperçu : le style du site
 
 Le volet d'aperçu du CMS affiche les articles avec la typographie et les
@@ -207,6 +276,7 @@ par exemple, demande d'ajouter la ligne correspondante au journal).
 | Images d'un article | dans le dossier de l'article, à côté de `index.md` |
 | Schéma de référence | `src/content.config.ts` (collections `blog`, `projects`, `prompts`, `skills`) |
 | Configuration du CMS | `public/admin/config.yml` |
+| Logo du CMS | `public/admin/logo.svg` |
 | Page admin | `src/pages/admin/index.astro` + `src/admin/` (initialisation, aperçu, hook de sauvegarde, tableau de démonstration) |
 
 Les champs du CMS sont alignés sur le schéma Zod ; `src/lib/cms-config.test.ts`

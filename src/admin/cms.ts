@@ -17,8 +17,10 @@
  * (`hooks.ts`). Enregistré avant `init()`.
  *
  * Dépôt de test (dev seulement) : `/admin/?test-repo` sous `astro dev` recopie
- * `src/content/**` dans l'OPFS (`dev/testRepo.ts`) puis passe le backend
- * `test-repo` à `init()`, que Sveltia fusionne (deepmerge) avec `config.yml` :
+ * `src/content/**` dans l'OPFS (`dev/testRepo.ts`) puis passe à `init()` la
+ * config de `config.yml` elle-même, backend remplacé par `test-repo` seul et
+ * `load_config_file: false` (pas de fusion avec le backend github, donc pas
+ * d'avertissement `backend.repo` / `backend.branch` — plan 20, F1) :
  * bouton « Work with Test Repository », tableau réel sans jeton. En production la
  * branche `import.meta.env.DEV` (false) disparaît du build avec son `import()`
  * (contrôle : `scripts/check-admin.mjs`, ligne « dev-only »).
@@ -33,9 +35,12 @@ CMS.registerEventListener({ name: 'preSave', handler: normalizeBodyBeforeSave })
 
 if (import.meta.env.DEV && new URLSearchParams(location.search).has('test-repo')) {
   import('./dev/testRepo')
-    .then(({ seedTestRepo }) => seedTestRepo())
-    .catch((error) => console.error('test-repo : amorçage OPFS impossible', error))
-    .then(() => CMS.init({ config: { backend: { name: 'test-repo' } } }));
+    .then(async ({ seedTestRepo, loadTestRepoConfig }) => {
+      await seedTestRepo().catch((error) => console.error('test-repo : amorçage OPFS impossible', error));
+      return loadTestRepoConfig();
+    })
+    .then((config) => CMS.init({ config }))
+    .catch((error) => console.error('test-repo : tableau de test impossible', error));
 } else {
   CMS.init();
 }

@@ -3,9 +3,20 @@
  *
  * `/admin/?test-repo` sous `astro dev` : `cms.ts` importe dynamiquement ce
  * module, recopie `src/content/**` dans l'OPFS du navigateur puis lance
- * `CMS.init({ config: { backend: { name: 'test-repo' } } })`. Le bouton
- * « Work with Test Repository » ouvre alors le vrai tableau, sans jeton ni
- * sélecteur de dossier.
+ * `CMS.init({ config })` avec la config de `testRepoConfig()` : `config.yml`
+ * lui-même, backend remplacé par `{ name: 'test-repo' }` et
+ * `load_config_file: false`. Le bouton « Work with Test Repository » ouvre
+ * alors le vrai tableau, sans jeton ni sélecteur de dossier.
+ *
+ * Pourquoi pas `CMS.init({ config: { backend: { name: 'test-repo' } } })`
+ * (plan 19) : Sveltia fusionne (deepmerge) cet objet dans `config.yml`, le
+ * backend garde `repo` et `branch` du backend github, et le schéma du backend
+ * `test-repo` (`additionalProperties: false`) les signale à chaque chargement
+ * (plan 20, R19, F1). `load_config_file` est lu DANS l'objet `config`
+ * (`initCmsConfig` : `if (rawConfig.load_config_file !== false) rawConfig =
+ * merge(await fetchCmsConfig(), rawConfig)`) ; la clé est déclarée par le
+ * schéma `CmsConfig`, donc sans avertissement. `yaml` n'est importé que d'ici :
+ * hors du build de production avec le reste du module.
  *
  * Contrat lu dans `@sveltia/cms` 0.221.0 (`npm/index.js`) : le backend
  * `test-repo` ouvre au `signIn` le dossier `sveltia-cms-test` de
@@ -21,6 +32,9 @@
  * (ligne « dev-only ») vérifie qu'aucun `dist/_astro/*.js` ne contient le
  * marqueur ci-dessous ni une clé `/src/content/`.
  */
+
+import type { CmsConfig } from '@sveltia/cms';
+import { parse } from 'yaml';
 
 /** Marqueur propre à ce module ; sa présence dans `dist/` trahirait une fuite. */
 export const TEST_REPO_SEED_MARKER = 'bencat-test-repo-seed';
@@ -112,4 +126,39 @@ export async function seedTestRepo(): Promise<number> {
   const count = await writeTestRepo(storage, contentFiles());
   console.info(`[${TEST_REPO_SEED_MARKER}] ${count} fichiers de src/content copiés dans l'OPFS ${TEST_REPO_ROOT}/`);
   return count;
+}
+
+/**
+ * `config.yml` (texte) → config du tableau de test : même contenu, backend
+ * remplacé par `{ name: 'test-repo' }` (ni `repo` ni `branch`) et
+ * `load_config_file: false` pour que Sveltia ne recharge ni ne fusionne le
+ * fichier. YAML lu avec les options du chargeur de Sveltia 0.221.0
+ * (`parseYAML(text, { merge: true, maxAliasCount: -1 })`).
+ */
+export function testRepoConfig(yamlText: string): CmsConfig {
+  const parsed: unknown = parse(yamlText, { merge: true, maxAliasCount: -1 });
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('test-repo: config.yml ne décrit pas un objet');
+  }
+  // Type déclaré, pas vérifié : c'est Sveltia qui valide la config au chargement.
+  return { ...parsed, backend: { name: 'test-repo' }, load_config_file: false } as CmsConfig;
+}
+
+/** Sous-ensemble de `Document` utilisé ici (facilite les tests). */
+interface DocumentLike {
+  querySelector(selector: string): { href: string } | null;
+}
+
+/**
+ * Charge la config à l'URL du lien `<link rel="cms-config-url">` de la page
+ * (celle que Sveltia lirait) et la passe par `testRepoConfig()`.
+ */
+export async function loadTestRepoConfig(
+  doc: DocumentLike = document as unknown as DocumentLike,
+  fetcher: (url: string) => Promise<Response> = (url) => fetch(url, { cache: 'no-store' }),
+): Promise<CmsConfig> {
+  const url = doc.querySelector('link[rel="cms-config-url"]')?.href ?? new URL('/admin/config.yml', location.href).href;
+  const res = await fetcher(url);
+  if (!res.ok) throw new Error(`test-repo: ${url} → HTTP ${res.status}`);
+  return testRepoConfig(await res.text());
 }

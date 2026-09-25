@@ -235,7 +235,12 @@ describe('page /admin', () => {
     expect(guard).not.toBeNull();
     const [, devBranch, prodBranch] = guard!;
     expect(devBranch).toMatch(/import\(\s*'\.\/dev\/testRepo'\s*\)/);
-    expect(devBranch).toMatch(/CMS\.init\(\s*\{\s*config:\s*\{\s*backend:\s*\{\s*name:\s*'test-repo'\s*\}\s*\}\s*\}/);
+    // Plan 20, F1 : la config du tableau de test est config.yml transformé
+    // (`testRepoConfig`, backend test-repo seul, load_config_file: false), pas
+    // un objet fusionné par Sveltia dans le backend github (repo/branch en trop).
+    expect(devBranch).toMatch(/loadTestRepoConfig\(\)/);
+    expect(devBranch).toMatch(/CMS\.init\(\s*\{\s*config\s*\}\s*\)/);
+    expect(devBranch).not.toMatch(/backend:/);
     expect(prodBranch).toMatch(/CMS\.init\(\)/);
     expect(prodBranch).not.toMatch(/test-repo/);
     // Un seul init() hors de ces deux branches : aucun.

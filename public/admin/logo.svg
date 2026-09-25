@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <!-- Tuile du logo de l'en-tête du site (src/components/Header.astro), couleurs de src/styles/global.css. -->
+  <style>
+    .tile { fill: rgba(11,107,76,.10); }
+    .bar { fill: #0B6B4C; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: rgba(74,222,128,.12); }
+      .bar { fill: #4ADE80; }
+    }
+  </style>
+  <rect class="tile" width="28" height="28" rx="9"/>
+  <rect class="bar" x="7" y="6.5" width="14" height="3" rx="1.5"/>
+  <rect class="bar" x="7" y="12.5" width="8.4" height="3" rx="1.5" opacity=".7"/>
+  <rect class="bar" x="7" y="18.5" width="11.48" height="3" rx="1.5" opacity=".45"/>
+</svg>
