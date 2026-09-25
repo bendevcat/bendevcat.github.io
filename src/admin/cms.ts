@@ -11,11 +11,17 @@
  * chaîne (`?inline` — pas de `<link>` ajouté à la page admin) et enregistré
  * comme feuille brute de l'aperçu, URL de polices rendues absolues
  * (`previewStyle.ts`). Enregistré avant `init()`.
+ *
+ * Sauvegarde : l'éditeur riche exporte les séparateurs en `***` ; le hook
+ * `preSave` les réécrit en `---`, seule forme admise dans le contenu
+ * (`hooks.ts`). Enregistré avant `init()`.
  */
 import CMS from '@sveltia/cms';
 import siteCss from '../styles/global.css?inline';
+import { normalizeBodyBeforeSave } from './hooks';
 import { registerSiteStyle } from './previewStyle';
 
 registerSiteStyle(CMS, siteCss, location.origin);
+CMS.registerEventListener({ name: 'preSave', handler: normalizeBodyBeforeSave });
 
 CMS.init();
