@@ -109,3 +109,38 @@ view on site: <P>/<P> published entries built at their preview_path · <D> draft
 - `site_url` / `display_url`; editorial workflow; saved default filter or group.
 - Preview templates and the `code` widget (plan 21); defaults, date hook, commit messages, WebP, ✏️ button (plan 22); editor blocks (plan 23).
 - Any change to `src/content/**`, `src/content.config.ts`, the site's pages or components; version bump, tag, merge, push.
+
+## Evidence
+### Verification attempt 1 (tip `452653a`, base `a592604`) — 20/21 proven, R19 failed
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | dev `/admin/?test-repo` (port 4322): board → 4 collections → rows, Sort/Filter/Group, entry, « Afficher sur le site en ligne »; preview entrance on :4391; no 5xx; (R19 fails as worded) |
+| R1 | proven | 17 passed; red on `view_filtrs: []` (skills) and on `sumary` (projects) |
+| R2 | proven | both tests pass; red on `app_title` change, `show_in_header: false`, `<title>` reverted, dark bar `#4ADE81`, opacity `.5`, `rx="8"`, accent changed in `global.css` |
+| R3 | proven | dev + preview `/admin/`: `<h1>` « benCat · Studio », `img[src=/admin/logo.svg]` naturalWidth 28, favicon `/admin/logo.svg`; board header button holds `img.logo`; `document.title` « Collection Articles – benCat · Studio » |
+| R4 | proven | test passes; red on `rocket` |
+| R5 | proven (instrument deviates) | sidebar icon texts `article`, `rocket_launch`, `terminal`, `extension` in « Material Symbols Outlined », 24×24 glyph boxes, glyphs drawn (screenshot); `document.fonts.check(…)` returns false because Sveltia also declares an inline CDN `@font-face` that is never loaded — the bundled face is loaded |
+| R6 | proven | 2 tests; red on `{{categorie}}` |
+| R7 | proven | Europe/Paris; the 13 row texts match the plan exactly; after `featured` on k9s: `… · Outils ⭐` |
+| R8 | proven | test; red on `thumbnail: cover` for prompts |
+| R9 | proven | 6 article rows with a loaded `<img>`; none on prompts/skills; a cover attached to `gha-svu` shows on its row only |
+| R10 | proven | test; red on `startDate` ascending and on an extra sortable field |
+| R11 | proven | row orders as planned; Sort menus show the configured defaults selected |
+| R12 | proven | 6 tests; red on `archive`, `"pause"` added to `PROJECT_STATUSES`, `"note"` added to `PROMPT_FORMATS`, Brouillons `eq: false`, `aiUsage eq: total`, group on `outil` |
+| R13 | proven | every filter's rows match the plan (IA totale = linux, vpn, docker; Fiches = bootstrap, macos-clone; archivé = ∅), and follow saved edits |
+| R14 | proven | 2 tests; red on `^\d{2}` |
+| R15 | proven | Année `2025:6`; Catégorie `Actus:1, DevOps:2, Outils:3`; Statut `actif:1, wip:1`; Outil `Claude:1, Claude Code:2` |
+| R16 | proven | test; red on `/projects/{{slug}}` and on a route keyed by title |
+| R17 | proven | check-admin 8 lines exit 0; exit 1 on `/projects/{{slug}}` (10/12), changed logo, `.png` src, a page for the draft, a published page removed (11/12) |
+| R18 | proven | 13 controls `aria-disabled="false"`; `window.open` targets `http://localhost:4322/<route>/<slug>`; 12 published → 200 with `<h1>` = title; draft → 404 « Page introuvable »; a real click loads `/skills/superpowers` |
+| R19 | failed | (1) two config-parser warnings on every `?test-repo` load: `backend.repo` / `backend.branch` not in the `test-repo` schema — present at base (plan 19 `cms.ts` merges `{ backend: { name: 'test-repo' } }` into a config holding `repo`/`branch`); (2) dev log `[404] /screenshot-2025-10-26-at-….png` ×3, aborted, right after opening the draft — the preview iframe (base URL `/`) requests the body's relative images before Sveltia swaps them to blob URLs; not reproduced on a slower second open |
+| R20 | proven | 440 passed; 0 errors; 51 site pages identical to base; 12 other checks identical; frozen diff empty; README greps; `ajv@8.20.0` |
+
+Mutations: 28 planted defects (23 on the tests, 5 on check-admin), all red. Findings outside criteria: R5's `fonts.check` instrument cannot pass while Sveltia declares its CDN face; check-admin parses `config.yml` twice (harmless); `/admin/logo.svg` re-requested on re-renders (harmless, cached 200).
+
+### F1 — Clean test-repo config (fix for R19 (1))
+- Files: `src/admin/cms.ts`, `src/admin/dev/testRepo.ts` (+ its test), `src/lib/cms-config.test.ts` if the DEV-guard test's shape changes
+- In test-repo mode only (still behind `import.meta.env.DEV` and dynamic import), build the config from `/admin/config.yml` itself — parsed with the `yaml` package — with `backend` replaced by `{ name: 'test-repo' }`, and call `CMS.init({ config, load_config_file: false })` (verify the exact option name/shape in the 0.221 npm source) so no `repo`/`branch` key reaches the test-repo schema. Production path unchanged (`CMS.init()`); check-admin `dev-only` line still 0/0.
+- Covers: R19 (1)
+- Acceptance: unit test on the config transform (backend = `{ name: 'test-repo' }` only, every other key identical to `config.yml`); `npx vitest run` 0 failed; build + check-admin 8 lines exit 0; the orchestrator walks `/admin/?test-repo` in a fresh tab → 0 console warning/error from the config parser
+- Depends on: T5
