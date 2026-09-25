@@ -43,9 +43,9 @@ Agent (dev): `npx astro dev --background` › **fresh tab** `http://localhost:<p
 | R6 | Hooks wired | `npx vitest run src/admin/hooks.test.ts` → existing R13 tests plus « un seul preSave : séparateurs puis dates » and « cms.ts enregistre preSave et postSave avant init » pass | yes |
 | R7 | Date rules on the board | fresh test board per case, OPFS read after Save: k9s body + one word → `updatedDate` = now (±2 min, browser offset), nothing else changed but that key and the body; k9s title only → file = the title edit alone (no `updatedDate`); bienvenue (draft) body edit → no `updatedDate`; macos-clone `version` `1.0.0` → `updated` = now; macos-clone title only → no `updated`; k9s body edited twice in one session → second save's `updatedDate` ≥ first | no |
 | R8 | Media config | `npx vitest run src/lib/cms-config.test.ts` → « images : WebP, 1600 px, qualité 80, plafond de taille » (`media_libraries.default.config.transformations.raster_image` = `{format: webp, quality: 80, width: 1600}`, `max_file_size: 1048576`) passes; `src/lib/cms-navigation.test.ts` (schema) green; red on `quality: 85` | yes |
-| R9 | Upload lands as WebP | test board, bienvenue: upload a 3000×2000 PNG as cover → Save → OPFS holds `<name>.webp` beside the entry, decoded width 1600, `cover: ./<name>.webp`; a 1600×1600 random-noise PNG is refused (oversized notice, nothing written) | no |
+| R9 | Upload lands as WebP | test board, bienvenue: upload a 3000×2000 PNG as cover → Save → OPFS holds `<name>.webp` beside the entry, decoded width 1600, `cover: <name>.webp`; a 1600×1600 random-noise PNG is refused (oversized notice, nothing written) | no |
 | R10 | Commit messages | `npx vitest run src/lib/cms-config.test.ts` → « messages de commit content(<collection>): <action> "<slug>" » (templates `content({{collection}}): create/update/delete "{{slug}}"`, media `content(media): upload/delete "{{path}}"`; rendered with Sveltia's substitution → `content(Article): update "k9s-kubernetes-terminal-ui"`) passes; red on `Update`; user smoke in the final report | yes |
-| R11 | Duplicate | test board: k9s › Duplicate › title `k9s copie` › Save → OPFS `src/content/blog/k9s-copie/index.md` exists with the copied values and `cover: ./k9s-header.png`, `k9s-copie/k9s-header.png` present; `k9s-kubernetes-terminal-ui/index.md` unchanged; same on `gha-svu` (projects) | no |
+| R11 | Duplicate | test board: k9s › Duplicate › title `k9s copie` › Save → OPFS `src/content/blog/k9s-copie/index.md` exists with the copied values and `cover: k9s-header.png`, `k9s-copie/k9s-header.png` present; `k9s-kubernetes-terminal-ui/index.md` unchanged; same on `gha-svu` (projects) | no |
 | R12 | Shortcuts page built | `npm run build && node scripts/check-admin.mjs` → base lines with isolation `1/<pages>` plus `raccourcis: /admin/raccourcis/index.html · noindex · 0 script · 2 bookmarklets (💡 Idée d'article, 💬 Nouveau prompt) · 2 plain links · 0 site chrome`; `Indexed 12 pages`; exit 1 when a bookmarklet is removed | yes (check-admin) |
 | R13 | Bookmarklets produce the right URL | `npx vitest run src/lib/bookmarklets.test.ts` → « 💡 : sélection sinon titre de page, source dans la description, draft=true », « 💬 : sélection multiligne → prompt, draft=true », « relu par URLSearchParams comme Sveltia : valeurs exactes (espaces, +, &, #, accents, sauts de ligne) », « liens simples » pass (bookmarklet source run in `node:vm` with stubbed `getSelection`, `document`, `location`, `open`) | yes |
 | R14 | Pre-filled forms | test board, URLs from R13 with origin → dev and `?test-repo`: 💡 → form title = selection, description = `Source : <url>`, Brouillon on, pubDate now; no selection → title = page title; 💬 → the prompt editor holds the 3-line selection, Brouillon on; each plain link → empty form, Brouillon on | no |
@@ -108,3 +108,52 @@ Agent (dev): `npx astro dev --background` › **fresh tab** `http://localhost:<p
 - Draft on Duplicate (Sveltia copies the original's `draft`); date rules on new records; `pubDate` on first publication.
 - A UI to clear the ✏️ marker (README gives the console line); a link to `/admin/raccourcis` inside Sveltia's UI.
 - Editorial workflow, config generated from Zod, previews (plan 21), editor blocks (plan 23); schema changes; version bump, tag, merge, push.
+
+## Evidence
+### Verification attempt 1 (tip `36ff7ce`, clean base `74bc756`) — 21/25 proven; R9, R11 failed on the plan's own text (fixed: Sveltia writes `cover: <name>`, no `./` — a plan-text defect, the product works); R10 proven + smoke; R0 proven
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | agent path walked end to end (Create ×3, edit + rule B, WebP upload, Duplicate, `/admin/raccourcis` bookmarklets + links, ✏️ link and entry route); dev log 115×200, 9×404 on the draft page (base too); no 5xx |
+| R1 | proven | tests pass; red on `skills.draft` default false and on `pubDate` default removed |
+| R2 | proven | new article: pubDate = browser now (0 min), Brouillon checked; new prompt/skill: Brouillon checked; saved OPFS file `pubDate: 2026-09-25T17:26:00+02:00`, `draft: true` |
+| R3 | proven | test; red on `draft:` removed from macos-clone |
+| R4 | proven | 5 tests; red on 5 mutations (one equivalent mutant noted) |
+| R5 | proven | 5 tests; red on `Authorization`, `no-cache`, `credentials: 'include'`, 404 branch dropped, memory bypassed, branch `master`; live contents API 200 with CORS without token, 404 for a missing path |
+| R6 | proven | red on swapped steps, `postSave` removed, `preSave` after `init`, a second `preSave` |
+| R7 | proven | k9s body edit → only `+updatedDate: 2026-09-25T17:27:45+02:00` + body line; title only → title line only; bienvenue (draft) body → body only; macos-clone version → `+version` `+updated`; title only → title only; two body saves → second ≥ first |
+| R8 | proven | test; red on quality 85, width 1920, 2 MiB |
+| R9 | failed (plan text) | 3000×2000 PNG → `grand-test.webp` RIFF/WEBP 1600×1066, 13 904 B beside the entry; 1600×1600 noise PNG refused (« Fichier volumineux… 1 Mo »), nothing written; stored `cover: grand-test.webp` (no `./`, base writes the same form; a build with a bare cover emits the image) |
+| R10 | proven + smoke | test; red on `Update` / `Upload`; real commit text = production smoke |
+| R11 | failed (plan text) | `k9s-copie/index.md` = original except title and `cover: k9s-header.png` (no `./`); image copied byte-identical; original unchanged; gha-svu duplicate: title only |
+| R12 | proven | exact `raccourcis:` line, isolation 1/53, `Indexed 12 pages`; exit 1 on a bookmarklet removed; 375/1280 no overflow, 0 contrast/off-token finding |
+| R13 | proven | 7 tests; red on 5 mutations |
+| R14 | proven | both bookmarklets run on a page with a `<pre>` selection (quotes, `&`, `#`, `+`, `%`, `?`, `=`, emoji, ZWJ, `<b>&amp;</b>`, newlines), `window.open` intercepted, origin rewritten to the dev test board: 💡 title = selection (newlines collapsed) / page title without selection, description `Source : <full URL>`, Brouillon on, pubDate now; 💬 saved `prompt` = the 3-line selection exactly, `draft: true`; plain links: empty forms, Brouillon on; 0 console error |
+| R15 | proven | exact lines; exit 1 on `hidden` removed, wrong href, link on `/blog` |
+| R16 | proven | tests; red on href without `/index`, marker after `init`, wrong key |
+| R17 | proven | preview, 12 pages × 375/1280 × light/dark: fresh profile 48/48 hidden; JS off 48/48 hidden (also with the marker); after one `/admin/` visit 48/48 shown, in viewport, contrast 6.20:1 / 9.78:1, 2 px ink focus outline; click → `/admin/#/collections/prompts/entries/macos-clone/index` (sign-in screen on the real backend, entry opens on a signed-in test board for the 4 collections); marker removed → hidden; 0 Pagefind fragment |
+| R18 | proven | guard; red on quoted title, flow list, reordered keys, `featured` removed, blank line removed |
+| R19 | proven | 13/13 canonical; 12 changed files: equal values, byte-equal bodies; additions `featured=false` ×6, `draft=false` ×3 |
+| R20 | proven | 13 fresh boards, load + full scroll + Save: 11 saved byte-identical, 2 keep Save disabled → 13/13 |
+| R21 | proven | caller found; `--check` exit 1 on plants, `--write` 2/13, then 13/13 |
+| R22 | proven | greps 5 · 4 · 1 · 0 |
+| R23 | proven (relative to base) | 0 console error in R2/R14/R7 walks except the draft-page 404 (base too); warnings = sandbox notice (base too) |
+| R24 | proven | 549 passed; 0 errors; 13 checks = base; check-admin only `1/52`→`1/53` + `raccourcis:`; CSS: 0 base declarations missing, + `.bottom-4` `.z-30`; frozen diff empty; content diff = R19 |
+
+Findings outside criteria: (1) **rule B writes seconds but Sveltia's datetime widget holds minutes** — an unedited save after a rule-B save rewrites `17:32:52` as `17:32:00` (breaks D148; the guard misses it) → F1; (2) a refused oversized image empties the cover field and a later Save drops `cover:` → README (F3); (3) slugs keep accents (`essai-création/`, frequent with the 💡 bookmarklet) → F2; (4) minor: fixed ✏️ overlaps the bottom of the TOC at 1280; ~180 Tabs to reach it; `/admin/raccourcis` light only (by design); a duplicate of a published article is published (D150).
+
+Real-backend smoke for the final report: commit text `content(Article): update "<slug>"`; rule B through GitHub in production; WebP cover landing in the repo + deploy; Duplicate on disk; ✏️ opens the entry directly when signed in.
+
+### F1 — Rule-B timestamps at minute precision + guard (finding 1)
+- Files: `src/admin/dateRules.ts` (`formatLocalTimestamp` writes seconds `00`) + test; `src/lib/cmsFrontmatter.ts` / its test (the replica truncates datetime values the way Sveltia's widget does, so a value with non-zero seconds is flagged non-canonical)
+- Acceptance: tests; red on a planted `updatedDate: …:52+02:00` in a content copy; verifier: rule-B save then an unedited save → byte-identical
+- Depends on: T6
+
+### F2 — ASCII slugs (finding 3)
+- Files: `public/admin/config.yml` (global `slug` options per Sveltia 0.221's schema: transliterate accents, lowercase), `src/lib/cms-config.test.ts` (test tied to the schema + a slug computed with the same options for « Essai création à la une » → `essai-creation-a-la-une`)
+- Acceptance: tests; ajv schema test green; verifier: a new article titled with accents saves under an ASCII folder
+- Depends on: F1
+
+### F3 — README fixes (cover form, refused image)
+- Files: `README.md` — `cover: <nom>.webp` (Sveltia's form, no `./`; both resolve), and the trap: an image refused for size empties the cover field — do not Save, or re-pick a smaller image
+- Acceptance: greps (`cover: ./<nom>` → 0; the trap stated once)
+- Depends on: F2
