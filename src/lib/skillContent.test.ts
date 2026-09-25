@@ -142,7 +142,15 @@ describe('contenu des skills — valeurs sourcées (D65, D66, D115, D116)', () =
     // D66 : intro française, « How it works » cité en blockquotes, contenu.
     expect(body).toContain('## Comment il travaille');
     expect(body).toContain('## Ce qu\'il contient');
-    const blockquotes = body.split(/\n\s*\n/).filter((block) => block.trimStart().startsWith('>'));
-    expect(blockquotes).toHaveLength(5);
+    // Plan 17, F4 (WCAG 3.1.2) : les 5 citations anglaises du README sont des
+    // `<blockquote lang="en">` ; plus aucune blockquote Markdown `>` sans langue.
+    const markdownQuotes = body.split(/\n\s*\n/).filter((block) => block.trimStart().startsWith('>'));
+    expect(markdownQuotes).toHaveLength(0);
+    const htmlQuotes = [...body.matchAll(/<blockquote\b([^>]*)>([\s\S]*?)<\/blockquote>/g)];
+    expect(htmlQuotes).toHaveLength(5);
+    for (const [, attrs, text] of htmlQuotes) {
+      expect(attrs.trim()).toBe('lang="en"');
+      expect(text.trim()).not.toBe('');
+    }
   });
 });

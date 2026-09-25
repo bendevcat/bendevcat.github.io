@@ -46,6 +46,10 @@
  *   `installCmd` ; les étapes ≠ `installCmd` coupée sur `&&` ; la note ≠
  *   `installNote` ;
  * - les points forts, les déclencheurs ou les versions ≠ le frontmatter ;
+ * - (plan 17, F4, WCAG 3.1.2) la description de l'en-tête, la note
+ *   d'installation ou une blockquote du corps n'a pas la langue de la règle
+ *   quoteLang (src/lib/skillDetail.ts, réécrite ici) : `lang="en"` pour une
+ *   citation anglaise, aucun `lang` pour une phrase française ;
  * - l'explorateur : un fichier sans bouton ou sans aperçu, un aperçu dont le
  *   `<pre>` ≠ son `excerpt`, dont la barre ≠ son chemin ; ≠ 1 aperçu montré,
  *   ≠ 1 bouton `aria-pressed="true"`, ou l'aperçu montré n'est pas celui du
@@ -94,6 +98,16 @@ const PANELS = [
   { id: 'versions', label: 'versions', hook: 'data-skill-versions' },
   { id: 'infos', label: 'infos', hook: 'data-skill-infos' },
 ];
+
+/**
+ * Langue d'une citation — même règle que quoteLang (src/lib/skillDetail.ts) :
+ * une lettre accentuée du français ou un mot-outil français → `fr` ; sinon
+ * `en`. Attendu : `lang="en"` pour `en`, aucun `lang` pour `fr`.
+ */
+const FRENCH_LETTER = /[àâçéèêëîïôûùüÿœæ]/i;
+const FRENCH_WORD =
+  /(?:^|[^\p{L}])(?:le|la|les|un|une|des|du|de|et|est|ne|pas|rien|entre|chaque|toute|tout|ce|qui|que|par|pour|avec|sans|dans|sur|son|sa|ses)(?=$|[^\p{L}])/iu;
+const expectedLang = (text) => (FRENCH_LETTER.test(text) || FRENCH_WORD.test(text) ? undefined : 'en');
 
 const VOID = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
@@ -377,6 +391,16 @@ for (const id of ids) {
   if (h1s.length !== 1 || !within(h1s[0], article)) fail(`${h1s.length} h1 (attendu : 1, dans l'article)`);
   else if (squash(h1s[0].text) !== info.title) fail(`h1 « ${squash(h1s[0].text)} » ≠ title « ${info.title} »`);
 
+  // Description (plan 17, F4) : la langue de la règle quoteLang.
+  const description = squash(String(data.description ?? ''));
+  if (description) {
+    const descEl = find('data-skill-header').flatMap(descendants).find((el) => el.tag === 'p' && squash(el.text) === description);
+    if (!descEl) fail('description absente de l\'en-tête');
+    else if (descEl.attrs.lang !== expectedLang(description)) {
+      fail(`description lang « ${descEl.attrs.lang ?? '—'} » (attendu : « ${expectedLang(description) ?? '—'} »)`);
+    }
+  }
+
   // Rangée méta.
   const metas = find('data-skill-meta');
   if (metas.length !== 1) fail(`${metas.length} [data-skill-meta] (attendu : 1)`);
@@ -442,6 +466,9 @@ for (const id of ids) {
     const note = notes[0] ? squash(notes[0].text) : null;
     const expectedNote = data.installNote ? squash(String(data.installNote)) : null;
     if (note !== expectedNote) fail(`note « ${note ?? '—'} » (attendu : « ${expectedNote ?? '—'} »)`);
+    if (notes[0] && notes[0].attrs.lang !== expectedLang(note)) {
+      fail(`note lang « ${notes[0].attrs.lang ?? '—'} » (attendu : « ${expectedLang(note) ?? '—'} »)`);
+    }
     info.install = `${title || '—'} · ${plural(shownSteps.length, 'step', 'steps')} · ${copy ? squash(copy.text) : '—'} · ${note ? 'note' : 'no note'} · ${copyOk ? 'copy = installCmd' : 'copy ≠ installCmd'}`;
   } else {
     info.install = 'no install window';
@@ -562,6 +589,12 @@ for (const id of ids) {
     if (ignored(notes)) fail('En détail hors index de recherche');
     const heading = descendants(notes).find((el) => el.tag === 'h2');
     if (squash(heading?.text ?? '') !== 'En détail') fail(`titre du corps « ${squash(heading?.text ?? '') || '—'} »`);
+    for (const quote of descendants(notes).filter((el) => el.tag === 'blockquote')) {
+      const text = squash(quote.text);
+      if (quote.attrs.lang !== expectedLang(text)) {
+        fail(`blockquote « ${text.slice(0, 40)}… » lang « ${quote.attrs.lang ?? '—'} » (attendu : « ${expectedLang(text) ?? '—'} »)`);
+      }
+    }
     leftParts.push('en détail');
   }
   info.left = leftParts.join(' · ');

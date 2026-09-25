@@ -7,7 +7,8 @@
  * - Fil d'Ariane mono 13, hors index de recherche : `~/ skills` (lien
  *   `/skills/`, `accent`) puis ` / <name ?? id>` `muted`.
  * - h1 36 px / 700 `ink`.
- * - Description 16.5 px `muted`, 660 px au plus.
+ * - Description 16.5 px `muted`, 660 px au plus ; `lang="en"` quand elle est
+ *   citée en anglais (quoteLang ; plan 17, F4, WCAG 3.1.2).
  * - Rangée méta mono 11 qui passe à la ligne : pilule de type
  *   (`accentSoft` / `accent`), pilules `v<version>` et licence (`chip` /
  *   `muted`, chacune omise sans valeur), `· <résumé>` — le résumé de la carte
@@ -19,6 +20,8 @@
  * `data-skill-meta`, `data-meta-field`. Une `div` et pas un `<header>` : la
  * page n'a qu'un `<header>`, celui du site.
  */
+import { quoteLang } from '../../lib/skillDetail';
+
 interface Props {
   id: string;
   title: string;
@@ -47,7 +50,12 @@ const CHIP = 'rounded-pill px-2 py-1 leading-none';
     >
   </p>
   <h1 class="font-sans text-[36px] leading-[1.15] font-bold tracking-[-.03em] text-pretty text-ink">{title}</h1>
-  <p class="max-w-[660px] font-sans text-[16.5px] leading-[1.6] text-pretty text-muted">{description}</p>
+  <p
+    lang={quoteLang(description) === 'en' ? 'en' : undefined}
+    class="max-w-[660px] font-sans text-[16.5px] leading-[1.6] text-pretty text-muted"
+  >
+    {description}
+  </p>
   <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 font-mono text-[11px] text-muted" data-skill-meta>
     <span class={`${CHIP} bg-accentSoft text-accent`} data-meta-field="type">{type}</span>
     {version && <span class={`${CHIP} bg-chip text-muted`} data-meta-field="version">{version}</span>}

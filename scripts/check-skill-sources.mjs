@@ -30,7 +30,7 @@
  * - texte d'une ligne de version : la section de CETTE version dans le
  *   CHANGELOG (`## [x.y.z] - date`) ou les RELEASE-NOTES (`## vX.Y.Z (date)`),
  *   dont le titre doit exister avec la même date ;
- * - blockquotes du corps : README.
+ * - blockquotes du corps (Markdown `>` ou HTML `<blockquote>`) : README.
  * Extraits (D116) : `lines` = nombre de lignes du fichier ; l'extrait =
  * ses K premières lignes mot pour mot, K ≤ 16, sans aucune adresse e-mail.
  * Comptes : `skillCount` = nombre de `skills/* /SKILL.md`, `commandCount`
@@ -152,13 +152,22 @@ function changelogSections(text, heading) {
   return sections;
 }
 
-/** Blockquotes Markdown du corps (blocs séparés par une ligne vide), texte sans `>`. */
+/**
+ * Blockquotes du corps, dans l'ordre : HTML `<blockquote …>…</blockquote>`
+ * (plan 17, F4 : `<blockquote lang="en">` autour du Markdown cité), texte
+ * intérieur rogné ; puis, hors de ces blocs, blockquotes Markdown (blocs
+ * séparés par une ligne vide), texte sans `>`.
+ */
 function blockquotes(body) {
-  return body
+  const html = /<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/g;
+  const htmlQuotes = [...body.matchAll(html)].map((match) => match[1].trim());
+  const markdownQuotes = body
+    .replace(html, '')
     .split(/\n[ \t]*\n/)
     .map((block) => block.trim())
     .filter((block) => block.startsWith('>'))
     .map((block) => block.split('\n').map((line) => line.replace(/^>\s?/, '')).join('\n'));
+  return [...htmlQuotes, ...markdownQuotes];
 }
 
 function isoDate(value) {
