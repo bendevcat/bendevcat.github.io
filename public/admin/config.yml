@@ -29,11 +29,29 @@ output:
   # chaîne vide / null et casse la validation Zod côté Astro (spec R4).
   omit_empty_optional_fields: true
 
+# Listes des collections (plan 20, T3) — gardées par src/lib/cms-navigation.test.ts.
+# Comportements Sveltia 0.221 lus dans ses sources (npm/index.js.map) :
+# - `icon` : nom d'une icône Material Symbols Outlined (police livrée) (R4).
+# - `summary` : `{{champ}}` affiche la valeur telle que l'éditeur la voit (le
+#   LIBELLÉ d'un select) ; `date('…')` et `ternary('a','b')` lisent la valeur
+#   brute ; une clé absente donne '' avant toute transformation. D'où les
+#   séparateurs portés par `ternary` : rien ne s'affiche quand le champ manque (R6).
+# - `thumbnail` : un champ image nommé, ou `false` pour aucune vignette (R8).
+# - `sortable_fields.default` : tri d'une liste sans réglage de vue enregistré (R10).
+# - `view_filters` : `eq` compare aussi la forme texte (`true` = 'true') ; `ne`
+#   garde une entrée SANS le champ ; `empty: true` = clé absente, null, '' ou []
+#   (R12). Un filtre, groupe ou tri sur un champ non déclaré est une ERREUR de
+#   config : les projets n'ont pas de champ `draft` (Zod ni CMS), donc la paire
+#   Brouillons / Publiés ne vaut que pour articles, prompts et skills (D134).
+# - `view_groups` : avec `pattern`, groupe par le premier match de la regex sur
+#   la valeur brute ; sans, par la valeur (R14).
 collections:
   - name: blog
     label: Articles
     label_singular: Article
     description: Articles du blog — src/content/blog/{slug}/index.md
+    # R4 : icône de la barre latérale.
+    icon: article
     folder: src/content/blog
     path: '{{slug}}/index'
     extension: md
@@ -49,7 +67,26 @@ collections:
     delete: true
     slug: '{{slug}}'
     identifier_field: title
-    sortable_fields: [pubDate, title]
+    # R6 : titre · date · catégorie, 📝 si brouillon, ⭐ si mis en avant.
+    summary: "{{title}} · {{pubDate | date('YYYY-MM-DD')}} · {{category}}{{draft | ternary(' 📝','')}}{{featured | ternary(' ⭐','')}}"
+    # R8 : vignette = couverture.
+    thumbnail: cover
+    # R10 : plus récent d'abord.
+    sortable_fields:
+      fields: [pubDate, updatedDate, title]
+      default: { field: pubDate, direction: descending }
+    # R12 : un filtre par condition, valeurs tirées du schéma Zod.
+    view_filters:
+      - { name: drafts, label: Brouillons, field: draft, eq: true }
+      - { name: published, label: Publiés, field: draft, ne: true }
+      - { name: featured, label: Mis en avant, field: featured, eq: true }
+      - { name: no-cover, label: Sans couverture, field: cover, empty: true }
+      - { name: ai-partial, label: IA partielle, field: aiUsage, eq: partial }
+      - { name: ai-full, label: IA totale, field: aiUsage, eq: full }
+    # R14 : année (4 premiers chiffres de pubDate) et catégorie.
+    view_groups:
+      - { name: year, label: Année, field: pubDate, pattern: '^\d{4}' }
+      - { name: category, label: Catégorie, field: category }
     # Médias à côté de l'article : Astro optimise les images co-localisées.
     media_folder: ''
     public_folder: ''
@@ -87,6 +124,8 @@ collections:
     label: Projets
     label_singular: Projet
     description: Fiches projets — src/content/projects/{slug}/index.md
+    # R4 : icône de la barre latérale.
+    icon: rocket_launch
     folder: src/content/projects
     path: '{{slug}}/index'
     extension: md
@@ -97,7 +136,24 @@ collections:
     delete: true
     slug: '{{slug}}'
     identifier_field: title
-    sortable_fields: [title, startDate]
+    # R6 : titre · statut, ⭐ si mis en avant (pas de champ draft : pas de 📝).
+    summary: "{{title}} · {{status}}{{featured | ternary(' ⭐','')}}"
+    # R8 : vignette = couverture.
+    thumbnail: cover
+    # R10 : projet le plus récent d'abord.
+    sortable_fields:
+      fields: [startDate, title]
+      default: { field: startDate, direction: descending }
+    # R12 : un filtre par valeur de PROJECT_STATUSES, libellé de la puce du
+    # site (src/lib/projectStatus.ts). Pas de Brouillons / Publiés : les
+    # projets n'ont pas de champ `draft` (D134).
+    view_filters:
+      - { name: status-actif, label: actif, field: status, eq: actif }
+      - { name: status-wip, label: wip, field: status, eq: wip }
+      - { name: status-archive, label: archivé, field: status, eq: archivé }
+    # R14 : par statut.
+    view_groups:
+      - { name: status, label: Statut, field: status }
     # Médias à côté de la fiche : Astro optimise les images co-localisées
     # (même stratégie que `blog`, prouvée en production au Plan 2).
     media_folder: ''
@@ -176,6 +232,8 @@ collections:
     label: Prompts
     label_singular: Prompt
     description: Bibliothèque de prompts — src/content/prompts/{slug}/index.md
+    # R4 : icône de la barre latérale.
+    icon: terminal
     folder: src/content/prompts
     path: '{{slug}}/index'
     extension: md
@@ -186,7 +244,24 @@ collections:
     delete: true
     slug: '{{slug}}'
     identifier_field: title
-    sortable_fields: [title]
+    # R6 : titre · format (libellé du select) · outil, « v<version> » si
+    # renseignée, 📝 si brouillon.
+    summary: "{{title}} · {{format}} · {{tool}}{{version | ternary(' v','')}}{{version}}{{draft | ternary(' 📝','')}}"
+    # R8 : pas de couverture, pas de vignette.
+    thumbnail: false
+    # R10 : dernière mise à jour d'abord (une entrée sans `updated` n'a pas de date).
+    sortable_fields:
+      fields: [updated, title]
+      default: { field: updated, direction: descending }
+    # R12 : Brouillons / Publiés, puis un filtre par valeur de PROMPT_FORMATS.
+    view_filters:
+      - { name: drafts, label: Brouillons, field: draft, eq: true }
+      - { name: published, label: Publiés, field: draft, ne: true }
+      - { name: fiches, label: Fiches, field: format, eq: fiche }
+      - { name: guides, label: Guides, field: format, eq: guide }
+    # R14 : par outil.
+    view_groups:
+      - { name: tool, label: Outil, field: tool }
     media_folder: ''
     public_folder: ''
     fields:
@@ -235,6 +310,8 @@ collections:
     label: Skills
     label_singular: Skill
     description: Bibliothèque de skills Claude Code — src/content/skills/{slug}/index.md
+    # R4 : icône de la barre latérale.
+    icon: extension
     folder: src/content/skills
     path: '{{slug}}/index'
     extension: md
@@ -245,7 +322,19 @@ collections:
     delete: true
     slug: '{{slug}}'
     identifier_field: title
-    sortable_fields: [title]
+    # R6 : titre · v<version> · licence (chaque partie seulement si
+    # renseignée), 📝 si brouillon.
+    summary: "{{title}}{{version | ternary(' · v','')}}{{version}}{{license | ternary(' · ','')}}{{license}}{{draft | ternary(' 📝','')}}"
+    # R8 : pas de couverture, pas de vignette.
+    thumbnail: false
+    # R10 : ordre alphabétique.
+    sortable_fields:
+      fields: [title]
+      default: { field: title, direction: ascending }
+    # R12 : Brouillons / Publiés. Pas de groupe (R14).
+    view_filters:
+      - { name: drafts, label: Brouillons, field: draft, eq: true }
+      - { name: published, label: Publiés, field: draft, ne: true }
     media_folder: ''
     public_folder: ''
     fields:
