@@ -41,7 +41,11 @@
  *   l'index survit donc à une sauvegarde sans modification ; la validation
  *   (`validateFields('extraValues')`) teste le motif d'un champ texte sur la
  *   valeur ÉLAGUÉE : `toBlock` élague donc titre, id et langage avant
- *   d'écrire.
+ *   d'écrire. Un champ `code` (`output_code_only`) y passe aussi : son
+ *   `pattern` est honoré (`fields/code/validate.js` rend la valeur telle
+ *   quelle), d'où le refus des suites de ``` du Terminal (D156). La
+ *   validation bloque la SAUVEGARDE (`validateEntry` dans `draft/save`) ;
+ *   `toBlock` a déjà réécrit le corps à la frappe.
  * - Activation par champ : `editor_components` du champ markdown (défaut :
  *   `code-block`, `image` et TOUS les composants enregistrés) ; un champ
  *   markdown d'un composant hérite `allow_nested_components` du champ parent
@@ -84,6 +88,21 @@ export const TITLE_FORM_PATTERN = /^[^[\]\r\n]*[^[\]\r\n\\]$/;
 export const VIDEO_ID_FORM_PATTERN = new RegExp(
   `^(?:${VIDEO_PROVIDERS.map((provider) => VIDEO_ID_PATTERNS[provider].source.slice(1, -1)).join('|')})$`,
 );
+
+/**
+ * Code du Terminal accepté par le formulaire (D156) : aucune suite de trois
+ * backticks. L'éditeur de code de Sveltia se ferme dessus : en tête de ligne
+ * le reste sort du code ; ailleurs l'export Lexical allonge la clôture, que
+ * `parseCodeBlock` ne relit pas, et la valeur ENTIÈRE est vidée à l'ouverture
+ * suivante (plan 23, T5). Même règle que `fence-in-code` du garde canonique.
+ * Sveltia teste le motif sur la valeur élaguée, ce qui ne crée ni ne retire
+ * de suite.
+ */
+export const CODE_FORM_PATTERN = /^(?![\s\S]*`{3})/;
+
+/** Message du motif, affiché sous le champ quand la sauvegarde est refusée. */
+export const CODE_FORM_MESSAGE =
+  'Pas de ``` (trois backticks à la suite) : l’éditeur de code s’y arrête et viderait le code à la prochaine ouverture.';
 
 /** Option du sélecteur de Carte. */
 export interface CardOption {
@@ -173,6 +192,7 @@ function blockFields(options: readonly CardOption[]): Record<BlockId, Field[]> {
         widget: 'code',
         output_code_only: true,
         allow_language_selection: false,
+        pattern: [CODE_FORM_PATTERN, CODE_FORM_MESSAGE],
       },
     ],
     carte: [
