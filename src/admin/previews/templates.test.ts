@@ -5,12 +5,13 @@ import { isTreeElement, treeH, type H, type TreeElement } from './html';
 import { articlePreview } from './article';
 import { projectPreview } from './project';
 import { promptPreview } from './prompt';
+import { skillPreview } from './skill';
 
 /**
  * Gabarits d'aperçu `/admin/` (plan 21, R2) : fonctions pures `(data, h)`
  * qui produisent des props React valides. Chaque gabarit est appelé sur
- * chaque entrée réelle de sa collection, lue sur le disque (D131). Les
- * gabarits des autres collections s'ajoutent à `TEMPLATES` (T5).
+ * chaque entrée réelle de sa collection, lue sur le disque (D131). Un
+ * gabarit par collection de contenu dans `TEMPLATES`.
  */
 type Template = (data: never, h: H<TreeElement>) => TreeElement;
 
@@ -18,6 +19,7 @@ const TEMPLATES: Record<string, Template> = {
   blog: articlePreview as Template,
   projects: projectPreview as Template,
   prompts: promptPreview as Template,
+  skills: skillPreview as Template,
 };
 
 const entries = (await diskEntries()).filter((entry) => Object.hasOwn(TEMPLATES, entry.collection));
