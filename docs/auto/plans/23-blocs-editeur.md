@@ -121,3 +121,43 @@ Agent (dev): `npx astro dev --background` › fresh tab `/admin/?test-repo` › 
 - The Terminal component's `code` field gets a `pattern` refusing any run of 3+ backticks, with a French message; verify the pattern option is honoured for the `code` widget inside an editor component in Sveltia 0.221 (source); if it is not, use the `text` widget and prove the round trip still holds
 - Acceptance: tests (a code value with ``` is refused by the field validation used by Sveltia — test through the same validator code path, or prove from source); round-trip tests green
 - Depends on: T5
+
+## Evidence
+### Verification attempt 1 — 19/21 proven; R20 and T4b failed; R0 failed through them
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | failed | reachability walks pass (board by clicks, scratch `/blog/blocs-demo/`); fails through R20 and T4b |
+| R1 | proven | 19 tests; red on blank-line rule removed (3), fixed `:::` (3), fixed ``` (1), permissive ref |
+| R2 | proven | red on no `role=note` (4), terminal left to Shiki (2), card/video without pagefind-ignore, `<img>` in facade |
+| R3 | proven | 5 tests, red on each mutation; scratch build with `ref="blog/inexistant"` exit 1 « ref inconnue », card to the draft exit 1 « brouillon (draft: true) cité par une entrée publiée » (no-provider test weak — finding 3) |
+| R4 | proven | `:pods`, `a:b`, `::x`, `:x[y]{z}` stay text; red with full `directive()` |
+| R5 | proven | red on FORBID `aside` (1), `ALLOW_DATA_ATTR:false` (3), `remarkBlocks` removed (2) |
+| R6 | proven | red on draft forced false (2), `/projects/` (1), preview mode throwing (1) |
+| R7 | proven | red on registration after `init`, `encadre` on projects, URL field on Carte (2), icon removed, bad `allow_nested_components`, `carte` dropped |
+| R8 | proven | 9 tests; red on internal `^` anchors removed (3 each); leading `^` redundant under Sveltia's line-start rule |
+| R9 | proven | 13/13 canonical; red on each guard mutation |
+| R10 | proven | Insérer lists Encadré/Terminal/Carte/Vidéo on the article body only (no Insérer on projects/prompts/skills); 8 blocks inserted via forms, card from 13 options; OPFS blocks = `toBlock(fromBlock(m))`; reopen shows the values; unedited save byte-identical; raw-mode paste identical; unknown ref survives an unedited save |
+| R11 | proven | preview: 4 callouts in tone tokens, terminal, card → `/projets/gha-svu/`, 2 facades, 0 iframe; 0 request to youtube/ytimg/asciinema in ~1 250 requests (light only in this walk) |
+| R12 | proven | `check-blocks --dist <fixture dist>` 3 lines exit 0; exit 1 on iframe, card pagefind attr removed, extra ytimg URL; check-previews `blog 6/6` in the scratch build |
+| R13 | proven | click → `youtube-nocookie.com/embed/aqz-KE-bpKQ?autoplay=1` focused; Enter → asciinema `/a/335480/iframe?autoplay=1` focused; ⌘-click opens the provider page; JS off → plain provider links; 0 third-party request before click |
+| R14 | proven | tokens test red on a literal colour / unmeasured token / palette class; audit-rendered at 375/1280, light/dark: no overflow, 0 contrast finding, 0 off-token colour |
+| R15 | proven | real content: 0 blocks, 0 block scripts; fixture: both scripts on `blocs-demo`; planted video script on k9s → exit 1 |
+| R16 | proven | both `@source not`; only `.lowercase` lost; check-previews green |
+| R17 | proven | 51 pages + Pagefind identical to ead7b81; one byte changed → exit 1 |
+| R18 | proven | greps 4 / 0 / 1; section complete |
+| R19 | proven | 648 passed; 0 errors; 15 checks identical base vs tip; check-edit-link green vs 74bc756; frozen diff empty |
+| R20 | failed | (a) Terminal/Carte/Vidéo inserted → 2 `console.error` per keystroke until required fields are filled (« Bloc « video » … : titre vide », « Aperçu blog : rendu du corps impossible »); (b) facade click → « Allow attribute will take precedence over 'allowfullscreen' »; (c) typing ``` in the code editor → « Minified Lexical error #66 » |
+| T4b | failed | the `pattern` never sees the value: Sveltia's code editor empties or truncates the code as soon as ``` is typed (3 attempts: empty code saved; `echo x ``` y` saved empty; key-by-key leaves `fin`) — silent data loss persists |
+
+Findings: the site iframe `sandbox` / narrowed asciinema `allow` (plan did not specify; D153 context); an unreferenced terminal-script asset in `dist/_astro` on real content (harmless); « sans index fourni : erreur » matches any throw (weak test); separate `terminal-block.ts` (documented); vendored replica not in `dist`.
+
+### F1 — Terminal code through the `text` widget (T4b)
+- Files: `src/admin/blocks/editorComponents.ts` (+ tests), round-trip replica tests
+- The Terminal `code` field becomes `widget: text` (no Lexical code editor, so ``` survives); drop the useless pattern; `toBlock` keeps a fence longer than any backtick run; prove with the replica that markdown → form → markdown is identical for code containing ```, and that the Lexical body import leaves the block intact
+- Acceptance: replica tests incl. ``` inside terminal code; verifier: typing ``` in the form keeps the code and saves it; reopen shows it; unedited save byte-identical
+- Depends on: T7
+
+### F2 — Quiet preview for incomplete blocks; iframe attributes; stronger test
+- Files: `src/lib/blocks/remarkBlocks.mjs` (preview mode: an incomplete or invalid block renders a neutral placeholder « Bloc incomplet : … » instead of throwing — the site build still throws), `src/admin/previews/register.ts` if needed (no `console.error` for a block validation error in preview), `src/lib/videoEmbed.ts` (drop `allowfullscreen`; `allow` carries fullscreen), the weak « sans index fourni » test (assert the specific message)
+- Acceptance: tests (preview mode placeholder; site mode still throws; iframe has no `allowfullscreen`); verifier: inserting each block and typing shows 0 console error / warning until filled; facade click 0 warning
+- Depends on: F1
