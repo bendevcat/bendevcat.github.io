@@ -370,3 +370,18 @@ Choice: home headers keep DOM order title → badge with `justify-end` + `flex-1
 
 ## D123 · Run 3 · E1 — Publish wave 3 as v1.5.0
 Choice: fast-forward `main` to the integration branch, annotated tag `v1.5.0`, push `main`, `v1.5.0`, `milestone-plan-12` … `milestone-plan-18`, then a production check · Alternatives: wait · Reversibility: expensive (a published tag and a production deploy) · Why: user's answer "A" to escalation E1.
+
+## D124 · Plan 19 · T5 — Test backend opt-in through `?test-repo`   ⚑ à relire
+Choice: in dev only, `/admin/?test-repo` loads Sveltia's `test-repo` backend seeded from `src/content/**` (OPFS); plain `/admin/` keeps the README's "Work with Local Repository" flow; `scripts/check-admin.mjs` proves the seeding code is absent from the production build · Alternatives: test backend by default in dev; a separate dev route · Reversibility: cheap · Why: agents cannot type the PAT nor use the native directory picker (brief, Smoke surfaces), and the author's local workflow must not change.
+
+## D125 · Plan 19 · T3 — Preview CSS through `?inline`, root URLs made absolute
+Choice: `global.css?inline` (Tailwind-compiled) registered with `registerPreviewStyle(css, { raw: true })`, root-relative `url()` rewritten to the page origin · Alternatives: `?url` (proven broken at authoring: the emitted URL has no file in `dist/`); a hand-copied stylesheet in `public/` (forbidden by Architecture B) · Reversibility: cheap · Why: a raw style is served from a `blob:` URL where `/_astro/…woff2` does not resolve.
+
+## D126 · Plan 19 · T4 — `preSave` hook writes thematic breaks back as `---`
+Choice: a `preSave` hook rewrites `***`/`___` rules of the body as `---` (outside code fences) and inserts a blank line before a `---` that follows text · Alternatives: adopt `***` as the canonical rule; accept that a CMS save turns the guard test red · Reversibility: cheap · Why: Sveltia's Lexical serialiser writes every rule as `***`; CI runs the tests before deploying.
+
+## D127 · Plan 19 · T6 — `delete: true` set from source evidence, proven by walkthrough   ⚑ à relire
+Choice: re-enable `delete` on the four collections because Sveltia 0.221's `deleteEntries` → `planCascadeDelete` removes the deleted slug from referencing optional relation fields in the same commit; R16 walkthrough + scratch build must prove it, otherwise the fix round sets `false` back (D08 maintained) · Alternatives: keep `false` until the walkthrough passed · Reversibility: cheap to flip, but a wrong `true` in production could break a deploy · Why: brief roster row 19; D08's cause (no back-reference cleanup) no longer holds in 0.221 source.
+
+## D128 · Plan 19 · T2 — SRI dropped with the CDN; integrity rests on the npm lockfile   ⚑ à relire
+Choice: `@sveltia/cms` 0.221.0 exact in `dependencies`, bundled by Vite; no CDN script, hence no SRI attribute (Plan 2's `68e854a`) · Alternatives: none compatible with Architecture B · Reversibility: expensive (going back means the CDN architecture) · Why: user-chosen Architecture B; `package-lock.json` integrity hashes replace the SRI.
