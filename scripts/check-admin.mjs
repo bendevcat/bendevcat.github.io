@@ -22,7 +22,11 @@
  *     `--color-bg:` et un `@font-face` Nebula Sans ; chaque `url(/_astro/…)`
  *     de ce CSS désigne un fichier présent dans `dist/_astro/` (sinon la
  *     ligne signale les cibles absentes) (T3) ;
- *   dev-only: … — (T5) ;
+ *   dev-only: … — le dépôt de test de dev (`src/admin/dev/testRepo.ts`,
+ *     chargé sous `import.meta.env.DEV` seulement) n'a laissé aucune trace
+ *     dans `dist/_astro/*.js` : ni son marqueur `TEST_REPO_SEED_MARKER` (lu
+ *     dans le source), ni une chaîne commençant par `/src/content/` (clé de
+ *     son `import.meta.glob`) — occurrences comptées sur tous les fichiers (T5) ;
  *   isolation: … — seules les pages dont le graphe JS touche un chunk du
  *     graphe admin sont comptées : 1 (la page admin) sur toutes les pages (T2) ;
  *   config: … — `dist/admin/config.yml` identique octet pour octet à
@@ -163,7 +167,28 @@ const adminChunks = adminExists ? jsClosure(admin) : new Set();
   lines.push(line);
 }
 
-// --- dev-only (T5) : à venir. -----------------------------------------------
+// --- dev-only (T5) ---------------------------------------------------------
+{
+  const source = readFileSync(join(ROOT, 'src', 'admin', 'dev', 'testRepo.ts'), 'utf8');
+  const marker = source.match(/export const TEST_REPO_SEED_MARKER = '([^']+)'/)?.[1];
+  if (!marker) {
+    console.error('check-admin: TEST_REPO_SEED_MARKER introuvable dans src/admin/dev/testRepo.ts');
+    process.exit(1);
+  }
+  let markers = 0;
+  let keys = 0;
+  const leaks = new Set();
+  for (const name of readdirSync(ASTRO).filter((n) => n.endsWith('.js')).sort()) {
+    const js = readFileSync(join(ASTRO, name), 'utf8');
+    const m = js.split(marker).length - 1;
+    const k = [...js.matchAll(/[`'"]\/src\/content\//g)].length;
+    markers += m;
+    keys += k;
+    if (m || k) leaks.add(name);
+  }
+  lines.push(`dev-only: ${markers} test-repo seed marker · ${keys} /src/content/ key in dist/_astro`);
+  if (leaks.size) notes.push(`dev-only code in: ${[...leaks].join(', ')}`);
+}
 
 // --- isolation (T2) ---------------------------------------------------------
 {
@@ -195,6 +220,7 @@ const EXPECTED = [
   'admin page: /admin/index.html · noindex · cms-config-url /admin/config.yml · 1 module script · 0 stylesheet link · 0 site chrome',
   `sveltia: @sveltia/cms ${pinned} bundled · 0 CDN script tag`,
   'preview css: site CSS inlined in the admin bundle (.prose, --color-bg, @font-face Nebula Sans)',
+  'dev-only: 0 test-repo seed marker · 0 /src/content/ key in dist/_astro',
   `isolation: admin bundle referenced by 1/${pageCount} pages`,
   'config: dist/admin/config.yml = public/admin/config.yml',
 ];

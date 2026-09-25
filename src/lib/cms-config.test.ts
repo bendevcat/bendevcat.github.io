@@ -177,6 +177,26 @@ describe('page /admin', () => {
       expect(src).not.toMatch(/https?:\/\/[^'"\s]*sveltia/);
     }
   });
+
+  it('ne charge le dépôt de test que sous import.meta.env.DEV', () => {
+    const cms = read('../admin/cms.ts');
+    // Aucun import statique du module de dev : seul un import() dynamique, que
+    // le build élimine avec la branche `import.meta.env.DEV` (false en prod).
+    expect(cms).not.toMatch(/^import\b[^;]*['"]\.\/dev\//m);
+    const refs = [...cms.matchAll(/['"]\.\/dev\/[^'"]*['"]/g)];
+    expect(refs).toHaveLength(1);
+    const guard = cms.match(
+      /if\s*\(\s*import\.meta\.env\.DEV\s*&&\s*new URLSearchParams\(location\.search\)\.has\('test-repo'\)\s*\)\s*\{([\s\S]*?)\n\}\s*else\s*\{([\s\S]*?)\n\}/,
+    );
+    expect(guard).not.toBeNull();
+    const [, devBranch, prodBranch] = guard!;
+    expect(devBranch).toMatch(/import\(\s*'\.\/dev\/testRepo'\s*\)/);
+    expect(devBranch).toMatch(/CMS\.init\(\s*\{\s*config:\s*\{\s*backend:\s*\{\s*name:\s*'test-repo'\s*\}\s*\}\s*\}/);
+    expect(prodBranch).toMatch(/CMS\.init\(\)/);
+    expect(prodBranch).not.toMatch(/test-repo/);
+    // Un seul init() hors de ces deux branches : aucun.
+    expect([...cms.matchAll(/CMS\.init\(/g)]).toHaveLength(2);
+  });
 });
 
 describe('config CMS — sortie', () => {
