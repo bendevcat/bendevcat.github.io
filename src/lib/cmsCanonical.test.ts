@@ -9,6 +9,7 @@ import {
   type CanonicalIssue,
   type CanonicalRule,
 } from './cmsCanonical';
+import { BLOCKS } from './blocks/syntax.mjs';
 import { codeWindowText } from './codeWindow';
 import { measurePromptText } from './listCards';
 
@@ -222,5 +223,130 @@ describe('forme canonique Sveltia du contenu (plan 21, F2)', () => {
         expect(measurePromptText(withNewline, entry.body)).toBe(measurePromptText(data, entry.body));
       }
     }
+  });
+});
+
+describe('blocs de l’éditeur dans la forme que Sveltia écrit (plan 23, T5, R9)', () => {
+  const callout = (content: string, kind = 'note') => BLOCKS.encadre.toBlock({ kind, content });
+  const terminal = (title: string, code: string, lang = 'bash') => BLOCKS.terminal.toBlock({ title, lang, code });
+  const carte = BLOCKS.carte.toBlock({ ref: 'projects/gha-svu' });
+  const video = BLOCKS.video.toBlock({ provider: 'youtube', id: 'aqz-KE-bpKQ', title: 'Big Buck Bunny' });
+
+  it('blocs canoniques acceptés', () => {
+    const fixture = readFileSync(new URL('./blocks/fixtures/blocs-demo.md', import.meta.url), 'utf8')
+      .trim()
+      .replace(/^---\n[\s\S]*?\n---\n/, '')
+      .replace(/^\n/, '');
+    const bodies = [
+      fixture,
+      callout('Une **note** avec un [lien](/blog/) et `du code`.\n\n- a\n- b\n    - c\n\n1. un\n2. deux', 'astuce'),
+      callout(''),
+      callout('texte\n:::\nsuite', 'danger'),
+      callout('Le séparateur est ::: — « accents » et "guillemets"', 'attention'),
+      terminal('deploy.sh', 'npm ci\n\n  echo "a:::b"\n:::\n$ ls *.md ~ _x_'),
+      terminal('sortie', '', ''),
+      terminal('t', '\n\nlead', 'yaml'),
+      // Code en champ `text` (F1, D158) : ```, ~~~ et saut de ligne final gardés.
+      terminal('t', 'a\n```\nb'),
+      terminal('t', 'x ```'),
+      terminal('t', 'fin\n'),
+      terminal('README.md', 'cat <<EOF\n```sh\nnpm ci\n```\n~~~\nx\n~~~\nEOF'),
+      `- a\n    - b\n\n${terminal('t', 'a\n```\nb')}\n\n- c\n    - d`,
+      carte,
+      video,
+      BLOCKS.video.toBlock({ provider: 'asciinema', id: '335480', title: 'Session' }),
+      `Avant.\n\n${carte}\n\n${video}\n\nAprès.`,
+      `## Titre\n\n${callout('Fin de document.')}`,
+    ];
+    const flagged = bodies.flatMap((body) => findBodyIssues(body).map(describeIssue(JSON.stringify(body))));
+    expect(flagged).toEqual([]);
+  });
+
+  it('bloc non canonique signalé', () => {
+    const cases: [string, CanonicalRule[]][] = [
+      // Non reconnu par le motif Sveltia : reste du texte dans l'éditeur.
+      [':::carte{ref=projects/gha-svu}\n:::', ['block']],
+      [":::carte{ref='projects/gha-svu'}\n:::", ['block']],
+      [':::inconnu\n\nx\n\n:::', ['block']],
+      ['  :::note\n\nx\n\n  :::', ['block']],
+      ['::: note\n\nx\n\n:::', ['block']],
+      // `:::` dans un encadré à la même longueur de clôture : le bloc s'arrête là,
+      // la suite colle à sa clôture, la dernière ligne `:::` n'ouvre rien.
+      [':::note\n\ntexte\n:::\nsuite\n\n:::', ['block', 'block-gap']],
+      // Reconnu, mais réécrit par `toBlock`.
+      [':::note\nx\n:::', ['block']],
+      [':::note\n\n\nx\n\n\n:::', ['block']],
+      [':::note  \n\nx\n\n:::', ['block']],
+      ['::::note\n\nx\n\n::::', ['block']],
+      [`${carte.split('\n')[0]}\n\n:::`, ['block']],
+      [':::video[ Titre ]{youtube="aqz-KE-bpKQ"}\n:::', ['block']],
+      [':::terminal[t]\n```sh\nls\n```\n:::', ['block']],
+      [':::terminal[t]\n\n```sh \nls\n```\n\n:::', ['block']],
+      // Sans ligne vide autour.
+      [`Texte\n${carte}`, ['block-gap']],
+      [`${carte}\nTexte`, ['block-gap']],
+      [`${carte}\n${video}`, ['block-gap']],
+      // Contenu d'encadré relu par son éditeur (ni bloc de code, ni barré).
+      [callout('```sh\nls\n```'), ['block-content']],
+      [callout('~~barré~~'), ['block-content']],
+      [callout('logger *avant*'), ['star']],
+      [callout('- a\n\n- b'), ['loose-list']],
+      // Ligne ``` impaire dans le code : bascule des passes du corps inversée.
+      [terminal('t', 'a\n```\n  - x'), ['fence-toggle']],
+      [terminal('t', 'a\n```\n> '), ['fence-toggle']],
+      [`${terminal('t', 'a\n```\nb')}\n\n> q\n>\n> r`, ['fence-toggle']],
+      ['````md\n```\n  - x\n````', ['fence-toggle']],
+    ];
+    for (const [body, expected] of cases) expect([body, rules(findBodyIssues(body))]).toEqual([body, expected]);
+    // Numéros de ligne : ceux du corps (contenu décalé sous l'ouverture).
+    expect(findBodyIssues(`Intro\n\n${callout('a\n\n*b*')}`)).toEqual([
+      { line: 7, rule: 'star', text: '*b*' },
+    ]);
+    expect(findBodyIssues(`Intro\n\n${terminal('t', '```\n  - b')}`)).toEqual([
+      { line: 7, rule: 'fence-toggle', text: '  - b' },
+    ]);
+  });
+
+  it('normalizeBody met un bloc reconnu dans la forme de toBlock, sans toucher au reste', () => {
+    const body = [
+      'Avant *penché*.',
+      '',
+      ':::note  ',
+      'Une *note* ~ ici.',
+      '',
+      '',
+      ':::',
+      '',
+      ':::terminal[a ~ *b*]',
+      '```sh ',
+      'ls *.md ~',
+      '```',
+      ':::',
+      '',
+      ':::carte{ref="projects/gha-svu"}',
+      '',
+      ':::',
+      '',
+      ':::carte{ref=projects/gha-svu}',
+      ':::',
+    ].join('\n');
+    const normalized = normalizeBody(body);
+    expect(normalized).toBe(
+      [
+        'Avant _penché_.',
+        '',
+        callout('Une _note_ \\~ ici.'),
+        '',
+        terminal('a ~ *b*', 'ls *.md ~', 'sh'),
+        '',
+        carte,
+        '',
+        // Non reconnu : laissé tel quel, signalé.
+        ':::carte{ref=projects/gha-svu}',
+        ':::',
+      ].join('\n'),
+    );
+    expect(findBodyIssues(normalized).map((i) => [i.line, i.rule])).toEqual([[20, 'block'], [21, 'block']]);
+    expect(normalizeBody(normalized)).toBe(normalized);
   });
 });

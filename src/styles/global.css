@@ -14,6 +14,16 @@
 @source not "../../docs";
 @source not "../**/*.test.ts";
 
+/* Les fichiers de l'admin ne pilotent pas non plus le CSS du site : l'option
+   `slug.lowercase: true` de public/admin/config.yml (plan 22) y faisait
+   générer une règle `.lowercase` que rien du site n'utilise (plan 23, T7).
+   Les gabarits d'aperçu (src/admin/previews) et les composants d'éditeur
+   (src/admin/blocks) n'emploient que des classes déjà utilisées par les
+   pages du site ou par le balisage des blocs (src/lib/blocks, toujours
+   scanné) : leur CSS reste généré sans eux. */
+@source not "../../public/admin";
+@source not "../admin";
+
 /* bascule de thème pilotée par [data-theme] sur <html> */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 

@@ -182,7 +182,18 @@ collections:
         value_field: '{{slug}}'
         search_fields: [title]
         display_fields: [title]
-      - { name: body, label: Contenu, widget: markdown }
+      # Plan 23 (T4, D152) : blocs `:::` dans le menu Insert du corps des
+      # articles SEULEMENT (Encadré, Terminal, Carte, Vidéo — composants
+      # enregistrés par src/admin/blocks/editorComponents.ts). Sans cette
+      # liste, Sveltia 0.221 active `code-block`, `image` ET tout composant
+      # enregistré sur chaque champ markdown. `allow_nested_components` :
+      # aucun bloc dans le contenu d'un encadré (le champ markdown d'un
+      # composant hérite l'option du champ parent).
+      - name: body
+        label: Contenu
+        widget: markdown
+        editor_components: [code-block, image, encadre, terminal, carte, video]
+        allow_nested_components: false
 
   - name: projects
     label: Projets
@@ -298,7 +309,8 @@ collections:
         value_field: '{{slug}}'
         search_fields: [title]
         display_fields: [title]
-      - { name: body, label: Contenu, widget: markdown }
+      # Plan 23 (T4) : les composants d'avant les blocs, rien de plus.
+      - { name: body, label: Contenu, widget: markdown, editor_components: [code-block, image] }
 
   - name: prompts
     label: Prompts
@@ -388,7 +400,8 @@ collections:
         search_fields: [title]
         display_fields: [title]
       # Plan 16 (D110) : facultatif — une fiche peut n'avoir que son prompt.
-      - { name: body, label: Contenu, widget: markdown, required: false }
+      # Plan 23 (T4) : les composants d'avant les blocs, rien de plus.
+      - { name: body, label: Contenu, widget: markdown, required: false, editor_components: [code-block, image] }
 
   - name: skills
     label: Skills
@@ -499,4 +512,5 @@ collections:
         search_fields: [title]
         display_fields: [title]
       # Plan 17 (D115) : facultatif, comme pour `prompts` (D110).
-      - { name: body, label: Contenu, widget: markdown, required: false }
+      # Plan 23 (T4) : les composants d'avant les blocs, rien de plus.
+      - { name: body, label: Contenu, widget: markdown, required: false, editor_components: [code-block, image] }

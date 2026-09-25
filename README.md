@@ -67,6 +67,8 @@ Pour monter de version :
    décrit l'écriture de la 0.221 : ouvrir puis sauvegarder sans modification
    quelques entrées sur le tableau de démonstration, et vérifier que le fichier
    ne change pas.
+4. Mettre à jour la réplique de l'aller-retour Lexical des blocs (fichiers
+   recopiés de Sveltia, version de `lexical`) : voir « Blocs de l'éditeur ».
 
 ### En production (publier / corriger un article)
 
@@ -466,6 +468,192 @@ de `src/lib/cms-config.test.ts` garde ces réglages.
   `/admin/` est concerné, jamais le site. Sveltia permet de l'auto-héberger
   plus tard (`setCodeHighlighterLoaders`).
 
+### Blocs de l'éditeur
+
+Le corps d'un **article** accepte quatre blocs, chacun écrit comme une
+directive `:::` dans le Markdown : un encadré, un terminal titré, une carte
+vers une entrée du site, une vidéo. Ils ne sont proposés que sur le corps des
+articles (`editor_components` de `public/admin/config.yml`) : les éditeurs des
+projets, prompts et skills n'en offrent aucun.
+
+**Insérer.** Dans le corps de l'article, menu **« Insérer »** (« Insert »
+en anglais) de la barre d'outils › **Encadré**, **Terminal**, **Carte** ou
+**Vidéo**. Un formulaire s'ouvre dans le texte ; le remplir, puis **Save**. Rouvrir l'entrée remet les
+valeurs enregistrées dans le formulaire. Le volet d'aperçu montre chaque bloc
+avec le style du site. Tant qu'un champ requis est vide ou invalide (bloc
+juste inséré, titre ou identifiant en cours de saisie), l'aperçu affiche à sa
+place « Bloc incomplet : <bloc> — <problème> », sans erreur dans la console ;
+le même bloc enregistré tel quel fait échouer le build.
+
+**Syntaxe** — la forme qu'écrit l'éditeur, à reprendre telle quelle pour un
+fichier écrit à la main. Chaque bloc est précédé et suivi d'une ligne vide :
+
+- **Encadré** : `:::note`, `:::astuce`, `:::attention` ou `:::danger`, une
+  ligne vide, le contenu en Markdown, une ligne vide, `:::`. Formulaire : Type
+  (Note, Astuce, Attention, Danger) et Contenu (gras, italique, code, lien,
+  listes).
+
+  ```md
+  :::astuce
+
+  Lancer `npm ci` avant le build.
+
+  :::
+  ```
+
+- **Terminal** : `:::terminal[<titre>]`, une ligne vide, **un** bloc de code
+  clôturé (langage facultatif), une ligne vide, `:::`. Formulaire : Titre (une
+  ligne, sans `[` ni `]`), Langage (facultatif, par ex. `bash` — le terminal
+  n'est pas coloré), Code (une zone de texte simple : le code est gardé tel
+  quel, ```` ``` ```` compris).
+
+  ````md
+  :::terminal[deploy.sh]
+
+  ```bash
+  npm ci
+  npm run build
+  ```
+
+  :::
+  ````
+
+- **Carte** : `:::carte{ref="<collection>/<id>"}` puis `:::` sur la ligne
+  suivante, sans ligne vide ; `<collection>` = `blog`, `projects`, `prompts`
+  ou `skills`, `<id>` = le dossier de l'entrée. Formulaire : une liste
+  déroulante **Entrée**, libellée `Article · <titre>`, `Projet · …`,
+  `Prompt · …`, `Skill · …` (📝 = brouillon) — aucune adresse à taper.
+
+  ```md
+  :::carte{ref="projects/gha-svu"}
+  :::
+  ```
+
+- **Vidéo** : `:::video[<titre>]{youtube="<id>"}` ou
+  `{asciinema="<id>"}`, puis `:::` sur la ligne suivante. Formulaire :
+  Fournisseur (YouTube, asciinema), Identifiant (YouTube : les 11 caractères
+  après `watch?v=` ; asciinema : le numéro après `/a/`), Titre (une ligne,
+  sans `[` ni `]`).
+
+  ```md
+  :::video[Big Buck Bunny]{youtube="aqz-KE-bpKQ"}
+  :::
+  ```
+
+Si le contenu d'un encadré contient une ligne qui commence par `:::`,
+l'éditeur allonge la clôture (`::::note` … `::::`) ; de même, la clôture du
+bloc de code d'un terminal est plus longue que toute suite de backticks du
+code. Les attributs s'écrivent entre guillemets doubles. Un nom de bloc
+inconnu (`:::remarque`…), un identifiant vidéo ou une `ref` mal formés font
+échouer le build. Le reste du texte n'est pas touché : `:pods`, `a:b` ou
+`::x` restent du texte.
+
+**Ce que rend le site** (et l'aperçu, qui passe par le même pipeline
+Markdown, `src/lib/markdownOptions.mjs` + `src/lib/blocks/remarkBlocks.mjs`) :
+
+- **Encadré** : un `<aside role="note">` avec son libellé fixe (Note, Astuce,
+  Attention, Danger) et le Markdown rendu ; teinte bleue pour note, verte pour
+  astuce, ambre pour attention, rose pour danger (jetons de couleur du site,
+  thèmes clair et sombre). Son texte est indexé par la recherche Pagefind.
+- **Terminal** : la même fenêtre que le code des projets — toujours sombre,
+  barre à trois points, titre, lignes numérotées, bouton « Copier » ; le code
+  n'est pas coloré par Shiki. Le script « Copier » n'est chargé que sur les
+  articles qui ont un terminal.
+- **Carte** : un lien vers la page de l'entrée (`/blog/…`, `/projets/…`,
+  `/prompts/…`, `/skills/…`) avec son genre, son titre et sa description,
+  **résolus au build**. Une `ref` inconnue, ou une cible brouillon citée par
+  un article publié, **fait échouer le build** avec un message qui nomme le
+  fichier et la `ref` (contrôle au démarrage du build,
+  `src/lib/blocks/buildCheck.mjs`). Dans l'aperçu, une `ref` inconnue
+  s'affiche en carte d'erreur « Entrée introuvable : <ref> », sans rien
+  bloquer. La carte est hors index Pagefind.
+- **Vidéo** : une façade 16:9, toujours sombre, avec le titre, un symbole de
+  lecture et « Lecture sur YouTube au clic » (ou asciinema). **Rien n'est
+  chargé depuis le fournisseur avant le clic** : ni vignette, ni iframe, ni
+  script tiers. Un clic (ou Entrée) remplace la façade par le lecteur —
+  `https://www.youtube-nocookie.com/embed/<id>?autoplay=1` pour YouTube,
+  `https://asciinema.org/a/<id>/iframe?autoplay=1` pour asciinema — et y
+  place le focus. Ctrl/⌘-clic ouvre la page du fournisseur ; **sans
+  JavaScript**, la façade est un simple lien vers
+  `https://www.youtube.com/watch?v=<id>` ou `https://asciinema.org/a/<id>`.
+  Le script (`src/scripts/video-facade.ts`) n'est chargé que sur les articles
+  qui ont une vidéo. La vidéo est hors index Pagefind. L'assainisseur de
+  l'aperçu est inchangé : un `<iframe>` écrit dans le contenu y est toujours
+  retiré.
+
+**Limites.**
+
+- **Pas de bloc dans un bloc** (`allow_nested_components: false`), et dans un
+  encadré **ni bloc de code clôturé, ni barré** (`~~`) : l'éditeur de
+  l'encadré les réécrirait en `` \` `` et `\~`.
+- **Le code d'un terminal est une zone de texte simple**, pas l'éditeur de
+  code de Sveltia, qui vidait ou tronquait le code dès qu'on y tapait
+  ```` ``` ```` (D158). Le code peut contenir ```` ``` ````, `~~~` ou `:::` :
+  l'éditeur allonge la clôture du bloc au-delà de toute suite de backticks du
+  code. Seule réserve : un nombre **impair** de lignes qui commencent par
+  ```` ``` ```` ou `~~~` dans le code trompe les passes que Sveltia applique
+  au corps à l'ouverture — une ligne du code en `  - x` ou `> `, ou une ligne
+  `>` vide d'une citation plus bas, serait réécrite. Le garde-fou canonique
+  signale ces lignes (`fence-toggle`).
+- **La liste de la Carte est figée au chargement** : l'index des entrées
+  (module virtuel de `src/admin/viteSiteEntries.mjs`, lu sur le disque) est
+  construit au build et au démarrage de `astro dev`. Une entrée créée depuis
+  le CMS n'apparaît dans la liste qu'**après le déploiement suivant** (ou
+  après un redémarrage de `astro dev` en local). Une `ref` absente de la liste
+  survit à une sauvegarde sans modification.
+- **Supprimer une entrée citée par une carte casse le build** : Sveltia ne
+  nettoie pas les cartes (voir « Supprimer une entrée »). Avant de supprimer,
+  chercher `ref="<collection>/<id>"` dans le contenu et retirer d'abord la
+  carte :
+
+  ```sh
+  grep -rn 'ref="projects/gha-svu"' src/content/
+  ```
+
+- Les projets, prompts et skills n'ont pas les blocs dans leur éditeur ; un
+  bloc écrit à la main dans leur corps est rendu, mais les scripts « Copier »
+  et vidéo ne sont branchés que sur les pages d'article.
+
+**Forme canonique.** Le garde-fou `src/lib/cmsCanonical.test.ts` connaît les
+blocs : `block` (bloc hors de la forme qu'écrit l'éditeur — attribut sans
+guillemets, `:::` dans un encadré à la même longueur de clôture…),
+`block-gap` (pas de ligne vide autour), `block-content` (bloc de code ou `~~`
+dans un encadré), `fence-toggle` (ligne ```` ``` ```` impaire dans du code,
+qui inverse les passes de Sveltia sur le corps).
+`node scripts/canonicalize-content.mjs --check` doit rester à
+`canonical: 13/13 entries`.
+
+**Contrôles.**
+
+- `node scripts/check-blocks.mjs` après `npm run build` : sur le contenu
+  réel, `blocks: 0 on <n> pages · video script on 0 pages · terminal script
+  on 0 blog pages`. Sur une page à blocs, il compte encadrés, terminaux,
+  cartes et façades, vérifie qu'aucune iframe ni image n'est dans la page
+  construite, que les seules URL tierces sont les liens des façades, que le
+  texte des encadrés est indexé et que celui des cartes et vidéos ne l'est
+  pas (code 1 sinon). `--base <dist de base>` compare en plus chaque page
+  à un build de référence. La fixture `src/lib/blocks/fixtures/blocs-demo.md`
+  contient les quatre blocs : la copier en `src/content/blog/blocs-demo/index.md`
+  dans une copie jetable du dépôt, construire, puis
+  `node scripts/check-blocks.mjs --dist <copie>/dist`.
+- **Réplique de l'aller-retour Lexical** (`src/admin/blocks/roundTrip.test.ts`,
+  `lexicalRoundTrip.ts`, tests seulement, jamais dans `dist`) : chaque bloc,
+  et chaque corps réel de `src/content/`, repasse par la lecture puis
+  l'écriture de l'éditeur de Sveltia 0.221 et doit revenir identique. Elle
+  tourne sur une copie des fichiers de @sveltia/ui 0.77.0 et de Sveltia
+  (`src/admin/blocks/lexical/`, licence MIT dans `LICENSE-sveltia.txt`) et
+  sur `lexical` + `@lexical/*` épinglés à `0.51.0`, la version que Sveltia
+  embarque.
+
+**En montant de version de Sveltia** : recopier à l'identique, depuis les
+sources de la nouvelle version (`npm/index.js.map` de `@sveltia/cms`), les
+fichiers de `src/admin/blocks/lexical/sveltia-ui/` et les parties reprises
+dans `src/admin/blocks/lexical/sveltia-cms.js` (en mettant à jour leurs
+en-têtes de version) ; ré-épingler `lexical` et les paquets `@lexical/*` à la
+version de Lexical embarquée (`npm install --save-exact --save-dev …`) ; puis
+`npx vitest run src/admin/blocks/`. Un test rouge signale un changement
+d'écriture de l'éditeur à examiner avant de pousser.
+
 ### Séparateurs : toujours `---`
 
 Dans le corps d'un article, un séparateur horizontal s'écrit **uniquement**
@@ -565,7 +753,7 @@ Le test « images : WebP, 1600 px, qualité 80, plafond de taille » de
 **Après « Fichier volumineux », le champ couverture est vide.** Le refus vide
 le champ dans le formulaire, même s'il portait déjà une couverture ; une
 sauvegarde à ce moment retire la ligne `cover:` de l'article. **Ne pas
-sauvegarder** : choisir une image plus légère, ou annuler (« Cancel ») pour
+sauvegarder** : choisir une image plus légère, ou annuler (« Annuler ») pour
 revenir à l'état enregistré.
 
 **Garde les couvertures légères — de l'ordre de 30 à 100 Ko.** Sveltia envoie le
@@ -593,8 +781,14 @@ Sveltia retire le slug de l'entrée supprimée des champs relation des autres
 entrées, **dans le même commit** que la suppression : supprimer le projet
 `gha-svu` l'enlève aussi de `relatedProjects` sur les articles qui le citaient,
 supprimer un prompt l'enlève de `relatedPrompts` sur les skills, et ainsi de
-suite (`relatedPosts`, `relatedSkills`). Aucune référence morte ne reste pour
-casser le build.
+suite (`relatedPosts`, `relatedSkills`). Aucune référence morte ne reste dans
+ces champs pour casser le build.
+
+**Exception : les cartes.** Un bloc Carte (`:::carte{ref="<collection>/<id>"}`,
+voir « Blocs de l'éditeur ») vit dans le corps d'un article : Sveltia ne le
+nettoie pas, et une carte vers une entrée supprimée **fait échouer le build**.
+Avant de supprimer une entrée, chercher `ref="<collection>/<id>"` dans
+`src/content/` et retirer d'abord la carte.
 
 Ce nettoyage suppose que ces quatre relations restent **optionnelles** : si un
 champ relation devenait `required` (ou recevait un `min`), Sveltia refuserait
@@ -661,6 +855,7 @@ n'existent qu'avec le vrai backend GitHub. À vérifier une fois, sur
 | Raccourcis de création | `src/pages/admin/raccourcis.astro` + `src/lib/bookmarklets.ts` |
 | Lien ✏️ Éditer | `src/components/EditLink.astro` + `src/scripts/edit-link.ts` + `src/lib/editLink.ts` |
 | Remise en forme du contenu | `scripts/canonicalize-content.mjs` |
+| Blocs de l'éditeur | syntaxe `src/lib/blocks/syntax.mjs`, rendu `src/lib/blocks/remarkBlocks.mjs`, formulaires `src/admin/blocks/editorComponents.ts`, contrôle `scripts/check-blocks.mjs` |
 | Schéma de référence | `src/content.config.ts` (collections `blog`, `projects`, `prompts`, `skills`) |
 | Configuration du CMS | `public/admin/config.yml` |
 | Logo du CMS | `public/admin/logo.svg` |

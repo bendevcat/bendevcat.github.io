@@ -10,11 +10,20 @@
  * d'Astro), `bodyHtml` (`renderBody`, le pipeline du site) et `images` (vide :
  * aucune image résolue hors navigateur). Aucune valeur figée (D131) : toute
  * entrée présente — publiée ou brouillon — est lue.
+ *
+ * Blocs `:::carte` (plan 23, T1) : hors navigateur, l'index d'entrées de
+ * l'aperçu est lu sur le disque (`readSiteEntries`) et installé en mode
+ * `preview` (ref inconnue → carte d'erreur, comme dans `/admin/`) si aucun
+ * fournisseur n'est déjà en place (`astro.config.mjs` installe le sien).
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { parseFrontmatter } from '@astrojs/markdown-remark';
 import { parse } from 'yaml';
 import { renderBody } from './markdown';
+import { provideSiteEntries, siteEntriesProvider } from '../../lib/blocks/siteEntries.mjs';
+import { readSiteEntries } from '../../lib/blocks/readSiteEntries.mjs';
+
+if (!siteEntriesProvider()) provideSiteEntries({ mode: 'preview', entries: () => readSiteEntries() });
 
 export interface DiskEntry {
   collection: string;

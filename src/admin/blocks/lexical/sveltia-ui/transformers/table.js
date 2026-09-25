@@ -1,0 +1,223 @@
+// Copied verbatim from @sveltia/ui 0.77.0 — dist/components/text-editor/transformers/table.js
+// (sources embedded in @sveltia/cms 0.221.0 npm/index.js.map). MIT License,
+// Copyright (c) 2026 Kohei Yoshino — full text in ../../LICENSE-sveltia.txt.
+// Test-only: part of the Lexical round-trip replica (lexicalRoundTrip.ts).
+// Sveltia adapted it from Lexical's playground (MIT License, Copyright (c) Meta Platforms, Inc.
+// and affiliates — the notice ships in node_modules/lexical/LICENSE).
+
+// Adopted from https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MarkdownTransformers/index.ts
+
+/* eslint-disable jsdoc/require-jsdoc */
+/* eslint-disable jsdoc/require-returns-description */
+/* eslint-disable jsdoc/require-param-description */
+
+import {
+  $convertFromMarkdownString as convertFromMarkdownString,
+  $convertToMarkdownString as convertToMarkdownString,
+  TRANSFORMERS,
+} from '@lexical/markdown';
+import {
+  $createTableCellNode as createTableCellNode,
+  $createTableNode as createTableNode,
+  $createTableRowNode as createTableRowNode,
+  $isTableCellNode as isTableCellNode,
+  $isTableNode as isTableNode,
+  $isTableRowNode as isTableRowNode,
+  TableCellHeaderStates,
+  TableCellNode,
+  TableNode,
+  TableRowNode,
+} from '@lexical/table';
+import { $isParagraphNode as isParagraphNode, $isTextNode as isTextNode } from 'lexical';
+
+/**
+ * @import { ElementTransformer } from '@lexical/markdown';
+ */
+
+const TABLE_ROW_REG_EXP = /^(?:\|)(.+)(?:\|)\s?$/;
+const TABLE_ROW_DIVIDER_REG_EXP = /^(\| ?:?-*:? ?)+\|\s?$/;
+
+/**
+ * Returns the number of columns in the table.
+ * @internal
+ * @param {TableNode} table
+ * @returns {number}
+ */
+export const getTableColumnsSize = (table) => {
+  const row = table.getFirstChild();
+
+  return isTableRowNode(row) ? row.getChildrenSize() : 0;
+};
+
+/**
+ * Creates a table cell with the given text content.
+ * @internal
+ * @param {string} textContent
+ * @returns {TableCellNode}
+ */
+export const createTableCell = (textContent) => {
+  textContent = textContent.replace(/\\n/g, '\n');
+
+  const cell = createTableCellNode(TableCellHeaderStates.NO_STATUS);
+
+  convertFromMarkdownString(textContent, TRANSFORMERS, cell);
+
+  return cell;
+};
+
+/**
+ * Maps the given text content to an array of table cells.
+ * @internal
+ * @param {string} textContent
+ * @returns {TableCellNode[] | null}
+ */
+export const mapToTableCells = (textContent) => {
+  const [, match] = textContent.match(TABLE_ROW_REG_EXP) ?? [];
+
+  if (!match) {
+    return null;
+  }
+
+  return match.split('|').map((text) => createTableCell(text));
+};
+
+/**
+ * @type {ElementTransformer}
+ */
+export const TABLE = {
+  dependencies: [TableNode, TableRowNode, TableCellNode],
+  export: (node) => {
+    if (!isTableNode(node)) {
+      return null;
+    }
+
+    /** @type {string[]} */
+    const output = [];
+
+    node.getChildren().forEach((row) => {
+      /** @type {string[]} */
+      const rowOutput = [];
+
+      if (!isTableRowNode(row)) {
+        return;
+      }
+
+      let isHeaderRow = false;
+
+      row.getChildren().forEach((cell) => {
+        // It’s TableCellNode so it’s just to make flow happy
+        if (isTableCellNode(cell)) {
+          rowOutput.push(convertToMarkdownString(TRANSFORMERS, cell).replace(/\n/g, '\\n').trim());
+
+          if (cell.__headerState === TableCellHeaderStates.ROW) {
+            isHeaderRow = true;
+          }
+        }
+      });
+
+      output.push(`| ${rowOutput.join(' | ')} |`);
+
+      if (isHeaderRow) {
+        output.push(`| ${rowOutput.map(() => '---').join(' | ')} |`);
+      }
+    });
+
+    return output.join('\n');
+  },
+  regExp: TABLE_ROW_REG_EXP,
+  replace: (parentNode, _children, [textContent]) => {
+    // Header row
+    if (TABLE_ROW_DIVIDER_REG_EXP.test(textContent)) {
+      const table = parentNode.getPreviousSibling();
+
+      if (!table || !isTableNode(table)) {
+        return;
+      }
+
+      const rows = table.getChildren();
+      const lastRow = rows[rows.length - 1];
+
+      if (!lastRow || !isTableRowNode(lastRow)) {
+        return;
+      }
+
+      // Add header state to row cells
+      lastRow.getChildren().forEach((cell) => {
+        if (!isTableCellNode(cell)) {
+          return;
+        }
+
+        cell.setHeaderStyles(TableCellHeaderStates.ROW, TableCellHeaderStates.ROW);
+      });
+
+      // Remove line
+      parentNode.remove();
+
+      return;
+    }
+
+    const matchCells = mapToTableCells(textContent);
+
+    if (!matchCells) {
+      return;
+    }
+
+    const rows = [matchCells];
+    let sibling = parentNode.getPreviousSibling();
+    let maxCells = matchCells.length;
+
+    while (sibling) {
+      if (!isParagraphNode(sibling)) {
+        break;
+      }
+
+      if (sibling.getChildrenSize() !== 1) {
+        break;
+      }
+
+      const firstChild = sibling.getFirstChild();
+
+      if (!isTextNode(firstChild)) {
+        break;
+      }
+
+      const cells = mapToTableCells(firstChild.getTextContent());
+
+      if (!cells) {
+        break;
+      }
+
+      maxCells = Math.max(maxCells, cells.length);
+      rows.unshift(cells);
+
+      const previousSibling = sibling.getPreviousSibling();
+
+      sibling.remove();
+      sibling = previousSibling;
+    }
+
+    const table = createTableNode();
+
+    rows.forEach((cells) => {
+      const tableRow = createTableRowNode();
+
+      table.append(tableRow);
+
+      for (let i = 0; i < maxCells; i += 1) {
+        tableRow.append(i < cells.length ? cells[i] : createTableCell(''));
+      }
+    });
+
+    const previousSibling = parentNode.getPreviousSibling();
+
+    if (isTableNode(previousSibling) && getTableColumnsSize(previousSibling) === maxCells) {
+      previousSibling.append(...table.getChildren());
+      parentNode.remove();
+    } else {
+      parentNode.replace(table);
+    }
+
+    table.selectEnd();
+  },
+  type: 'element',
+};

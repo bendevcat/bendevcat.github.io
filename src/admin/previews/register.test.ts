@@ -258,6 +258,41 @@ describe('aperçus /admin/ : enregistrement dans Sveltia', () => {
     expect(release).toHaveLength(0);
   });
 
+  it('bloc en cours de saisie : « Bloc incomplet » puis le bloc, sans console.error ni warn (plan 23, F2)', async () => {
+    // Le pipeline réel de l'aperçu (fournisseur d'entrées en mode preview,
+    // installé par diskEntries comme par cms.ts) ; un Vidéo inséré puis rempli.
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const component = previewComponent('blog', PREVIEWS.blog, {
+      h: treeH,
+      createClass: fakeCreateClass,
+      sanitize,
+      loadRenderBody: async () => renderBody,
+    });
+    const typed = (body: string) => ({ entry: fakeEntry({ title: 'T', body }, 'a'), getAsset: () => undefined });
+    const view = mount(component, typed('Intro.\n\n:::video[]{youtube=""}\n:::'));
+    await flush(20);
+    expect(renderToHtml(view.tree)).toContain('Bloc incomplet : Vidéo — titre vide');
+    for (const body of [
+      'Intro.\n\n:::video[B]{youtube=""}\n:::',
+      'Intro.\n\n:::video[Big]{youtube="aqz"}\n:::',
+      'Intro.\n\n:::terminal[]\n\n```bash\n```\n\n:::',
+      'Intro.\n\n:::carte{ref=""}\n:::',
+    ]) {
+      view.update(typed(body));
+      await flush(20);
+      expect(renderToHtml(view.tree), body).toContain('Bloc incomplet : ');
+    }
+    view.update(typed('Intro.\n\n:::video[Big]{youtube="aqz-KE-bpKQ"}\n:::'));
+    await flush(20);
+    const html = renderToHtml(view.tree);
+    expect(html).not.toContain('Bloc incomplet');
+    expect(html).toContain('data-video-id="aqz-KE-bpKQ"');
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+    view.unmount();
+  });
+
   it('sans window.h ni window.createClass : console.error, rien d’enregistré (aperçu par défaut)', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const registered: string[] = [];
