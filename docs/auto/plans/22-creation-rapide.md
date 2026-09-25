@@ -157,3 +157,28 @@ Real-backend smoke for the final report: commit text `content(Article): update "
 - Files: `README.md` — `cover: <nom>.webp` (Sveltia's form, no `./`; both resolve), and the trap: an image refused for size empties the cover field — do not Save, or re-pick a smaller image
 - Acceptance: greps (`cover: ./<nom>` → 0; the trap stated once)
 - Depends on: F2
+
+### Verification attempt 2 (tip `b3dae6d`) — 25/25 proven
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | every reachability step re-walked (Create ×3, rule B, prompt version, WebP + refusal, Duplicate ×2, `/admin/raccourcis`, ✏️ hidden/shown, click route opens the entry on a signed-in board); dev 84×200, 6×404 on the draft page (base too); preview routes 200 |
+| R1 | proven | red on `skills.draft` default false |
+| R2 | proven | new article pubDate = now (18:21), Brouillon on; saved `pubDate: 2026-09-25T18:22:00+02:00`, `draft: true`; prompt/skill Brouillon on |
+| R3, R5, R6, R13, R14, R16, R21 | proven (carried) | green in the full suite; files unchanged since attempt 1 |
+| R4 | proven | red on seconds restored and on either draft check dropped |
+| R7 | proven | k9s body → `+updatedDate: …T18:27:00+02:00` + body; title only → title; draft body → body; macos-clone version → `+version`, `+updated: …T18:18:00+02:00`; two body saves 18:27 → 18:28 |
+| R8 | proven | red on quality 85 |
+| R9 | proven | `grand-test.webp` beside the entry (RIFF/WEBP VP8X, 13 908 B, 1600×1066), `cover: grand-test.webp`; noise PNG refused, nothing written |
+| R10 | proven + smoke | red on `Update`; real commit text = production smoke |
+| R11 | proven | `k9s-copie/index.md` = original except `title: k9s copie` and `cover: k9s-header.png`; image sha256 equal; original unchanged; gha-svu copy differs only in title |
+| R12 | proven | check-admin = base except `1/53` + `raccourcis:`; `Indexed 12 pages` |
+| R15 | proven | `check-edit-link --base cleanbase/dist` 12/12, 51 identical, exit 0 |
+| R17 | proven | dev re-walk (visitor hidden, author shown, click route); preview shown after a production `/admin/` visit; widths/themes/JS off/contrast carried |
+| R18 | proven | new datetime test red when the replay line is removed; `--root` copy: `:00` → 13/13 exit 0, `:52` → 12/13 exit 1 |
+| R19 | proven | 13/13 canonical (Paris and local TZ); content unchanged since attempt 1 |
+| R20 | proven | 13 fresh boards: 11 saved byte-identical, 2 Save disabled → 13/13 |
+| R22 | proven | greps 5 · 4 · 1 · 0; `cover: ./<nom>` 0; trap once |
+| R23 | proven | 0 console error except the draft 404 (base too); sandbox notice only |
+| R24 | proven | 559 passed; 0 errors; 13 checks = base; 0 base CSS declarations missing; frozen diff empty; content = R19 |
+
+F1: rule-B save then two unedited saves after the next minute → byte-identical; prompt `updated` `…18:19:00+02:00`, later Save stays disabled. F2: « Essai création à la une » → `essai-creation-a-la-une/index.md`; red on `clean_accents: false`, `encoding: unicode`, `slug` removed. Findings: a `.lowercase` utility rule now appears in the site CSS because Tailwind scans `public/admin/config.yml` (`lowercase: true`) — unused, harmless (plan 23 input: `@source not` for `public/admin`); README says « Cancel » where the French UI reads « Annuler » (plan 23 input). Production smoke: commit text; rule B via GitHub; WebP in the repo + deploy; Duplicate on disk; ✏️ opens the entry when signed in.
