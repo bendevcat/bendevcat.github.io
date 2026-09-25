@@ -31,7 +31,13 @@
  * Erreurs (le build échoue, le message nomme le fichier) : nom de conteneur
  * inconnu, étiquette ou attributs inattendus, titre / id / ref invalides,
  * terminal sans exactement un bloc de code ; ref inconnue ou brouillon cité
- * selon la politique de `siteEntries.mjs`.
+ * selon la politique de `siteEntries.mjs`. Dans l'aperçu (fournisseur
+ * d'entrées en mode `preview` — plan 23, F2 ; D158), un tel bloc est rendu
+ * par un espace réservé neutre « Bloc incomplet : <bloc> — <problème> »,
+ * sans exception : un bloc juste inséré a ses champs vides, et chaque frappe
+ * jetait deux `console.error` (celui de `@astrojs/markdown-remark`, qui
+ * journalise toute erreur de rendu, puis celui de `previews/register.ts`).
+ * Sans fournisseur, ou en mode `site`, l'erreur est levée.
  *
  * Drapeau : un corps qui porte des blocs reçoit `blocks: { callout, terminal,
  * carte, video }` (comptes) dans le frontmatter des plugins
@@ -51,7 +57,7 @@ import {
   titleError,
   videoIdError,
 } from './syntax.mjs';
-import { resolveCards } from './siteEntries.mjs';
+import { resolveCards, siteEntriesProvider } from './siteEntries.mjs';
 
 /**
  * @typedef {{ type: 'element', tagName: string, properties: Record<string, unknown>, children: HastNode[] }} HastElement
@@ -125,6 +131,9 @@ const CARD_CLASSES = {
   description: 'mt-1 block text-[14px] leading-[1.6] text-muted',
   missing: 'my-6 rounded-inner border border-tagRoseLine bg-tagRoseBg px-4 py-3 font-mono text-[13px] text-tagRoseInk',
 };
+
+/** Espace réservé d'un bloc incomplet ou invalide (aperçu seulement) : neutre, tokens seulement. */
+export const INCOMPLETE_CLASS = 'my-6 rounded-inner border border-line bg-card px-4 py-3 font-mono text-[13px] text-muted';
 
 const VIDEO_CLASSES = {
   figure: 'my-6 aspect-video overflow-hidden rounded-inner border border-windowLine bg-windowBg',
@@ -293,6 +302,39 @@ function videoHast(provider, id, title) {
   );
 }
 
+/**
+ * Espace réservé d'un bloc incomplet ou invalide (aperçu).
+ * @param {string} name nom du conteneur
+ * @param {string} problem
+ * @returns {HastElement}
+ */
+function incompleteHast(name, problem) {
+  return el('div', { className: cls(INCOMPLETE_CLASS), dataBlockIncomplete: name, dataPagefindIgnore: true }, [
+    text(`Bloc incomplet : ${blockLabel(name)} — ${problem}`),
+  ]);
+}
+
+/** Nom lisible d'un bloc (message de l'espace réservé). @param {string} name */
+function blockLabel(name) {
+  if (/** @type {readonly string[]} */ (CALLOUT_KINDS).includes(name)) return 'Encadré';
+  /** @type {Record<string, string>} */
+  const labels = { terminal: 'Terminal', carte: 'Carte', video: 'Vidéo' };
+  return labels[name] ?? `« ${name} »`;
+}
+
+/** Erreur de validation d'un bloc : message complet (build) et problème seul (aperçu). */
+class BlockError extends Error {
+  /**
+   * @param {string} message
+   * @param {string} problem
+   */
+  constructor(message, problem) {
+    super(message);
+    this.name = 'BlockError';
+    this.problem = problem;
+  }
+}
+
 /* ------------------------------------------------------------------------ */
 /* Plugin                                                                    */
 /* ------------------------------------------------------------------------ */
@@ -348,8 +390,10 @@ export function remarkBlocks() {
     /** @param {MdNode} node @param {string} message */
     const fail = (node, message) => {
       const line = node.position?.start.line;
-      return new Error(`Bloc « ${node.name} » dans ${path}${line ? ` (ligne ${line})` : ''} : ${message}`);
+      return new BlockError(`Bloc « ${node.name} » dans ${path}${line ? ` (ligne ${line})` : ''} : ${message}`, message);
     };
+    // Aperçu : un bloc invalide devient un espace réservé ; ailleurs, il lève.
+    const preview = siteEntriesProvider()?.mode === 'preview';
 
     /** @param {MdNode} node */
     const label = (node) => {
@@ -375,7 +419,8 @@ export function remarkBlocks() {
     /** @type {{ node: MdNode, ref: string }[]} */
     const cards = [];
 
-    for (const node of blocks) {
+    /** Rend un conteneur (mutation du nœud) ; lève une `BlockError` s'il est invalide. @param {MdNode} node */
+    const renderBlock = (node) => {
       const name = node.name ?? '';
       if (!(/** @type {readonly string[]} */ (BLOCK_NAMES).includes(name))) {
         throw fail(node, `nom de bloc inconnu (attendus : ${BLOCK_NAMES.join(', ')})`);
@@ -407,7 +452,7 @@ export function remarkBlocks() {
           },
         ];
         counts.callout += 1;
-        continue;
+        return;
       }
 
       if (name === 'terminal') {
@@ -424,7 +469,7 @@ export function remarkBlocks() {
         if (langProblem) throw fail(node, langProblem);
         replaceWith(node, terminalHast(/** @type {string} */ (title), lang, body[0].value ?? ''));
         counts.terminal += 1;
-        continue;
+        return;
       }
 
       if (name === 'carte') {
@@ -436,7 +481,7 @@ export function remarkBlocks() {
         if (content(node).length > 0) throw fail(node, 'une carte est vide entre ses clôtures');
         cards.push({ node, ref: /** @type {string} */ (ref) });
         counts.carte += 1;
-        continue;
+        return;
       }
 
       // video
@@ -455,6 +500,15 @@ export function remarkBlocks() {
         videoHast(/** @type {'youtube' | 'asciinema'} */ (provider), /** @type {string} */ (id), /** @type {string} */ (title)),
       );
       counts.video += 1;
+    };
+
+    for (const node of blocks) {
+      try {
+        renderBlock(node);
+      } catch (error) {
+        if (!(preview && error instanceof BlockError)) throw error;
+        replaceWith(node, incompleteHast(node.name ?? '', error.problem));
+      }
     }
 
     if (cards.length > 0) {

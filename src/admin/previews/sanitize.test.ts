@@ -167,6 +167,13 @@ describe('aperçus /admin/ : HTML des corps assaini', () => {
     expect(clean).toBe(reserialize(withFrame.replace(/<iframe[^>]*><\/iframe>/, '')));
   });
 
+  it('l’espace réservé d’un bloc incomplet traverse l’assainisseur inchangé (F2)', async () => {
+    const html = await renderBody(':::video[]{youtube=""}\n:::\n\n:::carte{ref=""}\n:::');
+    expect(html.match(/data-block-incomplete=/g)).toHaveLength(2);
+    expect(html).toContain('Bloc incomplet : Vidéo — titre vide');
+    expect(sanitize(html)).toBe(reserialize(html));
+  });
+
   it('sanitizingH assainit tout dangerouslySetInnerHTML et laisse le reste intact', () => {
     const safeH = sanitizingH(treeH as H<TreeElement>, sanitize);
     const tree = safeH(

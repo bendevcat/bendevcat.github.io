@@ -18,7 +18,10 @@
  *   surgissantes qui sortent du bac à sable (« Regarder sur YouTube »,
  *   lien asciinema), présentation (Cast) ; ni formulaires, ni navigation de
  *   la page, ni modales, ni téléchargements. `allow` : ce que le lecteur
- *   utilise, rien de plus (asciinema : lecture auto et plein écran).
+ *   utilise, rien de plus (asciinema : lecture auto et plein écran). Le plein
+ *   écran passe par `allow` seul : l'attribut historique `allowfullscreen` en
+ *   plus fait avertir le navigateur (« Allow attribute will take precedence
+ *   over 'allowfullscreen' » — plan 23, F2 ; D158).
  * - Clic avec modificateur ou bouton du milieu : le navigateur garde la main
  *   (nouvel onglet vers la page du fournisseur).
  */
@@ -96,7 +99,6 @@ export function activateVideoFacade(figure: HTMLElement): HTMLIFrameElement | nu
   const iframe = figure.ownerDocument.createElement('iframe');
   iframe.title = title;
   iframe.setAttribute('allow', VIDEO_IFRAME_ALLOW[provider]);
-  iframe.setAttribute('allowfullscreen', '');
   iframe.setAttribute('sandbox', VIDEO_IFRAME_SANDBOX);
   iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
   // Classe déjà émise par le lien de la façade : aucune règle CSS nouvelle

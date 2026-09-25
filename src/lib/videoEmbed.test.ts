@@ -73,7 +73,10 @@ describe('activateVideoFacade', () => {
     expect(iframe!.getAttribute('title')).toBe('Big Buck Bunny');
     expect(iframe!.getAttribute('allow')).toBe(VIDEO_IFRAME_ALLOW.youtube);
     expect(iframe!.getAttribute('sandbox')).toBe(VIDEO_IFRAME_SANDBOX);
-    expect(iframe!.hasAttribute('allowfullscreen')).toBe(true);
+    // Plein écran par `allow` seul : `allowfullscreen` en plus fait avertir le
+    // navigateur (« Allow attribute will take precedence… », plan 23, F2).
+    expect(iframe!.hasAttribute('allowfullscreen')).toBe(false);
+    expect(iframe!.getAttribute('allow')).toMatch(/\bfullscreen\b/);
     expect(iframe!.getAttribute('referrerpolicy')).toBe('strict-origin-when-cross-origin');
     expect(document.activeElement).toBe(iframe);
   });
@@ -83,6 +86,7 @@ describe('activateVideoFacade', () => {
     const iframe = activateVideoFacade(figure);
     expect(iframe!.getAttribute('src')).toBe('https://asciinema.org/a/335480/iframe?autoplay=1');
     expect(iframe!.getAttribute('allow')).toBe('autoplay; fullscreen');
+    expect(iframe!.hasAttribute('allowfullscreen')).toBe(false);
     expect(iframe!.getAttribute('title')).toBe('Une session');
   });
 

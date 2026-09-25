@@ -79,6 +79,7 @@ describe('blocs : tokens de couleur', () => {
     { what: 'carte survolée : genre, description', text: 'muted', stack: ['bg', 'surface', 'card', 'cardHover'] },
     { what: 'carte survolée : titre', text: 'ink', stack: ['bg', 'surface', 'card', 'cardHover'] },
     { what: 'carte d’erreur (aperçu)', text: 'tagRoseInk', stack: ['bg', 'surface', 'tagRoseBg'] },
+    { what: 'bloc incomplet (aperçu)', text: 'muted', stack: ['bg', 'surface', 'card'] },
     { what: 'vidéo : titre', text: 'windowInk', stack: ['windowBg'] },
     { what: 'vidéo : « Lecture sur … au clic »', text: 'windowDim', stack: ['windowBg'] },
     { what: 'vidéo : glyphe lecture', text: 'windowInk', stack: ['windowBg', 'windowHead'] },

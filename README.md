@@ -480,7 +480,10 @@ projets, prompts et skills n'en offrent aucun.
 en anglais) de la barre d'outils › **Encadré**, **Terminal**, **Carte** ou
 **Vidéo**. Un formulaire s'ouvre dans le texte ; le remplir, puis **Save**. Rouvrir l'entrée remet les
 valeurs enregistrées dans le formulaire. Le volet d'aperçu montre chaque bloc
-avec le style du site.
+avec le style du site. Tant qu'un champ requis est vide ou invalide (bloc
+juste inséré, titre ou identifiant en cours de saisie), l'aperçu affiche à sa
+place « Bloc incomplet : <bloc> — <problème> », sans erreur dans la console ;
+le même bloc enregistré tel quel fait échouer le build.
 
 **Syntaxe** — la forme qu'écrit l'éditeur, à reprendre telle quelle pour un
 fichier écrit à la main. Chaque bloc est précédé et suivi d'une ligne vide :

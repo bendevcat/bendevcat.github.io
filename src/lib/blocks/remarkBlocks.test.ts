@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { createMarkdownProcessor, parseFrontmatter, type AstroMarkdownOptions } from '@astrojs/markdown-remark';
 import { markdownOptions } from '../markdownOptions.mjs';
 import { codeWindowText } from '../codeWindow';
-import { remarkBlocks } from './remarkBlocks.mjs';
+import { INCOMPLETE_CLASS, remarkBlocks } from './remarkBlocks.mjs';
 import { provideSiteEntries, resetSiteEntries, type SiteEntry } from './siteEntries.mjs';
 
 /**
@@ -196,7 +196,11 @@ describe('blocs : erreurs de build', () => {
 
   it('sans index fourni : erreur', async () => {
     resetSiteEntries();
-    await expect(render(':::carte{ref="projects/gha-svu"}\n:::')).rejects.toThrow(/index/);
+    await expect(render(':::carte{ref="projects/gha-svu"}\n:::')).rejects.toThrow(
+      /Bloc carte dans \S*demo-blocs\/index\.md : aucun index d'entrées fourni \(provideSiteEntries\) — impossible de résoudre « projects\/gha-svu »/,
+    );
+    // Sans fournisseur, un bloc invalide lève comme au build (pas d'espace réservé).
+    await expect(render(':::video[]{youtube=""}\n:::')).rejects.toThrow(/« video » dans \S*demo-blocs/);
     // Sans carte, aucun index n'est demandé.
     await expect(render(':::note\n\nx\n\n:::')).resolves.toBeDefined();
   });
@@ -207,6 +211,60 @@ describe('blocs : erreurs de build', () => {
     await expect(render(':::terminal[a [b] c]\n\n```\nx\n```\n\n:::')).rejects.toThrow(/titre/);
     await expect(render(':::carte{ref="Blog/X"}\n:::')).rejects.toThrow(/Blog\/X/);
     await expect(render(':::carte\n:::')).rejects.toThrow(/ref/);
+  });
+});
+
+/** Blocs incomplets (formulaire à peine inséré) ou invalides : message attendu. */
+const INCOMPLETE: [string, string, RegExp][] = [
+  ['vidéo sans titre ni id', ':::video[]{youtube=""}\n:::', /^Bloc incomplet : Vidéo — titre vide$/],
+  ['vidéo sans id', ':::video[Titre]{youtube=""}\n:::', /^Bloc incomplet : Vidéo — .*id/],
+  ['terminal sans titre', ':::terminal[]\n\n```bash\n```\n\n:::', /^Bloc incomplet : Terminal — titre vide$/],
+  ['terminal sans bloc de code', ':::terminal[t]\n\ntexte\n\n:::', /^Bloc incomplet : Terminal — .*bloc de code/],
+  ['carte sans ref', ':::carte{ref=""}\n:::', /^Bloc incomplet : Carte — .*ref/],
+  ['encadré titré', ':::note[Titre]\n\nx\n\n:::', /^Bloc incomplet : Encadré — .*titre/],
+  ['nom inconnu', ':::info\n\nx\n\n:::', /^Bloc incomplet : « info » — nom de bloc inconnu/],
+];
+
+describe('aperçu : bloc incomplet ou invalide (plan 23, F2 ; D158)', () => {
+  it('espace réservé neutre « Bloc incomplet : … », sans exception ni console.error', async () => {
+    provideSiteEntries({ mode: 'preview', entries: () => ENTRIES });
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      for (const [what, md, message] of INCOMPLETE) {
+        const { doc, code } = await dom(`Avant.\n\n${md}\n\nAprès.`);
+        const holders = doc.querySelectorAll('[data-block-incomplete]');
+        expect(holders, what).toHaveLength(1);
+        const holder = holders[0];
+        expect(holder.tagName, what).toBe('DIV');
+        expect(holder.textContent, what).toMatch(message);
+        // Le message ne cite ni le fichier fictif ni la ligne (aperçu).
+        expect(holder.textContent, what).not.toMatch(/preview|index\.md|ligne/);
+        expect(holder.hasAttribute('data-pagefind-ignore'), what).toBe(true);
+        // Neutre (pas le rose de la carte d'erreur), tokens seulement.
+        expect(holder.className, what).toBe(INCOMPLETE_CLASS);
+        expect(code, what).not.toMatch(/<iframe|<img|:::/);
+        expect([...doc.querySelectorAll('body > p')].map((p) => p.textContent), what).toEqual(['Avant.', 'Après.']);
+      }
+      expect(errors).not.toHaveBeenCalled();
+      expect(warnings).not.toHaveBeenCalled();
+    } finally {
+      errors.mockRestore();
+      warnings.mockRestore();
+    }
+  });
+
+  it('un bloc complet voisin est rendu normalement', async () => {
+    provideSiteEntries({ mode: 'preview', entries: () => ENTRIES });
+    const { doc } = await dom(':::video[]{youtube=""}\n:::\n\n:::video[V]{youtube="aqz-KE-bpKQ"}\n:::');
+    expect(doc.querySelectorAll('[data-block-incomplete]')).toHaveLength(1);
+    expect(doc.querySelectorAll('figure[data-video]')).toHaveLength(1);
+  });
+
+  it('site : les mêmes blocs lèvent toujours (le build échoue)', async () => {
+    for (const [what, md] of INCOMPLETE) {
+      await expect(render(md), what).rejects.toThrow(/dans \S*demo-blocs\/index\.md/);
+    }
   });
 });
 
