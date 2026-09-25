@@ -124,7 +124,7 @@ superpowers @ 6.4.1: version 6.4.1 = plugin.json · license MIT = plugin.json ·
 ### F2 — Date helpers guarded in UTC on any machine
 - Files: `src/lib/skillDetail.test.ts`, `src/lib/projectDetail.test.ts`, `src/lib/listCards.test.ts`
 - Covers: R1 (guarantee), plan 14 / 15 carried findings
-- Acceptance (verifier failure): add boundary cases (e.g. `new Date('2026-07-23T23:30:00Z')` → `23 juil. 2026`; a month boundary such as `2026-08-01T00:00:00Z` → `août 2026`) so that removing `timeZone: 'UTC'` from `versionDate`, `updatedLabel`, `projectMetaRows` (depuis) or `featuredSince` turns a test red **in this machine's time zone and with `TZ=UTC`** — demonstrate each mutation red then restore; `npx vitest run` 0 failed
+- Acceptance (verifier failure): add boundary cases (e.g. `new Date('2026-07-23T23:30:00Z')` → `23 juil. 2026`; a month boundary such as `2026-08-01T00:00:00Z` → `août 2026`) so that removing `timeZone: 'UTC'` from `versionDate`, `updatedLabel`, `projectMetaRows` (depuis) or `featuredSince` turns a test red **in this machine's time zone (Europe/Paris), with `TZ=America/New_York` and with `TZ=Asia/Tokyo`** (under `TZ=UTC` the option is a no-op, so no test can fail) — demonstrate each mutation red then restore; `npx vitest run` 0 failed
 - Depends on: —
 
 ### F3 — Tab labels out of the search index; the sticky column fits the viewport
