@@ -8,10 +8,12 @@
  * Libellé mono 10 capitales .12em `muted` ; par skill un lien `.card-inner`
  * (padding 12) : titre 14 / 600 `ink` (survol `accent`), `v<version>` mono 10
  * `accent` (omis sans version), description 12.5 px `muted` sur 2 lignes au
- * plus.
+ * plus, `lang="en"` si elle est en anglais (quoteLang ; plan 18, T2).
  *
  * Crochet lu par scripts/check-prompt.mjs : `data-prompt-skills`.
  */
+import { quoteLang } from '../../lib/skillDetail';
+
 interface Props {
   skills: { id: string; title: string; version?: string; description: string }[];
 }
@@ -38,7 +40,10 @@ const { skills } = Astro.props;
               </span>
               {skill.version && <span class="shrink-0 font-mono text-[10px] text-accent">v{skill.version}</span>}
             </span>
-            <span class="mt-1 line-clamp-2 block font-sans text-[12.5px] leading-[1.45] text-muted">
+            <span
+              lang={quoteLang(skill.description) === 'en' ? 'en' : undefined}
+              class="mt-1 line-clamp-2 block font-sans text-[12.5px] leading-[1.45] text-muted"
+            >
               {skill.description}
             </span>
           </a>
