@@ -22,7 +22,11 @@
  * précédent vient d'ailleurs (`previousEntry.ts`).
  *
  * Horodatage : `YYYY-MM-DDTHH:mm:ssZ` au décalage du navigateur, le format
- * des champs `datetime` de `config.yml` (celui qu'écrit le widget).
+ * des champs `datetime` de `config.yml` (celui qu'écrit le widget), secondes
+ * à `00` (plan 22, F1 ; D151) : l'éditeur datetime de Sveltia 0.221 ne tient
+ * que les minutes (`<input type="datetime-local">`, `getInputValue`) et
+ * réécrirait `…:52` en `…:00` à la sauvegarde suivante, même sans
+ * modification — la garde `cmsFrontmatter.ts` signale une telle valeur.
  */
 import { normalizeThematicBreaks } from '../lib/thematicBreaks';
 
@@ -82,14 +86,17 @@ export function dateUpdates(entry: SavingEntry, previous: PreviousState, now: st
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** `YYYY-MM-DDTHH:mm:ssZ` (dayjs) au décalage local : `2026-09-25T14:03:07+02:00`. */
+/**
+ * `YYYY-MM-DDTHH:mm:ssZ` (dayjs) au décalage local, à la minute (secondes
+ * `00`, comme le bouton « Maintenant » de l'éditeur) : `2026-09-25T14:03:00+02:00`.
+ */
 export function formatLocalTimestamp(date: Date): string {
   const offset = -date.getTimezoneOffset();
   const sign = offset < 0 ? '-' : '+';
   const abs = Math.abs(offset);
   return (
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:00` +
     `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
   );
 }

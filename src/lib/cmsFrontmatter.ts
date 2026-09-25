@@ -19,6 +19,10 @@
  *   `fields/<type>/defaults.js` : booléen → `default` ou `false`, liste →
  *   `default` ou `[]`, …) ; une valeur de champ texte qui n'est pas une chaîne
  *   est convertie (`String`), un booléen écrit en texte relu en booléen ;
+ * - éditeurs montés — `date-time-editor.svelte` réécrit un champ `datetime`
+ *   dont l'instant a des secondes non nulles : l'`<input
+ *   type="datetime-local">` ne tient que les minutes (`datetimeEditorValue`,
+ *   plan 22 F1, D151) ;
  * - sauvegarde — `draft/save/changes.js` `normalizeFieldValue` (chaque chaîne
  *   rognée), `draft/save/serialize.js` `finalizeContent` (clés dans l'ordre
  *   des champs de `config.yml`, items de liste dans l'ordre de leurs
@@ -53,6 +57,14 @@ export interface CmsField {
   value_type?: string;
   options?: unknown[];
   output_code_only?: boolean;
+  /** `widget: datetime` (`fields/date-time/config.js` `parseDateTimeConfig`). */
+  type?: string;
+  format?: string;
+  date_format?: string | boolean;
+  time_format?: string | boolean;
+  picker_utc?: boolean;
+  input_timezone?: string;
+  output_utc?: boolean;
 }
 
 export interface CmsCollection {
@@ -80,6 +92,14 @@ export interface EditorTransforms {
   markdown?: (value: string) => string;
   /** Champs `widget: code` (`output_code_only`). */
   code?: (value: string) => string;
+}
+
+export interface SaveOptions {
+  /**
+   * Fuseau IANA du navigateur qui ouvre l'entrée (celui où l'éditeur
+   * `datetime` reformate une valeur). Défaut : le fuseau local du processus.
+   */
+  timeZone?: string;
 }
 
 type Flat = Record<string, unknown>;
@@ -438,6 +458,132 @@ export function openEntry(parsed: Record<string, unknown>, fields: CmsField[]): 
 }
 
 /* ------------------------------------------------------------------------ */
+/* Éditeur datetime (`components/…/date-time/date-time-editor.svelte`,       */
+/* `services/contents/fields/date-time/{config,helpers,timezone}.js`)        */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Horodatage aux secondes. Avec décalage, `dayjs(valeur,
+ * 'YYYY-MM-DDTHH:mm:ssZ')` (customParseFormat) le lit sans la fraction (le
+ * format n'a pas de `SSS`) ; sans décalage, le jeton `Z` ne trouve rien, la
+ * lecture échoue et `getDate` se rabat sur `dayjs(valeur)` (heure locale,
+ * millisecondes = trois premiers chiffres de la fraction).
+ */
+const ISO_WITH_SECONDS = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}(?::?\d{2})?)?$/;
+/** Formes sans secondes : l'éditeur n'y change rien (instant déjà à la minute). */
+const MINUTE_OR_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?$/;
+/**
+ * Date seule : `YYYY-MM-DD` en tête. `DATE_ONLY_MATCH_REGEX` de `helpers.js`
+ * (`…\b`) la prend telle quelle ; devant un `T` (caractère de mot, pas de
+ * `\b`), `getInputValue` passe par `dayjs(valeur, 'YYYY-MM-DD')`, qui lit ce
+ * même préfixe : le jour reste le même, `shouldUpdateValue` ne remplace rien.
+ */
+const DATE_PREFIX = /^\d{4}-\d{2}-\d{2}(?!\d)/;
+
+/** `longOffset` d'Intl (`GMT+02:00`, `GMT`) → `+02:00`, comme `dayjs().format('Z')`. */
+function offsetOf(date: Date, timeZone?: string): string {
+  const name =
+    new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'longOffset' })
+      .formatToParts(date)
+      .find((p) => p.type === 'timeZoneName')?.value ?? 'GMT';
+  const offset = name.replace('GMT', '');
+  return offset === '' ? '+00:00' : offset;
+}
+
+/** Instant tronqué à la minute, `YYYY-MM-DDTHH:mm:00±HH:MM` au fuseau donné. */
+function minuteInZone(date: Date, timeZone?: string): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+      .formatToParts(date)
+      .map(({ type, value }) => [type, value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:00${offsetOf(date, timeZone)}`;
+}
+
+/** Heure murale (sans décalage) lue au fuseau donné → instant. */
+function wallClockInstant(fields: number[], timeZone?: string): Date {
+  const [y, mo, d, h, mi, s] = fields;
+  const guess = Date.UTC(y, mo - 1, d, h, mi, s);
+  // Deux passes suffisent hors des heures sautées/dédoublées du changement d'heure.
+  let instant = guess;
+  for (let i = 0; i < 2; i++) {
+    const [, sign, hh, mm] = /^([+-])(\d{2}):(\d{2})$/.exec(offsetOf(new Date(instant), timeZone))!;
+    instant = guess - (sign === '-' ? -1 : 1) * (Number(hh) * 60 + Number(mm)) * 60_000;
+  }
+  return new Date(instant);
+}
+
+/**
+ * Valeur d'un champ `datetime` après montage de son éditeur, la page ouverte
+ * au fuseau `timeZone` (défaut : fuseau local). Rejoue `getInputValue` →
+ * `getCurrentValue` → `shouldUpdateValue` pour les formes de notre
+ * `config.yml` (fuseau `local`, sortie non UTC) :
+ *
+ * - `datetime-local` avec `format` : l'input reçoit `YYYY-MM-DDTHH:mm` de
+ *   l'instant (`getDateTimeParts`), relu à l'heure locale puis formaté au
+ *   `format` (décalage du navigateur) ; la valeur n'est remplacée que si
+ *   l'instant diffère (`getTime()`), c.-à-d. si ses secondes ne sont pas
+ *   nulles. Avec décalage, le format (sans `SSS`) ignore les millisecondes
+ *   (`…:00.500+01:00` reste tel quel) ; sans décalage, elles comptent
+ *   (`…:00.500` est réécrit, voir `ISO_WITH_SECONDS`) ;
+ * - date seule (`time_format: false` ou `type: date`) au format
+ *   `YYYY-MM-DD` : l'input reçoit le préfixe `YYYY-MM-DD`, relu le même jour :
+ *   rien ne change.
+ *
+ * Toute autre option (`picker_utc`, `input_timezone`, `output_utc`, sans
+ * `format`, heure seule) ou valeur lève une erreur plutôt que d'être devinée.
+ * La réécriture n'est reproduite qu'au format `YYYY-MM-DDTHH:mm:ssZ`.
+ */
+export function datetimeEditorValue(value: string, field: CmsField, timeZone?: string): string {
+  const unsupported = (why: string) =>
+    new Error(`cmsFrontmatter : champ datetime « ${field.name} » (${why}) non pris en charge par la réplique`);
+  if (field.picker_utc !== undefined || field.input_timezone !== undefined || field.output_utc !== undefined) {
+    throw unsupported('fuseau ou sortie UTC');
+  }
+  const dateOnly = field.type === 'date' || field.time_format === false;
+  if (field.type === 'time' || field.date_format === false) throw unsupported('heure seule');
+  if (typeof field.date_format === 'string' || typeof field.time_format === 'string') throw unsupported('date_format / time_format');
+  if (dateOnly ? field.format !== 'YYYY-MM-DD' : field.format !== 'YYYY-MM-DDTHH:mm:ssZ') {
+    throw unsupported(`format ${JSON.stringify(field.format)}`);
+  }
+  if (value === '') return value;
+
+  const refuse = () => new Error(`cmsFrontmatter : valeur ${JSON.stringify(value)} du champ « ${field.name} » non prise en charge par la réplique`);
+
+  if (dateOnly) {
+    if (!DATE_PREFIX.test(value)) throw refuse();
+    return value;
+  }
+  if (MINUTE_OR_DATE.test(value)) return value;
+
+  const match = ISO_WITH_SECONDS.exec(value);
+  if (!match) throw refuse();
+  const [, y, mo, d, h, mi, s, fraction = '', offset] = match;
+  const milliseconds = offset === undefined ? Number(fraction.slice(0, 3) || '0') : 0;
+  if (s === '00' && milliseconds === 0) return value;
+
+  const fields = [y, mo, d, h, mi, s].map(Number);
+  let instant: Date;
+  if (offset === undefined) {
+    instant = wallClockInstant(fields, timeZone);
+  } else {
+    const [, sign = '+', oh = '00', om = '00'] = /^([+-])(\d{2}):?(\d{2})?$/.exec(offset) ?? [];
+    const minutes = (sign === '-' ? -1 : 1) * (Number(oh) * 60 + Number(om));
+    instant = new Date(Date.UTC(fields[0], fields[1] - 1, fields[2], fields[3], fields[4], fields[5]) - minutes * 60_000);
+  }
+  if (Number.isNaN(instant.getTime())) throw refuse();
+  return minuteInZone(instant, timeZone);
+}
+
+/* ------------------------------------------------------------------------ */
 /* Sauvegarde (`draft/save/changes.js`, `serialize.js`, `file/format.js`)    */
 /* ------------------------------------------------------------------------ */
 
@@ -548,16 +694,26 @@ export function writeEntry(valueMap: Flat, fields: CmsField[], output: CmsOutput
 
 /**
  * Ce que Sveltia écrit pour ce fichier après ouverture puis **Save** sans
- * modification. `transforms` rejoue en plus la réécriture des éditeurs
- * (corps, champs `code`), que ce module ne modélise pas.
+ * modification. La réécriture de l'éditeur `datetime` est toujours rejouée
+ * (`datetimeEditorValue`, au fuseau `options.timeZone`) ; `transforms` rejoue
+ * en plus celle des éditeurs de corps et de champs `code`, que ce module ne
+ * modélise pas.
  */
-export function sveltiaSave(raw: string, collection: CmsCollection, output: CmsOutput = {}, transforms: EditorTransforms = {}): string {
+export function sveltiaSave(
+  raw: string,
+  collection: CmsCollection,
+  output: CmsOutput = {},
+  transforms: EditorTransforms = {},
+  { timeZone }: SaveOptions = {},
+): string {
   const content = openEntry(parseEntryText(raw), collection.fields);
   for (const [key, value] of Object.entries(content)) {
     if (typeof value !== 'string') continue;
-    const widget = fieldAt(collection.fields, key)?.widget;
+    const field = fieldAt(collection.fields, key);
+    const widget = field?.widget;
     if (widget === 'markdown' && transforms.markdown) content[key] = transforms.markdown(value);
     if (widget === 'code' && transforms.code) content[key] = transforms.code(value);
+    if (widget === 'datetime') content[key] = datetimeEditorValue(value, field!, timeZone);
   }
   return writeEntry(content, collection.fields, output);
 }

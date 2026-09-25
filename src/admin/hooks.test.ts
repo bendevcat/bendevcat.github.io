@@ -154,7 +154,7 @@ describe('hooks de sauvegarde : séparateurs et dates', () => {
       title: 'k9s',
       draft: false,
       body: 'Intro.\n\n---\n\nSuite. Un mot.',
-      updatedDate: expect.stringMatching(/^2026-09-25T\d{2}:03:07[+-]\d{2}:\d{2}$/),
+      updatedDate: expect.stringMatching(/^2026-09-25T\d{2}:03:00[+-]\d{2}:\d{2}$/),
     });
 
     // Seuls les séparateurs diffèrent : la date ne bouge pas.

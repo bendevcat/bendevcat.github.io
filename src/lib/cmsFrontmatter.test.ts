@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import {
+  datetimeEditorValue,
   parseCmsConfig,
   parseEntryText,
   readEntry,
@@ -40,7 +41,8 @@ function contentFiles(): File[] {
 }
 
 const collection = (name: string) => config.collections.find((c) => c.name === name)!;
-const save = (raw: string, name = 'blog') => sveltiaSave(raw, collection(name), config.output);
+const save = (raw: string, name = 'blog', timeZone?: string) =>
+  sveltiaSave(raw, collection(name), config.output, {}, { timeZone });
 
 /** Première ligne différente, pour un message d'échec lisible. */
 function firstDifference(before: string, after: string): string {
@@ -187,6 +189,89 @@ describe('réplique de la lecture et de l’écriture de Sveltia', () => {
   it('refuse un type de champ qu’elle ne modélise pas', () => {
     const fields: CmsField[] = [{ name: 'o', widget: 'object', fields: [{ name: 'a' }] }];
     expect(() => sveltiaSave('---\no: 1\n---\n', { name: 'x', folder: 'x', fields }, {})).toThrow(/non pris en charge/);
+  });
+});
+
+/**
+ * Plan 22, F1 (D151) : l'éditeur `datetime` de Sveltia 0.221 réécrit la
+ * valeur dès qu'il est monté (`date-time-editor.svelte`, deux `watch` =
+ * `$effect`) : `getInputValue` ne garde que `YYYY-MM-DDTHH:mm` pour
+ * l'`<input type="datetime-local">`, `getCurrentValue` le reformate
+ * (`format` du champ, décalage du navigateur), et `shouldUpdateValue` ne
+ * remplace la valeur que si l'instant change — donc seulement quand ses
+ * secondes ne sont pas nulles. Valeurs attendues relevées en exécutant
+ * `helpers.js` / `timezone.js` / `config.js` de `npm/index.js.map` avec le
+ * dayjs 1.11.23 qu'il embarque, sous chaque fuseau.
+ */
+describe('champs datetime : réécriture par l’éditeur de Sveltia (plan 22, F1)', () => {
+  const updated = 'updatedDate: 2026-09-25T17:32:52+02:00';
+  const withUpdated = (line: string) => k9s().replace(/^(pubDate: .*)$/m, `$1\n${line}`);
+
+  it('signale une date aux secondes non nulles (updatedDate: …T17:32:52+02:00) et la ramène à la minute', () => {
+    const planted = withUpdated(updated);
+    expect(planted).not.toBe(k9s());
+    expect(save(planted, 'blog', 'Europe/Paris')).toBe(withUpdated('updatedDate: 2026-09-25T17:32:00+02:00'));
+    expect(save(planted, 'blog', 'UTC')).toBe(withUpdated('updatedDate: 2026-09-25T15:32:00+00:00'));
+    expect(save(planted)).not.toBe(planted);
+  });
+
+  it('une date à la minute est stable, quel que soit le fuseau', () => {
+    const minute = withUpdated('updatedDate: 2026-09-25T17:32:00+02:00');
+    for (const tz of ['Europe/Paris', 'UTC', 'America/New_York', 'Asia/Kolkata']) expect(save(minute, 'blog', tz), tz).toBe(minute);
+  });
+
+  const datetime = collection('blog').fields.find((f) => f.name === 'updatedDate')!;
+  const dateOnly = collection('skills').fields.find((f) => f.name === 'changelog')!.fields!.find((f) => f.name === 'date')!;
+
+  // [valeur, Europe/Paris, UTC, America/New_York, Asia/Kolkata]
+  const observed: [string, string, string, string, string][] = [
+    ['2026-09-25T17:32:52+02:00', '2026-09-25T17:32:00+02:00', '2026-09-25T15:32:00+00:00', '2026-09-25T11:32:00-04:00', '2026-09-25T21:02:00+05:30'],
+    ['2025-10-28T23:59:07.000+01:00', '2025-10-28T23:59:00+01:00', '2025-10-28T22:59:00+00:00', '2025-10-28T18:59:00-04:00', '2025-10-29T04:29:00+05:30'],
+    ['2025-10-20T14:00:30Z', '2025-10-20T16:00:00+02:00', '2025-10-20T14:00:00+00:00', '2025-10-20T10:00:00-04:00', '2025-10-20T19:30:00+05:30'],
+    ['2025-05-05T10:20:30', '2025-05-05T10:20:00+02:00', '2025-05-05T10:20:00+00:00', '2025-05-05T10:20:00-04:00', '2025-05-05T10:20:00+05:30'],
+    ['2025-10-26T02:30:15-03:30', '2025-10-26T07:00:00+01:00', '2025-10-26T06:00:00+00:00', '2025-10-26T02:00:00-04:00', '2025-10-26T11:30:00+05:30'],
+    // Sans décalage, `getDate` se rabat sur `dayjs(valeur)`, qui garde les millisecondes.
+    ['2024-05-13T08:12:00.648', '2024-05-13T08:12:00+02:00', '2024-05-13T08:12:00+00:00', '2024-05-13T08:12:00-04:00', '2024-05-13T08:12:00+05:30'],
+  ];
+  const zones = ['Europe/Paris', 'UTC', 'America/New_York', 'Asia/Kolkata'];
+
+  it('datetime-local : secondes non nulles → minute de l’instant au décalage du navigateur', () => {
+    for (const [value, ...expected] of observed) {
+      zones.forEach((tz, i) => expect(datetimeEditorValue(value, datetime, tz), `${value} @ ${tz}`).toBe(expected[i]));
+    }
+  });
+
+  it('datetime-local : valeur inchangée quand l’instant tombe sur la minute (millisecondes ignorées par le format)', () => {
+    const kept = [
+      '',
+      '2026-09-25T17:32:00+02:00',
+      '2025-10-28T23:59:00.000+01:00',
+      '2025-10-28T23:59:00.500+01:00',
+      '2025-10-20T14:00:00Z',
+      '2025-10-26T02:30:00+05:45',
+      '2025-05-05',
+      '2025-05-05T10:20',
+      '2025-05-05T10:20:00',
+    ];
+    for (const value of kept) for (const tz of zones) expect(datetimeEditorValue(value, datetime, tz), `${value} @ ${tz}`).toBe(value);
+  });
+
+  it('date seule (changelog, YYYY-MM-DD, time_format: false) : valeur inchangée', () => {
+    for (const value of ['2026-09-18', '2026-09-18T10:00:00Z', '2026-09-18T23:30:00-05:00', '']) {
+      for (const tz of zones) expect(datetimeEditorValue(value, dateOnly, tz), `${value} @ ${tz}`).toBe(value);
+    }
+  });
+
+  it('chaque champ datetime de config.yml est d’une forme modélisée', () => {
+    const all = config.collections.flatMap((c) => c.fields.flatMap((f) => [f, ...(f.fields ?? [])])).filter((f) => f.widget === 'datetime');
+    expect(all.map((f) => f.name).sort()).toEqual(['date', 'pubDate', 'startDate', 'updated', 'updatedDate']);
+    for (const f of all) expect(() => datetimeEditorValue('2026-09-25T17:32:00+02:00', f, 'UTC'), f.name).not.toThrow();
+  });
+
+  it('refuse une option ou une valeur qu’elle ne modélise pas', () => {
+    expect(() => datetimeEditorValue('2026-09-25T17:32:52Z', { ...datetime, picker_utc: true } as never, 'UTC')).toThrow(/non pris en charge/);
+    expect(() => datetimeEditorValue('2026-09-25T17:32:52Z', { name: 'd', widget: 'datetime' }, 'UTC')).toThrow(/non pris en charge/);
+    expect(() => datetimeEditorValue('25/09/2026', datetime, 'UTC')).toThrow(/non prise en charge/);
   });
 });
 

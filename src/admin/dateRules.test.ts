@@ -96,17 +96,22 @@ describe('règles de date (preSave)', () => {
       else process.env.TZ = tz;
     });
 
+    // Secondes toujours `00` (plan 22, F1 ; D151) : l'éditeur datetime de
+    // Sveltia 0.221 ne tient que les minutes (`<input type="datetime-local">`,
+    // `helpers.js` `getInputValue` → `HH:mm`) ; une valeur à secondes non
+    // nulles serait réécrite `…:00` à la sauvegarde suivante, même sans
+    // modification (rupture de D148).
     it('format YYYY-MM-DDTHH:mm:ssZ au décalage local', () => {
       const summer = new Date('2026-07-01T10:20:30.999Z');
       const winter = new Date('2026-01-31T23:05:09Z');
       process.env.TZ = 'Europe/Paris';
-      expect(formatLocalTimestamp(summer)).toBe('2026-07-01T12:20:30+02:00');
-      expect(formatLocalTimestamp(winter)).toBe('2026-02-01T00:05:09+01:00');
+      expect(formatLocalTimestamp(summer)).toBe('2026-07-01T12:20:00+02:00');
+      expect(formatLocalTimestamp(winter)).toBe('2026-02-01T00:05:00+01:00');
       process.env.TZ = 'UTC';
-      expect(formatLocalTimestamp(summer)).toBe('2026-07-01T10:20:30+00:00');
+      expect(formatLocalTimestamp(summer)).toBe('2026-07-01T10:20:00+00:00');
       process.env.TZ = 'America/St_Johns';
-      expect(formatLocalTimestamp(summer)).toBe('2026-07-01T07:50:30-02:30');
-      expect(formatLocalTimestamp(winter)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+      expect(formatLocalTimestamp(summer)).toBe('2026-07-01T07:50:00-02:30');
+      expect(formatLocalTimestamp(winter)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00[+-]\d{2}:\d{2}$/);
     });
   });
 });

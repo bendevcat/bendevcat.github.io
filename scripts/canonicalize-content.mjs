@@ -11,7 +11,10 @@
  * **Save** sans modification écrirait :
  * - frontmatter — `sveltiaSave` de src/lib/cmsFrontmatter.ts (lecture,
  *   défauts à l'ouverture, ordre des champs, champs optionnels vides retirés,
- *   YAML de Sveltia, ligne vide avant le corps) ;
+ *   YAML de Sveltia, ligne vide avant le corps) ; un champ `datetime` dont
+ *   l'instant a des secondes non nulles est ramené à la minute, comme le fait
+ *   l'éditeur de Sveltia (plan 22, F1 ; D151), au fuseau local de ce
+ *   processus (`TZ=Europe/Paris node …` pour celui du navigateur) ;
  * - corps (`widget: markdown`) — `normalizeBody` de src/lib/cmsCanonical.ts ;
  * - champs `widget: code` — `normalizeCodeField` (saut de ligne final retiré).
  * Ces deux fonctions ne réécrivent que la syntaxe dont le rendu du site ne
