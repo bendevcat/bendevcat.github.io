@@ -127,3 +127,24 @@ Exit 1 when a line differs: a home grid not 16 px or a header whose badge is not
 - Home / about pixel values beyond inventory §10 (panel paddings 22/24, `Plus d'articles →` right-aligned, 64 px top offset, about gaps — the about markup 925–1005 is not cached).
 - Changing the search dialog's Escape behaviour (logged); `lang` inside Pagefind result excerpts; any content, schema or token change; TZ pinning (done in plan 17 F2).
 - Version bump, tag, merge to `main`, push, deploy — the orchestrator raises the single `publication` escalation after this plan.
+
+## Evidence
+
+### Verification 1 (2026-09-25)
+| ID | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | walk on preview, light then dark: 5 nav links, an entry of each list → detail, home banner → `/transparence-ia/`, blog and prompt tag chips → tag pages, `/tags/` from tag page and 404, unknown URL → 404 page, ⌘K and loupe open search; no 5xx; R1–R19 below (R13 smoke) |
+| R1–R8 | proven | named tests pass; 23 targeted mutations each turn their test red |
+| R9 | proven | both greps `0`; 51 HTML files identical between T5 and T6 builds |
+| R10 | proven | `check-fidelity` 7 lines, exit 0; exit 1 on one injected defect per line (10 cases) |
+| R11 | proven | 1280 both themes: home gaps 16/16/16, badges flush right, titles 10 px before; about 3 px accent left border, other sides 1 px `line`; rail label gap 10 on `/blog` and article |
+| R12 | proven | 1024×768: last aside link's focus ring inside the scroll area (4.16 / 38.35 px spare); no-JS: toggle and search hidden, 4 `défaut :` lines; with JS lines hidden, inputs shown, toggle works; search Escape clears then closes, focus back on loupe |
+| R13 | smoke | design MCP refused (`needs_design_scopes`) |
+| R14 | proven | 10 screens at 1280 both themes: blocks, order and column widths match the inventory (home 1.35 split, blog rail 250, article 250 / 698 / 230, projects hero 1.1, project 874 / 280, prompts / skills 3 cols, prompt window + 340, skill 818 / 340 sticky, about); differences all covered by D42, D92, D111, D117 |
+| R15 | proven | `audit-rendered.js` 309 runs (23 routes × 3 widths × 2 themes + 171 open states: search, dropdowns, empty states, every tab, no-JS): 0 overflow / contrast / off-token / V2; negative control caught |
+| R16 | proven | 51 pages at 375: `scrollWidth = clientWidth` |
+| R17 | proven | 11 other instruments byte-identical to base; HTML diff limited to the 15 listed pages, each change intended |
+| R18 | proven | guard tests 26 passed; token grep `0`; component classes `4` |
+| R19 | proven | frozen diff empty; 399 tests; 0 errors; `matchesFilters` 1 |
+
+Not taken (outside this plan, logged for the report): Pagefind returns weak matches for nonsense Latin queries; blog and skills empty states unreachable with today's content; header nav links without trailing slash (served 200).
