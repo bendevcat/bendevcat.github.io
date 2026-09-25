@@ -18,6 +18,7 @@
     "@astrojs/rss": "^4.0.19",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource/nebula-sans": "^5.3.0",
+    "@sveltia/cms": "0.221.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.1.1",
     "rehype-autolink-headings": "^7.1.0",

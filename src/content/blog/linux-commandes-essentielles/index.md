@@ -38,7 +38,7 @@ awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -1
 rsync -avz --delete --exclude='node_modules' --exclude='.git' /src/ user@backup:/dst/
 ```
 
-- - -
+---
 
 ## 1. grep - La recherche de logs en production 🔍
 
@@ -92,7 +92,7 @@ if [ $(journalctl --since "1 hour ago" | grep -c ERROR) -gt 100 ]; then
 fi
 ```
 
-- - -
+---
 
 ## 2. find - Au-delà de la simple recherche 📂
 
@@ -147,7 +147,7 @@ find / -perm -4000 -user root -ls 2>/dev/null
 find /etc /bin /sbin -type f -mmin -120 -ls
 ```
 
-- - -
+---
 
 ## 3. awk - Le couteau suisse de l'analyse de texte 📊
 
@@ -229,7 +229,7 @@ END {
 }'
 ```
 
-- - -
+---
 
 ## 4. sed - Édition de texte en streaming 🔧
 
@@ -285,7 +285,7 @@ find ~/projects -name "package.json" -exec sed -i 's/"version": "1.0.0"/"version
 sed -E 's/(token|password|secret)=[A-Za-z0-9]+/\1=[REDACTED]/gi' app.log
 ```
 
-- - -
+---
 
 ## 5. xargs - Passer les résultats en arguments ⚙️
 
@@ -344,7 +344,7 @@ echo "80 443 8080 3306" | xargs -n 1 -I {} timeout 2 bash -c "echo > /dev/tcp/pr
 cat domains.txt | xargs -n 1 -P 5 -I {} sh -c 'echo {} && echo | openssl s_client -connect {}:443 2>/dev/null | openssl x509 -noout -dates'
 ```
 
-- - -
+---
 
 ## 6. journalctl - Maîtriser systemd logs 📝
 
@@ -413,7 +413,7 @@ systemd-analyze blame
 journalctl -p err --since today | grep "Failed with result" | awk '{print $NF}' | sort | uniq -c | sort -rn
 ```
 
-- - -
+---
 
 ## 7. ss / netstat - Debugging réseau 🌐
 
@@ -476,7 +476,7 @@ ulimit -n  # File descriptors limit
 ss -s      # Socket summary statistics
 ```
 
-- - -
+---
 
 ## 8. strace / ltrace - Debugging au niveau système 🔬
 
@@ -535,7 +535,7 @@ ltrace -c myapp  # Résumé des appels library
 strace -e open,close -p $(pgrep myapp) 2>&1 | grep -E "^(open|close)" | wc -l
 ```
 
-- - -
+---
 
 ## 9. tar + rsync - Backup & transfert pro 💾
 
@@ -585,7 +585,7 @@ done
 rsync -avz --link-dest=/backup/previous /data/ /backup/$(date +%Y%m%d)/
 ```
 
-- - -
+---
 
 ## 10. One-liners DevOps magiques ✨
 
@@ -653,7 +653,7 @@ mysqladmin processlist | grep -v "Sleep" | wc -l
 tail -f /var/log/postgresql/postgresql.log | grep "duration"
 ```
 
-- - -
+---
 
 ## Conclusion : Composer les commandes
 

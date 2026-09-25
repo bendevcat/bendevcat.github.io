@@ -30,13 +30,14 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
-    # Défaut Sveltia = true : sans cette clé, le bouton « Supprimer » est actif
-    # alors que le CMS ne nettoie JAMAIS les rétro-références. Supprimer un
-    # article laisserait un `relatedProjects` mort sur une fiche projet ; le
-    # commit suivant échoue au garde-fou `assertEntriesResolved` et le build
-    # entier ne produit plus aucune page (D08). Suppression propre : voir la
-    # section dédiée du README.
-    delete: false
+    # Suppression permise (Plan 19, R15 — lève D08). Depuis Sveltia 0.221,
+    # supprimer une entrée retire son slug de chaque champ relation qui la
+    # cite (ici `relatedPosts` des projets), DANS LE MÊME COMMIT : aucun
+    # renvoi mort ne reste pour `assertEntriesResolved`. Sveltia ne refuse la
+    # suppression que si un champ ainsi vidé est `required` ou passe sous son
+    # `min` — nos quatre relations sont optionnelles et sans `min` : les
+    # garder ainsi (test « garde les quatre relations optionnelles »).
+    delete: true
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [pubDate, title]
@@ -82,13 +83,9 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
-    # Défaut Sveltia = true : sans cette clé, le bouton « Supprimer » est actif
-    # alors que le CMS ne nettoie JAMAIS les rétro-références. Supprimer un
-    # projet laisserait un `relatedProjects` mort sur un article de blog ; le
-    # commit suivant échoue au garde-fou `assertEntriesResolved` et le build
-    # entier ne produit plus aucune page (D08). Suppression propre : voir la
-    # section dédiée du README.
-    delete: false
+    # Suppression permise (R15) : Sveltia 0.221 retire le slug du projet des
+    # `relatedProjects` des articles dans le même commit — voir `blog`.
+    delete: true
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [title, startDate]
@@ -175,11 +172,9 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
-    # Voir D08 (Plan 3) : le CMS ne nettoie pas les rétro-références. Supprimer
-    # un prompt laisserait un `relatedPrompts` mort sur un skill ; le commit
-    # suivant casse `assertEntriesResolved` et le build ne produit plus aucune
-    # page. Suppression propre : voir la section dédiée du README.
-    delete: false
+    # Suppression permise (R15) : Sveltia 0.221 retire le slug du prompt des
+    # `relatedPrompts` des skills dans le même commit — voir `blog`.
+    delete: true
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [title]
@@ -236,9 +231,9 @@ collections:
     extension: md
     format: yaml-frontmatter
     create: true
-    # Voir D08 (Plan 3) — même raison que pour `prompts`, la relation est
-    # symétrique.
-    delete: false
+    # Suppression permise (R15) : Sveltia 0.221 retire le slug du skill des
+    # `relatedSkills` des prompts dans le même commit — voir `blog`.
+    delete: true
     slug: '{{slug}}'
     identifier_field: title
     sortable_fields: [title]

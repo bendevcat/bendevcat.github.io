@@ -55,7 +55,7 @@ scoop install k9s
 ✅ Édition YAML directe
 ✅ Pulse pour surveiller les changements
 
-- - -
+---
 
 ## Qu'est-ce que k9s ?
 
@@ -473,6 +473,6 @@ k9s est devenu un **outil indispensable** dans ma toolbox DevOps. Une fois les r
 
 Si vous gérez Kubernetes au quotidien, **essayez k9s dès aujourd'hui**. Vous ne pourrez plus vous en passer ! 🐶
 
-- - -
+---
 
 **Et vous, quels sont vos outils préférés pour gérer Kubernetes ? Partagez en commentaires !**

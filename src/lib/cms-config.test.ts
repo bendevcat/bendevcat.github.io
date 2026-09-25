@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro:content';
 import { CATEGORIES, PROJECT_STATUSES, PROMPT_FORMATS, collections } from '../content.config';
@@ -118,34 +118,136 @@ describe('config CMS — backend', () => {
   });
 });
 
-describe('config CMS — suppression désactivée (D08)', () => {
-  it('interdit la suppression sur blog et projects : le CMS ne nettoie pas les rétro-références', () => {
+/** Tous les champs `relation` de la config, où qu'ils soient imbriqués. */
+function relationFields(cfg: any): Array<{ collection: string; field: any }> {
+  const found: Array<{ collection: string; field: any }> = [];
+  const walk = (collection: string, fields: any[] = []) => {
+    for (const f of fields) {
+      if (f.widget === 'relation') found.push({ collection, field: f });
+      if (f.fields) walk(collection, f.fields);
+      if (f.field) walk(collection, [f.field]);
+      if (f.types) for (const t of f.types) walk(collection, t.fields);
+    }
+  };
+  for (const c of cfg.collections) walk(c.name, c.fields);
+  return found;
+}
+
+describe('config CMS — suppression (R15, D08 levé)', () => {
+  it('autorise la suppression sur les quatre collections : Sveltia 0.221 retire les rétro-références', () => {
+    // D08 (Plan 3) interdisait la suppression : l'ancien Sveltia laissait une
+    // référence morte sur l'entrée liée, et `assertEntriesResolved` cassait le
+    // build. Depuis 0.221, `deleteEntries` appelle `planCascadeDelete`, qui
+    // retire le slug supprimé de chaque champ relation qui le cite, dans le
+    // MÊME commit. On ancre ce constat dans le build npm effectivement
+    // embarqué : son garde-fou « bloquer si une relation requise se vide »
+    // n'existe que si la cascade existe.
     const cfg = loadCmsConfig();
-    // Défaut Sveltia = true. Sans `delete: false`, supprimer une entrée laisse
-    // une référence morte (`relatedPosts`/`relatedProjects`) sur l'autre
-    // collection : le commit suivant casse `assertEntriesResolved` et
-    // `astro build` ne produit plus aucune page (constat I1, revue T-C1).
-    expect(cfg.collections[0].name).toBe('blog');
-    expect(cfg.collections[0].delete).toBe(false);
-    expect(cfg.collections[1].name).toBe('projects');
-    expect(cfg.collections[1].delete).toBe(false);
+    expect(cfg.collections.map((c: any) => [c.name, c.delete])).toEqual([
+      ['blog', true],
+      ['projects', true],
+      ['prompts', true],
+      ['skills', true],
+    ]);
+    const sveltia = readFileSync(
+      new URL('../../node_modules/@sveltia/cms/npm/index.js', import.meta.url),
+      'utf8',
+    );
+    expect(sveltia).toContain('Cannot delete entries that other entries require');
+  });
+
+  it('garde les quatre relations optionnelles (sinon Sveltia bloque la suppression)', () => {
+    // `planCascadeDelete` revalide chaque champ qui perd une référence : s'il
+    // est `required` et se retrouve vide, ou compte moins de `min` éléments,
+    // la suppression est refusée. Toute nouvelle relation doit être examinée
+    // ici avant d'entrer dans la config.
+    const rels = relationFields(loadCmsConfig());
+    expect(rels.map(({ collection, field }) => `${collection}.${field.name}→${field.collection}`)).toEqual([
+      'blog.relatedProjects→projects',
+      'projects.relatedPosts→blog',
+      'prompts.relatedSkills→skills',
+      'skills.relatedPrompts→prompts',
+    ]);
+    for (const { field } of rels) {
+      expect(field.required).toBe(false);
+      expect(field.multiple).toBe(true);
+      expect(field.min).toBeUndefined();
+    }
   });
 });
 
 describe('page /admin', () => {
-  it('épingle la version du CDN Sveltia et interdit l’indexation', () => {
-    const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');
-    expect(html).toContain('https://unpkg.com/@sveltia/cms@0.175.1/dist/sveltia-cms.js');
-    expect(html).toMatch(/<meta\s+name="robots"\s+content="noindex"\s*\/?>/);
-    // Un tag flottant ferait sauter l’épinglage (spec §6.2).
-    expect(html).not.toContain('@sveltia/cms/dist');
-    expect(html).not.toContain('@latest');
+  const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+
+  it('sert /admin depuis une page Astro autonome, noindex, sans BaseLayout', () => {
+    const page = read('../pages/admin/index.astro');
+    expect(page).toMatch(/<html\s+lang="fr"\s*>/);
+    expect(page).toMatch(/<meta\s+name="robots"\s+content="noindex"\s*\/?>/);
+    // Sveltia lit sa config à côté de la page ; le lien la rend explicite.
+    expect(page).toMatch(
+      /<link\s+rel="cms-config-url"\s+type="application\/yaml"\s+href="\/admin\/config\.yml"\s*\/?>/,
+    );
+    // Page autonome : ni layout du site (en-tête, CSS global), ni indexation Pagefind.
+    expect(page).not.toMatch(/import\s+\w+\s+from\s+['"][^'"]*layouts\//);
+    expect(page).not.toMatch(/<[A-Z]\w*Layout\b/);
+    expect(page).not.toMatch(/<\w+\b[^>]*\sdata-pagefind-body\b/);
+    const scripts = [...page.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)];
+    expect(scripts).toHaveLength(1);
+    expect(scripts[0][1]).toMatch(/import\s+['"]\.\.\/\.\.\/admin\/cms['"]/);
   });
 
-  it('vérifie l’intégrité du script CDN via SRI (spec I4)', () => {
-    const html = readFileSync(new URL('../../public/admin/index.html', import.meta.url), 'utf8');
-    expect(html).toMatch(/integrity="sha384-/);
-    expect(html).toContain('crossorigin="anonymous"');
+  it('n’a plus de public/admin/index.html ; la config reste un YAML valide dans public/admin/', () => {
+    expect(existsSync(new URL('../../public/admin/index.html', import.meta.url))).toBe(false);
+    const cfg = loadCmsConfig();
+    expect(cfg.backend.name).toBe('github');
+    expect(cfg.collections).toHaveLength(4);
+  });
+
+  it('épingle @sveltia/cms à 0.221.0 exactement (package.json sans ^ ni ~, lock résolu)', () => {
+    const pkg = JSON.parse(read('../../package.json'));
+    expect(pkg.dependencies['@sveltia/cms']).toBe('0.221.0');
+    const lock = JSON.parse(read('../../package-lock.json'));
+    expect(lock.packages[''].dependencies['@sveltia/cms']).toBe('0.221.0');
+    expect(lock.packages['node_modules/@sveltia/cms'].version).toBe('0.221.0');
+  });
+
+  it('importe @sveltia/cms depuis npm, sans CDN', () => {
+    const cms = read('../admin/cms.ts');
+    expect(cms).toMatch(/^import\s+CMS\s+from\s+['"]@sveltia\/cms['"];?$/m);
+    // Le paquet npm ne s'initialise pas seul quand il est importé en module.
+    expect(cms).toMatch(/CMS\.init\(/);
+    for (const src of [cms, read('../pages/admin/index.astro')]) {
+      expect(src).not.toContain('unpkg');
+      expect(src).not.toMatch(/https?:\/\/[^'"\s]*sveltia/);
+    }
+  });
+
+  it('ne charge le dépôt de test que sous import.meta.env.DEV', () => {
+    const cms = read('../admin/cms.ts');
+    // Aucun import statique du module de dev : seul un import() dynamique, que
+    // le build élimine avec la branche `import.meta.env.DEV` (false en prod).
+    expect(cms).not.toMatch(/^import\b[^;]*['"]\.\/dev\//m);
+    const refs = [...cms.matchAll(/['"]\.\/dev\/[^'"]*['"]/g)];
+    expect(refs).toHaveLength(1);
+    const guard = cms.match(
+      /if\s*\(\s*import\.meta\.env\.DEV\s*&&\s*new URLSearchParams\(location\.search\)\.has\('test-repo'\)\s*\)\s*\{([\s\S]*?)\n\}\s*else\s*\{([\s\S]*?)\n\}/,
+    );
+    expect(guard).not.toBeNull();
+    const [, devBranch, prodBranch] = guard!;
+    expect(devBranch).toMatch(/import\(\s*'\.\/dev\/testRepo'\s*\)/);
+    expect(devBranch).toMatch(/CMS\.init\(\s*\{\s*config:\s*\{\s*backend:\s*\{\s*name:\s*'test-repo'\s*\}\s*\}\s*\}/);
+    expect(prodBranch).toMatch(/CMS\.init\(\)/);
+    expect(prodBranch).not.toMatch(/test-repo/);
+    // Un seul init() hors de ces deux branches : aucun.
+    expect([...cms.matchAll(/CMS\.init\(/g)]).toHaveLength(2);
+  });
+
+  it('pré-regroupe @sveltia/cms en dev (cache Vite froid : pas de 504 Outdated Optimize Dep)', async () => {
+    // Plan 19, F1 (R7) : sans `optimizeDeps.include`, Vite ne découvre Sveltia
+    // qu'à la première visite de /admin/, ré-optimise, recharge, et la barre
+    // d'outils Astro répond 504 jusqu'au redémarrage du serveur.
+    const { default: config } = await import('../../astro.config.mjs');
+    expect(config.vite?.optimizeDeps?.include).toContain('@sveltia/cms');
   });
 });
 
@@ -441,14 +543,14 @@ function field(cfg: any, collection: string, name: string): any {
 }
 
 describe('config CMS — collection prompts', () => {
-  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+  it('pointe le bon dossier, en page bundle, suppression permise (R15)', () => {
     const cfg = loadCmsConfig();
     const coll = cfg.collections.find((c: any) => c.name === 'prompts');
     expect(coll.folder).toBe('src/content/prompts');
     expect(coll.path).toBe('{{slug}}/index');
     expect(coll.extension).toBe('md');
     expect(coll.format).toBe('yaml-frontmatter');
-    expect(coll.delete).toBe(false);
+    expect(coll.delete).toBe(true);
     expect(coll.media_folder).toBe('');
     expect(coll.public_folder).toBe('');
   });
@@ -556,7 +658,7 @@ describe('config CMS — collection prompts', () => {
 });
 
 describe('config CMS — collection skills', () => {
-  it('pointe le bon dossier, en page bundle, sans suppression', () => {
+  it('pointe le bon dossier, en page bundle, suppression permise (R15)', () => {
     // Complété (I4, D10) : cette assertion omettait `extension`, `format`,
     // `media_folder` et `public_folder`, pourtant vérifiés sur `prompts` —
     // asymétrie du garde-fou entre les deux collections jumelles.
@@ -566,7 +668,7 @@ describe('config CMS — collection skills', () => {
     expect(coll.path).toBe('{{slug}}/index');
     expect(coll.extension).toBe('md');
     expect(coll.format).toBe('yaml-frontmatter');
-    expect(coll.delete).toBe(false);
+    expect(coll.delete).toBe(true);
     expect(coll.media_folder).toBe('');
     expect(coll.public_folder).toBe('');
   });
