@@ -198,6 +198,11 @@ Réglé dans `public/admin/config.yml`, gardé par `src/lib/cms-config.test.ts` 
   (`default: '{{now}}'`, au décalage horaire du navigateur), modifiable. C'est
   l'heure de **création** : en publiant un brouillon plus tard, ajuster cette
   date à la main si besoin (rien ne la change à la publication).
+- **Nom du dossier** (le slug, tiré du titre) : toujours en **ASCII**,
+  minuscules, accents retirés (option globale `slug` de
+  `public/admin/config.yml`). « Essai création à la une » donne
+  `essai-creation-a-la-une/index.md`, donc l'adresse
+  `/blog/essai-creation-a-la-une/`. Les entrées existantes gardent leur dossier.
 - **Nouvel article, prompt ou skill** : case **Brouillon** cochée
   (`draft: true` par défaut). Rien n'apparaît sur le site tant qu'elle n'est pas
   décochée. Les projets n'ont pas de champ `draft` : un nouveau projet est
@@ -224,8 +229,12 @@ Un fichier écrit à la main doit le déclarer aussi.
 
 À chaque sauvegarde d'une entrée **existante**, le hook `preSave`
 (`src/admin/hooks.ts`, règles dans `src/admin/dateRules.ts`) peut poser une date,
-au format des champs du CMS (`2026-09-25T14:03:07+02:00`, heure et décalage du
-navigateur) :
+au format des champs du CMS (`2026-09-25T14:03:00+02:00`, heure et décalage du
+navigateur), **à la minute** (secondes `00`) comme le widget date de Sveltia :
+avec des secondes, la sauvegarde suivante, même sans modification, les
+remettrait à `00` et changerait le fichier. Le test de frontmatter canonique
+(`src/lib/cmsFrontmatter.test.ts`) signale toute date dont les secondes ne
+sont pas `00` :
 
 - **Article** : `updatedDate` = maintenant **seulement** si l'article est
   **publié** (Brouillon décoché avant **et** après la sauvegarde) **et** que son
@@ -537,19 +546,27 @@ Sveltia écrit). Les `---` sont hors de ce garde-fou : l'éditeur les ouvre en `
 (Save s'active donc sur un article qui en contient) et le hook `preSave` les
 rétablit à l'écriture.
 
-### Images téléversées : WebP, et deux pièges
+### Images téléversées : WebP, et trois pièges
 
 **Conversion automatique.** Toute image matricielle téléversée depuis le CMS
 (PNG, JPEG, GIF, AVIF, HEIC, WebP) est convertie **dans le navigateur, avant
 tout envoi** (`media_libraries.default.config` de `public/admin/config.yml`) :
 format **WebP**, **1600 px de large au plus** (jamais agrandie), **qualité 80**.
 Le fichier atterrit en `<nom>.webp` dans le dossier de l'entrée, à côté de
-`index.md` (`cover: ./<nom>.webp`). Si le fichier **converti** dépasse
-**1 Mio** (`max_file_size: 1048576`), Sveltia le refuse avec un avis et
-n'écrit rien : recadrer ou réduire l'image, puis recommencer. Un SVG n'est pas
-touché ; un GIF animé devient une image fixe. Le test « images : WebP, 1600 px,
-qualité 80, plafond de taille » de `src/lib/cms-config.test.ts` garde ces
-réglages.
+`index.md`, et Sveltia l'inscrit sans `./` : `cover: <nom>.webp`. Les deux
+formes (`<nom>.webp` et `./<nom>.webp`, écrite à la main) désignent le même
+fichier et passent au build. Si le fichier **converti** dépasse
+**1 Mio** (`max_file_size: 1048576`), Sveltia le refuse avec un avis
+et n'écrit rien : recadrer ou réduire l'image, puis
+recommencer. Un SVG n'est pas touché ; un GIF animé devient une image fixe.
+Le test « images : WebP, 1600 px, qualité 80, plafond de taille » de
+`src/lib/cms-config.test.ts` garde ces réglages.
+
+**Après « Fichier volumineux », le champ couverture est vide.** Le refus vide
+le champ dans le formulaire, même s'il portait déjà une couverture ; une
+sauvegarde à ce moment retire la ligne `cover:` de l'article. **Ne pas
+sauvegarder** : choisir une image plus légère, ou annuler (« Cancel ») pour
+revenir à l'état enregistré.
 
 **Garde les couvertures légères — de l'ordre de 30 à 100 Ko.** Sveltia envoie le
 commit par l'API GraphQL de GitHub, avec le fichier encodé en base64 **à
@@ -625,7 +642,7 @@ n'existent qu'avec le vrai backend GitHub. À vérifier une fois, sur
    `dates :` dans la console.
 3. **Image WebP dans le dépôt** : téléverser une couverture (PNG ou JPEG) sur un
    brouillon et sauvegarder ; le dépôt contient `src/content/blog/<slug>/<nom>.webp`
-   (1600 px de large au plus), le frontmatter porte `cover: ./<nom>.webp`, et
+   (1600 px de large au plus), le frontmatter porte `cover: <nom>.webp`, et
    le déploiement passe.
 4. **Duplicate sur disque** : dupliquer un article, lui donner un nouveau titre,
    sauvegarder ; le dépôt contient `src/content/blog/<nouveau-slug>/index.md`
