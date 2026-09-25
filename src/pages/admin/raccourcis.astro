@@ -1,0 +1,121 @@
+---
+/**
+ * Raccourcis de création (plan 22, T4, R12 ; D150), sur `/admin/raccourcis`.
+ * Page autonome comme `/admin/` : pas de `BaseLayout` (ni en-tête, ni pied,
+ * ni recherche, ni script de thème), pas de `data-pagefind-body` (non
+ * indexée), `noindex`, AUCUN script. Seul `global.css` est importé, pour les
+ * tokens et les patrons `.card` / `.pill` (thème clair : sans script, rien ne
+ * pose `data-theme`). Atteinte depuis le README.
+ *
+ * Les bookmarklets (`src/lib/bookmarklets.ts`) sont construits au build
+ * contre `<site>/admin/` (`site` d'astro.config.mjs, l'origine de
+ * production), y compris en dev. Les liens simples sont relatifs : ils
+ * ouvrent le CMS de l'origine qui sert cette page.
+ *
+ * Classes : uniquement des utilitaires déjà employés par le site, pour que la
+ * feuille de style générée ne change pas. Contrôle : `scripts/check-admin.mjs`,
+ * ligne `raccourcis:`.
+ */
+import '../../admin/raccourcis.css';
+import { adminBase, bookmarklets, quickLinks } from '../../lib/bookmarklets';
+
+if (!Astro.site) {
+  throw new Error('admin/raccourcis : `site` absent d’astro.config.mjs — cible des bookmarklets');
+}
+const admin = adminBase(Astro.site);
+const marks = bookmarklets(Astro.site);
+const links = quickLinks();
+const help: Record<string, string> = {
+  idea:
+    'Ouvre un nouvel article en brouillon : titre = texte sélectionné (sinon titre de la page), ' +
+    'description = « Source : » suivi de l’adresse de la page.',
+  prompt:
+    'Ouvre un nouveau prompt en brouillon : le texte sélectionné, sauts de ligne compris, ' +
+    'devient le texte du prompt.',
+};
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>benCat · Raccourcis</title>
+  </head>
+  <body>
+    <main class="mx-auto box-content max-w-shell px-4 sm:px-6">
+      <section class="mx-auto max-w-3xl py-16">
+        <p class="font-mono text-sm text-accent">~/ admin / raccourcis</p>
+        <h1 class="mt-4 font-sans text-4xl font-bold text-ink sm:text-5xl">Raccourcis de création</h1>
+        <p class="mt-4 text-muted">
+          Capturer une idée d’article ou un prompt depuis n’importe quelle page, sans passer par la liste du CMS.
+          Chaque raccourci ouvre un formulaire « nouvelle entrée » pré-rempli, en brouillon ; rien n’est
+          enregistré avant « Enregistrer ».
+        </p>
+      </section>
+
+      <section class="mx-auto max-w-3xl pb-20">
+        <div class="card p-5 sm:p-6">
+          <h2 class="font-sans text-lg leading-snug font-semibold text-ink">Bookmarklets</h2>
+          <p class="mt-2 text-muted">
+            Glisser chaque bouton dans la barre de favoris. Sur une page, sélectionner du texte (facultatif) puis
+            cliquer le favori : le CMS en ligne (<code class="font-mono text-sm">{admin}</code>) s’ouvre dans un
+            nouvel onglet. Il faut y être connecté.
+          </p>
+          <ul class="mt-6 flex flex-wrap gap-2">
+            {
+              marks.map((mark) => (
+                <li>
+                  <a
+                    href={mark.href}
+                    data-bookmarklet={mark.id}
+                    class="pill inline-block text-sm transition-colors hover:ring-1 hover:ring-accent"
+                  >
+                    {mark.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <ul class="mt-6">
+            {
+              marks.map((mark) => (
+                <li class="mt-2 text-sm text-muted">
+                  <span class="font-semibold text-ink">{mark.label}</span> — {help[mark.id]}
+                </li>
+              ))
+            }
+          </ul>
+          <p class="mt-6 text-sm text-muted">
+            Le texte sélectionné et l’adresse de la page voyagent dans le fragment de l’URL (après le dièse) :
+            le navigateur ne les envoie à aucun serveur. Ils n’entrent dans le dépôt que si l’entrée est
+            enregistrée. Une sélection très longue est tronquée (…).
+          </p>
+        </div>
+
+        <div class="card mt-6 p-5 sm:p-6">
+          <h2 class="font-sans text-lg leading-snug font-semibold text-ink">Liens simples</h2>
+          <p class="mt-2 text-muted">
+            Sur mobile, où les bookmarklets sont malcommodes : un formulaire vide, en brouillon.
+          </p>
+          <ul class="mt-6 flex flex-wrap gap-2">
+            {
+              links.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    data-quick-link
+                    class="pill inline-block text-sm transition-colors hover:ring-1 hover:ring-accent"
+                  >
+                    {link.label} →
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
