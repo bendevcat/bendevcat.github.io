@@ -126,3 +126,32 @@ describe('about layout (plan 18 T1, inventory §10)', () => {
     expect(openTags(row2.slice(0, row2.indexOf('<AiPanel')), 'section')).toHaveLength(2);
   });
 });
+
+// T5 (R8 ; D121 ; plan 17 v2, constat 1) : à 1024×768 et 1280×800, l'anneau de
+// focus du dernier lien de la colonne collante d'une fiche skill (décalage 2 +
+// trait 2) dépassait le bas de la zone de défilement de 3,8 px. Un
+// `scroll-padding-bottom` d'au moins 6 px (8 : `lg:scroll-pb-2`) à partir de
+// 1024 px — là seulement où la colonne défile — fait défiler le focus assez
+// loin pour que l'anneau reste dans le scrollport.
+/** Largeur en px d'une classe d'espacement Tailwind (`2` → 8, `[6px]` → 6). */
+function spacingPx(value: string): number {
+  const arbitrary = value.match(/^\[(\d+(?:\.\d+)?)px\]$/);
+  if (arbitrary) return Number(arbitrary[1]);
+  return /^\d+(?:\.\d+)?$/.test(value) ? Number(value) * 4 : NaN;
+}
+
+describe('skill aside (plan 18 T5)', () => {
+  it("pads the sticky skill column's scroll by at least 6 px at the bottom", () => {
+    const page = markupOf(read('pages/skills/[...slug].astro'));
+    const asides = openTags(page, 'aside').filter((tag) => tag.includes('data-skill-aside'));
+    expect(asides).toHaveLength(1);
+    const classes = classesOf(asides[0]);
+    // La colonne défile à partir de 1024 px seulement.
+    expect(classes).toEqual(expect.arrayContaining(['lg:sticky', 'lg:max-h-[calc(100vh-40px)]', 'lg:overflow-y-auto']));
+    const pads = classes.filter((c) => /^(?:[a-z]+:)*scroll-p[by]?-/.test(c));
+    expect(pads, 'une seule marge de défilement basse, à partir de lg').toHaveLength(1);
+    const match = pads[0].match(/^lg:scroll-p[by]-(.+)$/);
+    expect(match, pads[0]).toBeTruthy();
+    expect(spacingPx(match![1])).toBeGreaterThanOrEqual(6);
+  });
+});
