@@ -151,3 +151,26 @@ Exit 1 if a line differs (e.g. a `<link rel="stylesheet">` or the site header in
 | R18 | proven | 428 passed, 0 failed; `0 errors`; 51 site pages byte-identical to base; 12 other `check-*.mjs` identical; frozen `git diff --stat` empty |
 
 Findings outside criteria (attempt 1): (1) **high** `src/admin/dev/testRepo.test.ts:103` hard-codes `toBe(13)` — any CMS create/delete turns `npm test` red and CI blocks the deploy; (2) **medium** deleting `gha-svu` or `bootstrap-session-anti-drift` through the CMS turns 6 content-pinning tests red (`projectContent.test.ts` ×2, `promptContent.test.ts` ×4) — CI blocks the deploy although `npm run build` is green; the same pins block ordinary CMS edits of those entries; (3) low: `bienvenue-dans-mon-foutoir` body images requested at the site root in the preview (404 ×3) — plan 21 input; (4) low: a save rewrites the whole frontmatter — plan 21 input; (5) info: `dist/` 9.9 → 26 MB (admin-only chunks), Sveltia fetches `githubstatus.com` on load.
+
+### Verification attempt 2 (tip `033ea7b`) — 19/19 proven
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| R0 | proven | cold cache (`rm -rf node_modules/.vite`): `@sveltia_cms.js` pre-bundled at start, no reload, no 504; fresh tab: `/admin/` 3 sign-in buttons; `?test-repo` board 6/2/3/2 (`Parsed 13 entries (0 errors)`), k9s preview opens; preview build `/admin/` and `?test-repo` 3 buttons, logs `[200] /admin/` only |
+| R1, R2 | proven | tests re-run; attempt-1 mutations carried (files untouched by F1–F3) |
+| R3 | proven | `Indexed 12 pages`, check-admin 6 lines exit 0 |
+| R4 | proven | dev `curl /admin/` 200 + noindex; config `cmp` identical |
+| R5 | proven | as R0; headless sidebar 6/2/3/2 |
+| R6 | proven | preview `?test-repo`: same 3 buttons, OPFS `[]` |
+| R7 | proven | dev built-in browser: 0 request ≥ 400 (tab-6, tab-8), 0 console error in tab-8; headless cold: 130 responses, 0 bad, 0 console error; preview: 0 bad, 0 error. One `AbortError: Transition was skipped` once in tab-6 = Sveltia view transition skipped while the pane was hidden (`visibilityState: hidden`), not reproduced in 3 clicks, tab-8 or headless |
+| R8 | proven | tests re-run |
+| R9 | proven | k9s preview: bg `rgb(241, 244, 247)`, `<p>` `rgb(40, 50, 61)`, Nebula Sans 400/700 `loaded` |
+| R10 | proven | 29 `<pre>`, **28** coloured `pre.shiki` (the 29th is a plain block) — Sveltia colours code natively: yes (count corrected from attempt 1) |
+| R11–R13 | proven | tests re-run; mutations carried |
+| R12 | proven | `25 +---`, `2 -***`, `23 -- - -`, 4 files |
+| R14 | proven | carried (F1 moves pre-bundling only; `hooks.ts`, `thematicBreaks.ts` load 200) |
+| R15 | proven | tests re-run |
+| R16 | proven | browser deletions carried; scratch tip with the 4 entries deleted and emptied relations dropped: `npm test` 423 passed, `npm run check` 0 errors, `npm run build` exit 0 (45 pages) — the full `deploy.yml` sequence |
+| R17 | proven | greps 0 · 2 · 3 · 3 · 0; `---` rule and guard named; « Supprimer une entrée » states CI runs `npm test` and the remaining rules |
+| R18 | proven | `npx vitest run --no-cache` 423 passed, 0 failed; `0 errors`; 51 site pages raw byte-identical to a fresh base build; 12 other checks identical; frozen diff empty |
+
+Mutations (attempt 2): 11 planted defects, each turns exactly one test red (variable removed, `No content` in a prompt / a skill body, version without changelog row, role not verbatim, role outside stack, seed glob missing `skills`, asset glob `.jpg` only, snippet line changed, e-mail in an excerpt, `optimizeDeps.include` removed). Findings outside criteria: remaining content rules can still block a deploy after some CMS edits (D133, README); the `No content` rule matches the phrase anywhere in a body.
