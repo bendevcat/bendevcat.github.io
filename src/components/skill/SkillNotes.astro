@@ -1,0 +1,26 @@
+---
+/**
+ * SkillNotes.astro (plan 17, T4 ; D117) — carte « En détail », dernier bloc
+ * de la colonne de gauche : le corps de la fiche (texte de l'auteur), omis
+ * quand il est blanc. Indexée par la recherche.
+ *
+ * `.card` rayon 18, padding 26/28, ombre `var(--shadow)` en style écrit ;
+ * h2 17 px / 600 `ink` ; le corps (slot) en `.prose`. `.prose` est hors
+ * couche et l'emporterait sur un utilitaire simple — d'où le `!` qui retire
+ * la marge haute de son premier bloc.
+ *
+ * Crochet lu par scripts/check-skill.mjs : `data-skill-notes`.
+ */
+---
+
+<section
+  class="card rounded-aside px-7 py-[26px]"
+  style="box-shadow: var(--shadow);"
+  aria-labelledby="skill-notes"
+  data-skill-notes
+>
+  <h2 id="skill-notes" class="font-sans text-[17px] leading-snug font-semibold text-ink">En détail</h2>
+  <div class="prose mt-4 [&>:first-child]:mt-0!">
+    <slot />
+  </div>
+</section>

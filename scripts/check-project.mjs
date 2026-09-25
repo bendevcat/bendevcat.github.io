@@ -13,7 +13,7 @@
  *   <id> stack: <nom> (logo|<monogramme>)[ · <rôle>] | …
  *   <id> window: <fichier> · <n> lines · <yaml|text> · <n> Copier · code = snippet      (ou `—`)
  *   links: every internal href resolves in dist/
- *   search: <n> fragments · title and prose indexed · sidebar, window and panel labels not indexed
+ *   search: <n> fragments · title and prose indexed · tab row, sidebar, window and panel labels not indexed
  *
  * Les fiches sont lues dans l'ordre des noms de dossier de `dist/projets/`
  * (une par `<id>/index.html`) ; chaque entrée `[data-entry-id]` de
@@ -41,15 +41,18 @@
  *   l'inverse), sa puce ≠ `snippetFile`, les numéros de la gouttière ne sont
  *   pas 1…n (n = lignes du `<code>`), le texte du `<code>` + `\n` ≠ le
  *   `snippet` du frontmatter, ou elle n'a pas exactement un `Copier` ;
- * - l'`<aside>`, la fenêtre de code ou un libellé de panneau
- *   (`[data-panel-label]`) n'est pas `data-pagefind-ignore` ;
+ * - la rangée d'onglets (`role="tablist"`), l'`<aside>`, la fenêtre de code
+ *   ou un libellé de panneau (`[data-panel-label]`) n'est pas
+ *   `data-pagefind-ignore` ;
  * - un `href` interne (requête retirée) ne résout pas dans `dist/`, ou une
  *   ancre `#id` de la page n'y existe pas ;
  * - son fragment Pagefind (`dist/pagefind/fragment/*.pf_fragment`, gunzip,
  *   JSON après `pagefind_dcd` — comme scripts/check-article.mjs) manque, ne
  *   contient pas le titre ou la première phrase de la prose, ou contient
  *   `tous les projets`, `code source`, `Copier`, `ce qui fait tourner`,
- *   `écrit à propos` ou `Le projet en bref`.
+ *   `écrit à propos`, `Le projet en bref` ou les libellés de la rangée
+ *   d'onglets mis bout à bout, effectifs compris (`Aperçu Stack 4 …` —
+ *   plan 17, F3).
  *
  * Balisage lu : src/pages/projets/[...slug].astro, src/components/project/*,
  * src/components/DetailTabs.astro et src/components/Thumbnail.astro.
@@ -321,6 +324,11 @@ for (const id of ids) {
     }),
   );
   info.tabs = tabs.length > 0 ? tabs.map((tab) => squash(tab.text)).join(' | ') : '(aucune rangée)';
+  // Plan 17, F3 : les libellés d'onglets n'entrent pas dans l'index.
+  for (const tablist of inRoot.filter((el) => el.attrs.role === 'tablist')) {
+    if (!ignored(tablist)) fail('rangée d\'onglets (role="tablist") sans data-pagefind-ignore');
+  }
+  if (tabs.length > 0) info.tabRow = tabs.map((tab) => squash(tab.text)).join(' ');
   if (tabInfo.get('apercu')?.count != null) fail('Aperçu porte un effectif');
 
   // Libellés de panneau.
@@ -541,7 +549,7 @@ for (const info of projects) {
     titleAndProse = false;
     errors.push(`${info.route} : le fragment ne contient pas « ${info.firstSentence ?? '—'} »`);
   }
-  for (const text of FORBIDDEN_IN_INDEX) {
+  for (const text of [...FORBIDDEN_IN_INDEX, info.tabRow].filter(Boolean)) {
     if (content.includes(text)) {
       clean = false;
       errors.push(`${info.route} : le fragment contient « ${text} »`);
@@ -549,7 +557,7 @@ for (const info of projects) {
   }
 }
 lines.push(
-  `search: ${indexed} fragments · ${titleAndProse ? 'title and prose indexed' : 'title or prose missing'} · ${clean ? 'sidebar, window and panel labels not indexed' : 'sidebar, window or panel labels indexed'}`,
+  `search: ${indexed} fragments · ${titleAndProse ? 'title and prose indexed' : 'title or prose missing'} · ${clean ? 'tab row, sidebar, window and panel labels not indexed' : 'tab row, sidebar, window or panel labels indexed'}`,
 );
 
 for (const line of lines) console.log(line);

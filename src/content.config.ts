@@ -109,6 +109,34 @@ const skills = defineCollection({
     license: z.string().optional(),
     repoUrl: z.string().url().optional(),
     installCmd: z.string().optional(),
+    // Plan 17 (D115, D116) : champs de la fiche skill, tous facultatifs et
+    // remplis uniquement depuis le plugin réel (contrôle local :
+    // scripts/check-skill-sources.mjs ; invariants CI : src/lib/skillContent.test.ts).
+    // Comptes lus dans l'arbre du plugin (`skills/*/SKILL.md`, `commands/*.md`).
+    skillCount: z.number().int().min(0).optional(),
+    commandCount: z.number().int().min(0).optional(),
+    // Note sous les étapes de la fenêtre d'installation, citée d'une source.
+    installNote: z.string().optional(),
+    // `Ce que fait ce skill` : phrases citées de la doc du plugin ou du corps.
+    highlights: z.array(z.string()).optional(),
+    // Onglet déclencheurs : phrases citées des descriptions SKILL.md / README.
+    triggers: z.array(z.string()).optional(),
+    // Onglet versions, du plus récent au plus ancien ; `maj.` = date de la
+    // ligne de `version` (pas de champ `updated`, D117).
+    changelog: z.array(z.object({
+      version: z.string(),
+      date: z.coerce.date(),
+      text: z.string(),
+    })).optional(),
+    // Explorateur : extrait = premières lignes verbatim (≤ 16, arrêt avant la
+    // première ligne portant une adresse e-mail) ; `lines` = total du fichier.
+    files: z.array(z.object({
+      path: z.string(),
+      lines: z.number().int().positive(),
+      excerpt: z.string(),
+    })).optional(),
+    // Révision des fichiers : commit (`3dc3336`) ou version (`6.4.1`).
+    filesSource: z.string().optional(),
     draft: z.boolean().default(false),
     relatedPrompts: z.array(reference('prompts')).optional(),
   }),

@@ -8,6 +8,197 @@ license: MIT
 installCmd: "claude plugin marketplace add ~/workspace/anti-drift-planning && claude plugin install anti-drift-planning@anti-drift-marketplace"
 tags: [anti-drift, planification, claude-code, méthodologie]
 relatedPrompts: [bootstrap-session-anti-drift, decouper-un-projet-en-plans-anti-drift]
+skillCount: 1
+commandCount: 7
+installNote: "La commande d'installation de cette fiche n'est pas exécutable en l'état."
+highlights:
+  - "Specs binaires. Chaque spec a une table de critères de succès avec une mesure pass/fail par exigence"
+  - "Anti-arbitrage silencieux. Toute déviation est loggée avant d'être exécutée"
+  - "Scope ledger. Un fichier par plan suit chaque exigence"
+  - "Phase de vérification. La dernière phase de chaque plan est /anti-drift-planning:verify <N>"
+  - "Invariants mécaniques. Ce qui est comptable est compté par du code"
+triggers:
+  - "roadmap"
+  - "split into plans"
+  - "multi-phase feature"
+  - "avoid drift"
+  - "session per plan"
+  - "ne rien perdre entre les sessions"
+  - "decompose into specs"
+changelog:
+  - version: "0.4.0"
+    date: 2026-07-31
+    text: "Lock 5 — mechanical invariants"
+  - version: "0.3.0"
+    date: 2026-06-27
+    text: "Session chaining: /anti-drift-planning:verify N on a PASS verdict now emits the next actionable step automatically"
+  - version: "0.2.0"
+    date: 2026-06-11
+    text: "Binary deviation test in the bootstrap prompt"
+  - version: "0.1.0"
+    date: 2026-05-10
+    text: "Initial scaffold: plugin manifest, anti-drift-planning skill, 4 commands"
+filesSource: "3dc3336"
+files:
+  - path: .claude-plugin/plugin.json
+    lines: 20
+    excerpt: |-
+      {
+        "name": "anti-drift-planning",
+        "description": "Drift-resistant multi-session planning methodology — 5 locks (binary specs, anti-silent-arbitrage, scope ledger, verification phase, mechanical lint) for shipping multi-phase projects without losing scope between sessions",
+        "version": "0.4.0",
+        "author": {
+          "name": "bendevcat",
+  - path: commands/init.md
+    lines: 31
+    excerpt: |-
+      ---
+      description: Bootstrap the anti-drift methodology + folder structure in the current project. Creates <base>/{specs,plans,handoffs}/ (default docs/anti-drift/) and writes the methodology spec.
+      allowed-tools: ["Read", "Write", "Bash", "Glob", "AskUserQuestion", "Skill"]
+      ---
+
+      # `/anti-drift-planning:init` — bootstrap a project
+
+      Bootstraps this project to use the anti-drift planning methodology.
+
+      ## Steps
+
+      1. **Load the `anti-drift-planning` skill** first to absorb the methodology context.
+      2. **Check current state** of the project — git status, existing `docs/` structure, CLAUDE.md if any. If a methodology spec already exists anywhere under `docs/*/specs/*-methodology.md`, abort with a clear message instead of overwriting (this command is idempotent).
+      3. **Ask the user** (via `AskUserQuestion`):
+         - What is the project's high-level vision or current gap to close?
+         - Where should specs/plans/handoffs live? Default: `docs/anti-drift/`
+  - path: commands/lint.md
+    lines: 53
+    excerpt: |-
+      ---
+      description: Check the mechanical invariants of the plan artifacts — spec/ledger coverage, deviation references, status vocabularies, required files, unfilled placeholders. Reports only; exits non-zero on any violation.
+      allowed-tools: ["Bash", "Read", "Glob"]
+      ---
+
+      # `/anti-drift-planning:lint [N]` — check the mechanical invariants
+
+      Methodology lock 5: what is countable is counted by code, not by prose review. This
+      command runs that code. It never asks the user anything and never edits a file.
+
+      ## Argument
+
+      - `[N]` — optional plan number. Omitted, every plan in the roster is checked.
+
+      ## Steps
+  - path: commands/new-plan.md
+    lines: 36
+    excerpt: |-
+      ---
+      description: Write a new plan spec from the anti-drift template. Args - N (plan number) and topic (kebab-case). Prompts the user for goal, success criteria, and scope.
+      allowed-tools: ["Read", "Write", "Bash", "Glob", "AskUserQuestion", "Skill"]
+      ---
+
+      # `/anti-drift-planning:new-plan <N> <topic>` — author a new plan spec
+
+      Generate a new plan spec following the anti-drift binary-criteria format.
+
+      ## Arguments
+
+      - `<N>` — plan number (e.g., `5`)
+      - `<topic>` — kebab-case short label (e.g., `agents-and-chat`)
+
+      ## Steps
+  - path: commands/resume.md
+    lines: 30
+    excerpt: |-
+      ---
+      description: Regenerate a resume prompt for a plan interrupted mid-execution (handoff). Reads the ledger to find where to continue. Outputs a ready-to-paste prompt.
+      allowed-tools: ["Read", "Bash", "Glob"]
+      ---
+
+      # `/anti-drift-planning:resume <N>` — resume an interrupted plan
+
+      Produce the prompt to paste as the first message of a fresh session that CONTINUES plan N from where the last session stopped (handoff: low context, or an `expensive` deviation that blocked progress).
+
+      ## Argument
+
+      - `<N>` — plan number to resume
+
+      ## Steps
+
+      1. **Resolve the base dir:** glob `docs/*/specs/*-methodology.md`. If no match, instruct the user to run `/anti-drift-planning:init` first and stop.
+  - path: commands/start-session.md
+    lines: 36
+    excerpt: |-
+      ---
+      description: Generate the bootstrap prompt for a fresh execution session of plan N. Outputs a ready-to-paste prompt with paths and substitutions filled in.
+      allowed-tools: ["Read", "Bash", "Glob"]
+      ---
+
+      # `/anti-drift-planning:start-session <N>` — prepare a fresh execution session
+
+      Produce the bootstrap prompt to paste as the first message of a new Claude Code session for plan N.
+
+      ## Argument
+
+      - `<N>` — plan number to execute
+
+      ## Steps
+
+      1. **Resolve the base dir:** glob `docs/*/specs/*-methodology.md`. If no match, instruct the user to run `/anti-drift-planning:init` first and stop.
+  - path: commands/status.md
+    lines: 36
+    excerpt: |-
+      ---
+      description: Cross-plan dashboard — per-plan ledger status, deviations, and milestone tags. Announces project completion when every plan has shipped clean.
+      allowed-tools: ["Read", "Bash", "Glob"]
+      ---
+
+      # `/anti-drift-planning:status` — cross-plan dashboard & project-end audit
+
+      Show the status of every plan in the project, and announce the project complete when all plans have shipped through Phase Z with zero pending decisions.
+
+      ## Steps
+
+      1. **Resolve the base dir:** glob `docs/*/specs/*-methodology.md`. If no match, instruct the user to run `/anti-drift-planning:init` first and stop.
+      2. **Read the decomposition roster:** parse §4 of the methodology spec (the plan table). This is the authoritative list of planned plans. If §4 is empty, report "no plans defined yet — run `/anti-drift-planning:new-plan 1 <topic>`" and stop.
+      3. **For each plan N in the roster:**
+         - Locate the spec: glob `<base>/specs/*-plan-<N>-*.md`. If missing → status `not started (no spec)`.
+         - Locate the ledger: `<base>/handoffs/plan-<N>-ledger.md`. If missing → status `not started`.
+  - path: commands/verify.md
+    lines: 70
+    excerpt: |-
+      ---
+      description: Run the Phase Z verification audit for plan N. Runs the mechanical lint first, re-reads spec, marks every requirement Done/Deferred/Cut, checks deviations log has zero pending-user, runs the test suite, prompts for user-story walkthrough.
+      allowed-tools: ["Read", "Edit", "Write", "Bash", "Glob", "AskUserQuestion", "Skill"]
+      ---
+
+      # `/anti-drift-planning:verify <N>` — run the Phase Z audit
+
+      Execute the verification phase of plan N. **This command is the canonical implementation of Phase Z** (methodology lock 4) — the five audit steps live here and nowhere else. Non-skippable; the only path to the release script and the milestone tag.
+
+      ## Argument
+
+      - `<N>` — plan number to verify
+
+      ## Steps
+
+      1. **Load the `anti-drift-planning` skill** for context.
+  - path: skills/anti-drift-planning/SKILL.md
+    lines: 90
+    excerpt: |-
+      ---
+      name: anti-drift-planning
+      description: Use when a project must ship multiple features across separate sessions and the user wants to avoid silent scope cuts, invisible work-in-progress, or work going missing between sessions. Triggers on "roadmap", "split into plans", "multi-phase feature", "avoid drift", "session per plan", "ne rien perdre entre les sessions", "decompose into specs", or when a previously shipped milestone silently missed planned scope.
+      ---
+
+      # Anti-Drift Planning
+
+      A methodology for shipping multi-phase projects across separate Claude Code sessions without losing scope, silently cutting features, or shipping incomplete work.
+
+      ## When to use this skill
+
+      Activate when:
+
+      - The project's vision is significantly larger than one session can ship (multiple features, multiple subsystems)
+      - The user is recovering from a previous cycle where work was lost silently
+      - The user will run 2+ plan execution sessions sequentially and each must know what came before
 ---
 
 Un plugin Claude Code — une skill et sept commandes — pour livrer un projet en

@@ -1,0 +1,82 @@
+---
+/**
+ * SkillHeader.astro (plan 17, T4 ; inventaire §8 ; prototype 795–923) —
+ * l'en-tête de la fiche skill, sans carte, posé sur le fond de page.
+ *
+ * - Colonne, écart 12.
+ * - Fil d'Ariane mono 13, hors index de recherche : `~/ skills` (lien
+ *   `/skills/`, `accent`) puis ` / <name ?? id>` `muted`.
+ * - h1 36 px / 700 `ink`.
+ * - Description 16.5 px `muted`, 660 px au plus ; `lang="en"` quand elle est
+ *   citée en anglais (quoteLang ; plan 17, F4, WCAG 3.1.2).
+ * - Rangée méta mono 11 qui passe à la ligne : pilule de type
+ *   (`accentSoft` / `accent`), pilules `v<version>` et licence (`chip` /
+ *   `muted`, chacune omise sans valeur), `· <résumé>` — le résumé de la carte
+ *   de `/skills/` (skillCardData, src/lib/listCards.ts) —, `· maj. <date>`
+ *   (fr-FR long, UTC ; skillUpdated / updatedLabel). Chaque emplacement est
+ *   omis sans valeur.
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-skill-back`,
+ * `data-skill-meta`, `data-meta-field`. Une `div` et pas un `<header>` : la
+ * page n'a qu'un `<header>`, celui du site.
+ */
+import { quoteLang } from '../../lib/skillDetail';
+
+interface Props {
+  id: string;
+  title: string;
+  name?: string;
+  description: string;
+  type: string;
+  /** `v<version>` ou `null`. */
+  version: string | null;
+  license: string | null;
+  /** `N skill(s) · N commande(s) · N prompt(s)` ou `null`. */
+  summary: string | null;
+  /** Date `maj.`, ou `null`. */
+  updated: Date | null;
+  /** `18 septembre 2026`, ou `null`. */
+  updatedLabel: string | null;
+}
+
+const { id, title, name, description, type, version, license, summary, updated, updatedLabel } = Astro.props;
+const CHIP = 'rounded-pill px-2 py-1 leading-none';
+---
+
+<div class="flex flex-col gap-3" data-skill-header>
+  <p class="font-mono text-[13px] text-muted" data-pagefind-ignore>
+    <a href="/skills/" class="text-accent underline-offset-4 hover:underline" data-skill-back>~/ skills</a><span
+      data-skill-crumb> / {name ?? id}</span
+    >
+  </p>
+  <h1 class="font-sans text-[36px] leading-[1.15] font-bold tracking-[-.03em] text-pretty text-ink">{title}</h1>
+  <p
+    lang={quoteLang(description) === 'en' ? 'en' : undefined}
+    class="max-w-[660px] font-sans text-[16.5px] leading-[1.6] text-pretty text-muted"
+  >
+    {description}
+  </p>
+  <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 font-mono text-[11px] text-muted" data-skill-meta>
+    <span class={`${CHIP} bg-accentSoft text-accent`} data-meta-field="type">{type}</span>
+    {version && <span class={`${CHIP} bg-chip text-muted`} data-meta-field="version">{version}</span>}
+    {license && <span class={`${CHIP} bg-chip text-muted`} data-meta-field="license">{license}</span>}
+    {
+      summary && (
+        <span>
+          <span aria-hidden="true">· </span>
+          <span data-meta-field="summary">{summary}</span>
+        </span>
+      )
+    }
+    {
+      updated && updatedLabel && (
+        <span>
+          <span aria-hidden="true">· </span>maj.{' '}
+          <time datetime={updated.toISOString().slice(0, 10)} data-meta-field="updated">
+            {updatedLabel}
+          </time>
+        </span>
+      )
+    }
+  </div>
+</div>

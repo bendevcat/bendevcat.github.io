@@ -1,0 +1,44 @@
+---
+/**
+ * SkillVersions.astro (plan 17, T4 ; inventaire §8) — panneau `versions` de
+ * la colonne de la fiche skill. Hors index de recherche.
+ *
+ * `Notes de version` 13 / 600 `ink` ; une rangée par ligne du journal, dans
+ * l'ordre stocké (la plus récente d'abord), séparées d'un filet `line2` :
+ * version mono 11 `accent` (44 px au moins), texte 12.5 px `body`
+ * (`lang="en"`, cité tel quel), date mono 10 `muted` `18 sept. 2026`
+ * (versionDate, fr-FR court, UTC).
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-skill-versions`,
+ * `data-version-row`.
+ */
+import { versionDate, type ChangelogRow } from '../../lib/skillDetail';
+
+interface Props {
+  changelog: ChangelogRow[];
+}
+
+const { changelog } = Astro.props;
+---
+
+<div data-skill-versions data-pagefind-ignore>
+  <p class="font-sans text-[13px] font-semibold text-ink">Notes de version</p>
+  <ol class="mt-3 flex flex-col">
+    {
+      changelog.map((row) => (
+        <li
+          class="flex items-baseline gap-3 border-t border-line2 py-2.5 first:border-t-0 first:pt-0 last:pb-0"
+          data-version-row={row.version}
+        >
+          <span class="min-w-[44px] shrink-0 font-mono text-[11px] text-accent">{row.version}</span>
+          <span lang="en" class="min-w-0 flex-1 font-sans text-[12.5px] leading-[1.5] [overflow-wrap:anywhere] text-body">
+            {row.text}
+          </span>
+          <time datetime={row.date.toISOString().slice(0, 10)} class="shrink-0 font-mono text-[10px] whitespace-nowrap text-muted">
+            {versionDate(row.date)}
+          </time>
+        </li>
+      ))
+    }
+  </ol>
+</div>

@@ -5,7 +5,7 @@ import {
   nextTabIndex,
   projectTabs,
   promptPageTabs,
-  skillTabs,
+  skillPageTabs,
   type Tab,
 } from './detailTabs';
 
@@ -112,19 +112,33 @@ describe('promptPageTabs', () => {
   });
 });
 
-describe('skillTabs', () => {
-  it('lists Aperçu then Infos when the body is not blank', () => {
-    expect(labels(skillTabs({ body: 'Ce que fait la skill.' }))).toEqual(['Aperçu', 'Infos']);
+// Les noms de tests cités par R4 (plan 17) sont repris MOT POUR MOT.
+describe('skillPageTabs', () => {
+  const ids = (tabs: Tab[]) => tabs.map((tab) => tab.id);
+
+  it('gives a skill déclencheurs, versions and infos in that order when fed', () => {
+    const tabs = skillPageTabs({ triggerCount: 7, changelogCount: 4 });
+    expect(labels(tabs)).toEqual(['déclencheurs', 'versions', 'infos']);
+    expect(ids(tabs)).toEqual(['declencheurs', 'versions', 'infos']);
+    // Piste de pastilles : pas de compteur.
+    expect(tabs.every((tab) => tab.count === undefined)).toBe(true);
+    expect(hasTabRow(tabs)).toBe(true);
   });
 
-  it('omits Aperçu when the body is blank', () => {
-    expect(labels(skillTabs({ body: '\n\n' }))).toEqual(['Infos']);
-    expect(labels(skillTabs({ body: undefined }))).toEqual(['Infos']);
+  it('omits déclencheurs without triggers and versions without changelog', () => {
+    expect(labels(skillPageTabs({ triggerCount: 0, changelogCount: 3 }))).toEqual(['versions', 'infos']);
+    expect(labels(skillPageTabs({ triggerCount: 2, changelogCount: 0 }))).toEqual(['déclencheurs', 'infos']);
+    const alone = skillPageTabs({ triggerCount: 0, changelogCount: 0 });
+    expect(labels(alone)).toEqual(['infos']);
+    expect(hasTabRow(alone)).toBe(false);
   });
 
-  it('always lists Infos', () => {
-    expect(labels(skillTabs({ body: 'x' }))).toContain('Infos');
-    expect(labels(skillTabs({ body: '' }))).toContain('Infos');
+  it('never gives a skill an apercu tab', () => {
+    for (const triggerCount of [0, 1]) {
+      for (const changelogCount of [0, 1]) {
+        expect(ids(skillPageTabs({ triggerCount, changelogCount }))).not.toContain('apercu');
+      }
+    }
   });
 });
 

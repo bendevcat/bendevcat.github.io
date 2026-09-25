@@ -11,7 +11,9 @@
  *   <famille>/<slug>: Label | Label        (ou `(panneau unique)`)
  *
  * Code de sortie 1 (erreurs détaillées sur stderr) si une page viole R2/R8 :
- * - exactement un `role="tablist"`, avec un `aria-label` non vide ;
+ * - exactement un `role="tablist"`, avec un `aria-label` non vide et
+ *   `data-pagefind-ignore` (plan 17, F3 : les libellés d'onglets n'ont rien
+ *   à faire dans l'index de recherche, quelle que soit la variante) ;
  * - chaque `role="tab"` est un <button> dont `aria-controls` nomme un
  *   `role="tabpanel"` existant, dont `aria-labelledby` nomme cet onglet ;
  * - autant d'onglets que de panneaux ;
@@ -139,7 +141,10 @@ function checkPage(family, html) {
   }
 
   if (tablists.length !== 1) errors.push(`${tablists.length} role="tablist" (attendu : 1)`);
-  else if (!tablists[0].attrs['aria-label']?.trim()) errors.push('role="tablist" sans aria-label');
+  else {
+    if (!tablists[0].attrs['aria-label']?.trim()) errors.push('role="tablist" sans aria-label');
+    if (!('data-pagefind-ignore' in tablists[0].attrs)) errors.push('role="tablist" sans data-pagefind-ignore');
+  }
 
   if (tabs.length !== panels.length) {
     errors.push(`${tabs.length} onglet(s) pour ${panels.length} panneau(x)`);
@@ -219,13 +224,20 @@ function layerBlocks(css, name) {
 const ASTRO = join(DIST, '_astro');
 const cssFiles = existsSync(ASTRO) ? readdirSync(ASTRO).filter((file) => file.endsWith('.css')) : [];
 const base = cssFiles.map((file) => layerBlocks(readFileSync(join(ASTRO, file), 'utf8'), 'base')).join('');
-const noJsRule =
-  /html:not\(\[data-js\]\) \[data-detail-tabs\] \[role="?tabpanel"?\]\[hidden\]\{display:block!important\}/;
+// Le minifieur regroupe les règles voisines aux déclarations identiques
+// (plan 17 : le repli de l'explorateur de la fiche skill a la même
+// déclaration) : le sélecteur est cherché dans la liste de chaque règle.
+const noJsSelector = /^html:not\(\[data-js\]\) \[data-detail-tabs\] \[role="?tabpanel"?\]\[hidden\]$/;
+const noJsRule = [...base.matchAll(/([^{}]+)\{([^{}]*)\}/g)].some(
+  ([, selectors, declarations]) =>
+    declarations.trim() === 'display:block!important' &&
+    selectors.split(',').some((selector) => noJsSelector.test(selector.trim())),
+);
 if (!base.includes('[hidden]:where(')) {
   console.error('  ✗ CSS — preflight `[hidden]` introuvable dans @layer base');
   failed = true;
 }
-if (!noJsRule.test(base)) {
+if (!noJsRule) {
   console.error('  ✗ CSS — repli sans JS des panneaux absent de @layer base (R9) : le preflight [hidden] le masque');
   failed = true;
 }

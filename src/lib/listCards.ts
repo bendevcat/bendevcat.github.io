@@ -103,6 +103,31 @@ export function relatedPromptsSummary(
   return `${count} ${count === 1 ? 'prompt' : 'prompts'}`;
 }
 
+/** `1 skill`, `7 commandes`… ; `null` à 0 ou sans valeur (la partie disparaît). */
+function countPart(count: number | undefined, singular: string, plural: string): string | null {
+  if (!count || count <= 0) return null;
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+/**
+ * Résumé de contenu d'une skill (plan 17, D117) — partagé par la carte de
+ * `/skills/` et l'en-tête de la fiche : `N skill(s) · N commande(s) ·
+ * N prompt(s)`, dans cet ordre, chaque partie omise à 0 ou sans valeur ;
+ * `null` quand aucune ne reste. Les prompts sont les prompts liés PUBLIÉS
+ * (relatedPromptsSummary).
+ */
+export function skillContentSummary(
+  data: { skillCount?: number; commandCount?: number },
+  related: readonly { data: { draft?: boolean } }[] | undefined,
+): string | null {
+  const parts = [
+    countPart(data.skillCount, 'skill', 'skills'),
+    countPart(data.commandCount, 'commande', 'commandes'),
+    relatedPromptsSummary(related),
+  ].filter((part): part is string => part !== null);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
 export interface SkillCardData {
   type: string;
   license: string | null;
@@ -110,12 +135,19 @@ export interface SkillCardData {
   version: string | null;
   /** La commande d'installation telle qu'écrite, ou `null`. */
   install: string | null;
-  /** `N prompt(s)` ou `null`. */
+  /** `N skill(s) · N commande(s) · N prompt(s)` ou `null` (skillContentSummary). */
   summary: string | null;
 }
 
 export function skillCardData(
-  data: { type: string; license?: string; version?: string; installCmd?: string },
+  data: {
+    type: string;
+    license?: string;
+    version?: string;
+    installCmd?: string;
+    skillCount?: number;
+    commandCount?: number;
+  },
   related: readonly { data: { draft?: boolean } }[] | undefined,
 ): SkillCardData {
   return {
@@ -124,7 +156,7 @@ export function skillCardData(
     version: versionSlot(data.version),
     // Telle qu'écrite (check-lists compare la carte à `installCmd`).
     install: data.installCmd?.trim() ? data.installCmd : null,
-    summary: relatedPromptsSummary(related),
+    summary: skillContentSummary(data, related),
   };
 }
 

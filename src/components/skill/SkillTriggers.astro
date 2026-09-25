@@ -1,0 +1,35 @@
+---
+/**
+ * SkillTriggers.astro (plan 17, T4 ; inventaire §8) — panneau `déclencheurs`
+ * de la colonne de la fiche skill. Indexé par la recherche.
+ *
+ * `Quand il se déclenche` 13 / 600 `ink` ; intro 12.5 px `muted` ; chaque
+ * déclencheur une boîte `code` rayon 10 (`rounded-thumb`), padding 10/12,
+ * mono 12 `ink`, entre guillemets français `« … »`, `lang` de la citation
+ * (quoteLang : `en`, sauf une phrase française).
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-skill-triggers`,
+ * `data-trigger`.
+ */
+import { quoteLang } from '../../lib/skillDetail';
+
+interface Props {
+  triggers: string[];
+}
+
+const { triggers } = Astro.props;
+---
+
+<div data-skill-triggers>
+  <p class="font-sans text-[13px] font-semibold text-ink">Quand il se déclenche</p>
+  <p class="mt-1 font-sans text-[12.5px] leading-[1.5] text-muted">Cité de la documentation du plugin.</p>
+  <ul class="mt-3 flex flex-col gap-2">
+    {
+      triggers.map((trigger) => (
+        <li class="rounded-thumb bg-code px-3 py-2.5 font-mono text-[12px] leading-[1.5] [overflow-wrap:anywhere] text-ink">
+          «&nbsp;<span lang={quoteLang(trigger)} data-trigger>{trigger}</span>&nbsp;»
+        </li>
+      ))
+    }
+  </ul>
+</div>

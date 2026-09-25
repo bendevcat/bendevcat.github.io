@@ -14,6 +14,11 @@ document.querySelectorAll<HTMLPreElement>('article pre').forEach((pre) => {
   // Plan 16 : idem pour la fenêtre du prompt (`[data-prompt-window]`,
   // PromptWindow.astro), câblée par src/scripts/prompt-window.ts.
   if (pre.closest('[data-prompt-window]')) return;
+  // Plan 17 : les aperçus de l'explorateur de la fiche skill
+  // (`[data-skill-explorer]`, FileExplorer.astro) sont des extraits de
+  // lecture, pas du code à copier — la commande à copier a son « Copier »
+  // dans la fenêtre d'installation (src/scripts/skill-page.ts).
+  if (pre.closest('[data-skill-explorer]')) return;
 
   const codeText = pre.querySelector('code')?.innerText ?? pre.innerText;
 

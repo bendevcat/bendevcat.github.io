@@ -1,0 +1,79 @@
+---
+/**
+ * InstallWindow.astro (plan 17, T4 ; inventaire §8 et §9 ; prototype
+ * 795–923) — la fenêtre d'installation, premier bloc de la colonne de gauche
+ * de la fiche skill.
+ *
+ * - TOUJOURS SOMBRE, mêmes couleurs dans les deux thèmes : uniquement les
+ *   tokens `--color-window*` (plan 15 / 16, D114), rayon 18
+ *   (`--radius-aside`), bordure 1 px `windowLine`.
+ * - Barre `windowHead`, padding 10/14 : `installation · <outil>` mono 11
+ *   (`windowInk` / `windowDim` ; outil = toolLabel) et `Copier` (mono 10
+ *   `windowAccent` sur `windowAccentInk`, rayon 7), rendu `hidden` — aucun
+ *   utilitaire `display` dessus —, révélé et câblé par
+ *   src/scripts/skill-page.ts : il copie `installCmd` telle qu'écrite
+ *   (`data-install-cmd`), jamais les étapes.
+ * - Corps `windowBg`, padding 18/20 : `<ol>` mono 13 / 1.9, une étape par
+ *   partie de `installCmd` coupée sur `&&` (installSteps) — numéro `N.`
+ *   `windowDim`, commande `windowInk`, coupée n'importe où
+ *   (`overflow-wrap:anywhere`, jamais de défilement horizontal) ; puis
+ *   `installNote` mono 11 `windowDim` (`lang="en"` quand elle est citée en
+ *   anglais, quoteLang).
+ * - Toute la fenêtre est hors index de recherche.
+ *
+ * Crochets lus par scripts/check-skill.mjs : `data-install-window`,
+ * `data-install-title`, `data-install-copy`, `data-install-step`,
+ * `data-install-note`.
+ */
+import { quoteLang } from '../../lib/skillDetail';
+
+interface Props {
+  /** La commande telle qu'écrite (copiée par `Copier`). */
+  installCmd: string;
+  /** Étapes numérotées (installSteps). */
+  steps: string[];
+  /** `Claude Code`, ou le type tel qu'écrit (toolLabel). */
+  tool: string;
+  note?: string;
+}
+
+const { installCmd, steps, tool, note } = Astro.props;
+const BUTTON =
+  'cursor-pointer rounded-small px-2 py-1 font-mono text-[10px] leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-windowInk';
+---
+
+<figure
+  class="m-0 min-w-0 overflow-hidden rounded-aside border border-windowLine bg-windowBg"
+  aria-label="Installation"
+  data-install-window
+  data-pagefind-ignore
+>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 bg-windowHead px-3.5 py-2.5">
+    <p class="min-w-0 font-mono text-[11px] text-windowInk" data-install-title>
+      installation<span class="text-windowDim"> · {tool}</span>
+    </p>
+    <button
+      type="button"
+      hidden
+      aria-live="polite"
+      class={`${BUTTON} ml-auto bg-windowAccentInk text-windowAccent`}
+      data-install-copy
+      data-install-cmd={installCmd}>Copier</button
+    >
+  </div>
+  <div class="px-5 py-[18px]">
+    <ol class="m-0 flex list-none flex-col p-0 font-mono text-[13px] leading-[1.9]">
+      {
+        steps.map((step, index) => (
+          <li class="flex gap-2.5" data-install-step>
+            <span class="shrink-0 text-windowDim" aria-hidden="true">
+              {index + 1}.
+            </span>
+            <span class="min-w-0 [overflow-wrap:anywhere] text-windowInk">{step}</span>
+          </li>
+        ))
+      }
+    </ol>
+    {note && <p lang={quoteLang(note) === 'en' ? 'en' : undefined} class="mt-3 font-mono text-[11px] leading-[1.6] text-windowDim" data-install-note>{note}</p>}
+  </div>
+</figure>
