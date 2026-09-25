@@ -22,10 +22,7 @@
  *   de recherche, comme les titres de repli. Le contenu des panneaux, lui,
  *   reste indexé.
  *
- * Deux variantes (plan 15) :
- * - `pill` (défaut) : plus utilisée par les pages depuis les plans 16 et 17 ;
- *   balisage d'avant le plan 15, `data-pagefind-ignore` de la rangée en plus
- *   (plan 17, F3) ; `Tab.count` n'y est jamais rendu.
+ * Deux variantes, à choisir explicitement (`variant` obligatoire, plan 18) :
  * - `underline` : fiche projet (inventaire §4) — pas d'enveloppe `.card`
  *   (la page la place dans sa carte principale), racine
  *   `data-tab-variant="underline"`, rangée soulignée `line2`, onglet actif
@@ -52,37 +49,27 @@ interface Props {
   tabs: Tab[];
   /** Nom accessible de la rangée d'onglets (`aria-label` du tablist). */
   label: string;
-  /**
-   * `pill` (défaut, prompts et skills), `underline` (fiche projet, plan 15)
-   * ou `track` (colonne latérale d'une fiche, plan 16).
-   */
-  variant?: 'pill' | 'underline' | 'track';
+  /** `underline` (fiche projet, plan 15) ou `track` (colonne latérale d'une fiche, plan 16). */
+  variant: 'underline' | 'track';
 }
 
-const { tabs, label, variant = 'pill' } = Astro.props;
+const { tabs, label, variant } = Astro.props;
 const withRow = hasTabRow(tabs);
 const underline = variant === 'underline';
-const track = variant === 'track';
 
-// Classes par variante. Celles de `pill` sont celles d'avant le plan 15, à
-// l'identique : le HTML des prompts et des skills ne doit pas bouger (R20).
-const rootClass = underline ? 'mt-6' : track ? 'flex flex-col gap-3' : 'card mt-10 p-4 sm:p-6';
+// Classes par variante : `underline`, sinon `track`.
+const rootClass = underline ? 'mt-6' : 'flex flex-col gap-3';
 const tablistClass = underline
   ? 'flex overflow-x-auto border-b border-line2 px-5 sm:px-8'
-  : track
-    ? 'flex gap-1 rounded-pill border border-line bg-chip p-1'
-    : 'flex flex-wrap gap-2';
+  : 'flex gap-1 rounded-pill border border-line bg-chip p-1';
 const tabClass = underline
   ? 'shrink-0 cursor-pointer whitespace-nowrap border-b-2 border-transparent bg-transparent px-4 py-3 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink aria-selected:border-accent aria-selected:font-semibold aria-selected:text-ink'
-  : track
-    ? 'min-w-0 flex-1 cursor-pointer whitespace-nowrap rounded-pill border border-transparent bg-transparent px-2 py-1.5 font-mono text-[11px] text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:font-medium aria-selected:text-ink'
-    : 'cursor-pointer rounded-pill border border-transparent bg-transparent px-3 py-1.5 font-sans text-sm text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:text-ink';
+  : 'min-w-0 flex-1 cursor-pointer whitespace-nowrap rounded-pill border border-transparent bg-transparent px-2 py-1.5 font-mono text-[11px] text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-selected:border-line aria-selected:bg-card aria-selected:font-medium aria-selected:text-ink';
 // Carte d'un panneau de la variante `track` (inventaire §6 : surface, rayon
 // 18, ombre, padding 20). L'ombre passe par l'attribut `style`, comme
 // ProjectAside : l'utilitaire `.shadow` resterait clair en thème sombre.
 const trackPanelClass = 'card rounded-aside p-5';
 const trackPanelStyle = 'box-shadow: var(--shadow);';
-const variantAttr = underline ? 'underline' : track ? 'track' : undefined;
 
 // Rendu des slots côté serveur : un nom de slot dynamique ne passe pas par
 // `<slot name={…} />` de façon fiable, `Astro.slots.render` si.
@@ -91,7 +78,7 @@ const panels = await Promise.all(
 );
 ---
 
-<div class={rootClass} data-detail-tabs data-tab-variant={variantAttr}>
+<div class={rootClass} data-detail-tabs data-tab-variant={variant}>
   {
     withRow ? (
       <>
@@ -146,7 +133,7 @@ const panels = await Promise.all(
               </>
             ))}
           </div>
-        ) : track ? (
+        ) : (
           // Panneaux de la variante `track` : chacun est sa propre carte, la
           // racine en colonne les espace de 12 px. Sans JS, le titre de repli
           // précède chaque carte (12 px de plus au-dessus, sauf le premier).
@@ -172,29 +159,6 @@ const panels = await Promise.all(
               </div>
             </>
           ))
-        ) : (
-          panels.map(({ tab, html }, index) => (
-            <>
-              {/* Titre de repli : visible seulement sans JS, quand la rangée est
-                  cachée et que les panneaux s'empilent. Hors du panneau, pour
-                  que le contrôle « aucun panneau vide » (R2) reste honnête.
-                  `data-pagefind-ignore` : un libellé d'onglet (« // infos ») n'a
-                  rien à faire dans l'index de recherche (plan 11, R11). */}
-              <h2 class="mt-8 font-mono text-sm text-muted first-of-type:mt-0" data-tab-fallback-heading data-pagefind-ignore>
-                // {tab.label.toLowerCase()}
-              </h2>
-              <div
-                role="tabpanel"
-                id={`tabpanel-${tab.id}`}
-                aria-labelledby={`tab-${tab.id}`}
-                tabindex="0"
-                hidden={index !== 0}
-                class="mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-              >
-                <Fragment set:html={html} />
-              </div>
-            </>
-          ))
         )}
       </>
     ) : underline ? (
@@ -205,15 +169,9 @@ const panels = await Promise.all(
           </div>
         ))}
       </div>
-    ) : track ? (
-      panels.map(({ html }) => (
-        <div class={trackPanelClass} style={trackPanelStyle}>
-          <Fragment set:html={html} />
-        </div>
-      ))
     ) : (
       panels.map(({ html }) => (
-        <div>
+        <div class={trackPanelClass} style={trackPanelStyle}>
           <Fragment set:html={html} />
         </div>
       ))

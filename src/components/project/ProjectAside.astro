@@ -31,17 +31,15 @@ interface Props {
   repoUrl?: string;
   demoUrl?: string;
   posts: CollectionEntry<'blog'>[];
-  /** Classes de placement ajoutées par la page. */
-  class?: string;
 }
 
-const { rows, repoUrl, demoUrl, posts, class: extra } = Astro.props;
+const { rows, repoUrl, demoUrl, posts } = Astro.props;
 const BUTTON =
   'block w-full rounded-nested p-[11px] text-center font-sans text-sm leading-[1.4] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink';
 const dateFr = (date: Date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 
-<aside aria-label="Le projet en bref" data-pagefind-ignore class:list={['flex min-w-0 flex-col gap-4', extra]}>
+<aside aria-label="Le projet en bref" data-pagefind-ignore class="flex min-w-0 flex-col gap-4">
   <div class="card rounded-aside p-5" style="box-shadow: var(--shadow);" data-project-meta>
     <dl class="flex flex-col">
       {
