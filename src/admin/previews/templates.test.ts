@@ -2,17 +2,21 @@
 import { describe, it, expect } from 'vitest';
 import { diskEntries, type DiskEntry } from './diskEntries';
 import { isTreeElement, treeH, type H, type TreeElement } from './html';
+import { articlePreview } from './article';
+import { projectPreview } from './project';
 import { promptPreview } from './prompt';
 
 /**
  * Gabarits d'aperçu `/admin/` (plan 21, R2) : fonctions pures `(data, h)`
  * qui produisent des props React valides. Chaque gabarit est appelé sur
  * chaque entrée réelle de sa collection, lue sur le disque (D131). Les
- * gabarits des autres collections s'ajoutent à `TEMPLATES` (T4, T5).
+ * gabarits des autres collections s'ajoutent à `TEMPLATES` (T5).
  */
 type Template = (data: never, h: H<TreeElement>) => TreeElement;
 
 const TEMPLATES: Record<string, Template> = {
+  blog: articlePreview as Template,
+  projects: projectPreview as Template,
   prompts: promptPreview as Template,
 };
 
