@@ -591,6 +591,14 @@ describe('config CMS — collection skills', () => {
       'license',
       'repoUrl',
       'installCmd',
+      'installNote',
+      'skillCount',
+      'commandCount',
+      'highlights',
+      'triggers',
+      'changelog',
+      'files',
+      'filesSource',
       'tags',
       'draft',
       'relatedPrompts',
@@ -605,7 +613,8 @@ describe('config CMS — collection skills', () => {
       .filter((f: any) => f.required !== false)
       .map((f: any) => f.name)
       .sort();
-    expect(required).toEqual(['body', 'description', 'title', 'type']);
+    // Plan 17 (D115) : `body` facultatif, comme pour `prompts` (D110).
+    expect(required).toEqual(['description', 'title', 'type']);
   });
 
   it('utilise les widgets attendus pour les champs typés (I3, D10)', () => {
@@ -620,9 +629,66 @@ describe('config CMS — collection skills', () => {
     expect(byName.license.widget).toBe('string');
     expect(byName.repoUrl.widget).toBe('string');
     expect(byName.installCmd.widget).toBe('string');
+    expect(byName.installNote.widget).toBe('string');
+    expect(byName.skillCount.widget).toBe('number');
+    expect(byName.commandCount.widget).toBe('number');
+    expect(byName.highlights.widget).toBe('list');
+    expect(byName.triggers.widget).toBe('list');
+    expect(byName.changelog.widget).toBe('list');
+    expect(byName.files.widget).toBe('list');
+    expect(byName.filesSource.widget).toBe('string');
     expect(byName.tags.widget).toBe('list');
     expect(byName.draft.widget).toBe('boolean');
     expect(byName.body.widget).toBe('markdown');
+  });
+
+  it('écrit les comptes en entiers ≥ 0, comme `z.number().int().min(0)` (plan 17)', () => {
+    // Sans `value_type: int`, le widget number enregistre une chaîne que Zod
+    // (`z.number()`) rejette au build.
+    for (const name of ['skillCount', 'commandCount']) {
+      const f = field(loadCmsConfig(), 'skills', name);
+      expect(f.value_type, name).toBe('int');
+      expect(f.min, name).toBe(0);
+    }
+  });
+
+  it('saisit points forts et déclencheurs un par un, en chaînes (plan 17)', () => {
+    // Une liste sans `field` est un champ texte coupé aux virgules : une
+    // phrase citée contenant une virgule y serait scindée en deux entrées.
+    for (const name of ['highlights', 'triggers']) {
+      const f = field(loadCmsConfig(), 'skills', name);
+      expect(f.required, name).toBe(false);
+      expect(f.fields, name).toBeUndefined();
+      expect(f.field.widget, name).toBe('string');
+    }
+  });
+
+  it('décrit chaque ligne de version comme `{version, date, text}`, comme le schéma Zod (plan 17)', () => {
+    const f = field(loadCmsConfig(), 'skills', 'changelog');
+    expect(f.required).toBe(false);
+    expect(f.fields.map((x: any) => x.name)).toEqual(['version', 'date', 'text']);
+    const sub = Object.fromEntries(f.fields.map((x: any) => [x.name, x]));
+    for (const name of ['version', 'date', 'text']) expect(sub[name].required, name).not.toBe(false);
+    expect(sub.version.widget).toBe('string');
+    expect(sub.date.widget).toBe('datetime');
+    // Date seule, écrite comme dans le contenu (`2026-09-18`, lue par z.coerce.date()).
+    expect(sub.date.format).toBe('YYYY-MM-DD');
+    expect(sub.date.time_format).toBe(false);
+    expect(sub.text.widget).toBe('string');
+  });
+
+  it('décrit chaque fichier comme `{path, lines, excerpt}`, comme le schéma Zod (plan 17, D116)', () => {
+    const f = field(loadCmsConfig(), 'skills', 'files');
+    expect(f.required).toBe(false);
+    expect(f.fields.map((x: any) => x.name)).toEqual(['path', 'lines', 'excerpt']);
+    const sub = Object.fromEntries(f.fields.map((x: any) => [x.name, x]));
+    for (const name of ['path', 'lines', 'excerpt']) expect(sub[name].required, name).not.toBe(false);
+    expect(sub.path.widget).toBe('string');
+    expect(sub.lines.widget).toBe('number');
+    expect(sub.lines.value_type).toBe('int');
+    expect(sub.lines.min).toBe(1);
+    // Multiligne : l'extrait garde ses sauts de ligne.
+    expect(sub.excerpt.widget).toBe('text');
   });
 
   it('garde le défaut `claude-code` sur `type`, comme le schéma Zod', () => {
