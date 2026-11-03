@@ -1,0 +1,47 @@
+name: Sonde bencat.dev
+# Toutes les 30 min, de l'extérieur : le site, sa preview, l'appli bzc et leurs
+# certificats (tout est servi par le Raspberry Pi de Ben). Un échec = un mail de
+# GitHub (notifications Actions de bendevcat, « failed workflows »).
+# Ici, dans le dépôt PUBLIC de redirection : pas de quota de minutes (le dépôt du
+# site est privé, chaque passage y coûterait une minute facturée).
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+permissions: { contents: write }
+concurrency: { group: sonde, cancel-in-progress: true }
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sites et certificats
+        run: |
+          set -u
+          fail=0
+          check() { # libellé, URL, code attendu
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 --retry 2 --retry-delay 15 --retry-all-errors "$2" || true)
+            if [ "$code" = "$3" ]; then echo "ok    $1 ($code)"; else echo "::error::$1 : HTTP $code au lieu de $3"; fail=1; fi
+          }
+          check "bencat.dev" https://bencat.dev/ 200
+          check "www → bencat.dev" https://www.bencat.dev/ 301
+          check "preview protégée" https://preview.bencat.dev/ 401
+          health=$(curl -s --max-time 20 --retry 2 --retry-delay 15 --retry-all-errors https://bzc.bencat.dev/health || true)
+          if echo "$health" | grep -q '"status":"ok"'; then echo "ok    appli bzc ($health)"; else echo "::error::appli bzc /health : ${health:-pas de réponse}"; fail=1; fi
+          for h in bencat.dev preview.bencat.dev bzc.bencat.dev; do
+            end=$(echo | openssl s_client -servername "$h" -connect "$h:443" 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+            if [ -z "$end" ]; then echo "::error::certificat $h illisible"; fail=1; continue; fi
+            days=$(( ($(date -d "$end" +%s) - $(date +%s)) / 86400 ))
+            if [ "$days" -ge 14 ]; then echo "ok    certificat $h ($days j)"; else echo "::error::certificat $h : expire dans $days j (renouvellement Caddy en échec ?)"; fail=1; fi
+          done
+          exit $fail
+      - uses: actions/checkout@v4
+      - name: Garder le cron en vie
+        # GitHub désactive les crons d'un dépôt public sans activité depuis 60 jours.
+        run: |
+          age=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+          if [ "$age" -lt 45 ]; then echo "Dernier commit il y a $age j : rien à faire."; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --allow-empty -q -m "chore: garder la sonde active ($age j sans commit)"
+          git push -q origin HEAD:main
