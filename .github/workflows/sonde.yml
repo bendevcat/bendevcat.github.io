@@ -2,6 +2,9 @@ name: Sonde bencat.dev
 # Toutes les 30 min, de l'extérieur : le site, sa preview, l'appli bzc et leurs
 # certificats (tout est servi par le Raspberry Pi de Ben). Un échec = un mail de
 # GitHub (notifications Actions de bendevcat, « failed workflows »).
+# Le top vient de la crontab du Pi (workflow_dispatch, scripts/sonde/pi-declencheur.sh
+# du dépôt bencat.dev) : le cron ci-dessous ne passe que toutes les 4 à 8 h et ne
+# reste qu'en filet si le Pi ou la box tombent.
 # Ici, dans le dépôt PUBLIC de redirection : pas de quota de minutes (le dépôt du
 # site est privé, chaque passage y coûterait une minute facturée).
 on:
